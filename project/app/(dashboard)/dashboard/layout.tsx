@@ -5,7 +5,18 @@ import type React from "react"
 import { useState, Suspense } from "react"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Home, FolderOpen, Users, Settings, Menu, X, BarChart3, Calendar, Bell, Search } from "lucide-react"
+import {
+  Home,
+  FolderOpen,
+  Users,
+  Settings,
+  Menu,
+  X,
+  BarChart3,
+  Calendar,
+  Bell,
+  Search,
+} from "lucide-react"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home, current: true },
@@ -27,7 +38,10 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-platinum-900 dark:bg-outer_space-600">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       {/* Sidebar */}
