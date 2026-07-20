@@ -1,44 +1,124 @@
-// TODO: Task 3.1 - Design database schema for users, projects, lists, and tasks
-// TODO: Task 3.3 - Set up Drizzle ORM with type-safe schema definitions
+import { relations } from "drizzle-orm";
+import { pgTable, text, timestamp, integer, uuid } from "drizzle-orm/pg-core";
 
-/*
-TODO: Implementation Notes for Interns:
+// ---------- Tables ----------
 
-1. Install Drizzle ORM dependencies:
-   - drizzle-orm
-   - drizzle-kit
-   - @vercel/postgres (if using Vercel Postgres)
-   - OR pg + @types/pg (if using regular PostgreSQL)
+export const users = pgTable("users", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  clerkId: text("clerk_id").notNull().unique(),
+  email: text("email").notNull(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
-2. Define schemas for:
-   - users (id, clerkId, email, name, createdAt, updatedAt)
-   - projects (id, name, description, ownerId, createdAt, updatedAt, dueDate)
-   - lists (id, name, projectId, position, createdAt, updatedAt)
-   - tasks (id, title, description, listId, assigneeId, priority, dueDate, position, createdAt, updatedAt)
-   - comments (id, content, taskId, authorId, createdAt, updatedAt)
+export const projects = pgTable("projects", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  ownerId: uuid("owner_id")
+    .notNull()
+    .references(() => users.id),
+  dueDate: timestamp("due_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
-3. Set up proper relationships between tables
-4. Add indexes for performance
-5. Configure migrations
+export const lists = pgTable("lists", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  projectId: uuid("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  position: integer("position").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
-Example structure:
-import { pgTable, text, timestamp, integer, uuid } from 'drizzle-orm/pg-core'
+export const tasks = pgTable("tasks", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  listId: uuid("list_id")
+    .notNull()
+    .references(() => lists.id, { onDelete: "cascade" }),
+  assigneeId: uuid("assignee_id").references(() => users.id),
+  priority: text("priority", { enum: ["low", "medium", "high"] }),
+  dueDate: timestamp("due_date"),
+  position: integer("position").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
-export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  clerkId: text('clerk_id').notNull().unique(),
-  email: text('email').notNull(),
-  name: text('name').notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
-})
+export const comments = pgTable("comments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  content: text("content").notNull(),
+  taskId: uuid("task_id")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  authorId: uuid("author_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
-// ... other tables
-*/
+// ---------- Relations ----------
 
-// Placeholder exports to prevent import errors
-export const users = "TODO: Implement users table schema"
-export const projects = "TODO: Implement projects table schema"
-export const lists = "TODO: Implement lists table schema"
-export const tasks = "TODO: Implement tasks table schema"
-export const comments = "TODO: Implement comments table schema"
+export const usersRelations = relations(users, ({ many }) => ({
+  ownedProjects: many(projects),
+  assignedTasks: many(tasks),
+  comments: many(comments),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [projects.ownerId],
+    references: [users.id],
+  }),
+  lists: many(lists),
+}));
+
+export const listsRelations = relations(lists, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [lists.projectId],
+    references: [projects.id],
+  }),
+  tasks: many(tasks),
+}));
+
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
+  list: one(lists, {
+    fields: [tasks.listId],
+    references: [lists.id],
+  }),
+  assignee: one(users, {
+    fields: [tasks.assigneeId],
+    references: [users.id],
+  }),
+  comments: many(comments),
+}));
+
+export const commentsRelations = relations(comments, ({ one }) => ({
+  task: one(tasks, {
+    fields: [comments.taskId],
+    references: [tasks.id],
+  }),
+  author: one(users, {
+    fields: [comments.authorId],
+    references: [users.id],
+  }),
+}));
+
+// ---------- Inferred types ----------
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Project = typeof projects.$inferSelect;
+export type NewProject = typeof projects.$inferInsert;
+export type List = typeof lists.$inferSelect;
+export type NewList = typeof lists.$inferInsert;
+export type Task = typeof tasks.$inferSelect;
+export type NewTask = typeof tasks.$inferInsert;
+export type Comment = typeof comments.$inferSelect;
+export type NewComment = typeof comments.$inferInsert;
