@@ -1,13 +1,19 @@
 import {
   ArrowLeft,
-  Calendar,
-  MoreHorizontal,
   Settings,
   Users,
-} from "lucide-react"
-import Link from "next/link"
-import { DashboardLayout } from "@/components/dashboard-layout"
+  Calendar,
+  MoreHorizontal,
+} from "lucide-react";
+import Link from "next/link";
+import { DashboardLayout } from "@/components/dashboard-layout";
 
+const columnTaskCounts: Record<string, number> = {
+  "To Do": 3,
+  "In Progress": 2,
+  Review: 1,
+  Done: 4,
+};
 export default function ProjectPage({ params }: { params: { id: string } }) {
   return (
     <DashboardLayout>
@@ -150,5 +156,5 @@ export default function ProjectPage({ params }: { params: { id: string } }) {
         </div>
       </div>
     </DashboardLayout>
-  )
+  );
 }
