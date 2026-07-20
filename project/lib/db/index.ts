@@ -1,84 +1,95 @@
-// TODO: Task 3.2 - Configure PostgreSQL database (Vercel Postgres or Neon)
-// TODO: Task 3.5 - Implement database connection and query utilities
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
+import { eq } from "drizzle-orm";
+import * as schema from "./schema";
+import { projects, lists, tasks } from "./schema";
+import type { InferInsertModel } from "drizzle-orm";
 
-/*
-TODO: Implementation Notes for Interns:
+const sql = neon(process.env.DATABASE_URL!);
 
-1. Choose database provider:
-   - Vercel Postgres (recommended for Vercel deployment)
-   - Neon (good alternative)
-   - Local PostgreSQL for development
-
-2. Set up environment variables:
-   - DATABASE_URL
-   - POSTGRES_URL (if using Vercel Postgres)
-
-3. Configure Drizzle connection
-4. Implement CRUD operations for all entities
-5. Add proper error handling
-6. Set up connection pooling if needed
-
-Example structure:
-import { drizzle } from 'drizzle-orm/vercel-postgres'
-import { sql } from '@vercel/postgres'
-import * as schema from './schema'
-
-export const db = drizzle(sql, { schema })
+export const db = drizzle(sql, { schema });
 
 export const queries = {
   projects: {
-    getAll: async () => { ... },
-    getById: async (id: string) => { ... },
-    create: async (data: any) => { ... },
-    update: async (id: string, data: any) => { ... },
-    delete: async (id: string) => { ... },
+    getAll: async () => {
+      return db.select().from(projects);
+    },
+    getById: async (id: string) => {
+      return db.query.projects.findFirst({
+        where: eq(projects.id, id),
+        with: { lists: { with: { tasks: true } } },
+      });
+    },
+    create: async (data: InferInsertModel<typeof projects>) => {
+      const [project] = await db.insert(projects).values(data).returning();
+      return project;
+    },
+    update: async (
+      id: string,
+      data: Partial<InferInsertModel<typeof projects>>,
+    ) => {
+      const [project] = await db
+        .update(projects)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(projects.id, id))
+        .returning();
+      return project;
+    },
+    delete: async (id: string) => {
+      await db.delete(projects).where(eq(projects.id, id));
+    },
   },
-  // ... other entity queries
-}
-*/
-
-// Placeholder exports to prevent import errors
-export const db = "TODO: Implement database connection"
-
-export const queries = {
-  projects: {
-    getAll: () => {
-      console.log("TODO: Task 4.1 - Implement project CRUD operations")
-      return []
+  lists: {
+    getByProject: async (projectId: string) => {
+      return db.select().from(lists).where(eq(lists.projectId, projectId));
     },
-    getById: (id: string) => {
-      console.log(`TODO: Get project by ID: ${id}`)
-      return null
+    create: async (data: InferInsertModel<typeof lists>) => {
+      const [list] = await db.insert(lists).values(data).returning();
+      return list;
     },
-    create: (data: any) => {
-      console.log("TODO: Create project", data)
-      return null
+    update: async (
+      id: string,
+      data: Partial<InferInsertModel<typeof lists>>,
+    ) => {
+      const [list] = await db
+        .update(lists)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(lists.id, id))
+        .returning();
+      return list;
     },
-    update: (id: string, data: any) => {
-      console.log(`TODO: Update project ${id}`, data)
-      return null
-    },
-    delete: (id: string) => {
-      console.log(`TODO: Delete project ${id}`)
-      return null
+    delete: async (id: string) => {
+      await db.delete(lists).where(eq(lists.id, id));
     },
   },
   tasks: {
-    getByProject: (projectId: string) => {
-      console.log(`TODO: Task 4.4 - Get tasks for project ${projectId}`)
-      return []
+    getByProject: async (projectId: string) => {
+      const listsWithTasks = await db.query.lists.findMany({
+        where: eq(lists.projectId, projectId),
+        with: { tasks: true },
+      });
+      return listsWithTasks.flatMap((list) => list.tasks);
     },
-    create: (data: any) => {
-      console.log("TODO: Create task", data)
-      return null
+    getByList: async (listId: string) => {
+      return db.select().from(tasks).where(eq(tasks.listId, listId));
     },
-    update: (id: string, data: any) => {
-      console.log(`TODO: Update task ${id}`, data)
-      return null
+    create: async (data: InferInsertModel<typeof tasks>) => {
+      const [task] = await db.insert(tasks).values(data).returning();
+      return task;
     },
-    delete: (id: string) => {
-      console.log(`TODO: Delete task ${id}`)
-      return null
+    update: async (
+      id: string,
+      data: Partial<InferInsertModel<typeof tasks>>,
+    ) => {
+      const [task] = await db
+        .update(tasks)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(tasks.id, id))
+        .returning();
+      return task;
+    },
+    delete: async (id: string) => {
+      await db.delete(tasks).where(eq(tasks.id, id));
     },
   },
-}
+};
