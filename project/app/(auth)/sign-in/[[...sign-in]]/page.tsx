@@ -8,7 +8,7 @@ export default function SignInPage() {
           <h1 className="text-3xl font-bold text-outer_space-500 dark:text-platinum-500 mb-2">
             Welcome Back
           </h1>
-          <p className="text-payne's_gray-500 dark:text-french_gray-400">
+          <p className="text-paynes_gray-500 dark:text-french_gray-400">
             Sign in to your project management account
           </p>
         </div>
@@ -18,17 +18,17 @@ export default function SignInPage() {
             appearance={{
               elements: {
                 rootBox: "w-full",
-                card: "bg-white dark:bg-outer_space-500 border border-french_gray-300 dark:border-payne's_gray-400 shadow-none rounded-lg w-full",
+                card: "bg-white dark:bg-outer_space-500 border border-french_gray-300 dark:border-paynes_gray-400 shadow-none rounded-lg w-full",
                 headerTitle: "hidden",
                 headerSubtitle: "hidden",
                 socialButtonsBlockButton:
-                  "border border-french_gray-300 dark:border-payne's_gray-400 text-outer_space-500 dark:text-platinum-500",
+                  "border border-french_gray-300 dark:border-paynes_gray-400 text-outer_space-500 dark:text-platinum-500",
                 formButtonPrimary:
                   "bg-blue_munsell-500 hover:bg-blue_munsell-600 text-white",
                 footerActionLink:
                   "text-blue_munsell-500 hover:text-blue_munsell-600",
                 formFieldInput:
-                  "border border-french_gray-300 dark:border-payne's_gray-400 bg-white dark:bg-outer_space-400 text-outer_space-500 dark:text-platinum-500",
+                  "border border-french_gray-300 dark:border-paynes_gray-400 bg-white dark:bg-outer_space-400 text-outer_space-500 dark:text-platinum-500",
               },
             }}
           />
