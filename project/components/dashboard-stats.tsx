@@ -1,4 +1,4 @@
-import { TrendingUp, Users, CheckCircle, Clock } from "lucide-react"
+import { CheckCircle, Clock, TrendingUp, Users } from "lucide-react"
 
 const stats = [
   {
@@ -51,7 +51,9 @@ export function DashboardStats() {
                   {stat.name}
                 </dt>
                 <dd className="flex items-baseline">
-                  <div className="text-2xl font-semibold text-outer_space-500 dark:text-platinum-500">{stat.value}</div>
+                  <div className="text-2xl font-semibold text-outer_space-500 dark:text-platinum-500">
+                    {stat.value}
+                  </div>
                   <div
                     className={`ml-2 flex items-baseline text-sm font-semibold ${
                       stat.changeType === "positive"

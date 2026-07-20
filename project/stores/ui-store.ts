@@ -54,7 +54,9 @@ export const useUIStore = () => {
   return {
     isCreateProjectModalOpen: false,
     isCreateTaskModalOpen: false,
-    openCreateProjectModal: () => console.log("TODO: Open create project modal"),
-    closeCreateProjectModal: () => console.log("TODO: Close create project modal"),
+    openCreateProjectModal: () =>
+      console.log("TODO: Open create project modal"),
+    closeCreateProjectModal: () =>
+      console.log("TODO: Close create project modal"),
   }
 }

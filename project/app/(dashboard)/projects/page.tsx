@@ -1,4 +1,4 @@
-import { Plus, Search, Filter } from "lucide-react"
+import { Filter, Plus, Search } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 
 export default function ProjectsPage() {
@@ -7,8 +7,12 @@ export default function ProjectsPage() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-outer_space-500 dark:text-platinum-500">Projects</h1>
-            <p className="text-payne's_gray-500 dark:text-french_gray-500 mt-2">Manage and organize your team projects</p>
+            <h1 className="text-3xl font-bold text-outer_space-500 dark:text-platinum-500">
+              Projects
+            </h1>
+            <p className="text-payne's_gray-500 dark:text-french_gray-500 mt-2">
+              Manage and organize your team projects
+            </p>
           </div>
           <button className="inline-flex items-center px-4 py-2 bg-blue_munsell-500 text-white rounded-lg hover:bg-blue_munsell-600 transition-colors">
             <Plus size={20} className="mr-2" />
@@ -25,7 +29,9 @@ export default function ProjectsPage() {
             <li>• Task 4.1: Implement project CRUD operations</li>
             <li>• Task 4.2: Create project listing and dashboard interface</li>
             <li>• Task 4.5: Design and implement project cards and layouts</li>
-            <li>• Task 4.6: Add project and task search/filtering capabilities</li>
+            <li>
+              • Task 4.6: Add project and task search/filtering capabilities
+            </li>
           </ul>
         </div>
 
@@ -67,7 +73,8 @@ export default function ProjectsPage() {
               </h3>
 
               <p className="text-sm text-payne's_gray-500 dark:text-french_gray-400 mb-4">
-                This is a placeholder project description that will be replaced with actual project data.
+                This is a placeholder project description that will be replaced
+                with actual project data.
               </p>
 
               <div className="flex items-center justify-between text-sm text-payne's_gray-500 dark:text-french_gray-400 mb-4">
@@ -87,11 +94,15 @@ export default function ProjectsPage() {
 
         {/* Component Placeholders */}
         <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">📁 Components to Implement</h3>
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">
+            📁 Components to Implement
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
             <div>
               <strong>components/project-card.tsx</strong>
-              <p>Project display component with progress, members, and actions</p>
+              <p>
+                Project display component with progress, members, and actions
+              </p>
             </div>
             <div>
               <strong>components/modals/create-project-modal.tsx</strong>

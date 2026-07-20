@@ -1,4 +1,4 @@
-import { TrendingUp, Users, CheckCircle, Clock, Plus } from "lucide-react"
+import { CheckCircle, Clock, Plus, TrendingUp, Users } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 
 export default function DashboardPage() {
