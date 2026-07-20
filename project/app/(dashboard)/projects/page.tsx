@@ -1,5 +1,5 @@
-import { Filter, Plus, Search } from "lucide-react"
-import { DashboardLayout } from "@/components/dashboard-layout"
+import { Filter, Plus, Search } from "lucide-react";
+import { DashboardLayout } from "@/components/dashboard-layout";
 
 export default function ProjectsPage() {
   return (
@@ -10,7 +10,7 @@ export default function ProjectsPage() {
             <h1 className="text-3xl font-bold text-outer_space-500 dark:text-platinum-500">
               Projects
             </h1>
-            <p className="text-paynes_gray-500 dark:text-french_gray-500 mt-2">
+            <p className="teQxt-paynes_gray-500 dark:text-french_gray-500 mt-2">
               Manage and organize your team projects
             </p>
           </div>
@@ -120,5 +120,5 @@ export default function ProjectsPage() {
         </div>
       </div>
     </DashboardLayout>
-  )
+  );
 }

@@ -1,5 +1,5 @@
-"use client"
-
+"use client";
+import { UserButton } from "@clerk/nextjs";
 import {
   BarChart3,
   Bell,
@@ -11,11 +11,11 @@ import {
   Settings,
   Users,
   X,
-} from "lucide-react"
-import Link from "next/link"
-import type React from "react"
-import { Suspense, useState } from "react"
-import { ThemeToggle } from "@/components/theme-toggle"
+} from "lucide-react";
+import Link from "next/link";
+import type React from "react";
+import { Suspense, useState } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home, current: true },
@@ -24,14 +24,14 @@ const navigation = [
   { name: "Analytics", href: "/analytics", icon: BarChart3, current: false },
   { name: "Calendar", href: "/calendar", icon: Calendar, current: false },
   { name: "Settings", href: "/settings", icon: Settings, current: false },
-]
+];
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-platinum-900 dark:bg-outer_space-600">
@@ -120,9 +120,7 @@ export default function DashboardLayout({
 
               <ThemeToggle />
 
-              <div className="w-8 h-8 bg-blue_munsell-500 rounded-full flex items-center justify-center text-white font-semibold">
-                U
-              </div>
+              <UserButton />
             </div>
           </div>
         </div>
@@ -133,5 +131,5 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
-  )
+  );
 }
