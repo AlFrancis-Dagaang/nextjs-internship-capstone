@@ -12,6 +12,9 @@
     "@testing-library/jest-dom": "^6.1.5",
     "playwright": "^1.40.0"
   },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "name": "project-management-tool",
   "version": "0.1.0",
   "private": true,
