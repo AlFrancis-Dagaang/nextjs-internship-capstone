@@ -1,22 +1,21 @@
 "use client"
 
-import type React from "react"
-
-import { useState, Suspense } from "react"
-import Link from "next/link"
-import { ThemeToggle } from "@/components/theme-toggle"
 import {
-  Home,
-  FolderOpen,
-  Users,
-  Settings,
-  Menu,
-  X,
   BarChart3,
-  Calendar,
   Bell,
+  Calendar,
+  FolderOpen,
+  Home,
+  Menu,
   Search,
+  Settings,
+  Users,
+  X,
 } from "lucide-react"
+import Link from "next/link"
+import type React from "react"
+import { Suspense, useState } from "react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home, current: true },

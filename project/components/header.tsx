@@ -1,8 +1,8 @@
 "use client"
 
-import { useTheme } from "./theme-provider"
 import { Moon, Sun } from "lucide-react"
 import Link from "next/link"
+import { useTheme } from "./theme-provider"
 
 export function Header() {
   const { theme, setTheme } = useTheme()

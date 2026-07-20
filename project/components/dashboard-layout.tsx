@@ -1,11 +1,21 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import {
+  BarChart3,
+  Calendar,
+  FolderOpen,
+  Home,
+  Menu,
+  Moon,
+  Settings,
+  Sun,
+  Users,
+  X,
+} from "lucide-react"
 import Link from "next/link"
+import type React from "react"
+import { useState } from "react"
 import { useTheme } from "./theme-provider"
-import { Home, FolderOpen, Users, Settings, Moon, Sun, Menu, X, BarChart3, Calendar } from "lucide-react"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -24,7 +34,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-platinum-900 dark:bg-outer_space-600">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       {/* Sidebar */}

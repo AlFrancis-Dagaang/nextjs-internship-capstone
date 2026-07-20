@@ -69,9 +69,12 @@ export function useTasks(projectId: string) {
     isLoading: false,
     error: null,
     createTask: (data: any) => console.log("TODO: Create task", data),
-    updateTask: (id: string, data: any) => console.log(`TODO: Update task ${id}`, data),
+    updateTask: (id: string, data: any) =>
+      console.log(`TODO: Update task ${id}`, data),
     deleteTask: (id: string) => console.log(`TODO: Delete task ${id}`),
     moveTask: (taskId: string, newListId: string, position: number) =>
-      console.log(`TODO: Move task ${taskId} to list ${newListId} at position ${position}`),
+      console.log(
+        `TODO: Move task ${taskId} to list ${newListId} at position ${position}`,
+      ),
   }
 }
