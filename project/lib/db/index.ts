@@ -43,6 +43,9 @@ export const queries = {
         with: { lists: { with: { tasks: true } } },
       });
     },
+    getByOwner: async (ownerId: string) => {
+      return db.select().from(projects).where(eq(projects.ownerId, ownerId));
+    },
     create: async (data: InferInsertModel<typeof projects>) => {
       const [project] = await db.insert(projects).values(data).returning();
       return project;
