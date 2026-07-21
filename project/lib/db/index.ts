@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import * as schema from "./schema";
 import { projects, lists, tasks } from "./schema";
 import type { InferInsertModel } from "drizzle-orm";
@@ -67,7 +67,14 @@ export const queries = {
   },
   lists: {
     getByProject: async (projectId: string) => {
-      return db.select().from(lists).where(eq(lists.projectId, projectId));
+      return db
+        .select()
+        .from(lists)
+        .where(eq(lists.projectId, projectId))
+        .orderBy(asc(lists.position));
+    },
+    getById: async (id: string) => {
+      return db.query.lists.findFirst({ where: eq(lists.id, id) });
     },
     create: async (data: InferInsertModel<typeof lists>) => {
       const [list] = await db.insert(lists).values(data).returning();
