@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { createTask } from "@/lib/actions/tasks";
+import { useState, useTransition, useEffect } from "react";
+import { createTask, updateTask } from "@/lib/actions/tasks";
+import type { Task } from "@/lib/db/schema";
 import {
   Dialog,
   DialogContent,
@@ -21,37 +22,73 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+function toDateInputValue(d: Date | string | null | undefined): string {
+  if (!d) return "";
+  const date = typeof d === "string" ? new Date(d) : d;
+  return date.toISOString().split("T")[0];
+}
+
+type CreateTaskModalProps = {
+  listId: string;
+  onCreated?: () => void;
+  task?: Task;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+};
+
 export function CreateTaskModal({
   listId,
   onCreated,
-}: {
-  listId: string;
-  onCreated?: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<string>("");
-  const [dueDate, setDueDate] = useState("");
-  const [assignToMe, setAssignToMe] = useState(false);
+  task,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+  trigger,
+}: CreateTaskModalProps) {
+  const isEdit = Boolean(task);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = setControlledOpen ?? setUncontrolledOpen;
+
+  const [title, setTitle] = useState(task?.title ?? "");
+  const [description, setDescription] = useState(task?.description ?? "");
+  const [priority, setPriority] = useState<string>(task?.priority ?? "");
+  const [dueDate, setDueDate] = useState(toDateInputValue(task?.dueDate));
+  const [assignToMe, setAssignToMe] = useState(Boolean(task?.assigneeId));
   const [fieldErrors, setFieldErrors] = useState<
     Record<string, string[]> | undefined
-  >();
+  >(undefined);
   const [genericError, setGenericError] = useState<string | undefined>();
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (open) {
+      setTitle(task?.title ?? "");
+      setDescription(task?.description ?? "");
+      setPriority(task?.priority ?? "");
+      setDueDate(toDateInputValue(task?.dueDate));
+      setAssignToMe(Boolean(task?.assigneeId));
+      setFieldErrors(undefined);
+      setGenericError(undefined);
+    }
+  }, [open, task]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setGenericError(undefined);
     startTransition(async () => {
-      const result = await createTask({
+      const input = {
         title,
         description: description || undefined,
         listId,
         priority: priority || undefined,
         dueDate: dueDate || undefined,
         assignToMe,
-      });
+      };
+
+      const result = isEdit
+        ? await updateTask(task!.id, input)
+        : await createTask(input);
 
       if (!result.success) {
         if (result.fieldErrors) {
@@ -62,12 +99,14 @@ export function CreateTaskModal({
         return;
       }
 
-      setTitle("");
-      setDescription("");
-      setPriority("");
-      setDueDate("");
-      setAssignToMe(false);
-      setFieldErrors(undefined);
+      if (!isEdit) {
+        setTitle("");
+        setDescription("");
+        setPriority("");
+        setDueDate("");
+        setAssignToMe(false);
+        setFieldErrors(undefined);
+      }
       setOpen(false);
       onCreated?.();
     });
@@ -75,17 +114,21 @@ export function CreateTaskModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="w-full border-2 border-dashed border-french_gray-300 dark:border-paynes_gray-400 text-paynes_gray-500 dark:text-french_gray-400 hover:border-blue_munsell-500 hover:text-blue_munsell-500"
-        >
-          + Add task
-        </Button>
-      </DialogTrigger>
+      {trigger !== undefined ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : !isEdit ? (
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            className="w-full border-2 border-dashed border-french_gray-300 dark:border-paynes_gray-400 text-paynes_gray-500 dark:text-french_gray-400 hover:border-blue_munsell-500 hover:text-blue_munsell-500"
+          >
+            + Add task
+          </Button>
+        </DialogTrigger>
+      ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New Task</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Task" : "New Task"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {genericError && (
@@ -165,7 +208,13 @@ export function CreateTaskModal({
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Creating..." : "Create"}
+              {isPending
+                ? isEdit
+                  ? "Saving..."
+                  : "Creating..."
+                : isEdit
+                  ? "Save"
+                  : "Create"}
             </Button>
           </div>
         </form>

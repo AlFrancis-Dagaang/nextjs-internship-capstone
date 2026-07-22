@@ -1,4 +1,29 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { MoreHorizontal } from "lucide-react";
 import type { Task } from "@/lib/db/schema";
+import { deleteTask } from "@/lib/actions/tasks";
+import { CreateTaskModal } from "@/components/tasks/modal/create-tasks-modal";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const priorityStyles: Record<string, string> = {
   low: "bg-blue_munsell-100 text-blue_munsell-700 dark:bg-blue_munsell-900 dark:text-blue_munsell-300",
@@ -8,11 +33,74 @@ const priorityStyles: Record<string, string> = {
 };
 
 export function TaskCard({ task }: { task: Task }) {
+  const router = useRouter();
+  const [editOpen, setEditOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  function handleDelete() {
+    startTransition(async () => {
+      const result = await deleteTask(task.id);
+      if (result.success) {
+        router.refresh();
+      }
+      // TODO: surface result.error via toast (same follow-up noted on ProjectCard)
+    });
+  }
+
   return (
-    <div className="p-4 bg-white dark:bg-outer_space-300 rounded-lg border border-french_gray-300 dark:border-paynes_gray-400 cursor-pointer hover:shadow-md transition-shadow">
-      <h4 className="font-medium text-outer_space-500 dark:text-platinum-500 text-sm mb-2">
-        {task.title}
-      </h4>
+    <div className="relative p-4 bg-white dark:bg-outer_space-300 rounded-lg border border-french_gray-300 dark:border-paynes_gray-400 cursor-pointer hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-2">
+        <h4 className="font-medium text-outer_space-500 dark:text-platinum-500 text-sm pr-2">
+          {task.title}
+        </h4>
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 -mt-1 -mr-1 shrink-0"
+              >
+                <MoreHorizontal size={14} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                Edit
+              </DropdownMenuItem>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    className="text-destructive"
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete task?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete "{task.title}" and cannot be
+                      undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      disabled={isPending}
+                    >
+                      {isPending ? "Deleting..." : "Delete"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
       {task.description && (
         <p className="text-xs text-paynes_gray-500 dark:text-french_gray-400 mb-3 line-clamp-2">
           {task.description}
@@ -39,6 +127,15 @@ export function TaskCard({ task }: { task: Task }) {
           Due {new Date(task.dueDate).toLocaleDateString()}
         </p>
       )}
+
+      <CreateTaskModal
+        listId={task.listId}
+        task={task}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        trigger={<span className="hidden" />}
+        onCreated={() => router.refresh()}
+      />
     </div>
   );
 }
