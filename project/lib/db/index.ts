@@ -104,7 +104,14 @@ export const queries = {
       return listsWithTasks.flatMap((list) => list.tasks);
     },
     getByList: async (listId: string) => {
-      return db.select().from(tasks).where(eq(tasks.listId, listId));
+      return db
+        .select()
+        .from(tasks)
+        .where(eq(tasks.listId, listId))
+        .orderBy(asc(tasks.position));
+    },
+    getById: async (id: string) => {
+      return db.query.tasks.findFirst({ where: eq(tasks.id, id) });
     },
     create: async (data: InferInsertModel<typeof tasks>) => {
       const [task] = await db.insert(tasks).values(data).returning();
