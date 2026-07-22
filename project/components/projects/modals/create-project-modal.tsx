@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { createProject } from "@/lib/actions/projects";
+import { useState, useTransition, useEffect } from "react";
+import { createProject, updateProject } from "@/lib/actions/projects";
+import type { Project } from "@/lib/db/schema";
 import {
   Dialog,
   DialogContent,
@@ -14,31 +15,55 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-export function CreateProjectModal({ onCreated }: { onCreated?: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+type CreateProjectModalProps = {
+  onCreated?: () => void;
+  project?: Project;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+};
+
+export function CreateProjectModal({
+  onCreated,
+  project,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
+  trigger,
+}: CreateProjectModalProps) {
+  const isEdit = Boolean(project);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = setControlledOpen ?? setUncontrolledOpen;
+
+  const [name, setName] = useState(project?.name ?? "");
+  const [description, setDescription] = useState(project?.description ?? "");
   const [fieldErrors, setFieldErrors] = useState<
     Record<string, string[]> | undefined
-  >();
+  >(undefined);
   const [isPending, startTransition] = useTransition();
+
+  // Reset form fields whenever the modal opens for a given project
+  useEffect(() => {
+    if (open) {
+      setName(project?.name ?? "");
+      setDescription(project?.description ?? "");
+      setFieldErrors(undefined);
+    }
+  }, [open, project]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     startTransition(async () => {
-      const result = await createProject({
-        name,
-        description: description || undefined,
-      });
+      const input = { name, description: description || undefined };
+      const result = isEdit
+        ? await updateProject(project!.id, input)
+        : await createProject(input);
 
       if (!result.success) {
         setFieldErrors(result.fieldErrors);
         return;
       }
 
-      setName("");
-      setDescription("");
-      setFieldErrors(undefined);
       setOpen(false);
       onCreated?.();
     });
@@ -46,12 +71,16 @@ export function CreateProjectModal({ onCreated }: { onCreated?: () => void }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>+ New Project</Button>
-      </DialogTrigger>
+      {trigger !== undefined ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : !isEdit ? (
+        <DialogTrigger asChild>
+          <Button>+ New Project</Button>
+        </DialogTrigger>
+      ) : null}
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New Project</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Project" : "New Project"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
@@ -89,7 +118,13 @@ export function CreateProjectModal({ onCreated }: { onCreated?: () => void }) {
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Creating..." : "Create"}
+              {isPending
+                ? isEdit
+                  ? "Saving..."
+                  : "Creating..."
+                : isEdit
+                  ? "Save"
+                  : "Create"}
             </Button>
           </div>
         </form>
