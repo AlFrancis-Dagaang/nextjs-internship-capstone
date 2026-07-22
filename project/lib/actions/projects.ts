@@ -3,6 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { queries } from "@/lib/db";
 import { projectCreateSchema, projectUpdateSchema } from "@/lib/validations";
+import { Project } from "../db/schema";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -61,9 +62,7 @@ export async function getProjects(): Promise<
   return { success: true, data: projects };
 }
 
-export async function getProject(
-  id: string,
-): Promise<ActionResult<Awaited<ReturnType<typeof queries.projects.getById>>>> {
+export async function getProject(id: string): Promise<ActionResult<Project>> {
   const { userId } = await auth();
   if (!userId) {
     return { success: false, error: "Unauthorized" };
