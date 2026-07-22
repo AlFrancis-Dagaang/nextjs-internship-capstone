@@ -13,29 +13,26 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type React from "react";
 import { Suspense, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Home, current: true },
-  { name: "Projects", href: "/projects", icon: FolderOpen, current: false },
-  { name: "Team", href: "/team", icon: Users, current: false },
-  { name: "Analytics", href: "/analytics", icon: BarChart3, current: false },
-  { name: "Calendar", href: "/calendar", icon: Calendar, current: false },
-  { name: "Settings", href: "/settings", icon: Settings, current: false },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Projects", href: "/projects", icon: FolderOpen },
+  { name: "Team", href: "/team", icon: Users },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Calendar", href: "/calendar", icon: Calendar },
+  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <div className="min-h-screen bg-platinum-900 dark:bg-outer_space-600">
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
@@ -43,7 +40,6 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-outer_space-500 border-r border-french_gray-300 dark:border-paynes_gray-400 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
@@ -60,35 +56,30 @@ export default function DashboardLayout({
         </div>
 
         <nav className="mt-6 px-3">
-          <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-            <p className="text-xs text-yellow-800 dark:text-yellow-200">
-              📋 <strong>Task 2.6:</strong> Create protected dashboard layout
-            </p>
-          </div>
-
           <ul className="space-y-1">
-            {navigation.map((item) => (
-              <li key={item.name}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    item.current
-                      ? "bg-blue_munsell-100 dark:bg-blue_munsell-900 text-blue_munsell-700 dark:text-blue_munsell-300"
-                      : "text-outer_space-500 dark:text-platinum-500 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400"
-                  }`}
-                >
-                  <item.icon className="mr-3" size={20} />
-                  {item.name}
-                </Link>
-              </li>
-            ))}
+            {navigation.map((item) => {
+              const current = pathname === item.href;
+              return (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      current
+                        ? "bg-blue_munsell-100 dark:bg-blue_munsell-900 text-blue_munsell-700 dark:text-blue_munsell-300"
+                        : "text-outer_space-500 dark:text-platinum-500 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400"
+                    }`}
+                  >
+                    <item.icon className="mr-3" size={20} />
+                    {item.name}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </nav>
       </div>
 
-      {/* Main content */}
       <div className="lg:pl-64">
-        {/* Top bar */}
         <div className="sticky top-0 z-30 flex h-16 items-center gap-x-4 border-b border-french_gray-300 dark:border-paynes_gray-400 bg-white dark:bg-outer_space-500 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -98,7 +89,6 @@ export default function DashboardLayout({
           </button>
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            {/* Search bar placeholder */}
             <div className="flex flex-1 items-center">
               <div className="relative flex-1 max-w-md">
                 <Search
@@ -117,15 +107,12 @@ export default function DashboardLayout({
               <button className="p-2 rounded-lg hover:bg-platinum-500 dark:hover:bg-paynes_gray-400">
                 <Bell size={20} />
               </button>
-
               <ThemeToggle />
-
               <UserButton />
             </div>
           </div>
         </div>
 
-        {/* Page content */}
         <main className="py-8 px-4 sm:px-6 lg:px-8">
           <Suspense>{children}</Suspense>
         </main>
