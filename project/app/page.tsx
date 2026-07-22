@@ -1,10 +1,10 @@
-import { ArrowRight, CheckCircle, Kanban, Users } from "lucide-react"
-import Link from "next/link"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { ArrowRight, CheckCircle, Kanban, Users } from "lucide-react";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-platinum-900 to-platinum-800 dark:from-outer_space-500 dark:to-paynes_gray-500">
+    <div className="min-h-screen bg-linear-to-br from-platinum-900 to-platinum-800 dark:from-outer_space-500 dark:to-paynes_gray-500">
       {/* Header */}
       <header className="border-b border-french_gray-300 dark:border-paynes_gray-400 bg-white/80 dark:bg-outer_space-500/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -231,5 +231,5 @@ export default function HomePage() {
         </div>
       </section>
     </div>
-  )
+  );
 }
