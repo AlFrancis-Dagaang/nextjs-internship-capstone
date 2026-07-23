@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 type CreateProjectModalProps = {
   onCreated?: () => void;
@@ -31,6 +32,7 @@ export function CreateProjectModal({
   trigger,
 }: CreateProjectModalProps) {
   const isEdit = Boolean(project);
+  const { toast } = useToast();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = setControlledOpen ?? setUncontrolledOpen;
@@ -61,9 +63,22 @@ export function CreateProjectModal({
 
       if (!result.success) {
         setFieldErrors(result.fieldErrors);
+        toast({
+          title: isEdit
+            ? "Failed to update project"
+            : "Failed to create project",
+          description: result.fieldErrors
+            ? "Please check the highlighted fields."
+            : result.error,
+          variant: "destructive",
+        });
         return;
       }
 
+      toast({
+        title: isEdit ? "Project updated" : "Project created",
+        description: name,
+      });
       setOpen(false);
       onCreated?.();
     });

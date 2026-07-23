@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -46,6 +47,7 @@ export function CreateTaskModal({
   trigger,
 }: CreateTaskModalProps) {
   const isEdit = Boolean(task);
+  const { toast } = useToast();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = setControlledOpen ?? setUncontrolledOpen;
@@ -93,11 +95,26 @@ export function CreateTaskModal({
       if (!result.success) {
         if (result.fieldErrors) {
           setFieldErrors(result.fieldErrors);
+          toast({
+            title: isEdit ? "Failed to update task" : "Failed to create task",
+            description: "Please check the highlighted fields.",
+            variant: "destructive",
+          });
         } else {
           setGenericError(result.error);
+          toast({
+            title: isEdit ? "Failed to update task" : "Failed to create task",
+            description: result.error,
+            variant: "destructive",
+          });
         }
         return;
       }
+
+      toast({
+        title: isEdit ? "Task updated" : "Task created",
+        description: title,
+      });
 
       if (!isEdit) {
         setTitle("");
