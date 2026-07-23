@@ -7,6 +7,7 @@ import type { Task } from "@/lib/db/schema";
 import { deleteTask } from "@/lib/actions/tasks";
 import { CreateTaskModal } from "@/components/tasks/modal/create-tasks-modal";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +35,7 @@ const priorityStyles: Record<string, string> = {
 
 export function TaskCard({ task }: { task: Task }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -41,9 +43,18 @@ export function TaskCard({ task }: { task: Task }) {
     startTransition(async () => {
       const result = await deleteTask(task.id);
       if (result.success) {
+        toast({
+          title: "Task deleted",
+          description: `"${task.title}" was deleted.`,
+        });
         router.refresh();
+      } else {
+        toast({
+          title: "Failed to delete task",
+          description: result.error,
+          variant: "destructive",
+        });
       }
-      // TODO: surface result.error via toast (same follow-up noted on ProjectCard)
     });
   }
 

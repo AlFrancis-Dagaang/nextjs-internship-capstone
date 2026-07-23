@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { createList } from "@/lib/actions/lists";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 export function AddListForm({
   projectId,
@@ -12,8 +13,11 @@ export function AddListForm({
   projectId: string;
   onCreated?: () => void;
 }) {
+  const { toast } = useToast();
   const [name, setName] = useState("");
-  const [error, setError] = useState<string | undefined>();
+  const [fieldErrors, setFieldErrors] = useState<
+    Record<string, string[]> | undefined
+  >(undefined);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(e: React.FormEvent) {
@@ -21,11 +25,20 @@ export function AddListForm({
     startTransition(async () => {
       const result = await createList({ projectId, name });
       if (!result.success) {
-        setError(result.error);
+        setFieldErrors(result.fieldErrors);
+        toast({
+          title: "Failed to create list",
+          description: result.fieldErrors
+            ? "Please check the highlighted fields."
+            : result.error,
+          variant: "destructive",
+        });
         return;
       }
+
+      toast({ title: "List created", description: name });
       setName("");
-      setError(undefined);
+      setFieldErrors(undefined);
       onCreated?.();
     });
   }
@@ -40,7 +53,9 @@ export function AddListForm({
         onChange={(e) => setName(e.target.value)}
         placeholder="New list name"
       />
-      {error && <p className="text-destructive text-xs">{error}</p>}
+      {fieldErrors?.name && (
+        <p className="text-destructive text-xs">{fieldErrors.name[0]}</p>
+      )}
       <Button type="submit" disabled={isPending} className="w-full">
         {isPending ? "Adding..." : "+ Add list"}
       </Button>

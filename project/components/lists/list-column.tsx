@@ -7,6 +7,7 @@ import { CreateTaskModal } from "@/components/tasks/modal/create-tasks-modal";
 import { updateList, deleteList } from "@/lib/actions/lists";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,9 +34,9 @@ export function ListColumn({
   list: ListWithTasks;
   onChanged?: () => void;
 }) {
+  const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState(false);
   const [name, setName] = useState(list.name);
-  const [error, setError] = useState<string | undefined>();
   const [isPending, startTransition] = useTransition();
 
   function handleRenameSubmit(e: React.FormEvent) {
@@ -48,10 +49,16 @@ export function ListColumn({
     startTransition(async () => {
       const result = await updateList(list.id, { name });
       if (!result.success) {
-        setError(result.error);
+        toast({
+          title: "Failed to rename list",
+          description: result.error,
+          variant: "destructive",
+        });
+        setName(list.name); // revert to old value
+        setIsRenaming(false);
         return;
       }
-      setError(undefined);
+      toast({ title: "List renamed", description: result.data?.name });
       setIsRenaming(false);
       onChanged?.();
     });
@@ -61,9 +68,18 @@ export function ListColumn({
     startTransition(async () => {
       const result = await deleteList(list.id);
       if (result.success) {
+        toast({
+          title: "List deleted",
+          description: `"${list.name}" was deleted.`,
+        });
         onChanged?.();
+      } else {
+        toast({
+          title: "Failed to delete list",
+          description: result.error,
+          variant: "destructive",
+        });
       }
-      // TODO: surface result.error via toast (same follow-up noted on Project/TaskCard)
     });
   }
 
@@ -82,9 +98,6 @@ export function ListColumn({
                   disabled={isPending}
                   className="h-8"
                 />
-                {error && (
-                  <p className="text-destructive text-xs mt-1">{error}</p>
-                )}
               </form>
             ) : (
               <h3 className="font-semibold text-outer_space-500 dark:text-platinum-500">

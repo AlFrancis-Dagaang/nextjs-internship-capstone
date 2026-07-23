@@ -8,6 +8,7 @@ import type { Project } from "@/lib/db/schema";
 import { deleteProject } from "@/lib/actions/projects";
 import { CreateProjectModal } from "./modals/create-project-modal";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,7 @@ import {
 
 export function ProjectCard({ project }: { project: Project }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -35,9 +37,18 @@ export function ProjectCard({ project }: { project: Project }) {
     startTransition(async () => {
       const result = await deleteProject(project.id);
       if (result.success) {
+        toast({
+          title: "Project deleted",
+          description: `"${project.name}" was deleted.`,
+        });
         router.refresh();
+      } else {
+        toast({
+          title: "Failed to delete project",
+          description: result.error,
+          variant: "destructive",
+        });
       }
-      // TODO: surface result.error to the user (toast component is installed — #56 follow-up candidate)
     });
   }
 
