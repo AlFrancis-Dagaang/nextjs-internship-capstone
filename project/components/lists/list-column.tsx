@@ -166,7 +166,7 @@ export function ListColumn({
 
         <div className="p-4 space-y-3 min-h-100">
           {list.tasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
+            <TaskCard key={task.id} task={task} projectId={list.projectId} />
           ))}
           <CreateTaskModal listId={list.id} onCreated={onChanged} />
         </div>

@@ -218,3 +218,55 @@ export async function deleteTask(id: string): Promise<ActionResult<null>> {
   await queries.tasks.delete(id);
   return { success: true, data: null };
 }
+
+export async function moveTaskToList(
+  taskId: string,
+  newListId: string,
+): Promise<ActionResult<Awaited<ReturnType<typeof queries.tasks.update>>>> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const existingTask = await queries.tasks.getById(taskId);
+  if (!existingTask) {
+    return { success: false, error: "Not found" };
+  }
+
+  const sourceOwnership = await assertListOwnership(
+    existingTask.listId,
+    authResult.user.id,
+  );
+  if ("error" in sourceOwnership) {
+    return { success: false, error: sourceOwnership.error ?? "Unknown error" };
+  }
+
+  if (existingTask.listId === newListId) {
+    return { success: true, data: existingTask };
+  }
+
+  const destOwnership = await assertListOwnership(
+    newListId,
+    authResult.user.id,
+  );
+  if ("error" in destOwnership) {
+    return { success: false, error: destOwnership.error ?? "Unknown error" };
+  }
+
+  if (sourceOwnership.list.projectId !== destOwnership.list.projectId) {
+    return {
+      success: false,
+      error: "Cannot move a task to a list in a different project",
+    };
+  }
+
+  // Append-only in destination list, same pattern as #16/#17.
+  const destTasks = await queries.tasks.getByList(newListId);
+  const position = destTasks.length;
+
+  const updated = await queries.tasks.update(taskId, {
+    listId: newListId,
+    position,
+  });
+  return { success: true, data: updated };
+}
