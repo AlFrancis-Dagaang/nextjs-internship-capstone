@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { MoreHorizontal } from "lucide-react";
 import type { Task } from "@/lib/db/schema";
 import { deleteTask } from "@/lib/actions/tasks";
-import { CreateTaskModal } from "@/components/tasks/modal/create-tasks-modal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,7 +34,13 @@ const priorityStyles: Record<string, string> = {
   high: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
 };
 
-export function TaskCard({ task }: { task: Task }) {
+export function TaskCard({
+  task,
+  projectId,
+}: {
+  task: Task;
+  projectId: string;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
@@ -139,13 +146,12 @@ export function TaskCard({ task }: { task: Task }) {
         </p>
       )}
 
-      <CreateTaskModal
-        listId={task.listId}
+      <TaskDetailModal
         task={task}
+        projectId={projectId}
         open={editOpen}
         onOpenChange={setEditOpen}
-        trigger={<span className="hidden" />}
-        onCreated={() => router.refresh()}
+        onChanged={() => router.refresh()}
       />
     </div>
   );
