@@ -1,33 +1,13 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { queries } from "@/lib/db";
 import { listCreateSchema, listUpdateSchema } from "@/lib/validations";
+import { getAuthedUserOrError } from "@/lib/services/auth";
+import { assertProjectOwnership } from "@/lib/services/ownership";
 
 type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string; fieldErrors?: Record<string, string[]> };
-
-async function getAuthedUserOrError() {
-  const { userId } = await auth();
-  if (!userId) return { error: "Unauthorized" } as const;
-
-  const user = await queries.users.getByClerkId(userId);
-  if (!user) return { error: "User record not found" } as const;
-
-  return { user } as const;
-}
-
-/**
- * Lists have no ownerId of their own — ownership is indirect, via the
- * parent project. Every list action must resolve up to projects.ownerId.
- */
-async function assertProjectOwnership(projectId: string, userId: string) {
-  const project = await queries.projects.getById(projectId);
-  if (!project) return { error: "Not found" } as const;
-  if (project.ownerId !== userId) return { error: "Forbidden" } as const;
-  return { project } as const;
-}
 
 export async function createList(
   input: unknown,

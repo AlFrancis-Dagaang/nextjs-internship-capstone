@@ -1,5 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { requireAuthedUser } from "@/lib/services/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
 
 export default async function DashboardGroupLayout({
@@ -7,10 +6,7 @@ export default async function DashboardGroupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect("/sign-in");
-  }
+  await requireAuthedUser();
 
   return <DashboardShell>{children}</DashboardShell>;
 }

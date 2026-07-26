@@ -1,65 +1,14 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { queries } from "@/lib/db";
 import { taskCreateSchema, taskUpdateSchema } from "@/lib/validations";
+import { getAuthedUserOrError } from "@/lib/services/auth";
+import { assertListOwnership } from "@/lib/services/ownership";
+import { resolveAssigneeId } from "@/lib/services/assignee";
 
 type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string; fieldErrors?: Record<string, string[]> };
-
-async function getAuthedUserOrError() {
-  const { userId } = await auth();
-  if (!userId) return { error: "Unauthorized" } as const;
-
-  const user = await queries.users.getByClerkId(userId);
-  if (!user) return { error: "User record not found" } as const;
-
-  return { user } as const;
-}
-
-/**
- * Tasks have no ownerId of their own, and are one level further removed
- * than lists were in #16: task -> listId -> list.projectId -> project.ownerId.
- * Both hops have to be walked and checked.
- */
-async function assertListOwnership(listId: string, userId: string) {
-  const list = await queries.lists.getById(listId);
-  if (!list) return { error: "Not found" } as const;
-
-  const project = await queries.projects.getById(list.projectId);
-  if (!project) return { error: "Not found" } as const;
-  if (project.ownerId !== userId) return { error: "Forbidden" } as const;
-
-  return { list, project } as const;
-}
-
-/**
- * assigneeId rule (per #12/#14 design, made concrete in #17): identity-derived
- * ownerId is never client input, but assigneeId is — however there is no
- * project-membership concept yet (#29, unstarted), so until then the only
- * valid assignee for a project is that project's own owner. `assignToMe`
- * lets the client toggle this without ever needing to know its own DB user
- * id (only Clerk's id is available client-side). A directly-supplied
- * assigneeId is still checked against the same rule, in case anything ever
- * calls this action without going through the toggle UI.
- */
-function resolveAssigneeId(
-  requestedAssigneeId: string | null | undefined,
-  assignToMe: boolean | undefined,
-  projectOwnerId: string,
-): { ok: true; assigneeId: string | null } | { ok: false; error: string } {
-  if (assignToMe) {
-    return { ok: true, assigneeId: projectOwnerId };
-  }
-  if (requestedAssigneeId == null) {
-    return { ok: true, assigneeId: null };
-  }
-  if (requestedAssigneeId !== projectOwnerId) {
-    return { ok: false, error: "Invalid assignee" };
-  }
-  return { ok: true, assigneeId: requestedAssigneeId };
-}
 
 type CreateTaskInput = { assignToMe?: boolean } & Record<string, unknown>;
 
@@ -95,7 +44,7 @@ export async function createTask(
     ownership.project.ownerId,
   );
   if (!assigneeResult.ok) {
-    return { success: false, error: assigneeResult.error ?? "Unknown error" };
+    return { success: false, error: assigneeResult.error };
   }
 
   // Position is always computed server-side, same as #16 — append-only.
