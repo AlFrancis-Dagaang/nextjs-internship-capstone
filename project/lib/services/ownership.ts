@@ -28,3 +28,19 @@ export async function assertListOwnership(listId: string, userId: string) {
 
   return { list, project } as const;
 }
+
+/**
+ * Comments have no ownerId of their own. Access to a task's comments
+ * requires the same project-ownership check as the task itself — this
+ * is an access check (can this user see/post here), not the
+ * author-only check used for deleting a specific comment.
+ */
+export async function assertTaskAccess(taskId: string, userId: string) {
+  const task = await queries.tasks.getById(taskId);
+  if (!task) return { error: "Not found" } as const;
+
+  const ownership = await assertListOwnership(task.listId, userId);
+  if ("error" in ownership) return ownership;
+
+  return { task, list: ownership.list, project: ownership.project } as const;
+}
