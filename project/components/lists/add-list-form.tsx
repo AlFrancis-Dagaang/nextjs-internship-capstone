@@ -6,13 +6,14 @@ import { createList } from "@/lib/actions/lists";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { List } from "@/lib/db/schema";
 
 export function AddListForm({
   projectId,
   onCreated,
 }: {
   projectId: string;
-  onCreated?: () => void;
+  onCreated?: (list: List) => void;
 }) {
   const { toast } = useToast();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -44,7 +45,7 @@ export function AddListForm({
       setName("");
       setFieldErrors(undefined);
       setIsExpanded(false);
-      onCreated?.();
+      onCreated?.(result.data);
     });
   }
 

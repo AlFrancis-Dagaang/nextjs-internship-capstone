@@ -8,14 +8,22 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ListActions } from "./modal/list-actions";
 import { DeleteListDialog } from "./modal/delete-list-dialog";
+import type { List } from "@/lib/db/schema";
 import type { ListWithTasks } from "./board";
 
 export function ListColumn({
   list,
   onChanged,
+  onRenamed,
+  onDeleted,
+  onMoved,
 }: {
   list: ListWithTasks;
+  /** Still triggers a full refresh — only tasks use this for now. */
   onChanged?: () => void;
+  onRenamed?: (updated: List) => void;
+  onDeleted?: (listId: string) => void;
+  onMoved?: () => void;
 }) {
   const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -44,7 +52,7 @@ export function ListColumn({
       }
       toast({ title: "List renamed", description: result.data?.name });
       setIsRenaming(false);
-      onChanged?.();
+      onRenamed?.(result.data);
     });
   }
 
@@ -57,7 +65,7 @@ export function ListColumn({
           description: `"${list.name}" was deleted.`,
         });
         setIsDeleteOpen(false);
-        onChanged?.();
+        onDeleted?.(list.id);
       } else {
         toast({
           title: "Failed to delete list",
@@ -70,8 +78,8 @@ export function ListColumn({
 
   return (
     <>
-      <div className="shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col max-h-[calc(100vh-12rem)] relative isolate">
-        <div className="flex items-center justify-between pb-3 px-1">
+      <div className="shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col max-h-[calc(100vh-16rem)] relative isolate">
+        <div className="flex items-center justify-between pb-3 px-1 shrink-0">
           {isRenaming ? (
             <form onSubmit={handleRenameSubmit} className="flex-1 mr-2">
               <Input
@@ -103,12 +111,11 @@ export function ListColumn({
                 setIsRenaming(true);
               }}
               onDelete={() => setIsDeleteOpen(true)}
-              onMoved={onChanged}
+              onMoved={onMoved}
             />
           )}
         </div>
 
-        {/* Scroll area configured with visible overflow on the x-axis so task action menus don't clip horizontally */}
         <div className="overflow-y-auto overflow-x-visible space-y-3 pr-1 flex-1">
           {list.tasks.map((task) => (
             <TaskCard key={task.id} task={task} projectId={list.projectId} />
