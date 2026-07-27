@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TaskActivityFeed } from "@/components/tasks/task-activity-feed";
 
 function toDateInputValue(d: Date | string | null | undefined): string {
   if (!d) return "";
@@ -197,6 +198,10 @@ export function TaskDetailModal({
               </Button>
             </div>
           </form>
+          <div className="space-y-1 border-t pt-4">
+            <Label>Activity</Label>
+            <TaskActivityFeed taskId={task.id} />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
