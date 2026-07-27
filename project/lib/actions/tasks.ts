@@ -6,6 +6,7 @@ import { getAuthedUserOrError } from "@/lib/services/auth";
 import { assertListOwnership } from "@/lib/services/ownership";
 import { resolveAssigneeId } from "@/lib/services/assignee";
 import { logTaskActivity } from "@/lib/services/activity";
+import { Task } from "../db/schema";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -179,7 +180,8 @@ export async function deleteTask(id: string): Promise<ActionResult<null>> {
 export async function moveTaskToList(
   taskId: string,
   newListId: string,
-): Promise<ActionResult<Awaited<ReturnType<typeof queries.tasks.update>>>> {
+  newPosition?: number,
+): Promise<ActionResult<Task>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
@@ -198,10 +200,6 @@ export async function moveTaskToList(
     return { success: false, error: sourceOwnership.error ?? "Unknown error" };
   }
 
-  if (existingTask.listId === newListId) {
-    return { success: true, data: existingTask };
-  }
-
   const destOwnership = await assertListOwnership(
     newListId,
     authResult.user.id,
@@ -217,21 +215,42 @@ export async function moveTaskToList(
     };
   }
 
-  // Append-only in destination list, same pattern as #16/#17.
-  const destTasks = await queries.tasks.getByList(newListId);
-  const position = destTasks.length;
+  // NOTE: same-list moves are no longer a no-op — this is a deliberate
+  // behavior change from #17's original version, to support manual
+  // within-list reordering (same track as the list-reorder work).
+  const destTasksAll = await queries.tasks.getByList(newListId);
+  const destTasks = destTasksAll.filter((t) => t.id !== taskId);
 
-  const updated = await queries.tasks.update(taskId, {
-    listId: newListId,
-    position,
+  const clampedPosition =
+    newPosition !== undefined
+      ? Math.max(0, Math.min(newPosition, destTasks.length))
+      : destTasks.length; // default: append, same as before
+
+  const reordered = [...destTasks];
+  reordered.splice(clampedPosition, 0, existingTask);
+
+  let updatedTask: Task | undefined;
+  const updates = reordered.map(async (t, index) => {
+    if (t.id === taskId) {
+      updatedTask = await queries.tasks.update(taskId, {
+        listId: newListId,
+        position: index,
+      });
+    } else if (t.position !== index) {
+      await queries.tasks.update(t.id, { position: index });
+    }
   });
 
-  await logTaskActivity(taskId, authResult.user.id, "moved", {
-    fromListId: existingTask.listId,
-    toListId: newListId,
-    fromListName: sourceOwnership.list.name,
-    toListName: destOwnership.list.name,
-  });
+  await Promise.all(updates);
 
-  return { success: true, data: updated };
+  if (existingTask.listId !== newListId) {
+    await logTaskActivity(taskId, authResult.user.id, "moved", {
+      fromListId: existingTask.listId,
+      toListId: newListId,
+      fromListName: sourceOwnership.list.name,
+      toListName: destOwnership.list.name,
+    });
+  }
+
+  return { success: true, data: updatedTask! };
 }

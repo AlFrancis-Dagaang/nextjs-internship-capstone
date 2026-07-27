@@ -1,15 +1,10 @@
-import {
-  ArrowLeft,
-  Settings,
-  Users,
-  Calendar,
-  MoreHorizontal,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getProject } from "@/lib/actions/projects";
 import { getListsByProject } from "@/lib/actions/lists";
 import { getTasksByList } from "@/lib/actions/tasks";
 import { Board, type ListWithTasks } from "@/components/lists/board";
+import { ProjectHeader } from "@/components/projects/project-header";
 
 export default async function ProjectPage({
   params,
@@ -54,45 +49,11 @@ export default async function ProjectPage({
   );
 
   return (
-    <div className="space-y-6">
-      {/* Project Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link
-            href="/projects"
-            className="p-2 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400 rounded-lg transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-outer_space-500 dark:text-platinum-500">
-              {project.name}
-            </h1>
-            <p className="text-paynes_gray-500 dark:text-french_gray-500 mt-1">
-              {project.description ??
-                "Kanban board view for project management"}
-            </p>
-          </div>
-        </div>
-
-        {/* Unchanged from placeholder — non-functional, out of scope for #18 */}
-        <div className="flex items-center space-x-2">
-          <button className="p-2 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400 rounded-lg transition-colors">
-            <Users size={20} />
-          </button>
-          <button className="p-2 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400 rounded-lg transition-colors">
-            <Calendar size={20} />
-          </button>
-          <button className="p-2 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400 rounded-lg transition-colors">
-            <Settings size={20} />
-          </button>
-          <button className="p-2 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400 rounded-lg transition-colors">
-            <MoreHorizontal size={20} />
-          </button>
-        </div>
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-6 space-y-6">
+      <ProjectHeader project={project} />
+      <div className="pt-2">
+        <Board projectId={id} initialLists={listsWithTasks} />
       </div>
-
-      <Board projectId={id} initialLists={listsWithTasks} />
     </div>
   );
 }

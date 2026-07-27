@@ -2,36 +2,19 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal } from "lucide-react";
+import { Calendar, MessageSquare } from "lucide-react";
 import type { Task } from "@/lib/db/schema";
-import { deleteTask } from "@/lib/actions/tasks";
-import { Button } from "@/components/ui/button";
+import { deleteTask, updateTask } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
+import { TaskActions } from "./modal/task-actions";
+import { DeleteTaskDialog } from "./modal/delete-task-dialog";
+import { Input } from "@/components/ui/input";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-
-const priorityStyles: Record<string, string> = {
-  low: "bg-blue_munsell-100 text-blue_munsell-700 dark:bg-blue_munsell-900 dark:text-blue_munsell-300",
-  medium:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-  high: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+const priorityBarStyles: Record<string, string> = {
+  low: "bg-blue-400",
+  medium: "bg-amber-400",
+  high: "bg-red-500",
 };
 
 export function TaskCard({
@@ -44,7 +27,35 @@ export function TaskCard({
   const router = useRouter();
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [title, setTitle] = useState(task.title);
   const [isPending, startTransition] = useTransition();
+
+  function handleRenameSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim() || title === task.title) {
+      setIsRenaming(false);
+      setTitle(task.title);
+      return;
+    }
+    startTransition(async () => {
+      const result = await updateTask(task.id, { title });
+      if (!result.success) {
+        toast({
+          title: "Failed to rename task",
+          description: result.error,
+          variant: "destructive",
+        });
+        setTitle(task.title);
+        setIsRenaming(false);
+        return;
+      }
+      toast({ title: "Task updated", description: result.data?.title });
+      setIsRenaming(false);
+      router.refresh();
+    });
+  }
 
   function handleDelete() {
     startTransition(async () => {
@@ -54,6 +65,7 @@ export function TaskCard({
           title: "Task deleted",
           description: `"${task.title}" was deleted.`,
         });
+        setDeleteOpen(false);
         router.refresh();
       } else {
         toast({
@@ -66,93 +78,118 @@ export function TaskCard({
   }
 
   return (
-    <div className="relative p-4 bg-white dark:bg-outer_space-300 rounded-lg border border-french_gray-300 dark:border-paynes_gray-400 cursor-pointer hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-2">
-        <h4 className="font-medium text-outer_space-500 dark:text-platinum-500 text-sm pr-2">
-          {task.title}
-        </h4>
-        <div onClick={(e) => e.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 -mt-1 -mr-1 shrink-0"
-              >
-                <MoreHorizontal size={14} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setEditOpen(true)}>
-                Edit
-              </DropdownMenuItem>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem
-                    onSelect={(e) => e.preventDefault()}
-                    className="text-destructive"
-                  >
-                    Delete
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete task?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete "{task.title}" and cannot be
-                      undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      disabled={isPending}
-                    >
-                      {isPending ? "Deleting..." : "Delete"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
+    <>
+      <div
+        onClick={() => setEditOpen(true)}
+        className="relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 cursor-pointer hover:shadow-md transition-shadow space-y-3 overflow-visible"
+      >
+        {/* Top Priority Color Indicator Bar */}
+        {task.priority && (
+          <div
+            className={`absolute top-0 left-0 right-0 h-1 rounded-t-xl ${
+              priorityBarStyles[task.priority] || "bg-neutral-300"
+            }`}
+          />
+        )}
+
+        {/* Absolute Top-Right Task Actions Menu */}
+        <div className="absolute right-2 top-2.5 z-30">
+          <TaskActions
+            taskId={task.id}
+            projectId={projectId}
+            currentListId={task.listId}
+            onView={() => setEditOpen(true)}
+            onRename={() => {
+              setTitle(task.title);
+              setIsRenaming(true);
+            }}
+            onArchive={() => {
+              toast({ title: "Task archived", description: task.title });
+            }}
+            onDeleteClick={() => setDeleteOpen(true)}
+            onMoved={() => router.refresh()}
+          />
         </div>
-      </div>
 
-      {task.description && (
-        <p className="text-xs text-paynes_gray-500 dark:text-french_gray-400 mb-3 line-clamp-2">
-          {task.description}
-        </p>
-      )}
-      <div className="flex items-center justify-between">
-        {task.priority ? (
-          <span
-            className={`px-2 py-1 text-xs font-medium rounded-full ${priorityStyles[task.priority]}`}
-          >
-            {task.priority[0].toUpperCase() + task.priority.slice(1)}
-          </span>
-        ) : (
-          <span />
-        )}
-        {task.assigneeId && (
-          <div className="w-6 h-6 bg-blue_munsell-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-            •
+        <div className="flex items-start justify-between pr-8">
+          <div className="flex items-center space-x-2.5 flex-1">
+            <div className="w-4 h-4 rounded-full border border-neutral-300 dark:border-neutral-600 shrink-0" />
+            {isRenaming ? (
+              <form
+                onSubmit={handleRenameSubmit}
+                className="flex-1 mr-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Input
+                  autoFocus
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onBlur={handleRenameSubmit}
+                  disabled={isPending}
+                  className="h-7 px-1.5 text-sm font-medium bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded shadow-sm focus-visible:ring-1"
+                />
+              </form>
+            ) : (
+              <h4 className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">
+                {task.title}
+              </h4>
+            )}
           </div>
-        )}
-      </div>
-      {task.dueDate && (
-        <p className="text-xs text-paynes_gray-500 dark:text-french_gray-400 mt-2">
-          Due {new Date(task.dueDate).toLocaleDateString()}
-        </p>
-      )}
+        </div>
 
-      <TaskDetailModal
-        task={task}
-        projectId={projectId}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        onChanged={() => router.refresh()}
+        <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400 pt-1">
+          <div className="flex items-center space-x-3">
+            {task.dueDate && (
+              <div className="flex items-center space-x-1">
+                <Calendar size={13} className="text-neutral-400" />
+                <span>
+                  {new Date(task.dueDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center space-x-1">
+              <MessageSquare size={13} className="text-neutral-400" />
+              <span>3</span>
+            </div>
+          </div>
+
+          <div className="flex items-center">
+            <div className="flex -space-x-1.5">
+              <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white">
+                U
+              </div>
+              <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white">
+                U
+              </div>
+              <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white">
+                U
+              </div>
+            </div>
+            <span className="ml-1 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-cyan-400 text-neutral-900 text-[10px] font-semibold">
+              +2
+            </span>
+          </div>
+        </div>
+
+        <TaskDetailModal
+          task={task}
+          projectId={projectId}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onChanged={() => router.refresh()}
+        />
+      </div>
+
+      <DeleteTaskDialog
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={handleDelete}
+        taskTitle={task.title}
+        isPending={isPending}
       />
-    </div>
+    </>
   );
 }

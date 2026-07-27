@@ -17,14 +17,8 @@ export function Board({
   const router = useRouter();
 
   return (
-    <div className="bg-white dark:bg-outer_space-500 rounded-lg border border-french_gray-300 dark:border-paynes_gray-400 p-6">
-      <div className="flex space-x-6 overflow-x-auto pb-4">
-        {initialLists.length === 0 && (
-          <p className="text-paynes_gray-500 dark:text-french_gray-400">
-            No lists yet — add one to get started.
-          </p>
-        )}
-
+    <div className="w-full overflow-x-auto pb-6">
+      <div className="flex items-start space-x-6 min-w-max">
         {initialLists.map((list) => (
           <ListColumn
             key={list.id}
