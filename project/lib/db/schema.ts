@@ -1,5 +1,12 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, integer, uuid } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  integer,
+  uuid,
+  jsonb,
+} from "drizzle-orm/pg-core";
 
 // ---------- Tables ----------
 
@@ -50,6 +57,34 @@ export const tasks = pgTable("tasks", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const taskActivity = pgTable("task_activity", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  taskId: uuid("task_id")
+    .notNull()
+    .references(() => tasks.id, { onDelete: "cascade" }),
+  actorId: uuid("actor_id")
+    .notNull()
+    .references(() => users.id),
+  action: text("action", {
+    enum: [
+      "created",
+      "updated",
+      "moved",
+      "priority_changed",
+      "due_date_changed",
+      "assignee_changed",
+      "description_changed",
+      "comment_added",
+      "comment_deleted",
+      "archived",
+      "restored",
+      "deleted",
+    ],
+  }).notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const comments = pgTable("comments", {
   id: uuid("id").defaultRandom().primaryKey(),
   content: text("content").notNull(),
@@ -97,6 +132,18 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
     references: [users.id],
   }),
   comments: many(comments),
+  activity: many(taskActivity),
+}));
+
+export const taskActivityRelations = relations(taskActivity, ({ one }) => ({
+  task: one(tasks, {
+    fields: [taskActivity.taskId],
+    references: [tasks.id],
+  }),
+  actor: one(users, {
+    fields: [taskActivity.actorId],
+    references: [users.id],
+  }),
 }));
 
 export const commentsRelations = relations(comments, ({ one }) => ({
@@ -122,3 +169,5 @@ export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
 export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;
+export type TaskActivity = typeof taskActivity.$inferSelect;
+export type NewTaskActivity = typeof taskActivity.$inferInsert;

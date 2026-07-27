@@ -5,6 +5,7 @@ import { taskCreateSchema, taskUpdateSchema } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import { assertListOwnership } from "@/lib/services/ownership";
 import { resolveAssigneeId } from "@/lib/services/assignee";
+import { logTaskActivity } from "@/lib/services/activity";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -60,6 +61,8 @@ export async function createTask(
     dueDate: parsed.data.dueDate,
     position,
   });
+
+  await logTaskActivity(task.id, authResult.user.id, "created");
 
   return { success: true, data: task };
 }
@@ -142,6 +145,11 @@ export async function updateTask(
     ...safeUpdate,
     assigneeId: finalAssigneeId,
   });
+
+  await logTaskActivity(updated.id, authResult.user.id, "updated", {
+    fields: Object.keys(safeUpdate),
+  });
+
   return { success: true, data: updated };
 }
 
@@ -217,5 +225,13 @@ export async function moveTaskToList(
     listId: newListId,
     position,
   });
+
+  await logTaskActivity(taskId, authResult.user.id, "moved", {
+    fromListId: existingTask.listId,
+    toListId: newListId,
+    fromListName: sourceOwnership.list.name,
+    toListName: destOwnership.list.name,
+  });
+
   return { success: true, data: updated };
 }
