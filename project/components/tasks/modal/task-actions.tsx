@@ -250,7 +250,7 @@ export function TaskActions({
                     <SelectTrigger className="w-full h-8 text-xs border-0 bg-neutral-100 dark:bg-neutral-800 shadow-none focus:ring-0">
                       <SelectValue placeholder="Select list" />
                     </SelectTrigger>
-                    <SelectContent className="z-[99999]">
+                    <SelectContent className="z-99999">
                       {lists.map((list) => (
                         <SelectItem key={list.id} value={list.id}>
                           {list.name}
@@ -267,7 +267,7 @@ export function TaskActions({
                     <SelectTrigger className="w-full h-8 text-xs border-0 bg-neutral-100 dark:bg-neutral-800 shadow-none focus:ring-0">
                       <SelectValue placeholder="1" />
                     </SelectTrigger>
-                    <SelectContent className="z-[99999]">
+                    <SelectContent className="z-99999">
                       {positionOptions.map((p) => (
                         <SelectItem key={p} value={p}>
                           {p}
