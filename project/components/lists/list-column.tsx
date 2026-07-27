@@ -1,30 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { MoreHorizontal } from "lucide-react";
 import { TaskCard } from "@/components/tasks/task-card";
 import { CreateTaskModal } from "@/components/tasks/modal/create-tasks-modal";
 import { updateList, deleteList } from "@/lib/actions/lists";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { ListActions } from "./modal/list-actions";
+import { DeleteListDialog } from "./modal/delete-list-dialog";
 import type { ListWithTasks } from "./board";
 
 export function ListColumn({
@@ -37,6 +20,7 @@ export function ListColumn({
   const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState(false);
   const [name, setName] = useState(list.name);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function handleRenameSubmit(e: React.FormEvent) {
@@ -54,7 +38,7 @@ export function ListColumn({
           description: result.error,
           variant: "destructive",
         });
-        setName(list.name); // revert to old value
+        setName(list.name);
         setIsRenaming(false);
         return;
       }
@@ -72,6 +56,7 @@ export function ListColumn({
           title: "List deleted",
           description: `"${list.name}" was deleted.`,
         });
+        setIsDeleteOpen(false);
         onChanged?.();
       } else {
         toast({
@@ -84,93 +69,61 @@ export function ListColumn({
   }
 
   return (
-    <div className="shrink-0 w-80">
-      <div className="bg-white dark:bg-outer_space-400 rounded-lg border border-french_gray-300 dark:border-paynes_gray-400">
-        <div className="p-4 border-b border-french_gray-300 dark:border-paynes_gray-400">
-          <div className="flex items-center justify-between">
-            {isRenaming ? (
-              <form onSubmit={handleRenameSubmit} className="flex-1 mr-2">
-                <Input
-                  autoFocus
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onBlur={handleRenameSubmit}
-                  disabled={isPending}
-                  className="h-8"
-                />
-              </form>
-            ) : (
-              <h3 className="font-semibold text-outer_space-500 dark:text-platinum-500">
+    <>
+      <div className="shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col max-h-[calc(100vh-12rem)] relative isolate">
+        <div className="flex items-center justify-between pb-3 px-1">
+          {isRenaming ? (
+            <form onSubmit={handleRenameSubmit} className="flex-1 mr-2">
+              <Input
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onBlur={handleRenameSubmit}
+                disabled={isPending}
+                className="h-7 px-2 text-xs font-bold uppercase tracking-wider bg-white dark:bg-neutral-900 dark:border-neutral-700 rounded shadow-sm focus-visible:ring-1 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-600"
+              />
+            </form>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
                 {list.name}
-                <span className="ml-2 px-2 py-1 text-xs bg-french_gray-300 dark:bg-paynes_gray-400 rounded-full">
-                  {list.tasks.length}
-                </span>
               </h3>
-            )}
+              <span className="text-xs text-neutral-500 font-semibold">
+                {list.tasks.length}
+              </span>
+            </div>
+          )}
 
-            {!isRenaming && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 shrink-0"
-                  >
-                    <MoreHorizontal size={14} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setName(list.name);
-                      setIsRenaming(true);
-                    }}
-                  >
-                    Rename
-                  </DropdownMenuItem>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem
-                        onSelect={(e) => e.preventDefault()}
-                        className="text-destructive"
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete list?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete "{list.name}" and all{" "}
-                          {list.tasks.length} task
-                          {list.tasks.length === 1 ? "" : "s"} in it. This
-                          cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDelete}
-                          disabled={isPending}
-                        >
-                          {isPending ? "Deleting..." : "Delete"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
+          {!isRenaming && (
+            <ListActions
+              listId={list.id}
+              listName={list.name}
+              onRename={() => {
+                setName(list.name);
+                setIsRenaming(true);
+              }}
+              onDelete={() => setIsDeleteOpen(true)}
+              onMoved={onChanged}
+            />
+          )}
         </div>
 
-        <div className="p-4 space-y-3 min-h-100">
+        {/* Scroll area configured with visible overflow on the x-axis so task action menus don't clip horizontally */}
+        <div className="overflow-y-auto overflow-x-visible space-y-3 pr-1 flex-1">
           {list.tasks.map((task) => (
             <TaskCard key={task.id} task={task} projectId={list.projectId} />
           ))}
           <CreateTaskModal listId={list.id} onCreated={onChanged} />
         </div>
       </div>
-    </div>
+
+      <DeleteListDialog
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        onConfirm={handleDelete}
+        listName={list.name}
+        isPending={isPending}
+      />
+    </>
   );
 }
