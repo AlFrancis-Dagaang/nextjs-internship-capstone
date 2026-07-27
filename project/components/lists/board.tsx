@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ListColumn } from "./list-column";
 import { AddListForm } from "./add-list-form";
 import { getListsByProject } from "@/lib/actions/lists";
@@ -16,7 +15,6 @@ export function Board({
   projectId: string;
   initialLists: ListWithTasks[];
 }) {
-  const router = useRouter();
   const [lists, setLists] = useState<ListWithTasks[]>(initialLists);
 
   function handleListCreated(newList: List) {
@@ -33,10 +31,6 @@ export function Board({
     setLists((prev) => prev.filter((l) => l.id !== listId));
   }
 
-  // Move can shift multiple lists' positions at once (see moveList's
-  // reindexing), so a single-field local patch isn't reliable here.
-  // Re-fetching just the lists (no task data) and merging with the tasks
-  // already in state is still far cheaper than a full router.refresh().
   function handleListMoved() {
     getListsByProject(projectId).then((result) => {
       if (!result.success) return;
@@ -50,6 +44,57 @@ export function Board({
     });
   }
 
+  // --- Task handlers: patch state directly, no router.refresh() ---
+
+  function handleTaskCreated(listId: string, task: Task) {
+    setLists((prev) =>
+      prev.map((l) =>
+        l.id === listId ? { ...l, tasks: [...l.tasks, task] } : l,
+      ),
+    );
+  }
+
+  function handleTaskUpdated(task: Task) {
+    setLists((prev) =>
+      prev.map((l) =>
+        l.id === task.listId
+          ? { ...l, tasks: l.tasks.map((t) => (t.id === task.id ? task : t)) }
+          : l,
+      ),
+    );
+  }
+
+  function handleTaskDeleted(listId: string, taskId: string) {
+    setLists((prev) =>
+      prev.map((l) =>
+        l.id === listId
+          ? { ...l, tasks: l.tasks.filter((t) => t.id !== taskId) }
+          : l,
+      ),
+    );
+  }
+
+  // For cross-list moves, easiest correct fix is to remove from old list
+  // and push into new list (position ordering can refine later).
+  function handleTaskMoved(movedTask: Task) {
+    setLists((prev) => {
+      const withoutTask = prev.map((l) => ({
+        ...l,
+        tasks: l.tasks.filter((t) => t.id !== movedTask.id),
+      }));
+
+      return withoutTask.map((l) =>
+        l.id === movedTask.listId
+          ? {
+              ...l,
+              tasks: [...l.tasks, movedTask].sort(
+                (a, b) => a.position - b.position,
+              ),
+            }
+          : l,
+      );
+    });
+  }
   return (
     <div className="w-full overflow-x-auto pb-6">
       <div className="flex items-start space-x-6 min-w-max">
@@ -57,10 +102,13 @@ export function Board({
           <ListColumn
             key={list.id}
             list={list}
-            onChanged={() => router.refresh()}
             onRenamed={handleListRenamed}
             onDeleted={handleListDeleted}
             onMoved={handleListMoved}
+            onTaskCreated={handleTaskCreated}
+            onTaskUpdated={handleTaskUpdated}
+            onTaskDeleted={handleTaskDeleted}
+            onTaskMoved={handleTaskMoved}
           />
         ))}
 

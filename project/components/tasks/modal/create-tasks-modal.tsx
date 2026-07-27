@@ -10,7 +10,7 @@ import { Plus } from "lucide-react";
 
 type CreateTaskModalProps = {
   listId: string;
-  onCreated?: () => void;
+  onCreated?: (task: Task) => void;
   task?: Task;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -52,9 +52,8 @@ export function CreateTaskModal({
         if (result.fieldErrors) {
           setFieldErrors(result.fieldErrors);
           toast({
-            title: isEdit ? "Failed to update task" : "Failed to create task",
-            description: "Please check the highlighted fields.",
-            variant: "destructive",
+            title: isEdit ? "Task updated" : "Task created",
+            description: title,
           });
         } else {
           setGenericError(result.error);
@@ -75,7 +74,7 @@ export function CreateTaskModal({
       setTitle("");
       setFieldErrors(undefined);
       setIsExpanded(false);
-      onCreated?.();
+      onCreated?.(result.data);
     });
   }
 

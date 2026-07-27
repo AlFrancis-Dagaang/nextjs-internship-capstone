@@ -20,9 +20,15 @@ const priorityBarStyles: Record<string, string> = {
 export function TaskCard({
   task,
   projectId,
+  onUpdated,
+  onDeleted,
+  onMoved,
 }: {
   task: Task;
   projectId: string;
+  onUpdated?: (task: Task) => void;
+  onDeleted?: () => void;
+  onMoved?: (task: Task) => void;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -53,7 +59,7 @@ export function TaskCard({
       }
       toast({ title: "Task updated", description: result.data?.title });
       setIsRenaming(false);
-      router.refresh();
+      onUpdated?.(result.data); // <-- was router.refresh()
     });
   }
 
@@ -66,7 +72,7 @@ export function TaskCard({
           description: `"${task.title}" was deleted.`,
         });
         setDeleteOpen(false);
-        router.refresh();
+        onDeleted?.(); // <-- was router.refresh()
       } else {
         toast({
           title: "Failed to delete task",
@@ -107,7 +113,7 @@ export function TaskCard({
               toast({ title: "Task archived", description: task.title });
             }}
             onDeleteClick={() => setDeleteOpen(true)}
-            onMoved={() => router.refresh()}
+            onMoved={(movedTask) => onMoved?.(movedTask)}
           />
         </div>
 
@@ -179,7 +185,7 @@ export function TaskCard({
           projectId={projectId}
           open={editOpen}
           onOpenChange={setEditOpen}
-          onChanged={() => router.refresh()}
+          onChanged={(updatedTask) => onUpdated?.(updatedTask)}
         />
       </div>
 

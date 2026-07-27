@@ -36,7 +36,7 @@ type TaskDetailModalProps = {
   projectId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onChanged?: () => void;
+  onChanged?: (task: Task) => void; // <-- was: () => void
 };
 
 export function TaskDetailModal({
@@ -95,14 +95,14 @@ export function TaskDetailModal({
       }
 
       toast({ title: "Task updated", description: title });
-      onChanged?.();
+      onChanged?.(result.data);
     });
   }
 
   function handleMove(newListId: string) {
     if (newListId === task.listId) return;
-    moveTask(task.id, newListId, () => {
-      onChanged?.();
+    moveTask(task.id, newListId, (updatedTask) => {
+      onChanged?.(updatedTask);
       onOpenChange(false);
     });
   }

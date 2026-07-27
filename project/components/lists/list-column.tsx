@@ -8,22 +8,27 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ListActions } from "./modal/list-actions";
 import { DeleteListDialog } from "./modal/delete-list-dialog";
-import type { List } from "@/lib/db/schema";
+import type { List, Task } from "@/lib/db/schema";
 import type { ListWithTasks } from "./board";
 
 export function ListColumn({
   list,
-  onChanged,
   onRenamed,
   onDeleted,
   onMoved,
+  onTaskCreated,
+  onTaskUpdated,
+  onTaskDeleted,
+  onTaskMoved,
 }: {
   list: ListWithTasks;
-  /** Still triggers a full refresh — only tasks use this for now. */
-  onChanged?: () => void;
   onRenamed?: (updated: List) => void;
   onDeleted?: (listId: string) => void;
   onMoved?: () => void;
+  onTaskCreated?: (listId: string, task: Task) => void;
+  onTaskUpdated?: (task: Task) => void;
+  onTaskDeleted?: (listId: string, taskId: string) => void;
+  onTaskMoved?: (task: Task) => void;
 }) {
   const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -118,9 +123,19 @@ export function ListColumn({
 
         <div className="overflow-y-auto overflow-x-visible space-y-3 pr-1 flex-1">
           {list.tasks.map((task) => (
-            <TaskCard key={task.id} task={task} projectId={list.projectId} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              projectId={list.projectId}
+              onUpdated={onTaskUpdated}
+              onDeleted={() => onTaskDeleted?.(list.id, task.id)}
+              onMoved={(movedTask) => onTaskMoved?.(movedTask)}
+            />
           ))}
-          <CreateTaskModal listId={list.id} onCreated={onChanged} />
+          <CreateTaskModal
+            listId={list.id}
+            onCreated={(task) => onTaskCreated?.(list.id, task)}
+          />
         </div>
       </div>
 

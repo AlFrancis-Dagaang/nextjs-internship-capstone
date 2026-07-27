@@ -3,7 +3,7 @@
 import { useState, useTransition, useCallback } from "react";
 import { moveTaskToList } from "@/lib/actions/tasks";
 import { getListsByProject } from "@/lib/actions/lists";
-import type { List } from "@/lib/db/schema";
+import type { List, Task } from "@/lib/db/schema"; // <-- add Task import
 import { useToast } from "@/hooks/use-toast";
 
 export function useTaskLists(projectId: string) {
@@ -26,7 +26,11 @@ export function useMoveTask() {
   const { toast } = useToast();
   const [isMoving, startMoveTransition] = useTransition();
 
-  function moveTask(taskId: string, newListId: string, onSuccess?: () => void) {
+  function moveTask(
+    taskId: string,
+    newListId: string,
+    onSuccess?: (task: Task) => void, // <-- accept the task
+  ) {
     startMoveTransition(async () => {
       const result = await moveTaskToList(taskId, newListId);
       if (!result.success) {
@@ -38,7 +42,7 @@ export function useMoveTask() {
         return;
       }
       toast({ title: "Task moved" });
-      onSuccess?.();
+      onSuccess?.(result.data); // <-- pass it through
     });
   }
 

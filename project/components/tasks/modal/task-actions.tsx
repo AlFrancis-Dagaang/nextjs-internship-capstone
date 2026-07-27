@@ -28,7 +28,7 @@ import {
 import { getListsByProject } from "@/lib/actions/lists";
 import { getTasksByList, moveTaskToList } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
-import type { List } from "@/lib/db/schema";
+import type { List, Task } from "@/lib/db/schema";
 
 export function TaskActions({
   taskId,
@@ -47,7 +47,7 @@ export function TaskActions({
   onRename: () => void;
   onArchive: () => void;
   onDeleteClick: () => void;
-  onMoved?: () => void;
+  onMoved?: (task: Task) => void;
 }) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -103,7 +103,7 @@ export function TaskActions({
       toast({ title: "Task moved" });
       setIsOpen(false);
       setView("menu");
-      onMoved?.();
+      onMoved?.(result.data);
     });
   }
 
@@ -135,7 +135,7 @@ export function TaskActions({
 
       <DropdownMenuContent
         align="end"
-        className="w-56 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-2xl p-2 space-y-1 text-left z-[9999]"
+        className="w-56 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-2xl p-2 space-y-1 text-left z-9999"
         onClick={(e) => e.stopPropagation()}
         onInteractOutside={(e) => {
           // Radix <Select> portals its content outside this menu's own
