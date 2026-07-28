@@ -18,24 +18,33 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { moveList } from "@/lib/actions/lists";
+import { List } from "@/lib/db/schema";
 
 export function ListActions({
   listId,
   listName,
+  currentPosition, // 0-indexed position of this list, e.g. list.position
+  totalLists, // total number of lists in the project
   onRename,
   onDelete,
   onMoved,
 }: {
   listId: string;
   listName: string;
+  currentPosition: number;
+  totalLists: number;
   onRename: () => void;
   onDelete: () => void;
-  onMoved?: () => void;
+  onMoved?: (updatedLists: List[]) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"menu" | "move">("menu");
   const [position, setPosition] = useState("1");
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setPosition(String(currentPosition + 1));
+  }, [currentPosition]);
 
   // Close when clicking outside
   useEffect(() => {
@@ -58,6 +67,10 @@ export function ListActions({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
+
+  const positionOptions = Array.from({ length: totalLists }, (_, i) =>
+    String(i + 1),
+  );
 
   return (
     <div className="relative" ref={menuRef}>
@@ -150,9 +163,11 @@ export function ListActions({
                     <SelectValue placeholder="Select position" />
                   </SelectTrigger>
                   <SelectContent className="border-0 shadow-lg">
-                    <SelectItem value="1">1</SelectItem>
-                    <SelectItem value="2">2</SelectItem>
-                    <SelectItem value="3">3</SelectItem>
+                    {positionOptions.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -161,10 +176,13 @@ export function ListActions({
                 <Button
                   className="w-full bg-cyan-400 hover:bg-cyan-500 text-neutral-900 font-medium h-8 text-xs shadow-none border-0"
                   onClick={async () => {
-                    await moveList(listId, parseInt(position, 10) - 1);
+                    const result = await moveList(
+                      listId,
+                      parseInt(position, 10) - 1,
+                    );
                     setIsOpen(false);
                     setView("menu");
-                    onMoved?.();
+                    if (result.success) onMoved?.(result.data);
                   }}
                 >
                   Move

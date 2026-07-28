@@ -4,6 +4,7 @@ import { queries } from "@/lib/db";
 import { listCreateSchema, listUpdateSchema } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import { assertProjectOwnership } from "@/lib/services/ownership";
+import { List } from "../db/schema";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -139,7 +140,7 @@ export async function deleteList(id: string): Promise<ActionResult<null>> {
 export async function moveList(
   id: string,
   newPosition: number,
-): Promise<ActionResult<null>> {
+): Promise<ActionResult<List[]>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
@@ -167,17 +168,15 @@ export async function moveList(
   const reordered = projectLists.filter((l) => l.id !== id);
   reordered.splice(clampedPosition, 0, existingList);
 
-  // Reassign contiguous positions (0-indexed) and persist only the lists
-  // whose position actually changed — avoids unnecessary writes/updatedAt
-  // bumps on lists that didn't move.
-  const updates = reordered
-    .map((list, index) => ({ list, index }))
-    .filter(({ list, index }) => list.position !== index)
-    .map(({ list, index }) =>
-      queries.lists.update(list.id, { position: index }),
-    );
+  const finalLists = reordered.map((list, index) =>
+    list.position !== index ? { ...list, position: index } : list,
+  );
+
+  const updates = finalLists
+    .filter((list, index) => reordered[index].position !== index)
+    .map((list) => queries.lists.update(list.id, { position: list.position }));
 
   await Promise.all(updates);
 
-  return { success: true, data: null };
+  return { success: true, data: finalLists };
 }

@@ -32,16 +32,13 @@ export function Board({
     setLists((prev) => prev.filter((l) => l.id !== listId));
   }
 
-  function handleListMoved() {
-    getListsByProject(projectId).then((result) => {
-      if (!result.success) return;
-      setLists((prev) => {
-        const taskMap = new Map(prev.map((l) => [l.id, l.tasks]));
-        return result.data
-          .slice()
-          .sort((a, b) => a.position - b.position)
-          .map((l) => ({ ...l, tasks: taskMap.get(l.id) ?? [] }));
-      });
+  function handleListMoved(updatedLists: List[]) {
+    setLists((prev) => {
+      const taskMap = new Map(prev.map((l) => [l.id, l.tasks]));
+      return updatedLists
+        .slice()
+        .sort((a, b) => a.position - b.position)
+        .map((l) => ({ ...l, tasks: taskMap.get(l.id) ?? [] }));
     });
   }
 
@@ -135,6 +132,7 @@ export function Board({
           <ListColumn
             key={list.id}
             list={list}
+            totalLists={lists.length}
             onRenamed={handleListRenamed}
             onDeleted={handleListDeleted}
             onMoved={handleListMoved}

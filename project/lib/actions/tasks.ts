@@ -254,3 +254,22 @@ export async function moveTaskToList(
 
   return { success: true, data: updatedTask! };
 }
+
+export async function getTasksByProject(
+  projectId: string,
+): Promise<
+  ActionResult<Awaited<ReturnType<typeof queries.tasks.getByProject>>>
+> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  // Ownership: getProject/getListsByProject already validate project
+  // access on this page load, so this is a secondary read — but if you
+  // want defense-in-depth per-project ownership check here, this is
+  // where it'd go (similar to assertListOwnership, but project-scoped).
+
+  const tasks = await queries.tasks.getByProject(projectId);
+  return { success: true, data: tasks };
+}

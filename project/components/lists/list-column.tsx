@@ -13,6 +13,7 @@ import type { ListWithTasks } from "./board";
 
 export function ListColumn({
   list,
+  totalLists,
   onRenamed,
   onDeleted,
   onMoved,
@@ -22,9 +23,10 @@ export function ListColumn({
   onTaskMoved,
 }: {
   list: ListWithTasks;
+  totalLists: number;
   onRenamed?: (updated: List) => void;
   onDeleted?: (listId: string) => void;
-  onMoved?: () => void;
+  onMoved?: (updatedLists: List[]) => void;
   onTaskCreated?: (listId: string, task: Task) => void;
   onTaskUpdated?: (task: Task) => void;
   onTaskDeleted?: (listId: string, taskId: string) => void;
@@ -111,6 +113,8 @@ export function ListColumn({
             <ListActions
               listId={list.id}
               listName={list.name}
+              currentPosition={list.position}
+              totalLists={totalLists} // <-- new prop, passed down from Board
               onRename={() => {
                 setName(list.name);
                 setIsRenaming(true);
