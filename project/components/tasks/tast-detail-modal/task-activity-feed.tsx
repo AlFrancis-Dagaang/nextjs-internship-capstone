@@ -72,7 +72,7 @@ export function TaskActivityFeed({
   }
   if (activity === null) {
     return (
-      <div className="h-[140px] flex items-center">
+      <div className="h-35 flex items-center">
         <p className="text-neutral-400 text-xs animate-pulse">
           Loading activity…
         </p>
