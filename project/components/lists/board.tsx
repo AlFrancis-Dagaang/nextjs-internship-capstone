@@ -5,6 +5,7 @@ import { ListColumn } from "./list-column";
 import { AddListForm } from "./add-list-form";
 import { getListsByProject } from "@/lib/actions/lists";
 import type { List, Task } from "@/lib/db/schema";
+import { getTasksByList } from "@/lib/actions/tasks"; // <-- add this import
 
 export type ListWithTasks = List & { tasks: Task[] };
 
@@ -76,8 +77,17 @@ export function Board({
 
   // For cross-list moves, easiest correct fix is to remove from old list
   // and push into new list (position ordering can refine later).
+  // board.tsx
+
   function handleTaskMoved(movedTask: Task) {
+    let sourceListId: string | undefined;
+
     setLists((prev) => {
+      sourceListId = prev.find((l) =>
+        l.tasks.some((t) => t.id === movedTask.id),
+      )?.id;
+
+      // optimistic update so the UI feels instant
       const withoutTask = prev.map((l) => ({
         ...l,
         tasks: l.tasks.filter((t) => t.id !== movedTask.id),
@@ -93,6 +103,29 @@ export function Board({
             }
           : l,
       );
+    });
+
+    // reconcile: refetch the real position order for both affected lists
+    const listsToSync = new Set(
+      [movedTask.listId, sourceListId].filter(Boolean) as string[],
+    );
+
+    listsToSync.forEach((listId) => {
+      getTasksByList(listId).then((result) => {
+        if (!result.success) return;
+        setLists((current) =>
+          current.map((l) =>
+            l.id === listId
+              ? {
+                  ...l,
+                  tasks: result.data
+                    .slice()
+                    .sort((a, b) => a.position - b.position),
+                }
+              : l,
+          ),
+        );
+      });
     });
   }
   return (
