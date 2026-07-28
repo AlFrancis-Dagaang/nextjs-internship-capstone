@@ -10,6 +10,7 @@ import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
 import { TaskActions } from "./modal/task-actions";
 import { DeleteTaskDialog } from "./modal/delete-task-dialog";
 import { Input } from "@/components/ui/input";
+import { ListWithTasks } from "../lists/board";
 
 const priorityBarStyles: Record<string, string> = {
   low: "bg-blue-400",
@@ -20,15 +21,17 @@ const priorityBarStyles: Record<string, string> = {
 export function TaskCard({
   task,
   projectId,
+  allLists,
   onUpdated,
   onDeleted,
   onMoved,
 }: {
   task: Task;
   projectId: string;
+  allLists: ListWithTasks[];
   onUpdated?: (task: Task) => void;
   onDeleted?: () => void;
-  onMoved?: (task: Task) => void;
+  onMoved?: (task: Task, affectedTasks: Task[]) => void;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -104,6 +107,7 @@ export function TaskCard({
             taskId={task.id}
             projectId={projectId}
             currentListId={task.listId}
+            allLists={allLists}
             onView={() => setEditOpen(true)}
             onRename={() => {
               setTitle(task.title);
@@ -113,7 +117,9 @@ export function TaskCard({
               toast({ title: "Task archived", description: task.title });
             }}
             onDeleteClick={() => setDeleteOpen(true)}
-            onMoved={(movedTask) => onMoved?.(movedTask)}
+            onMoved={(movedTask, affectedTasks) =>
+              onMoved?.(movedTask, affectedTasks)
+            }
           />
         </div>
 

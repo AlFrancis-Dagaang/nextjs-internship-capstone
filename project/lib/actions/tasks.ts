@@ -181,7 +181,7 @@ export async function moveTaskToList(
   taskId: string,
   newListId: string,
   newPosition?: number,
-): Promise<ActionResult<Task>> {
+): Promise<ActionResult<{ movedTask: Task; affectedTasks: Task[] }>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
@@ -215,16 +215,13 @@ export async function moveTaskToList(
     };
   }
 
-  // NOTE: same-list moves are no longer a no-op — this is a deliberate
-  // behavior change from #17's original version, to support manual
-  // within-list reordering (same track as the list-reorder work).
   const destTasksAll = await queries.tasks.getByList(newListId);
   const destTasks = destTasksAll.filter((t) => t.id !== taskId);
 
   const clampedPosition =
     newPosition !== undefined
       ? Math.max(0, Math.min(newPosition, destTasks.length))
-      : destTasks.length; // default: append, same as before
+      : destTasks.length;
 
   const reordered = [...destTasks];
   reordered.splice(clampedPosition, 0, existingTask);
@@ -243,16 +240,32 @@ export async function moveTaskToList(
 
   await Promise.all(updates);
 
-  if (existingTask.listId !== newListId) {
+  const sourceListId = existingTask.listId;
+  const movedAcrossLists = sourceListId !== newListId;
+
+  if (movedAcrossLists) {
     await logTaskActivity(taskId, authResult.user.id, "moved", {
-      fromListId: existingTask.listId,
+      fromListId: sourceListId,
       toListId: newListId,
       fromListName: sourceOwnership.list.name,
       toListName: destOwnership.list.name,
     });
   }
 
-  return { success: true, data: updatedTask! };
+  // Fetch the authoritative, fully up-to-date state for both affected
+  // lists so the client can apply it directly with no local guessing.
+  const destTasksFinal = await queries.tasks.getByList(newListId);
+  const sourceTasksFinal = movedAcrossLists
+    ? await queries.tasks.getByList(sourceListId)
+    : [];
+
+  return {
+    success: true,
+    data: {
+      movedTask: updatedTask!,
+      affectedTasks: [...sourceTasksFinal, ...destTasksFinal],
+    },
+  };
 }
 
 export async function getTasksByProject(

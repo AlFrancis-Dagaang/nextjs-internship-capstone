@@ -25,15 +25,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getListsByProject } from "@/lib/actions/lists";
-import { getTasksByList, moveTaskToList } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
 import type { List, Task } from "@/lib/db/schema";
+import { moveTaskToList } from "@/lib/actions/tasks";
+import { ListWithTasks } from "@/components/lists/board";
 
 export function TaskActions({
   taskId,
   projectId,
   currentListId,
+  allLists,
   onView,
   onRename,
   onArchive,
@@ -43,46 +44,44 @@ export function TaskActions({
   taskId: string;
   projectId: string;
   currentListId: string;
+  allLists: ListWithTasks[];
   onView: () => void;
   onRename: () => void;
   onArchive: () => void;
   onDeleteClick: () => void;
-  onMoved?: (task: Task) => void;
+  onMoved?: (task: Task, affectedTasks: Task[]) => void;
 }) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"menu" | "move">("menu");
-  const [lists, setLists] = useState<List[]>([]);
   const [targetListId, setTargetListId] = useState(currentListId);
-  const [destTaskCount, setDestTaskCount] = useState<number | null>(null);
   const [position, setPosition] = useState("1");
   const [isMoving, startMoveTransition] = useTransition();
 
-  // Load real lists once the move panel is opened
+  // Reset target/position defaults whenever the move panel opens
   useEffect(() => {
-    if (view === "move" && lists.length === 0) {
-      getListsByProject(projectId).then((result) => {
-        if (result.success) setLists(result.data);
-      });
-    }
-  }, [view, projectId, lists.length]);
+    if (view === "move") {
+      setTargetListId(currentListId);
 
-  // Whenever the target list changes, fetch how many tasks are already
-  // there so the position dropdown offers the right range (1..count+1),
-  // same reasoning as the list-position fix.
-  useEffect(() => {
-    if (view !== "move") return;
-    getTasksByList(targetListId).then((result) => {
-      if (result.success) {
-        const count =
-          targetListId === currentListId
-            ? result.data.filter((t) => t.id !== taskId).length
-            : result.data.length;
-        setDestTaskCount(count);
-        setPosition("1");
-      }
-    });
-  }, [view, targetListId, currentListId, taskId]);
+      const currentList = allLists.find((l) => l.id === currentListId);
+      const sortedTasks = currentList
+        ? [...currentList.tasks].sort((a, b) => a.position - b.position)
+        : [];
+      const currentIndex = sortedTasks.findIndex((t) => t.id === taskId);
+
+      // Default to the task's actual current position (1-indexed).
+      // Falls back to "1" if somehow not found.
+      setPosition(currentIndex >= 0 ? String(currentIndex + 1) : "1");
+    }
+  }, [view, currentListId, allLists, taskId]);
+  // Derive destination task count from props — no fetch needed
+  const destTaskCount = (() => {
+    const destList = allLists.find((l) => l.id === targetListId);
+    if (!destList) return 0;
+    return targetListId === currentListId
+      ? destList.tasks.filter((t) => t.id !== taskId).length
+      : destList.tasks.length;
+  })();
 
   function handleMove() {
     const zeroIndexedPosition = parseInt(position, 10) - 1;
@@ -103,14 +102,13 @@ export function TaskActions({
       toast({ title: "Task moved" });
       setIsOpen(false);
       setView("menu");
-      onMoved?.(result.data);
+      onMoved?.(result.data.movedTask, result.data.affectedTasks);
     });
   }
 
-  const positionOptions =
-    destTaskCount !== null
-      ? Array.from({ length: destTaskCount + 1 }, (_, i) => String(i + 1))
-      : ["1"];
+  const positionOptions = Array.from({ length: destTaskCount + 1 }, (_, i) =>
+    String(i + 1),
+  );
 
   return (
     <DropdownMenu
@@ -251,7 +249,7 @@ export function TaskActions({
                       <SelectValue placeholder="Select list" />
                     </SelectTrigger>
                     <SelectContent className="z-99999">
-                      {lists.map((list) => (
+                      {allLists.map((list) => (
                         <SelectItem key={list.id} value={list.id}>
                           {list.name}
                         </SelectItem>

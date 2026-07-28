@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { ListColumn } from "./list-column";
 import { AddListForm } from "./add-list-form";
-import { getListsByProject } from "@/lib/actions/lists";
 import type { List, Task } from "@/lib/db/schema";
-import { getTasksByList } from "@/lib/actions/tasks"; // <-- add this import
 
 export type ListWithTasks = List & { tasks: Task[] };
 
@@ -42,8 +40,6 @@ export function Board({
     });
   }
 
-  // --- Task handlers: patch state directly, no router.refresh() ---
-
   function handleTaskCreated(listId: string, task: Task) {
     setLists((prev) =>
       prev.map((l) =>
@@ -72,59 +68,26 @@ export function Board({
     );
   }
 
-  // For cross-list moves, easiest correct fix is to remove from old list
-  // and push into new list (position ordering can refine later).
-  // board.tsx
-
-  function handleTaskMoved(movedTask: Task) {
-    let sourceListId: string | undefined;
-
+  // Server now returns the full authoritative state for every list
+  // touched by the move (source + destination), so we just replace
+  // those lists' tasks directly — no optimistic guess, no reconcile
+  // fetch needed.
+  function handleTaskMoved(movedTask: Task, affectedTasks: Task[]) {
     setLists((prev) => {
-      sourceListId = prev.find((l) =>
-        l.tasks.some((t) => t.id === movedTask.id),
-      )?.id;
+      const affectedListIds = new Set(affectedTasks.map((t) => t.listId));
 
-      // optimistic update so the UI feels instant
-      const withoutTask = prev.map((l) => ({
-        ...l,
-        tasks: l.tasks.filter((t) => t.id !== movedTask.id),
-      }));
+      return prev.map((l) => {
+        if (!affectedListIds.has(l.id)) return l;
 
-      return withoutTask.map((l) =>
-        l.id === movedTask.listId
-          ? {
-              ...l,
-              tasks: [...l.tasks, movedTask].sort(
-                (a, b) => a.position - b.position,
-              ),
-            }
-          : l,
-      );
-    });
+        const tasksForThisList = affectedTasks
+          .filter((t) => t.listId === l.id)
+          .sort((a, b) => a.position - b.position);
 
-    // reconcile: refetch the real position order for both affected lists
-    const listsToSync = new Set(
-      [movedTask.listId, sourceListId].filter(Boolean) as string[],
-    );
-
-    listsToSync.forEach((listId) => {
-      getTasksByList(listId).then((result) => {
-        if (!result.success) return;
-        setLists((current) =>
-          current.map((l) =>
-            l.id === listId
-              ? {
-                  ...l,
-                  tasks: result.data
-                    .slice()
-                    .sort((a, b) => a.position - b.position),
-                }
-              : l,
-          ),
-        );
+        return { ...l, tasks: tasksForThisList };
       });
     });
   }
+
   return (
     <div className="w-full overflow-x-auto pb-6">
       <div className="flex items-start space-x-6 min-w-max">
@@ -132,6 +95,7 @@ export function Board({
           <ListColumn
             key={list.id}
             list={list}
+            allLists={lists}
             totalLists={lists.length}
             onRenamed={handleListRenamed}
             onDeleted={handleListDeleted}

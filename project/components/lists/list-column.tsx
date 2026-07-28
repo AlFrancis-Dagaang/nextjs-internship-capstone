@@ -14,6 +14,7 @@ import type { ListWithTasks } from "./board";
 export function ListColumn({
   list,
   totalLists,
+  allLists,
   onRenamed,
   onDeleted,
   onMoved,
@@ -24,13 +25,14 @@ export function ListColumn({
 }: {
   list: ListWithTasks;
   totalLists: number;
+  allLists: ListWithTasks[];
   onRenamed?: (updated: List) => void;
   onDeleted?: (listId: string) => void;
   onMoved?: (updatedLists: List[]) => void;
   onTaskCreated?: (listId: string, task: Task) => void;
   onTaskUpdated?: (task: Task) => void;
   onTaskDeleted?: (listId: string, taskId: string) => void;
-  onTaskMoved?: (task: Task) => void;
+  onTaskMoved?: (task: Task, affectedTasks: Task[]) => void;
 }) {
   const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -131,9 +133,12 @@ export function ListColumn({
               key={task.id}
               task={task}
               projectId={list.projectId}
+              allLists={allLists}
               onUpdated={onTaskUpdated}
               onDeleted={() => onTaskDeleted?.(list.id, task.id)}
-              onMoved={(movedTask) => onTaskMoved?.(movedTask)}
+              onMoved={(movedTask, affectedTasks) =>
+                onTaskMoved?.(movedTask, affectedTasks)
+              }
             />
           ))}
           <CreateTaskModal
