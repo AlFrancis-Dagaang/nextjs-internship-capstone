@@ -5,11 +5,11 @@ import { comments } from "../schema";
 
 export const commentsQueries = {
   getByTask: async (taskId: string) => {
-    return db
-      .select()
-      .from(comments)
-      .where(eq(comments.taskId, taskId))
-      .orderBy(asc(comments.createdAt));
+    return db.query.comments.findMany({
+      where: eq(comments.taskId, taskId),
+      orderBy: asc(comments.createdAt),
+      with: { author: true },
+    });
   },
   getById: async (id: string) => {
     return db.query.comments.findFirst({ where: eq(comments.id, id) });

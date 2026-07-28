@@ -189,9 +189,17 @@ export function TaskCard({
         <TaskDetailModal
           task={task}
           projectId={projectId}
+          allLists={allLists}
           open={editOpen}
           onOpenChange={setEditOpen}
           onChanged={(updatedTask) => onUpdated?.(updatedTask)}
+          onMoved={(movedTask, affectedTasks) =>
+            onMoved?.(movedTask, affectedTasks)
+          }
+          onDeleteClick={() => setDeleteOpen(true)}
+          onArchive={() => {
+            toast({ title: "Task archived", description: task.title });
+          }}
         />
       </div>
 
