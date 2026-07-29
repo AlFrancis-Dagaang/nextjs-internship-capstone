@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Task } from "@/lib/db/schema";
 import type { ListWithTasks } from "@/components/lists/board";
 import { TaskActivityFeed } from "./task-activity-feed";
@@ -30,27 +31,45 @@ export function TaskSidebar({
   onDeleteClick,
   onArchive,
 }: TaskSidebarProps) {
+  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
+
+  function handleChanged(updated: Task) {
+    setActivityRefreshKey((k) => k + 1);
+    onChanged?.(updated);
+  }
+
+  function handleMoved(movedTask: Task, affectedTasks: Task[]) {
+    setActivityRefreshKey((k) => k + 1);
+    onMoved?.(movedTask, affectedTasks);
+  }
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Added pt-2 and pb-6 so top inputs and bottom inputs never clip */}
-      <div className="flex-1 overflow-y-auto space-y-4 pt-2 pr-1 pb-6 min-h-0">
-        <TaskPrioritySection task={task} onChanged={onChanged} />
-        <TaskDatesSection task={task} onChanged={onChanged} />
+      <div className="flex-1 overflow-y-auto space-y-4 pr-1 pb-6 min-h-0">
+        <TaskPrioritySection task={task} onChanged={handleChanged} />
 
-        <TaskMoveSection
-          task={task}
-          allLists={allLists}
-          onMoved={onMoved}
-          onOpenChange={onOpenChange}
-        />
+        <div className="border-t border-neutral-200 dark:border-neutral-800">
+          <TaskDatesSection task={task} onChanged={handleChanged} />
+        </div>
 
-        <TaskMembersSection />
+        <div className="border-t border-neutral-200 dark:border-neutral-800">
+          <TaskMoveSection
+            task={task}
+            allLists={allLists}
+            onMoved={handleMoved}
+          />
+        </div>
 
-        <div className="pt-3 border-t border-neutral-200 dark:border-neutral-800">
+        <div className="border-t border-neutral-200 dark:border-neutral-800">
+          <TaskMembersSection />
+        </div>
+
+        <div className="border-t border-neutral-200 dark:border-neutral-800">
           <h4 className="text-[10px] text-neutral-500 uppercase font-semibold tracking-wider mb-2">
             Activity Log
           </h4>
-          <TaskActivityFeed taskId={task.id} />
+          <TaskActivityFeed taskId={task.id} refreshKey={activityRefreshKey} />
         </div>
       </div>
 

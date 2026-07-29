@@ -35,7 +35,8 @@ export function TaskDetailModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Added gap-0 and space-y-0 to force the dialog role div to have zero internal vertical spacing */}
-      <DialogContent className="max-w-5xl p-0 gap-0 space-y-0 overflow-hidden bg-white dark:bg-neutral-950 flex flex-col max-h-[90vh] [&>button]:hidden">
+      <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden bg-white dark:bg-neutral-950 flex flex-col [&>button]:hidden">
+        {" "}
         {/* Header - Fixed & Pinned */}
         <div className="px-6 py-3 border-b border-neutral-200 dark:border-neutral-800 shrink-0 flex items-start justify-between gap-4">
           <div className="flex-1">
@@ -53,7 +54,6 @@ export function TaskDetailModal({
             <X className="h-5 w-5" />
           </button>
         </div>
-
         {/* 2-Column Layout Container - Sits completely flush against the header border */}
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* Left Content */}

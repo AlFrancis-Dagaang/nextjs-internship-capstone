@@ -19,12 +19,10 @@ export function TaskMoveSection({
   task,
   allLists,
   onMoved,
-  onOpenChange,
 }: {
   task: Task;
   allLists: ListWithTasks[];
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
-  onOpenChange: (open: boolean) => void;
 }) {
   const { toast } = useToast();
   const [isMoving, startMoveTransition] = useTransition();
@@ -75,7 +73,7 @@ export function TaskMoveSection({
       }
       toast({ title: "Task moved" });
       onMoved?.(result.data.movedTask, result.data.affectedTasks);
-      onOpenChange(false);
+      // removed: onOpenChange(false);
     });
   }
 

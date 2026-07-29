@@ -1,3 +1,4 @@
+// components/dashboard-shell.tsx
 "use client";
 
 import type React from "react";
@@ -10,19 +11,16 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-platinum-900 dark:bg-outer_space-600 transition-colors">
-      {/* Navigation Sidebar */}
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      {/* Main Content Wrapper */}
       <div className="lg:pl-64 flex flex-col min-h-screen">
         <Header setSidebarOpen={setSidebarOpen} />
 
+        {/* Standard padding for all regular pages */}
         <main className="flex-1 py-8 px-4 sm:px-6 lg:px-8">
           <Suspense
             fallback={
-              <div className="flex justify-center p-12 text-outer_space-500 dark:text-platinum-500">
-                Loading...
-              </div>
+              <div className="flex justify-center p-12">Loading...</div>
             }
           >
             {children}

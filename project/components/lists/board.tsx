@@ -4,6 +4,11 @@ import { useState } from "react";
 import { ListColumn } from "./list-column";
 import { AddListForm } from "./add-list-form";
 import type { List, Task } from "@/lib/db/schema";
+import { useToast } from "@/hooks/use-toast";
+import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
+import { deleteTask } from "@/lib/actions/tasks";
+import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
+import { useTransition } from "react";
 
 export type ListWithTasks = List & { tasks: Task[] };
 
@@ -14,7 +19,17 @@ export function Board({
   projectId: string;
   initialLists: ListWithTasks[];
 }) {
+  const { toast } = useToast();
   const [lists, setLists] = useState<ListWithTasks[]>(initialLists);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+
+  const [deleteTaskOpen, setDeleteTaskOpen] = useState(false);
+  const [isDeletingTask, startDeleteTaskTransition] = useTransition();
+
+  const openTask =
+    openTaskId != null
+      ? (lists.flatMap((l) => l.tasks).find((t) => t.id === openTaskId) ?? null)
+      : null;
 
   function handleListCreated(newList: List) {
     setLists((prev) => [...prev, { ...newList, tasks: [] }]);
@@ -66,12 +81,31 @@ export function Board({
           : l,
       ),
     );
+    if (openTaskId === taskId) setOpenTaskId(null);
   }
 
-  // Server now returns the full authoritative state for every list
-  // touched by the move (source + destination), so we just replace
-  // those lists' tasks directly — no optimistic guess, no reconcile
-  // fetch needed.
+  function handleConfirmDeleteTask() {
+    if (!openTask) return;
+    startDeleteTaskTransition(async () => {
+      const result = await deleteTask(openTask.id);
+      if (result.success) {
+        toast({
+          title: "Task deleted",
+          description: `"${openTask.title}" was deleted.`,
+        });
+        handleTaskDeleted(openTask.listId, openTask.id);
+        setDeleteTaskOpen(false);
+        setOpenTaskId(null);
+      } else {
+        toast({
+          title: "Failed to delete task",
+          description: result.error,
+          variant: "destructive",
+        });
+      }
+    });
+  }
+
   function handleTaskMoved(movedTask: Task, affectedTasks: Task[]) {
     setLists((prev) => {
       const affectedListIds = new Set(affectedTasks.map((t) => t.listId));
@@ -89,28 +123,60 @@ export function Board({
   }
 
   return (
-    <div className="w-full overflow-x-auto pb-6">
-      <div className="flex items-start space-x-6 min-w-max">
-        {lists.map((list) => (
-          <ListColumn
-            key={list.id}
-            list={list}
-            allLists={lists}
-            totalLists={lists.length}
-            onRenamed={handleListRenamed}
-            onDeleted={handleListDeleted}
-            onMoved={handleListMoved}
-            onTaskCreated={handleTaskCreated}
-            onTaskUpdated={handleTaskUpdated}
-            onTaskDeleted={handleTaskDeleted}
-            onTaskMoved={handleTaskMoved}
-          />
-        ))}
+    <div className="flex flex-col h-full w-full overflow-hidden">
+      {/* Scrollable container pinned to the bottom */}
+      <div className="flex-1 w-full overflow-x-auto overflow-y-hidden pb-6">
+        <div className="flex items-start space-x-6 min-w-max h-full px-1">
+          {lists.map((list) => (
+            <ListColumn
+              key={list.id}
+              list={list}
+              allLists={lists}
+              totalLists={lists.length}
+              onRenamed={handleListRenamed}
+              onDeleted={handleListDeleted}
+              onMoved={handleListMoved}
+              onTaskCreated={handleTaskCreated}
+              onTaskUpdated={handleTaskUpdated}
+              onTaskDeleted={handleTaskDeleted}
+              onTaskMoved={handleTaskMoved}
+              onOpenTask={setOpenTaskId}
+            />
+          ))}
 
-        <div className="shrink-0 w-80">
-          <AddListForm projectId={projectId} onCreated={handleListCreated} />
+          <div className="shrink-0 w-80">
+            <AddListForm projectId={projectId} onCreated={handleListCreated} />
+          </div>
         </div>
       </div>
+
+      {openTask && (
+        <TaskDetailModal
+          task={openTask}
+          projectId={projectId}
+          allLists={lists}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setOpenTaskId(null);
+          }}
+          onChanged={handleTaskUpdated}
+          onMoved={handleTaskMoved}
+          onDeleteClick={() => setDeleteTaskOpen(true)}
+          onArchive={() => {
+            toast({ title: "Task archived", description: openTask.title });
+          }}
+        />
+      )}
+
+      {openTask && (
+        <DeleteTaskDialog
+          isOpen={deleteTaskOpen}
+          onClose={() => setDeleteTaskOpen(false)}
+          onConfirm={handleConfirmDeleteTask}
+          taskTitle={openTask.title}
+          isPending={isDeletingTask}
+        />
+      )}
     </div>
   );
 }

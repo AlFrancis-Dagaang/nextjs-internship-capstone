@@ -57,9 +57,11 @@ export default async function ProjectPage({
   }));
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 p-6 space-y-6">
-      <ProjectHeader project={project} />
-      <div className="pt-2">
+    <div className="h-full flex flex-col overflow-hidden space-y-6">
+      <div className="shrink-0">
+        <ProjectHeader project={project} />
+      </div>
+      <div className="flex-1 min-h-0">
         <Board projectId={id} initialLists={listsWithTasks} />
       </div>
     </div>

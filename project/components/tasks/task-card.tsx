@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Calendar, MessageSquare } from "lucide-react";
 import type { Task } from "@/lib/db/schema";
 import { deleteTask, updateTask } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
-import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
 import { TaskActions } from "./modal/task-actions";
 import { DeleteTaskDialog } from "./modal/delete-task-dialog";
 import { Input } from "@/components/ui/input";
@@ -25,6 +23,7 @@ export function TaskCard({
   onUpdated,
   onDeleted,
   onMoved,
+  onOpenDetail,
 }: {
   task: Task;
   projectId: string;
@@ -32,10 +31,9 @@ export function TaskCard({
   onUpdated?: (task: Task) => void;
   onDeleted?: () => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
+  onOpenDetail: () => void;
 }) {
-  const router = useRouter();
   const { toast } = useToast();
-  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [title, setTitle] = useState(task.title);
@@ -62,7 +60,7 @@ export function TaskCard({
       }
       toast({ title: "Task updated", description: result.data?.title });
       setIsRenaming(false);
-      onUpdated?.(result.data); // <-- was router.refresh()
+      onUpdated?.(result.data);
     });
   }
 
@@ -75,7 +73,7 @@ export function TaskCard({
           description: `"${task.title}" was deleted.`,
         });
         setDeleteOpen(false);
-        onDeleted?.(); // <-- was router.refresh()
+        onDeleted?.();
       } else {
         toast({
           title: "Failed to delete task",
@@ -89,10 +87,9 @@ export function TaskCard({
   return (
     <>
       <div
-        onClick={() => setEditOpen(true)}
+        onClick={onOpenDetail}
         className="relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 cursor-pointer hover:shadow-md transition-shadow space-y-3 overflow-visible"
       >
-        {/* Top Priority Color Indicator Bar */}
         {task.priority && (
           <div
             className={`absolute top-0 left-0 right-0 h-1 rounded-t-xl ${
@@ -101,14 +98,13 @@ export function TaskCard({
           />
         )}
 
-        {/* Absolute Top-Right Task Actions Menu */}
         <div className="absolute right-2 top-2.5 z-30">
           <TaskActions
             taskId={task.id}
             projectId={projectId}
             currentListId={task.listId}
             allLists={allLists}
-            onView={() => setEditOpen(true)}
+            onView={onOpenDetail}
             onRename={() => {
               setTitle(task.title);
               setIsRenaming(true);
@@ -185,22 +181,6 @@ export function TaskCard({
             </span>
           </div>
         </div>
-
-        <TaskDetailModal
-          task={task}
-          projectId={projectId}
-          allLists={allLists}
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          onChanged={(updatedTask) => onUpdated?.(updatedTask)}
-          onMoved={(movedTask, affectedTasks) =>
-            onMoved?.(movedTask, affectedTasks)
-          }
-          onDeleteClick={() => setDeleteOpen(true)}
-          onArchive={() => {
-            toast({ title: "Task archived", description: task.title });
-          }}
-        />
       </div>
 
       <DeleteTaskDialog

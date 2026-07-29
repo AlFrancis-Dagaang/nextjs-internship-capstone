@@ -15,6 +15,7 @@ export function ListColumn({
   list,
   totalLists,
   allLists,
+  onOpenTask,
   onRenamed,
   onDeleted,
   onMoved,
@@ -33,6 +34,7 @@ export function ListColumn({
   onTaskUpdated?: (task: Task) => void;
   onTaskDeleted?: (listId: string, taskId: string) => void;
   onTaskMoved?: (task: Task, affectedTasks: Task[]) => void;
+  onOpenTask: (taskId: string) => void;
 }) {
   const { toast } = useToast();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -87,7 +89,8 @@ export function ListColumn({
 
   return (
     <>
-      <div className="shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col max-h-[calc(100vh-16rem)] relative isolate">
+      <div className="shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col h-full relative isolate">
+        {" "}
         <div className="flex items-center justify-between pb-3 px-1 shrink-0">
           {isRenaming ? (
             <form onSubmit={handleRenameSubmit} className="flex-1 mr-2">
@@ -126,7 +129,6 @@ export function ListColumn({
             />
           )}
         </div>
-
         <div className="overflow-y-auto overflow-x-visible space-y-3 pr-1 flex-1">
           {list.tasks.map((task) => (
             <TaskCard
@@ -139,6 +141,7 @@ export function ListColumn({
               onMoved={(movedTask, affectedTasks) =>
                 onTaskMoved?.(movedTask, affectedTasks)
               }
+              onOpenDetail={() => onOpenTask(task.id)}
             />
           ))}
           <CreateTaskModal

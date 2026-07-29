@@ -147,9 +147,35 @@ export async function updateTask(
     assigneeId: finalAssigneeId,
   });
 
-  await logTaskActivity(updated.id, authResult.user.id, "updated", {
-    fields: Object.keys(safeUpdate),
-  });
+  const changedFields = Object.keys(safeUpdate);
+
+  if (changedFields.includes("priority")) {
+    await logTaskActivity(updated.id, authResult.user.id, "priority_changed", {
+      from: existingTask.priority,
+      to: updated.priority,
+    });
+  } else if (changedFields.includes("dueDate")) {
+    await logTaskActivity(updated.id, authResult.user.id, "due_date_changed", {
+      from: existingTask.dueDate,
+      to: updated.dueDate,
+    });
+  } else if (changedFields.includes("description")) {
+    await logTaskActivity(
+      updated.id,
+      authResult.user.id,
+      "description_changed",
+      {},
+    );
+  } else if (finalAssigneeId !== existingTask.assigneeId) {
+    await logTaskActivity(updated.id, authResult.user.id, "assignee_changed", {
+      from: existingTask.assigneeId,
+      to: finalAssigneeId,
+    });
+  } else {
+    await logTaskActivity(updated.id, authResult.user.id, "updated", {
+      fields: changedFields,
+    });
+  }
 
   return { success: true, data: updated };
 }
@@ -249,6 +275,12 @@ export async function moveTaskToList(
       toListId: newListId,
       fromListName: sourceOwnership.list.name,
       toListName: destOwnership.list.name,
+    });
+  } else if (existingTask.position !== updatedTask?.position) {
+    await logTaskActivity(taskId, authResult.user.id, "moved", {
+      fromPosition: existingTask.position,
+      toPosition: updatedTask?.position,
+      listName: destOwnership.list.name,
     });
   }
 
