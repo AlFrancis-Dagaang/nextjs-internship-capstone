@@ -19,6 +19,7 @@ type TaskDetailModalProps = {
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
   onDeleteClick?: () => void;
   onArchive?: () => void;
+  onCommentCountChanged?: (taskId: string, delta: number) => void;
 };
 
 export function TaskDetailModal({
@@ -31,6 +32,7 @@ export function TaskDetailModal({
   onMoved,
   onDeleteClick,
   onArchive,
+  onCommentCountChanged,
 }: TaskDetailModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -63,7 +65,10 @@ export function TaskDetailModal({
             </div>
 
             <div className="flex-1 pt-6 overflow-hidden flex flex-col">
-              <TaskComments taskId={task.id} />
+              <TaskComments
+                taskId={task.id}
+                onCommentCountChanged={onCommentCountChanged}
+              />
             </div>
           </div>
 

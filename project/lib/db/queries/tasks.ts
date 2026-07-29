@@ -1,7 +1,7 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql, inArray } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 import { db } from "../client";
-import { lists, tasks } from "../schema";
+import { lists, tasks, comments } from "../schema";
 
 export const tasksQueries = {
   getByProject: async (projectId: string) => {
@@ -9,7 +9,29 @@ export const tasksQueries = {
       where: eq(lists.projectId, projectId),
       with: { tasks: true },
     });
-    return listsWithTasks.flatMap((list) => list.tasks);
+
+    const allTasks = listsWithTasks.flatMap((list) => list.tasks);
+    const taskIds = allTasks.map((t) => t.id);
+
+    if (taskIds.length === 0) {
+      return allTasks;
+    }
+
+    const commentCounts = await db
+      .select({
+        taskId: comments.taskId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(comments)
+      .where(inArray(comments.taskId, taskIds))
+      .groupBy(comments.taskId);
+
+    const countMap = new Map(commentCounts.map((c) => [c.taskId, c.count]));
+
+    return allTasks.map((task) => ({
+      ...task,
+      commentCount: countMap.get(task.id) ?? 0,
+    }));
   },
   getByList: async (listId: string) => {
     return db

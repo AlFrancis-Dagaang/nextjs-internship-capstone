@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TaskActions } from "./modal/task-actions";
 import { DeleteTaskDialog } from "./modal/delete-task-dialog";
 import { Input } from "@/components/ui/input";
-import { ListWithTasks } from "../lists/board";
+import { ListWithTasks, TaskWithCommentCount } from "../lists/board";
 
 const priorityBarStyles: Record<string, string> = {
   low: "bg-blue-400",
@@ -25,7 +25,7 @@ export function TaskCard({
   onMoved,
   onOpenDetail,
 }: {
-  task: Task;
+  task: TaskWithCommentCount;
   projectId: string;
   allLists: ListWithTasks[];
   onUpdated?: (task: Task) => void;
@@ -160,7 +160,7 @@ export function TaskCard({
             )}
             <div className="flex items-center space-x-1">
               <MessageSquare size={13} className="text-neutral-400" />
-              <span>3</span>
+              <span>{task.commentCount ?? 0}</span>
             </div>
           </div>
 

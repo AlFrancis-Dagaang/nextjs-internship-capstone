@@ -5,6 +5,7 @@ import { commentCreateSchema } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import { assertTaskAccess } from "@/lib/services/ownership";
 import { logTaskActivity } from "@/lib/services/activity";
+import type { Comment } from "@/lib/db/schema";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -103,4 +104,38 @@ export async function deleteComment(id: string): Promise<ActionResult<null>> {
   );
 
   return { success: true, data: null };
+}
+
+export async function updateComment(
+  id: string,
+  content: string,
+): Promise<ActionResult<Comment>> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const existingComment = await queries.comments.getById(id);
+  if (!existingComment) {
+    return { success: false, error: "Not found" };
+  }
+
+  const access = await assertTaskAccess(
+    existingComment.taskId,
+    authResult.user.id,
+  );
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
+  }
+
+  if (existingComment.authorId !== authResult.user.id) {
+    return { success: false, error: "Forbidden" };
+  }
+
+  if (!content.trim()) {
+    return { success: false, error: "Comment cannot be empty" };
+  }
+
+  const updated = await queries.comments.update(id, { content });
+  return { success: true, data: updated };
 }

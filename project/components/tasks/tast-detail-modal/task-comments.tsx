@@ -15,6 +15,7 @@ import {
   createComment,
   getCommentsByTask,
   deleteComment,
+  updateComment,
 } from "@/lib/actions/comments";
 import { getCurrentUserId } from "@/lib/actions/currentUser";
 import { useToast } from "@/hooks/use-toast";
@@ -31,9 +32,14 @@ import { TaskCommentsModal } from "./task-comments/task-comments-modal";
 type TaskCommentsProps = {
   taskId: string;
   previewCount?: number;
+  onCommentCountChanged?: (taskId: string, delta: number) => void;
 };
 
-export function TaskComments({ taskId, previewCount = 3 }: TaskCommentsProps) {
+export function TaskComments({
+  taskId,
+  previewCount = 4,
+  onCommentCountChanged,
+}: TaskCommentsProps) {
   const { toast } = useToast();
   const [comments, setComments] = useState<CommentWithAuthor[] | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -77,6 +83,7 @@ export function TaskComments({ taskId, previewCount = 3 }: TaskCommentsProps) {
       setContent("");
       setIsExpanded(false);
       refresh();
+      onCommentCountChanged?.(taskId, 1);
     });
   }
 
@@ -97,7 +104,22 @@ export function TaskComments({ taskId, previewCount = 3 }: TaskCommentsProps) {
         return;
       }
       refresh();
+      onCommentCountChanged?.(taskId, -1);
     });
+  }
+
+  async function handleEdit(id: string, content: string): Promise<boolean> {
+    const result = await updateComment(id, content);
+    if (!result.success) {
+      toast({
+        title: "Failed to update comment",
+        description: result.error,
+        variant: "destructive",
+      });
+      return false;
+    }
+    refresh();
+    return true;
   }
 
   const preview = comments?.slice(-previewCount).reverse() ?? [];
@@ -111,8 +133,8 @@ export function TaskComments({ taskId, previewCount = 3 }: TaskCommentsProps) {
         </h3>
       </div>
 
-      {/* Collapsible Comment Input Box */}
-      <div className="shrink-0 border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden bg-white dark:bg-neutral-950 focus-within:ring-1 focus-within:ring-cyan-400">
+      {/* Collapsible Comment Input Box with fully visible border styling */}
+      <div className="shrink-0 border border-neutral-300 dark:border-neutral-700 rounded-lg overflow-hidden bg-white dark:bg-neutral-950 focus-within:border-cyan-400 dark:focus-within:border-cyan-400 transition-colors ">
         {!isExpanded ? (
           <div
             onClick={() => setIsExpanded(true)}
@@ -125,7 +147,7 @@ export function TaskComments({ taskId, previewCount = 3 }: TaskCommentsProps) {
             />
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-0">
             <div className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 px-2 py-1.5 flex items-center gap-1">
               <Button
                 variant="ghost"
@@ -201,7 +223,7 @@ export function TaskComments({ taskId, previewCount = 3 }: TaskCommentsProps) {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Write a comment......"
-              className="min-h-20 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none shadow-none text-sm bg-white dark:bg-neutral-950 px-3"
+              className="min-h-20 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none shadow-none text-sm bg-white dark:bg-neutral-950 px-3 py-2"
             />
 
             <div className="p-2 flex justify-end gap-2 bg-white dark:bg-neutral-950 border-t border-neutral-100 dark:border-neutral-900">
@@ -251,6 +273,7 @@ export function TaskComments({ taskId, previewCount = 3 }: TaskCommentsProps) {
                   currentUserId={currentUserId}
                   isPending={isPending}
                   onDelete={handleDelete}
+                  onEdit={handleEdit}
                 />
               ))}
             </ul>
@@ -272,6 +295,7 @@ export function TaskComments({ taskId, previewCount = 3 }: TaskCommentsProps) {
         currentUserId={currentUserId}
         isPending={isPending}
         onDelete={handleDelete}
+        onEdit={handleEdit}
         open={showAllOpen}
         onOpenChange={setShowAllOpen}
       />

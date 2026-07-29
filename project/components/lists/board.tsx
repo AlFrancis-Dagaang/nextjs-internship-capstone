@@ -10,7 +10,8 @@ import { deleteTask } from "@/lib/actions/tasks";
 import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
 import { useTransition } from "react";
 
-export type ListWithTasks = List & { tasks: Task[] };
+export type TaskWithCommentCount = Task & { commentCount?: number };
+export type ListWithTasks = List & { tasks: TaskWithCommentCount[] };
 
 export function Board({
   projectId,
@@ -121,6 +122,18 @@ export function Board({
       });
     });
   }
+  function handleTaskCommentCountChanged(taskId: string, delta: number) {
+    setLists((prev) =>
+      prev.map((l) => ({
+        ...l,
+        tasks: l.tasks.map((t) =>
+          t.id === taskId
+            ? { ...t, commentCount: Math.max(0, (t.commentCount ?? 0) + delta) }
+            : t,
+        ),
+      })),
+    );
+  }
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
@@ -165,6 +178,7 @@ export function Board({
           onArchive={() => {
             toast({ title: "Task archived", description: openTask.title });
           }}
+          onCommentCountChanged={handleTaskCommentCountChanged}
         />
       )}
 

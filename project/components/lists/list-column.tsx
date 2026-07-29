@@ -89,8 +89,9 @@ export function ListColumn({
 
   return (
     <>
-      <div className="shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col h-full relative isolate">
-        {" "}
+      {/* Changed h-full to h-fit and max-h-full so it only grows with tasks, but caps at container height */}
+      <div className="shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col h-fit max-h-full relative isolate">
+        {/* Header */}
         <div className="flex items-center justify-between pb-3 px-1 shrink-0">
           {isRenaming ? (
             <form onSubmit={handleRenameSubmit} className="flex-1 mr-2">
@@ -119,7 +120,7 @@ export function ListColumn({
               listId={list.id}
               listName={list.name}
               currentPosition={list.position}
-              totalLists={totalLists} // <-- new prop, passed down from Board
+              totalLists={totalLists}
               onRename={() => {
                 setName(list.name);
                 setIsRenaming(true);
@@ -129,7 +130,9 @@ export function ListColumn({
             />
           )}
         </div>
-        <div className="overflow-y-auto overflow-x-visible space-y-3 pr-1 flex-1">
+
+        {/* Scrollable Tasks Container (grows organically, scrolls if content exceeds screen bounds) */}
+        <div className="overflow-y-auto overflow-x-visible space-y-3 pr-1 max-h-[calc(100vh-14rem)]">
           {list.tasks.map((task) => (
             <TaskCard
               key={task.id}
@@ -144,6 +147,10 @@ export function ListColumn({
               onOpenDetail={() => onOpenTask(task.id)}
             />
           ))}
+        </div>
+
+        {/* Create Task Footer (sits right beneath the tasks, moves down with them) */}
+        <div className="pt-3 mt-2 shrink-0 bg-neutral-100 dark:bg-neutral-800">
           <CreateTaskModal
             listId={list.id}
             onCreated={(task) => onTaskCreated?.(list.id, task)}

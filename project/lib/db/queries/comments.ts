@@ -18,6 +18,17 @@ export const commentsQueries = {
     const [comment] = await db.insert(comments).values(data).returning();
     return comment;
   },
+  update: async (
+    id: string,
+    data: Partial<InferInsertModel<typeof comments>>,
+  ) => {
+    const [comment] = await db
+      .update(comments)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(comments.id, id))
+      .returning();
+    return comment;
+  },
   delete: async (id: string) => {
     await db.delete(comments).where(eq(comments.id, id));
   },

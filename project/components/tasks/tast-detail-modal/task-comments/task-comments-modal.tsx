@@ -13,6 +13,7 @@ export function TaskCommentsModal({
   currentUserId,
   isPending,
   onDelete,
+  onEdit,
   open,
   onOpenChange,
 }: {
@@ -20,6 +21,7 @@ export function TaskCommentsModal({
   currentUserId: string | null;
   isPending: boolean;
   onDelete: (id: string) => void;
+  onEdit: (id: string, content: string) => Promise<boolean>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -40,6 +42,7 @@ export function TaskCommentsModal({
               currentUserId={currentUserId}
               isPending={isPending}
               onDelete={onDelete}
+              onEdit={onEdit}
             />
           ))}
         </ul>

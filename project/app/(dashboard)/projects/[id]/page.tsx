@@ -57,7 +57,7 @@ export default async function ProjectPage({
   }));
 
   return (
-    <div className="h-full flex flex-col overflow-hidden space-y-6">
+    <div className="h-full flex flex-col overflow-hidden px-1 space-y-4">
       <div className="shrink-0">
         <ProjectHeader project={project} />
       </div>

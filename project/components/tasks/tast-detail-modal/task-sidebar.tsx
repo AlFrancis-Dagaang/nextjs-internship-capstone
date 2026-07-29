@@ -46,7 +46,7 @@ export function TaskSidebar({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Added pt-2 and pb-6 so top inputs and bottom inputs never clip */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-1 pb-6 min-h-0">
+      <div className="flex-1 overflow-y-auto space-y-4 pr-1 pb-6 min-h-0 px-1">
         <TaskPrioritySection task={task} onChanged={handleChanged} />
 
         <div className="border-t border-neutral-200 dark:border-neutral-800">
