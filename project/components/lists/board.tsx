@@ -1,7 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragOverEvent,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import { ListColumn } from "./list-column";
+import { TaskCardView } from "@/components/tasks/task-card";
 import { AddListForm } from "./add-list-form";
 import type { List, Task } from "@/lib/db/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +39,21 @@ export function Board({
 
   const [deleteTaskOpen, setDeleteTaskOpen] = useState(false);
   const [isDeletingTask, startDeleteTaskTransition] = useTransition();
+
+  // #21 — drag-and-drop state. Reorder/move happens entirely client-side;
+  // persisting the resulting `position` values to the DB is #24's job.
+  const [activeTask, setActiveTask] = useState<TaskWithCommentCount | null>(
+    null,
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      // Requires the pointer to move 5px before a drag starts, so a plain
+      // click still reaches TaskCard's onClick (opens the detail modal)
+      // instead of being swallowed as a drag.
+      activationConstraint: { distance: 5 },
+    }),
+  );
 
   const openTask =
     openTaskId != null
@@ -135,33 +163,160 @@ export function Board({
     );
   }
 
+  // ---- #21 drag-and-drop helpers ----
+
+  function findListByTaskId(taskId: string): ListWithTasks | undefined {
+    return lists.find((l) => l.tasks.some((t) => t.id === taskId));
+  }
+
+  function findListById(id: string): ListWithTasks | undefined {
+    return lists.find((l) => l.id === id);
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    const task = lists
+      .flatMap((l) => l.tasks)
+      .find((t) => t.id === event.active.id);
+    setActiveTask(task ?? null);
+  }
+
+  // Live-move the card between columns while dragging over a different list,
+  // so the layout updates as you drag (standard dnd-kit multi-container
+  // pattern) rather than only snapping into place on drop.
+  function handleDragOver(event: DragOverEvent) {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+    if (activeId === overId) return;
+
+    const sourceList = findListByTaskId(activeId);
+    // `over` can be either a task id (dragging over a card) or a list id
+    // (dragging over an empty/near-empty column's droppable area).
+    const destList = findListByTaskId(overId) ?? findListById(overId);
+    if (!sourceList || !destList || sourceList.id === destList.id) return;
+
+    setLists((prev) => {
+      const source = prev.find((l) => l.id === sourceList.id);
+      const dest = prev.find((l) => l.id === destList.id);
+      if (!source || !dest) return prev;
+
+      const task = source.tasks.find((t) => t.id === activeId);
+      if (!task) return prev;
+
+      const overTaskIndex = dest.tasks.findIndex((t) => t.id === overId);
+      const insertIndex =
+        overTaskIndex >= 0 ? overTaskIndex : dest.tasks.length;
+
+      const movedTask = { ...task, listId: dest.id };
+
+      return prev.map((l) => {
+        if (l.id === source.id) {
+          return { ...l, tasks: l.tasks.filter((t) => t.id !== activeId) };
+        }
+        if (l.id === dest.id) {
+          const newTasks = [...l.tasks];
+          newTasks.splice(insertIndex, 0, movedTask);
+          return { ...l, tasks: newTasks };
+        }
+        return l;
+      });
+    });
+  }
+
+  // Finalize same-column reordering and recompute `position` for every
+  // affected list so the values stay consistent for #24 to persist later.
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    setActiveTask(null);
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    setLists((prev) => {
+      const list = prev.find((l) => l.tasks.some((t) => t.id === activeId));
+      if (!list) return prev;
+
+      const oldIndex = list.tasks.findIndex((t) => t.id === activeId);
+      const newIndex = list.tasks.findIndex((t) => t.id === overId);
+
+      // If `over` is a list id (dropped on an empty column) or the item
+      // didn't actually move within this list, handleDragOver already did
+      // the necessary cross-list update — just renumber positions.
+      const reordered =
+        oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex
+          ? arrayMove(list.tasks, oldIndex, newIndex)
+          : list.tasks;
+
+      return prev.map((l) => {
+        if (
+          l.tasks.some((t) => t.id === activeId) === false &&
+          l.id !== list.id
+        ) {
+          return l;
+        }
+        const tasksToNumber = l.id === list.id ? reordered : l.tasks;
+        return {
+          ...l,
+          tasks: tasksToNumber.map((t, i) => ({ ...t, position: i })),
+        };
+      });
+    });
+  }
+
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
-      {/* Scrollable container pinned to the bottom */}
-      <div className="flex-1 w-full overflow-x-auto overflow-y-hidden pb-6">
-        <div className="flex items-start space-x-6 min-w-max h-full px-1">
-          {lists.map((list) => (
-            <ListColumn
-              key={list.id}
-              list={list}
-              allLists={lists}
-              totalLists={lists.length}
-              onRenamed={handleListRenamed}
-              onDeleted={handleListDeleted}
-              onMoved={handleListMoved}
-              onTaskCreated={handleTaskCreated}
-              onTaskUpdated={handleTaskUpdated}
-              onTaskDeleted={handleTaskDeleted}
-              onTaskMoved={handleTaskMoved}
-              onOpenTask={setOpenTaskId}
-            />
-          ))}
+      <DndContext
+        id="kanban-board"
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        {/* Scrollable container pinned to the bottom */}
+        <div className="flex-1 w-full overflow-x-auto overflow-y-hidden pb-6">
+          <div className="flex items-start space-x-6 min-w-max h-full px-1">
+            {lists.map((list) => (
+              <ListColumn
+                key={list.id}
+                list={list}
+                allLists={lists}
+                totalLists={lists.length}
+                onRenamed={handleListRenamed}
+                onDeleted={handleListDeleted}
+                onMoved={handleListMoved}
+                onTaskCreated={handleTaskCreated}
+                onTaskUpdated={handleTaskUpdated}
+                onTaskDeleted={handleTaskDeleted}
+                onTaskMoved={handleTaskMoved}
+                onOpenTask={setOpenTaskId}
+              />
+            ))}
 
-          <div className="shrink-0 w-80">
-            <AddListForm projectId={projectId} onCreated={handleListCreated} />
+            <div className="shrink-0 w-80">
+              <AddListForm
+                projectId={projectId}
+                onCreated={handleListCreated}
+              />
+            </div>
           </div>
         </div>
-      </div>
+
+        <DragOverlay>
+          {activeTask ? (
+            <div className="w-72 rotate-2">
+              <TaskCardView
+                task={activeTask}
+                interactive={false}
+                className="shadow-lg cursor-grabbing"
+              />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {openTask && (
         <TaskDetailModal

@@ -1,6 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useDroppable } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { TaskCard } from "@/components/tasks/task-card";
 import { CreateTaskModal } from "@/components/tasks/modal/create-tasks-modal";
 import { updateList, deleteList } from "@/lib/actions/lists";
@@ -41,6 +46,14 @@ export function ListColumn({
   const [name, setName] = useState(list.name);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // #21 — column itself is a droppable target (id = list.id) so a task can
+  // be dropped into an empty column, in addition to the SortableContext
+  // below handling reorder/insert among existing task cards.
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: list.id,
+    data: { type: "list", listId: list.id },
+  });
 
   function handleRenameSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -90,7 +103,11 @@ export function ListColumn({
   return (
     <>
       {/* Changed h-full to h-fit and max-h-full so it only grows with tasks, but caps at container height */}
-      <div className="shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col h-fit max-h-full relative isolate">
+      <div
+        className={`shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col h-fit max-h-full relative isolate transition-colors ${
+          isOver ? "ring-2 ring-blue-munsell/60" : ""
+        }`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between pb-3 px-1 shrink-0">
           {isRenaming ? (
@@ -132,21 +149,29 @@ export function ListColumn({
         </div>
 
         {/* Scrollable Tasks Container (grows organically, scrolls if content exceeds screen bounds) */}
-        <div className="overflow-y-auto overflow-x-visible space-y-3 pr-1 max-h-[calc(100vh-14rem)]">
-          {list.tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              projectId={list.projectId}
-              allLists={allLists}
-              onUpdated={onTaskUpdated}
-              onDeleted={() => onTaskDeleted?.(list.id, task.id)}
-              onMoved={(movedTask, affectedTasks) =>
-                onTaskMoved?.(movedTask, affectedTasks)
-              }
-              onOpenDetail={() => onOpenTask(task.id)}
-            />
-          ))}
+        <div
+          ref={setDroppableRef}
+          className="overflow-y-auto overflow-x-visible space-y-3 pr-1 max-h-[calc(100vh-14rem)] min-h-[2rem]"
+        >
+          <SortableContext
+            items={list.tasks.map((t) => t.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {list.tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                projectId={list.projectId}
+                allLists={allLists}
+                onUpdated={onTaskUpdated}
+                onDeleted={() => onTaskDeleted?.(list.id, task.id)}
+                onMoved={(movedTask, affectedTasks) =>
+                  onTaskMoved?.(movedTask, affectedTasks)
+                }
+                onOpenDetail={() => onOpenTask(task.id)}
+              />
+            ))}
+          </SortableContext>
         </div>
 
         {/* Create Task Footer (sits right beneath the tasks, moves down with them) */}
