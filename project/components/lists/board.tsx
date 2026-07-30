@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -19,7 +19,7 @@ import { AddListForm } from "./add-list-form";
 import type { List, Task } from "@/lib/db/schema";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
-import { deleteTask } from "@/lib/actions/tasks";
+import { deleteTask, moveTaskToList } from "@/lib/actions/tasks";
 import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
 import { useTransition } from "react";
 
@@ -45,6 +45,9 @@ export function Board({
   const [activeTask, setActiveTask] = useState<TaskWithCommentCount | null>(
     null,
   );
+  // #24 — snapshot of `lists` taken at drag start, used to revert the
+  // optimistic update if the persist call to moveTaskToList fails.
+  const dragSnapshotRef = useRef<ListWithTasks[] | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -96,7 +99,18 @@ export function Board({
     setLists((prev) =>
       prev.map((l) =>
         l.id === task.listId
-          ? { ...l, tasks: l.tasks.map((t) => (t.id === task.id ? task : t)) }
+          ? {
+              ...l,
+              // updateTask's return value is a plain Task — no
+              // commentCount, since that's a client-only field. Preserve
+              // it from the existing card instead of letting it default
+              // away to 0.
+              tasks: l.tasks.map((t) =>
+                t.id === task.id
+                  ? { ...task, commentCount: t.commentCount }
+                  : t,
+              ),
+            }
           : l,
       ),
     );
@@ -137,6 +151,12 @@ export function Board({
 
   function handleTaskMoved(movedTask: Task, affectedTasks: Task[]) {
     setLists((prev) => {
+      // affectedTasks comes straight from the DB (moveTaskToList) and has
+      // no `commentCount` — that field is client-only. Look it up from the
+      // current state before overwriting, or it silently resets to 0.
+      const commentCountMap = new Map(
+        prev.flatMap((l) => l.tasks).map((t) => [t.id, t.commentCount]),
+      );
       const affectedListIds = new Set(affectedTasks.map((t) => t.listId));
 
       return prev.map((l) => {
@@ -144,7 +164,8 @@ export function Board({
 
         const tasksForThisList = affectedTasks
           .filter((t) => t.listId === l.id)
-          .sort((a, b) => a.position - b.position);
+          .sort((a, b) => a.position - b.position)
+          .map((t) => ({ ...t, commentCount: commentCountMap.get(t.id) }));
 
         return { ...l, tasks: tasksForThisList };
       });
@@ -174,6 +195,7 @@ export function Board({
   }
 
   function handleDragStart(event: DragStartEvent) {
+    dragSnapshotRef.current = lists;
     const task = lists
       .flatMap((l) => l.tasks)
       .find((t) => t.id === event.active.id);
@@ -225,44 +247,58 @@ export function Board({
     });
   }
 
-  // Finalize same-column reordering and recompute `position` for every
-  // affected list so the values stay consistent for #24 to persist later.
+  // Finalize same-column reordering, apply it optimistically, then persist
+  // to the DB via moveTaskToList — reconciling with its authoritative
+  // movedTask/affectedTasks on success, or reverting to the pre-drag
+  // snapshot and toasting on failure.
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveTask(null);
+    const snapshot = dragSnapshotRef.current;
+    dragSnapshotRef.current = null;
     if (!over) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    setLists((prev) => {
-      const list = prev.find((l) => l.tasks.some((t) => t.id === activeId));
-      if (!list) return prev;
+    // Read from `lists` directly (current render's state, already reflects
+    // any cross-column move handleDragOver made) rather than from inside
+    // the setLists updater below — that updater isn't guaranteed to run
+    // synchronously, so values captured there aren't safe to read right
+    // after the call.
+    const list = lists.find((l) => l.tasks.some((t) => t.id === activeId));
+    if (!list) return;
 
-      const oldIndex = list.tasks.findIndex((t) => t.id === activeId);
-      const newIndex = list.tasks.findIndex((t) => t.id === overId);
+    const oldIndex = list.tasks.findIndex((t) => t.id === activeId);
+    const newIndex = list.tasks.findIndex((t) => t.id === overId);
 
-      // If `over` is a list id (dropped on an empty column) or the item
-      // didn't actually move within this list, handleDragOver already did
-      // the necessary cross-list update — just renumber positions.
-      const reordered =
-        oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex
-          ? arrayMove(list.tasks, oldIndex, newIndex)
-          : list.tasks;
+    const reordered =
+      oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex
+        ? arrayMove(list.tasks, oldIndex, newIndex)
+        : list.tasks;
 
-      return prev.map((l) => {
-        if (
-          l.tasks.some((t) => t.id === activeId) === false &&
-          l.id !== list.id
-        ) {
-          return l;
-        }
-        const tasksToNumber = l.id === list.id ? reordered : l.tasks;
-        return {
-          ...l,
-          tasks: tasksToNumber.map((t, i) => ({ ...t, position: i })),
-        };
-      });
+    const finalListId = list.id;
+    const finalPosition = reordered.findIndex((t) => t.id === activeId);
+
+    setLists((prev) =>
+      prev.map((l) =>
+        l.id === list.id
+          ? { ...l, tasks: reordered.map((t, i) => ({ ...t, position: i })) }
+          : l,
+      ),
+    );
+
+    moveTaskToList(activeId, finalListId, finalPosition).then((result) => {
+      if (result.success) {
+        handleTaskMoved(result.data.movedTask, result.data.affectedTasks);
+      } else {
+        if (snapshot) setLists(snapshot);
+        toast({
+          title: "Failed to move task",
+          description: result.error,
+          variant: "destructive",
+        });
+      }
     });
   }
 
