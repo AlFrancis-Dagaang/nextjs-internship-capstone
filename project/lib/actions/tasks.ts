@@ -6,6 +6,7 @@ import { getAuthedUserOrError } from "@/lib/services/auth";
 import { assertListOwnership } from "@/lib/services/ownership";
 import { resolveAssigneeId } from "@/lib/services/assignee";
 import { logTaskActivity } from "@/lib/services/activity";
+import { Task } from "../db/schema";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -146,9 +147,35 @@ export async function updateTask(
     assigneeId: finalAssigneeId,
   });
 
-  await logTaskActivity(updated.id, authResult.user.id, "updated", {
-    fields: Object.keys(safeUpdate),
-  });
+  const changedFields = Object.keys(safeUpdate);
+
+  if (changedFields.includes("priority")) {
+    await logTaskActivity(updated.id, authResult.user.id, "priority_changed", {
+      from: existingTask.priority,
+      to: updated.priority,
+    });
+  } else if (changedFields.includes("dueDate")) {
+    await logTaskActivity(updated.id, authResult.user.id, "due_date_changed", {
+      from: existingTask.dueDate,
+      to: updated.dueDate,
+    });
+  } else if (changedFields.includes("description")) {
+    await logTaskActivity(
+      updated.id,
+      authResult.user.id,
+      "description_changed",
+      {},
+    );
+  } else if (finalAssigneeId !== existingTask.assigneeId) {
+    await logTaskActivity(updated.id, authResult.user.id, "assignee_changed", {
+      from: existingTask.assigneeId,
+      to: finalAssigneeId,
+    });
+  } else {
+    await logTaskActivity(updated.id, authResult.user.id, "updated", {
+      fields: changedFields,
+    });
+  }
 
   return { success: true, data: updated };
 }
@@ -179,7 +206,8 @@ export async function deleteTask(id: string): Promise<ActionResult<null>> {
 export async function moveTaskToList(
   taskId: string,
   newListId: string,
-): Promise<ActionResult<Awaited<ReturnType<typeof queries.tasks.update>>>> {
+  newPosition?: number,
+): Promise<ActionResult<{ movedTask: Task; affectedTasks: Task[] }>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
@@ -198,10 +226,6 @@ export async function moveTaskToList(
     return { success: false, error: sourceOwnership.error ?? "Unknown error" };
   }
 
-  if (existingTask.listId === newListId) {
-    return { success: true, data: existingTask };
-  }
-
   const destOwnership = await assertListOwnership(
     newListId,
     authResult.user.id,
@@ -217,21 +241,80 @@ export async function moveTaskToList(
     };
   }
 
-  // Append-only in destination list, same pattern as #16/#17.
-  const destTasks = await queries.tasks.getByList(newListId);
-  const position = destTasks.length;
+  const destTasksAll = await queries.tasks.getByList(newListId);
+  const destTasks = destTasksAll.filter((t) => t.id !== taskId);
 
-  const updated = await queries.tasks.update(taskId, {
-    listId: newListId,
-    position,
+  const clampedPosition =
+    newPosition !== undefined
+      ? Math.max(0, Math.min(newPosition, destTasks.length))
+      : destTasks.length;
+
+  const reordered = [...destTasks];
+  reordered.splice(clampedPosition, 0, existingTask);
+
+  let updatedTask: Task | undefined;
+  const updates = reordered.map(async (t, index) => {
+    if (t.id === taskId) {
+      updatedTask = await queries.tasks.update(taskId, {
+        listId: newListId,
+        position: index,
+      });
+    } else if (t.position !== index) {
+      await queries.tasks.update(t.id, { position: index });
+    }
   });
 
-  await logTaskActivity(taskId, authResult.user.id, "moved", {
-    fromListId: existingTask.listId,
-    toListId: newListId,
-    fromListName: sourceOwnership.list.name,
-    toListName: destOwnership.list.name,
-  });
+  await Promise.all(updates);
 
-  return { success: true, data: updated };
+  const sourceListId = existingTask.listId;
+  const movedAcrossLists = sourceListId !== newListId;
+
+  if (movedAcrossLists) {
+    await logTaskActivity(taskId, authResult.user.id, "moved", {
+      fromListId: sourceListId,
+      toListId: newListId,
+      fromListName: sourceOwnership.list.name,
+      toListName: destOwnership.list.name,
+    });
+  } else if (existingTask.position !== updatedTask?.position) {
+    await logTaskActivity(taskId, authResult.user.id, "moved", {
+      fromPosition: existingTask.position,
+      toPosition: updatedTask?.position,
+      listName: destOwnership.list.name,
+    });
+  }
+
+  // Fetch the authoritative, fully up-to-date state for both affected
+  // lists so the client can apply it directly with no local guessing.
+  const destTasksFinal = await queries.tasks.getByList(newListId);
+  const sourceTasksFinal = movedAcrossLists
+    ? await queries.tasks.getByList(sourceListId)
+    : [];
+
+  return {
+    success: true,
+    data: {
+      movedTask: updatedTask!,
+      affectedTasks: [...sourceTasksFinal, ...destTasksFinal],
+    },
+  };
+}
+
+export async function getTasksByProject(
+  projectId: string,
+): Promise<
+  ActionResult<Awaited<ReturnType<typeof queries.tasks.getByProject>>>
+> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  // Ownership: getProject/getListsByProject already validate project
+  // access on this page load, so this is a secondary read — but if you
+  // want defense-in-depth per-project ownership check here, this is
+  // where it'd go (similar to assertListOwnership, but project-scoped).
+
+  const tasks = await queries.tasks.getByProject(projectId);
+  return { success: true, data: tasks };
 }

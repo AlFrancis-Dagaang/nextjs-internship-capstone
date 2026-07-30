@@ -1,0 +1,86 @@
+"use client";
+
+import { useState } from "react";
+import type { Task } from "@/lib/db/schema";
+import type { ListWithTasks } from "@/components/lists/board";
+import { TaskActivityFeed } from "./task-activity-feed";
+import { TaskPrioritySection } from "./task-priority-section";
+import { TaskDatesSection } from "./task-dates-section";
+import { TaskMoveSection } from "./task-move-section";
+import { TaskMembersSection } from "./task-members-section";
+import { TaskQuickActions } from "./task-quick-actions";
+
+type TaskSidebarProps = {
+  task: Task;
+  projectId: string;
+  allLists: ListWithTasks[];
+  onChanged?: (task: Task) => void;
+  onMoved?: (task: Task, affectedTasks: Task[]) => void;
+  onOpenChange: (open: boolean) => void;
+  onDeleteClick?: () => void;
+  onArchive?: () => void;
+};
+
+export function TaskSidebar({
+  task,
+  projectId,
+  allLists,
+  onChanged,
+  onMoved,
+  onOpenChange,
+  onDeleteClick,
+  onArchive,
+}: TaskSidebarProps) {
+  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
+
+  function handleChanged(updated: Task) {
+    setActivityRefreshKey((k) => k + 1);
+    onChanged?.(updated);
+  }
+
+  function handleMoved(movedTask: Task, affectedTasks: Task[]) {
+    setActivityRefreshKey((k) => k + 1);
+    onMoved?.(movedTask, affectedTasks);
+  }
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Added pt-2 and pb-6 so top inputs and bottom inputs never clip */}
+      <div className="flex-1 overflow-y-auto space-y-4 pr-1 pb-6 min-h-0 px-1">
+        <TaskPrioritySection task={task} onChanged={handleChanged} />
+
+        <div className="border-t border-neutral-200 dark:border-neutral-800">
+          <TaskDatesSection task={task} onChanged={handleChanged} />
+        </div>
+
+        <div className="border-t border-neutral-200 dark:border-neutral-800">
+          <TaskMoveSection
+            task={task}
+            allLists={allLists}
+            onMoved={handleMoved}
+          />
+        </div>
+
+        <div className="border-t border-neutral-200 dark:border-neutral-800">
+          <TaskMembersSection />
+        </div>
+
+        <div className="border-t border-neutral-200 dark:border-neutral-800">
+          <h4 className="text-[10px] text-neutral-500 uppercase font-semibold tracking-wider mb-2">
+            Activity Log
+          </h4>
+          <TaskActivityFeed taskId={task.id} refreshKey={activityRefreshKey} />
+        </div>
+      </div>
+
+      {/* Pinned Quick Actions Footer */}
+      <div className="shrink-0 pt-3 mt-2 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
+        <TaskQuickActions
+          task={task}
+          onDeleteClick={onDeleteClick}
+          onArchive={onArchive}
+        />
+      </div>
+    </div>
+  );
+}

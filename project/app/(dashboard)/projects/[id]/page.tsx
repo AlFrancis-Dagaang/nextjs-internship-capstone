@@ -1,15 +1,11 @@
-import {
-  ArrowLeft,
-  Settings,
-  Users,
-  Calendar,
-  MoreHorizontal,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getProject } from "@/lib/actions/projects";
 import { getListsByProject } from "@/lib/actions/lists";
-import { getTasksByList } from "@/lib/actions/tasks";
+import { getTasksByProject } from "@/lib/actions/tasks";
 import { Board, type ListWithTasks } from "@/components/lists/board";
+import { ProjectHeader } from "@/components/projects/project-header";
+import type { Task } from "@/lib/db/schema";
 
 export default async function ProjectPage({
   params,
@@ -18,7 +14,11 @@ export default async function ProjectPage({
 }) {
   const { id } = await params;
 
-  const projectResult = await getProject(id);
+  const [projectResult, listsResult, tasksResult] = await Promise.all([
+    getProject(id),
+    getListsByProject(id),
+    getTasksByProject(id),
+  ]);
 
   if (!projectResult.success) {
     return (
@@ -39,60 +39,31 @@ export default async function ProjectPage({
   }
 
   const project = projectResult.data;
-
-  const listsResult = await getListsByProject(id);
   const lists = listsResult.success ? listsResult.data : [];
+  const allTasks = tasksResult.success ? tasksResult.data : [];
 
-  const listsWithTasks: ListWithTasks[] = await Promise.all(
-    lists.map(async (list) => {
-      const tasksResult = await getTasksByList(list.id);
-      return {
-        ...list,
-        tasks: tasksResult.success ? tasksResult.data : [],
-      };
-    }),
-  );
+  const tasksByList = new Map<string, Task[]>();
+  for (const task of allTasks) {
+    const arr = tasksByList.get(task.listId) ?? [];
+    arr.push(task);
+    tasksByList.set(task.listId, arr);
+  }
+
+  const listsWithTasks: ListWithTasks[] = lists.map((list) => ({
+    ...list,
+    tasks: (tasksByList.get(list.id) ?? []).sort(
+      (a, b) => a.position - b.position,
+    ),
+  }));
 
   return (
-    <div className="space-y-6">
-      {/* Project Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link
-            href="/projects"
-            className="p-2 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400 rounded-lg transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-outer_space-500 dark:text-platinum-500">
-              {project.name}
-            </h1>
-            <p className="text-paynes_gray-500 dark:text-french_gray-500 mt-1">
-              {project.description ??
-                "Kanban board view for project management"}
-            </p>
-          </div>
-        </div>
-
-        {/* Unchanged from placeholder — non-functional, out of scope for #18 */}
-        <div className="flex items-center space-x-2">
-          <button className="p-2 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400 rounded-lg transition-colors">
-            <Users size={20} />
-          </button>
-          <button className="p-2 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400 rounded-lg transition-colors">
-            <Calendar size={20} />
-          </button>
-          <button className="p-2 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400 rounded-lg transition-colors">
-            <Settings size={20} />
-          </button>
-          <button className="p-2 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400 rounded-lg transition-colors">
-            <MoreHorizontal size={20} />
-          </button>
-        </div>
+    <div className="h-full flex flex-col overflow-hidden px-1 space-y-4">
+      <div className="shrink-0">
+        <ProjectHeader project={project} />
       </div>
-
-      <Board projectId={id} initialLists={listsWithTasks} />
+      <div className="flex-1 min-h-0">
+        <Board projectId={id} initialLists={listsWithTasks} />
+      </div>
     </div>
   );
 }
