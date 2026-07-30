@@ -10,7 +10,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-platinum-900 dark:bg-outer_space-600 transition-colors">
+    <div className="min-h-screen bg-white/90 dark:bg-outer_space-600 transition-colors">
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <div className="lg:pl-64 flex flex-col min-h-screen">
