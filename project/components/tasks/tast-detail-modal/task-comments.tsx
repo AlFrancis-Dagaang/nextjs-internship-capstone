@@ -70,20 +70,39 @@ export function TaskComments({
 
   function handlePost() {
     if (!content.trim()) return;
+
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const submittedContent = content;
+    const optimisticComment = {
+      id: tempId,
+      taskId,
+      authorId: currentUserId ?? "",
+      content: submittedContent,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      author: { id: currentUserId ?? "", name: "You" },
+    } as CommentWithAuthor;
+
+    setContent("");
+    setIsExpanded(false);
+    setComments((prev) => [...(prev ?? []), optimisticComment]);
+    onCommentCountChanged?.(taskId, 1);
+
     startTransition(async () => {
-      const result = await createComment({ taskId, content });
+      const result = await createComment({ taskId, content: submittedContent });
       if (!result.success) {
         toast({
           title: "Failed to post comment",
           description: result.fieldErrors ? "Check your input." : result.error,
           variant: "destructive",
         });
+        setComments((prev) => (prev ?? []).filter((c) => c.id !== tempId));
+        onCommentCountChanged?.(taskId, -1);
+        setContent(submittedContent); // give the user their text back
+        setIsExpanded(true);
         return;
       }
-      setContent("");
-      setIsExpanded(false);
-      refresh();
-      onCommentCountChanged?.(taskId, 1);
+      refresh(); // real data replaces the temp entry wholesale
     });
   }
 
