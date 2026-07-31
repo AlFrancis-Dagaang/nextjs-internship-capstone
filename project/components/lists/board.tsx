@@ -20,6 +20,7 @@ import type { List, Task } from "@/lib/db/schema";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
 import { deleteTask, moveTaskToList } from "@/lib/actions/tasks";
+import { useUiStore } from "@/stores/ui-store";
 import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
 import { useTransition } from "react";
 
@@ -35,9 +36,14 @@ export function Board({
 }) {
   const { toast } = useToast();
   const [lists, setLists] = useState<ListWithTasks[]>(initialLists);
-  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
-  const [deleteTaskOpen, setDeleteTaskOpen] = useState(false);
+  // #22 (pass 1) — openTaskId/deleteTaskOpen moved to ui-store.ts.
+  const openTaskId = useUiStore((s) => s.openTaskId);
+  const deleteTaskOpen = useUiStore((s) => s.deleteTaskOpen);
+  const openTaskDetail = useUiStore((s) => s.openTaskDetail);
+  const closeTaskDetail = useUiStore((s) => s.closeTaskDetail);
+  const openDeleteTaskDialog = useUiStore((s) => s.openDeleteTaskDialog);
+  const closeDeleteTaskDialog = useUiStore((s) => s.closeDeleteTaskDialog);
   const [isDeletingTask, startDeleteTaskTransition] = useTransition();
 
   // #21 — drag-and-drop state. Reorder/move happens entirely client-side;
@@ -124,7 +130,7 @@ export function Board({
           : l,
       ),
     );
-    if (openTaskId === taskId) setOpenTaskId(null);
+    if (openTaskId === taskId) closeTaskDetail();
   }
 
   function handleConfirmDeleteTask() {
@@ -137,8 +143,7 @@ export function Board({
           description: `"${openTask.title}" was deleted.`,
         });
         handleTaskDeleted(openTask.listId, openTask.id);
-        setDeleteTaskOpen(false);
-        setOpenTaskId(null);
+        closeTaskDetail();
       } else {
         toast({
           title: "Failed to delete task",
@@ -328,7 +333,7 @@ export function Board({
                 onTaskUpdated={handleTaskUpdated}
                 onTaskDeleted={handleTaskDeleted}
                 onTaskMoved={handleTaskMoved}
-                onOpenTask={setOpenTaskId}
+                onOpenTask={openTaskDetail}
               />
             ))}
 
@@ -361,11 +366,11 @@ export function Board({
           allLists={lists}
           open={true}
           onOpenChange={(open) => {
-            if (!open) setOpenTaskId(null);
+            if (!open) closeTaskDetail();
           }}
           onChanged={handleTaskUpdated}
           onMoved={handleTaskMoved}
-          onDeleteClick={() => setDeleteTaskOpen(true)}
+          onDeleteClick={openDeleteTaskDialog}
           onArchive={() => {
             toast({ title: "Task archived", description: openTask.title });
           }}
@@ -376,7 +381,7 @@ export function Board({
       {openTask && (
         <DeleteTaskDialog
           isOpen={deleteTaskOpen}
-          onClose={() => setDeleteTaskOpen(false)}
+          onClose={closeDeleteTaskDialog}
           onConfirm={handleConfirmDeleteTask}
           taskTitle={openTask.title}
           isPending={isDeletingTask}

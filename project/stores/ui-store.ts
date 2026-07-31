@@ -48,15 +48,33 @@ export const useUIStore = create<UIState>((set) => ({
 }))
 */
 
-// Placeholder to prevent import errors
-export const useUIStore = () => {
-  console.log("TODO: Implement UI store with Zustand")
-  return {
-    isCreateProjectModalOpen: false,
-    isCreateTaskModalOpen: false,
-    openCreateProjectModal: () =>
-      console.log("TODO: Open create project modal"),
-    closeCreateProjectModal: () =>
-      console.log("TODO: Close create project modal"),
-  }
+import { create } from "zustand";
+
+/**
+ * #22 (pass 1) — UI-only state: which task's detail modal is open, and
+ * whether its delete-confirmation dialog is open. Deliberately excludes
+ * board/task DATA (lists, drag state) — that's board-store.ts's job in
+ * pass 2. Kept separate so UI concerns (modals, sidebar, etc.) don't get
+ * tangled with data mutations and their persistence/revert logic.
+ */
+interface UiState {
+  openTaskId: string | null;
+  deleteTaskOpen: boolean;
+
+  openTaskDetail: (taskId: string) => void;
+  closeTaskDetail: () => void;
+
+  openDeleteTaskDialog: () => void;
+  closeDeleteTaskDialog: () => void;
 }
+
+export const useUiStore = create<UiState>((set) => ({
+  openTaskId: null,
+  deleteTaskOpen: false,
+
+  openTaskDetail: (taskId) => set({ openTaskId: taskId }),
+  closeTaskDetail: () => set({ openTaskId: null, deleteTaskOpen: false }),
+
+  openDeleteTaskDialog: () => set({ deleteTaskOpen: true }),
+  closeDeleteTaskDialog: () => set({ deleteTaskOpen: false }),
+}));
