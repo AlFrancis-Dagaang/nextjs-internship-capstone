@@ -10,7 +10,14 @@ import { Plus } from "lucide-react";
 
 type CreateTaskModalProps = {
   listId: string;
+  // #23 — onCreated is now called immediately with an optimistic task
+  // (temp id for create, in-place edit for the isEdit branch), not after
+  // the server responds.
   onCreated?: (task: Task) => void;
+  // Create-only outcomes: onConfirmed swaps the temp task for the real
+  // one, onFailed removes it (caller reuses its delete-removal logic).
+  onConfirmed?: (tempId: string, realTask: Task) => void;
+  onFailed?: (tempId: string) => void;
   task?: Task;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -20,6 +27,8 @@ type CreateTaskModalProps = {
 export function CreateTaskModal({
   listId,
   onCreated,
+  onConfirmed,
+  onFailed,
   task,
 }: CreateTaskModalProps) {
   const isEdit = Boolean(task);
@@ -37,44 +46,86 @@ export function CreateTaskModal({
     e.preventDefault();
     if (!title.trim()) return;
 
+    const submittedTitle = title;
     setGenericError(undefined);
-    startTransition(async () => {
-      const input = {
-        title,
-        listId,
-      };
 
-      const result = isEdit
-        ? await updateTask(task!.id, { title })
-        : await createTask(input);
+    if (isEdit && task) {
+      // Optimistic edit (title-only, via this modal's edit mode).
+      setIsExpanded(false);
+      onCreated?.({ ...task, title: submittedTitle });
 
-      if (!result.success) {
-        if (result.fieldErrors) {
-          setFieldErrors(result.fieldErrors);
+      startTransition(async () => {
+        const result = await updateTask(task.id, { title: submittedTitle });
+        if (!result.success) {
+          if (result.fieldErrors) setFieldErrors(result.fieldErrors);
+          else setGenericError(result.error);
           toast({
-            title: isEdit ? "Task updated" : "Task created",
-            description: title,
-          });
-        } else {
-          setGenericError(result.error);
-          toast({
-            title: isEdit ? "Failed to update task" : "Failed to create task",
+            title: "Failed to update task",
             description: result.error,
             variant: "destructive",
           });
+          onCreated?.(task); // revert to the pre-edit task
+          return;
         }
+        toast({ title: "Task updated", description: submittedTitle });
+        setTitle("");
+        setFieldErrors(undefined);
+        onCreated?.(result.data); // reconcile with server's version
+      });
+      return;
+    }
+
+    // Optimistic create: show the card immediately with a temp id, then
+    // either swap it for the real task (onConfirmed) or remove it
+    // (onFailed) once createTask resolves.
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const optimisticTask = {
+      id: tempId,
+      title: submittedTitle,
+      description: null,
+      listId,
+      assigneeId: null,
+      priority: null,
+      dueDate: null,
+      position: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as Task;
+    // NOTE: this assumes Task's schema doesn't have other required
+    // non-nullable fields beyond what's listed here — if the build flags
+    // a type error on this object, add the missing field with a
+    // reasonable placeholder default.
+
+    setTitle("");
+    setFieldErrors(undefined);
+    setIsExpanded(false);
+    onCreated?.(optimisticTask);
+
+    startTransition(async () => {
+      const result = await createTask({ title: submittedTitle, listId });
+
+      if (!result.success) {
+        // Re-open the form with the failed title so field errors (if any)
+        // are still visible — don't leave the user with just a toast and
+        // no way to see/fix what went wrong.
+        setIsExpanded(true);
+        setTitle(submittedTitle);
+        if (result.fieldErrors) {
+          setFieldErrors(result.fieldErrors);
+        } else {
+          setGenericError(result.error);
+        }
+        toast({
+          title: "Failed to create task",
+          description: result.error,
+          variant: "destructive",
+        });
+        onFailed?.(tempId);
         return;
       }
 
-      toast({
-        title: isEdit ? "Task updated" : "Task created",
-        description: title,
-      });
-
-      setTitle("");
-      setFieldErrors(undefined);
-      setIsExpanded(false);
-      onCreated?.(result.data);
+      toast({ title: "Task created", description: submittedTitle });
+      onConfirmed?.(tempId, result.data);
     });
   }
 

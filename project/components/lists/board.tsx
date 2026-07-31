@@ -63,6 +63,7 @@ export function Board({
   const closeDeleteTaskDialog = useUiStore((s) => s.closeDeleteTaskDialog);
 
   const [isDeletingTask, startDeleteTaskTransition] = useTransition();
+  const replaceOptimisticTask = useBoardStore((s) => s.replaceOptimisticTask);
 
   // Hydrate the store from server-provided data. Re-runs if projectId
   // changes (e.g. client-side nav to a different project) so stale data
@@ -169,8 +170,10 @@ export function Board({
                 onDeleted={removeList}
                 onMoved={reorderLists}
                 onTaskCreated={addTask}
+                onTaskCreateConfirmed={replaceOptimisticTask}
                 onTaskUpdated={updateTaskLocal}
                 onTaskDeleted={handleTaskDeleted}
+                onTaskRestoreNeeded={(task) => addTask(task.listId, task)}
                 onTaskMoved={reconcileTaskMoved}
                 onOpenTask={openTaskDetail}
               />

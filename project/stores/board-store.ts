@@ -91,6 +91,12 @@ interface BoardState {
   removeTask: (listId: string, taskId: string) => void;
   reconcileTaskMoved: (movedTask: Task, affectedTasks: Task[]) => void;
   changeCommentCount: (taskId: string, delta: number) => void;
+  // #23 — swaps a client-generated temp id (from an optimistic create) for
+  // the server-confirmed task once createTask resolves. Searches by id
+  // across all lists rather than requiring a listId, since the caller
+  // (CreateTaskModal) doesn't need to track which list beyond what it
+  // already passed to addTask.
+  replaceOptimisticTask: (tempId: string, realTask: Task) => void;
 
   startDrag: (taskId: string) => void;
   clearActiveTask: () => void;
@@ -166,6 +172,18 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           ? { ...l, tasks: l.tasks.filter((t) => t.id !== taskId) }
           : l,
       ),
+    })),
+
+  replaceOptimisticTask: (tempId, realTask) =>
+    set((s) => ({
+      lists: s.lists.map((l) => ({
+        ...l,
+        tasks: l.tasks.map((t) =>
+          t.id === tempId
+            ? { ...realTask, commentCount: t.commentCount ?? 0 }
+            : t,
+        ),
+      })),
     })),
 
   // Same #24 fix as updateTaskLocal, for moveTaskToList's affectedTasks.
