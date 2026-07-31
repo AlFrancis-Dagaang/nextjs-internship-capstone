@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { moveTaskToList } from "@/lib/actions/tasks";
 import type { Task } from "@/lib/db/schema";
 import type { ListWithTasks } from "@/components/lists/board";
-
+import { useBoardStore } from "@/stores/board-store";
 export function TaskMoveSection({
   task,
   allLists,
@@ -26,6 +26,8 @@ export function TaskMoveSection({
 }) {
   const { toast } = useToast();
   const [isMoving, startMoveTransition] = useTransition();
+  const applyOptimisticMove = useBoardStore((s) => s.applyOptimisticMove);
+  const revertMoveSnapshot = useBoardStore((s) => s.revertMoveSnapshot);
 
   const currentIndexInCurrentList = (() => {
     const currentList = allLists.find((l) => l.id === task.listId);
@@ -57,6 +59,12 @@ export function TaskMoveSection({
 
   function handleMove() {
     const zeroIndexedPosition = parseInt(position, 10) - 1;
+    const snapshot = applyOptimisticMove(
+      task.id,
+      targetListId,
+      zeroIndexedPosition,
+    );
+
     startMoveTransition(async () => {
       const result = await moveTaskToList(
         task.id,
@@ -64,6 +72,7 @@ export function TaskMoveSection({
         zeroIndexedPosition,
       );
       if (!result.success) {
+        revertMoveSnapshot(snapshot);
         toast({
           title: "Failed to move task",
           description: result.error,
@@ -73,7 +82,6 @@ export function TaskMoveSection({
       }
       toast({ title: "Task moved" });
       onMoved?.(result.data.movedTask, result.data.affectedTasks);
-      // removed: onOpenChange(false);
     });
   }
 

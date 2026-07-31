@@ -29,7 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { List, Task } from "@/lib/db/schema";
 import { moveTaskToList } from "@/lib/actions/tasks";
 import { ListWithTasks } from "@/components/lists/board";
-
+import { useBoardStore } from "@/stores/board-store";
 export function TaskActions({
   taskId,
   projectId,
@@ -57,6 +57,8 @@ export function TaskActions({
   const [targetListId, setTargetListId] = useState(currentListId);
   const [position, setPosition] = useState("1");
   const [isMoving, startMoveTransition] = useTransition();
+  const applyOptimisticMove = useBoardStore((s) => s.applyOptimisticMove);
+  const revertMoveSnapshot = useBoardStore((s) => s.revertMoveSnapshot);
 
   // Reset target/position defaults whenever the move panel opens
   useEffect(() => {
@@ -85,6 +87,14 @@ export function TaskActions({
 
   function handleMove() {
     const zeroIndexedPosition = parseInt(position, 10) - 1;
+    const snapshot = applyOptimisticMove(
+      taskId,
+      targetListId,
+      zeroIndexedPosition,
+    );
+    setIsOpen(false);
+    setView("menu");
+
     startMoveTransition(async () => {
       const result = await moveTaskToList(
         taskId,
@@ -92,6 +102,7 @@ export function TaskActions({
         zeroIndexedPosition,
       );
       if (!result.success) {
+        revertMoveSnapshot(snapshot);
         toast({
           title: "Failed to move task",
           description: result.error,
@@ -100,8 +111,6 @@ export function TaskActions({
         return;
       }
       toast({ title: "Task moved" });
-      setIsOpen(false);
-      setView("menu");
       onMoved?.(result.data.movedTask, result.data.affectedTasks);
     });
   }
