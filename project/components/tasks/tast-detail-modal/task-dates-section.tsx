@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { updateTask } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
 import type { Task } from "@/lib/db/schema";
+import { useBoardStore } from "@/stores/board-store";
 
 function toDateInputValue(d: Date | string | null | undefined): string {
   if (!d) return "";
@@ -23,10 +24,12 @@ export function TaskDatesSection({
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [dueDate, setDueDate] = useState(toDateInputValue(task.dueDate));
+  const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
 
   function handleDateChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newDate = e.target.value;
     setDueDate(newDate);
+    updateTaskLocal({ ...task, dueDate: newDate ? new Date(newDate) : null });
 
     startTransition(async () => {
       const result = await updateTask(task.id, {
@@ -40,6 +43,7 @@ export function TaskDatesSection({
           variant: "destructive",
         });
         setDueDate(toDateInputValue(task.dueDate));
+        updateTaskLocal(task); // revert the board card too
         return;
       }
       onChanged?.(result.data);

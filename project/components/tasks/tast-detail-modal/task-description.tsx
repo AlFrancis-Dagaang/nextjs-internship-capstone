@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateTask } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
 import type { Task } from "@/lib/db/schema";
+import { useBoardStore } from "@/stores/board-store";
 
 export function TaskDescription({
   task,
@@ -29,11 +30,16 @@ export function TaskDescription({
   const [isEditing, setIsEditing] = useState(false);
   const [description, setDescription] = useState(task.description ?? "");
   const [isPending, startTransition] = useTransition();
+  const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
 
   function handleSave() {
+    const submittedDescription = description;
+    setIsEditing(false);
+    updateTaskLocal({ ...task, description: submittedDescription || null });
+
     startTransition(async () => {
       const result = await updateTask(task.id, {
-        description: description || undefined,
+        description: submittedDescription || undefined,
       });
 
       if (!result.success) {
@@ -42,10 +48,11 @@ export function TaskDescription({
           description: result.error,
           variant: "destructive",
         });
+        updateTaskLocal(task); // revert the board card
+        setIsEditing(true); // reopen so the failed edit isn't silently lost
         return;
       }
 
-      setIsEditing(false);
       onChanged?.(result.data);
     });
   }

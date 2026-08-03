@@ -91,6 +91,12 @@ interface BoardState {
   removeTask: (listId: string, taskId: string) => void;
   reconcileTaskMoved: (movedTask: Task, affectedTasks: Task[]) => void;
   changeCommentCount: (taskId: string, delta: number) => void;
+  // #23 — swaps a client-generated temp id (from an optimistic create) for
+  // the server-confirmed task once createTask resolves. Searches by id
+  // across all lists rather than requiring a listId, since the caller
+  // (CreateTaskModal) doesn't need to track which list beyond what it
+  // already passed to addTask.
+  replaceOptimisticTask: (tempId: string, realTask: Task) => void;
 
   startDrag: (taskId: string) => void;
   clearActiveTask: () => void;
@@ -100,6 +106,12 @@ interface BoardState {
     overId: string,
   ) => { finalListId: string; finalPosition: number } | null;
   revertToSnapshot: () => void;
+  applyOptimisticMove: (
+    taskId: string,
+    targetListId: string,
+    targetPosition: number,
+  ) => ListWithTasks[];
+  revertMoveSnapshot: (snapshot: ListWithTasks[]) => void;
 }
 
 export const useBoardStore = create<BoardState>((set, get) => ({
@@ -166,6 +178,18 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           ? { ...l, tasks: l.tasks.filter((t) => t.id !== taskId) }
           : l,
       ),
+    })),
+
+  replaceOptimisticTask: (tempId, realTask) =>
+    set((s) => ({
+      lists: s.lists.map((l) => ({
+        ...l,
+        tasks: l.tasks.map((t) =>
+          t.id === tempId
+            ? { ...realTask, commentCount: t.commentCount ?? 0 }
+            : t,
+        ),
+      })),
     })),
 
   // Same #24 fix as updateTaskLocal, for moveTaskToList's affectedTasks.
@@ -279,4 +303,44 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const { dragSnapshot } = get();
     if (dragSnapshot) set({ lists: dragSnapshot, dragSnapshot: null });
   },
+  applyOptimisticMove: (taskId, targetListId, targetPosition) => {
+    const { lists } = get();
+    const snapshot = lists;
+
+    const sourceList = lists.find((l) => l.tasks.some((t) => t.id === taskId));
+    const task = sourceList?.tasks.find((t) => t.id === taskId);
+    const destList = lists.find((l) => l.id === targetListId);
+    if (!sourceList || !task || !destList) return snapshot;
+
+    const movedTask = { ...task, listId: destList.id };
+
+    set({
+      lists: lists.map((l) => {
+        if (l.id === sourceList.id && l.id === destList.id) {
+          const withoutTask = l.tasks.filter((t) => t.id !== taskId);
+          withoutTask.splice(targetPosition, 0, movedTask);
+          return {
+            ...l,
+            tasks: withoutTask.map((t, i) => ({ ...t, position: i })),
+          };
+        }
+        if (l.id === sourceList.id) {
+          return { ...l, tasks: l.tasks.filter((t) => t.id !== taskId) };
+        }
+        if (l.id === destList.id) {
+          const newTasks = [...l.tasks];
+          newTasks.splice(targetPosition, 0, movedTask);
+          return {
+            ...l,
+            tasks: newTasks.map((t, i) => ({ ...t, position: i })),
+          };
+        }
+        return l;
+      }),
+    });
+
+    return snapshot;
+  },
+
+  revertMoveSnapshot: (snapshot) => set({ lists: snapshot }),
 }));

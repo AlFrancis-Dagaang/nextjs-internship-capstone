@@ -12,6 +12,7 @@ import {
 import { updateTask } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
 import type { Task } from "@/lib/db/schema";
+import { useBoardStore } from "@/stores/board-store";
 
 export function TaskPrioritySection({
   task,
@@ -23,9 +24,14 @@ export function TaskPrioritySection({
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [priority, setPriority] = useState(task.priority ?? "");
+  const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
 
   function handlePriorityChange(newPriority: string) {
     setPriority(newPriority);
+    // #23 — reflect on the board card immediately. onChanged (and the
+    // activityRefreshKey coupling it triggers via TaskSidebar) is left
+    // untouched below, still firing only on server success.
+    updateTaskLocal({ ...task, priority: newPriority as Task["priority"] });
 
     startTransition(async () => {
       const result = await updateTask(task.id, { priority: newPriority });
@@ -36,6 +42,7 @@ export function TaskPrioritySection({
           variant: "destructive",
         });
         setPriority(task.priority ?? "");
+        updateTaskLocal(task); // revert the board card too
         return;
       }
       onChanged?.(result.data);

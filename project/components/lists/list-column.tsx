@@ -25,8 +25,10 @@ export function ListColumn({
   onDeleted,
   onMoved,
   onTaskCreated,
+  onTaskCreateConfirmed,
   onTaskUpdated,
   onTaskDeleted,
+  onTaskRestoreNeeded,
   onTaskMoved,
 }: {
   list: ListWithTasks;
@@ -36,8 +38,16 @@ export function ListColumn({
   onDeleted?: (listId: string) => void;
   onMoved?: (updatedLists: List[]) => void;
   onTaskCreated?: (listId: string, task: Task) => void;
+  // #23 — optimistic create outcomes: confirm swaps the temp task for the
+  // server's real one, fail removes the temp task (reuses onTaskDeleted's
+  // removal logic since removing a temp task is structurally identical).
+  onTaskCreateConfirmed?: (tempId: string, realTask: Task) => void;
   onTaskUpdated?: (task: Task) => void;
   onTaskDeleted?: (listId: string, taskId: string) => void;
+  // #23 — called when a task's delete fails after being optimistically
+  // removed; forwards the full task so board.tsx can re-add it via
+  // the store's addTask.
+  onTaskRestoreNeeded?: (task: Task) => void;
   onTaskMoved?: (task: Task, affectedTasks: Task[]) => void;
   onOpenTask: (taskId: string) => void;
 }) {
@@ -165,6 +175,7 @@ export function ListColumn({
                 allLists={allLists}
                 onUpdated={onTaskUpdated}
                 onDeleted={() => onTaskDeleted?.(list.id, task.id)}
+                onDeleteFailed={onTaskRestoreNeeded}
                 onMoved={(movedTask, affectedTasks) =>
                   onTaskMoved?.(movedTask, affectedTasks)
                 }
@@ -179,6 +190,10 @@ export function ListColumn({
           <CreateTaskModal
             listId={list.id}
             onCreated={(task) => onTaskCreated?.(list.id, task)}
+            onConfirmed={(tempId, realTask) =>
+              onTaskCreateConfirmed?.(tempId, realTask)
+            }
+            onFailed={(tempId) => onTaskDeleted?.(list.id, tempId)}
           />
         </div>
       </div>

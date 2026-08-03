@@ -112,6 +112,7 @@ export function TaskCard({
   allLists,
   onUpdated,
   onDeleted,
+  onDeleteFailed,
   onMoved,
   onOpenDetail,
 }: {
@@ -120,6 +121,11 @@ export function TaskCard({
   allLists: ListWithTasks[];
   onUpdated?: (task: Task) => void;
   onDeleted?: () => void;
+  // #23 — called if the server delete fails, so the caller (ultimately
+  // board.tsx's addTask) can re-add the task that was optimistically
+  // removed. Not needed for rename, since a failed rename can just
+  // reapply the original `task` object via onUpdated instead.
+  onDeleteFailed?: (task: Task) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
   onOpenDetail: () => void;
 }) {
@@ -147,6 +153,7 @@ export function TaskCard({
     transform: CSS.Transform.toString(transform),
     transition,
   };
+  const isTemp = task.id.startsWith("temp-");
 
   function handleRenameSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -155,8 +162,14 @@ export function TaskCard({
       setTitle(task.title);
       return;
     }
+    const submittedTitle = title;
+    // #23 — apply immediately (optimistic), close the rename input right
+    // away instead of waiting for the server round-trip.
+    setIsRenaming(false);
+    onUpdated?.({ ...task, title: submittedTitle });
+
     startTransition(async () => {
-      const result = await updateTask(task.id, { title });
+      const result = await updateTask(task.id, { title: submittedTitle });
       if (!result.success) {
         toast({
           title: "Failed to rename task",
@@ -164,16 +177,21 @@ export function TaskCard({
           variant: "destructive",
         });
         setTitle(task.title);
-        setIsRenaming(false);
+        onUpdated?.(task); // revert to the pre-edit task
         return;
       }
       toast({ title: "Task updated", description: result.data?.title });
-      setIsRenaming(false);
-      onUpdated?.(result.data);
+      onUpdated?.(result.data); // reconcile with server's version
     });
   }
 
   function handleDelete() {
+    // #23 — remove immediately (optimistic); keep a reference to the task
+    // itself since it's already available as a prop, so a failed delete
+    // can hand it straight back for re-insertion via onDeleteFailed.
+    setDeleteOpen(false);
+    onDeleted?.();
+
     startTransition(async () => {
       const result = await deleteTask(task.id);
       if (result.success) {
@@ -181,14 +199,13 @@ export function TaskCard({
           title: "Task deleted",
           description: `"${task.title}" was deleted.`,
         });
-        setDeleteOpen(false);
-        onDeleted?.();
       } else {
         toast({
           title: "Failed to delete task",
           description: result.error,
           variant: "destructive",
         });
+        onDeleteFailed?.(task);
       }
     });
   }
@@ -245,8 +262,9 @@ export function TaskCard({
         ) : (
           <TaskCardView
             task={task}
-            onOpenDetail={onOpenDetail}
-            cornerActions={cornerActions}
+            interactive={!isTemp}
+            onOpenDetail={isTemp ? undefined : onOpenDetail}
+            cornerActions={isTemp ? undefined : cornerActions}
             className={isDragging ? "opacity-40 cursor-grabbing shadow-lg" : ""}
           />
         )}
