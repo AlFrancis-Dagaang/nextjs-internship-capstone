@@ -44,3 +44,60 @@ export async function assertTaskAccess(taskId: string, userId: string) {
 
   return { task, list: ownership.list, project: ownership.project } as const;
 }
+
+/**
+ * Role-aware project access check. Owner is resolved via projects.ownerId
+ * (not a project_members row — #29 deliberately keeps ownership as the
+ * single source of truth). Falls through to project_members for
+ * everyone else.
+ */
+export async function assertProjectAccess(projectId: string, userId: string) {
+  const project = await queries.projects.getById(projectId);
+  if (!project) return { error: "Not found" } as const;
+
+  if (project.ownerId === userId) {
+    return { project, role: "owner" as const, isOwner: true } as const;
+  }
+
+  const membership = await queries.projectMembers.getByProjectAndUser(
+    projectId,
+    userId,
+  );
+  if (!membership) return { error: "Forbidden" } as const;
+
+  return {
+    project,
+    role: membership.role,
+    isOwner: false,
+    membership,
+  } as const;
+}
+
+/**
+ * View access: owner, editor, or viewer — anyone with a role at all.
+ * Alias over assertProjectAccess for call-site clarity (matrix: view
+ * is the one row where all three roles are ✅).
+ */
+export async function assertProjectViewAccess(
+  projectId: string,
+  userId: string,
+) {
+  return assertProjectAccess(projectId, userId);
+}
+
+/**
+ * Edit access: owner or editor only, per the permission matrix
+ * (create/edit/move/delete tasks, comment, list CRUD, archive/restore).
+ * Viewer is explicitly rejected here even though they have project
+ * access — this is the check most existing task/list actions will
+ * retrofit to.
+ */
+export async function assertProjectEditAccess(
+  projectId: string,
+  userId: string,
+) {
+  const access = await assertProjectAccess(projectId, userId);
+  if ("error" in access) return access;
+  if (access.role === "viewer") return { error: "Forbidden" } as const;
+  return access;
+}

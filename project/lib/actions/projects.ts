@@ -3,7 +3,10 @@
 import { queries } from "@/lib/db";
 import { projectCreateSchema, projectUpdateSchema } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
-import { assertProjectOwnership } from "@/lib/services/ownership";
+import {
+  assertProjectOwnership,
+  assertProjectViewAccess,
+} from "@/lib/services/ownership";
 import { Project } from "../db/schema";
 
 type ActionResult<T> =
@@ -36,14 +39,16 @@ export async function createProject(
 }
 
 export async function getProjects(): Promise<
-  ActionResult<Awaited<ReturnType<typeof queries.projects.getByOwner>>>
+  ActionResult<Awaited<ReturnType<typeof queries.projects.getByOwnerOrMember>>>
 > {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const projects = await queries.projects.getByOwner(authResult.user.id);
+  const projects = await queries.projects.getByOwnerOrMember(
+    authResult.user.id,
+  );
   return { success: true, data: projects };
 }
 
@@ -53,12 +58,12 @@ export async function getProject(id: string): Promise<ActionResult<Project>> {
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const ownership = await assertProjectOwnership(id, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectViewAccess(id, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
-  return { success: true, data: ownership.project };
+  return { success: true, data: access.project };
 }
 
 export async function updateProject(
