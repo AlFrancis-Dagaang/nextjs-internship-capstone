@@ -3,7 +3,10 @@
 import { queries } from "@/lib/db";
 import { commentCreateSchema } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
-import { assertTaskAccess } from "@/lib/services/ownership";
+import {
+  assertTaskEditAccess,
+  assertTaskViewAccess,
+} from "@/lib/services/ownership";
 import { logTaskActivity } from "@/lib/services/activity";
 import type { Comment } from "@/lib/db/schema";
 
@@ -28,7 +31,10 @@ export async function createComment(
     };
   }
 
-  const access = await assertTaskAccess(parsed.data.taskId, authResult.user.id);
+  const access = await assertTaskEditAccess(
+    parsed.data.taskId,
+    authResult.user.id,
+  );
   if ("error" in access) {
     return { success: false, error: access.error ?? "Unknown error" };
   }
@@ -58,7 +64,7 @@ export async function getCommentsByTask(
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const access = await assertTaskAccess(taskId, authResult.user.id);
+  const access = await assertTaskViewAccess(taskId, authResult.user.id);
   if ("error" in access) {
     return { success: false, error: access.error ?? "Unknown error" };
   }
@@ -78,13 +84,11 @@ export async function deleteComment(id: string): Promise<ActionResult<null>> {
     return { success: false, error: "Not found" };
   }
 
-  // Delete-own-only: this is deliberately NOT a project-ownership check like
-  // every other delete action in this codebase. A project owner cannot
-  // delete another user's comment — only the comment's own author can,
-  // per #59's acceptance criteria. Access to the task itself is still
-  // verified first, since an author's own comment could theoretically be
-  // queried outside their current project access in edge cases.
-  const access = await assertTaskAccess(
+  // Delete-own-only: deliberately NOT an edit-access check. Comments can
+  // only be created by someone who held edit access at the time (see
+  // createComment), so author-only is already the real gate here — this
+  // view-access call just confirms the task/project is still reachable.
+  const access = await assertTaskViewAccess(
     existingComment.taskId,
     authResult.user.id,
   );
@@ -120,7 +124,7 @@ export async function updateComment(
     return { success: false, error: "Not found" };
   }
 
-  const access = await assertTaskAccess(
+  const access = await assertTaskViewAccess(
     existingComment.taskId,
     authResult.user.id,
   );

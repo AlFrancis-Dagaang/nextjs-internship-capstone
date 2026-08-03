@@ -75,8 +75,6 @@ export async function assertProjectAccess(projectId: string, userId: string) {
 
 /**
  * View access: owner, editor, or viewer — anyone with a role at all.
- * Alias over assertProjectAccess for call-site clarity (matrix: view
- * is the one row where all three roles are ✅).
  */
 export async function assertProjectViewAccess(
   projectId: string,
@@ -86,11 +84,9 @@ export async function assertProjectViewAccess(
 }
 
 /**
- * Edit access: owner or editor only, per the permission matrix
- * (create/edit/move/delete tasks, comment, list CRUD, archive/restore).
+ * Edit access: owner or editor only, per the permission matrix.
  * Viewer is explicitly rejected here even though they have project
- * access — this is the check most existing task/list actions will
- * retrofit to.
+ * access.
  */
 export async function assertProjectEditAccess(
   projectId: string,
@@ -100,4 +96,60 @@ export async function assertProjectEditAccess(
   if ("error" in access) return access;
   if (access.role === "viewer") return { error: "Forbidden" } as const;
   return access;
+}
+
+/**
+ * List-scoped view access: resolves list -> project, then defers to
+ * assertProjectViewAccess (owner/editor/viewer all pass).
+ */
+export async function assertListViewAccess(listId: string, userId: string) {
+  const list = await queries.lists.getById(listId);
+  if (!list) return { error: "Not found" } as const;
+
+  const access = await assertProjectViewAccess(list.projectId, userId);
+  if ("error" in access) return access;
+
+  return { list, ...access } as const;
+}
+
+/**
+ * List-scoped edit access: resolves list -> project, then defers to
+ * assertProjectEditAccess (owner/editor pass, viewer rejected).
+ */
+export async function assertListEditAccess(listId: string, userId: string) {
+  const list = await queries.lists.getById(listId);
+  if (!list) return { error: "Not found" } as const;
+
+  const access = await assertProjectEditAccess(list.projectId, userId);
+  if ("error" in access) return access;
+
+  return { list, ...access } as const;
+}
+
+/**
+ * Task-scoped view access: resolves task -> list -> project, then
+ * defers to assertProjectViewAccess (owner/editor/viewer all pass).
+ */
+export async function assertTaskViewAccess(taskId: string, userId: string) {
+  const task = await queries.tasks.getById(taskId);
+  if (!task) return { error: "Not found" } as const;
+
+  const access = await assertListViewAccess(task.listId, userId);
+  if ("error" in access) return access;
+
+  return { task, ...access } as const;
+}
+
+/**
+ * Task-scoped edit access: resolves task -> list -> project, then
+ * defers to assertProjectEditAccess (owner/editor pass, viewer rejected).
+ */
+export async function assertTaskEditAccess(taskId: string, userId: string) {
+  const task = await queries.tasks.getById(taskId);
+  if (!task) return { error: "Not found" } as const;
+
+  const access = await assertListEditAccess(task.listId, userId);
+  if ("error" in access) return access;
+
+  return { task, ...access } as const;
 }

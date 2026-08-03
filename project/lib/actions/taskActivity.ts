@@ -2,7 +2,7 @@
 
 import { queries } from "@/lib/db";
 import { getAuthedUserOrError } from "@/lib/services/auth";
-import { assertListOwnership } from "@/lib/services/ownership";
+import { assertListViewAccess } from "@/lib/services/ownership";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -23,9 +23,9 @@ export async function getTaskActivity(
     return { success: false, error: "Not found" };
   }
 
-  const ownership = await assertListOwnership(task.listId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertListViewAccess(task.listId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const activity = await queries.taskActivity.getByTask(taskId);
