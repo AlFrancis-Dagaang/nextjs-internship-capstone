@@ -6,6 +6,7 @@ import {
   integer,
   uuid,
   jsonb,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // ---------- Tables ----------
@@ -98,12 +99,33 @@ export const comments = pgTable("comments", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const projectMembers = pgTable(
+  "project_members",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["editor", "viewer"] })
+      .notNull()
+      .default("viewer"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueMembership: unique().on(table.projectId, table.userId),
+  }),
+);
+
 // ---------- Relations ----------
 
 export const usersRelations = relations(users, ({ many }) => ({
   ownedProjects: many(projects),
   assignedTasks: many(tasks),
   comments: many(comments),
+  projectMemberships: many(projectMembers),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -112,6 +134,18 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     references: [users.id],
   }),
   lists: many(lists),
+  members: many(projectMembers),
+}));
+
+export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectMembers.projectId],
+    references: [projects.id],
+  }),
+  user: one(users, {
+    fields: [projectMembers.userId],
+    references: [users.id],
+  }),
 }));
 
 export const listsRelations = relations(lists, ({ one, many }) => ({
@@ -171,3 +205,5 @@ export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;
 export type TaskActivity = typeof taskActivity.$inferSelect;
 export type NewTaskActivity = typeof taskActivity.$inferInsert;
+export type ProjectMember = typeof projectMembers.$inferSelect;
+export type NewProjectMember = typeof projectMembers.$inferInsert;
