@@ -3,7 +3,11 @@
 import { queries } from "@/lib/db";
 import { taskCreateSchema, taskUpdateSchema } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
-import { assertListOwnership } from "@/lib/services/ownership";
+import {
+  assertListEditAccess,
+  assertListViewAccess,
+  assertProjectViewAccess,
+} from "@/lib/services/ownership";
 import { resolveAssigneeId } from "@/lib/services/assignee";
 import { logTaskActivity } from "@/lib/services/activity";
 import { Task } from "../db/schema";
@@ -32,18 +36,18 @@ export async function createTask(
     };
   }
 
-  const ownership = await assertListOwnership(
+  const access = await assertListEditAccess(
     parsed.data.listId,
     authResult.user.id,
   );
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const assigneeResult = resolveAssigneeId(
     parsed.data.assigneeId,
     assignToMe,
-    ownership.project.ownerId,
+    access.project.ownerId,
   );
   if (!assigneeResult.ok) {
     return { success: false, error: assigneeResult.error };
@@ -76,9 +80,9 @@ export async function getTasksByList(
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const ownership = await assertListOwnership(listId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertListViewAccess(listId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const tasks = await queries.tasks.getByList(listId);
@@ -111,12 +115,12 @@ export async function updateTask(
     return { success: false, error: "Not found" };
   }
 
-  const ownership = await assertListOwnership(
+  const access = await assertListEditAccess(
     existingTask.listId,
     authResult.user.id,
   );
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   // `position` and `listId` are stripped even though taskUpdateSchema
@@ -134,7 +138,7 @@ export async function updateTask(
     const assigneeResult = resolveAssigneeId(
       requestedAssigneeId,
       assignToMe,
-      ownership.project.ownerId,
+      access.project.ownerId,
     );
     if (!assigneeResult.ok) {
       return { success: false, error: assigneeResult.error };
@@ -191,12 +195,12 @@ export async function deleteTask(id: string): Promise<ActionResult<null>> {
     return { success: false, error: "Not found" };
   }
 
-  const ownership = await assertListOwnership(
+  const access = await assertListEditAccess(
     existingTask.listId,
     authResult.user.id,
   );
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   await queries.tasks.delete(id);
@@ -218,23 +222,20 @@ export async function moveTaskToList(
     return { success: false, error: "Not found" };
   }
 
-  const sourceOwnership = await assertListOwnership(
+  const sourceAccess = await assertListEditAccess(
     existingTask.listId,
     authResult.user.id,
   );
-  if ("error" in sourceOwnership) {
-    return { success: false, error: sourceOwnership.error ?? "Unknown error" };
+  if ("error" in sourceAccess) {
+    return { success: false, error: sourceAccess.error ?? "Unknown error" };
   }
 
-  const destOwnership = await assertListOwnership(
-    newListId,
-    authResult.user.id,
-  );
-  if ("error" in destOwnership) {
-    return { success: false, error: destOwnership.error ?? "Unknown error" };
+  const destAccess = await assertListEditAccess(newListId, authResult.user.id);
+  if ("error" in destAccess) {
+    return { success: false, error: destAccess.error ?? "Unknown error" };
   }
 
-  if (sourceOwnership.list.projectId !== destOwnership.list.projectId) {
+  if (sourceAccess.list.projectId !== destAccess.list.projectId) {
     return {
       success: false,
       error: "Cannot move a task to a list in a different project",
@@ -273,14 +274,14 @@ export async function moveTaskToList(
     await logTaskActivity(taskId, authResult.user.id, "moved", {
       fromListId: sourceListId,
       toListId: newListId,
-      fromListName: sourceOwnership.list.name,
-      toListName: destOwnership.list.name,
+      fromListName: sourceAccess.list.name,
+      toListName: destAccess.list.name,
     });
   } else if (existingTask.position !== updatedTask?.position) {
     await logTaskActivity(taskId, authResult.user.id, "moved", {
       fromPosition: existingTask.position,
       toPosition: updatedTask?.position,
-      listName: destOwnership.list.name,
+      listName: destAccess.list.name,
     });
   }
 
@@ -310,10 +311,10 @@ export async function getTasksByProject(
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  // Ownership: getProject/getListsByProject already validate project
-  // access on this page load, so this is a secondary read — but if you
-  // want defense-in-depth per-project ownership check here, this is
-  // where it'd go (similar to assertListOwnership, but project-scoped).
+  const access = await assertProjectViewAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
+  }
 
   const tasks = await queries.tasks.getByProject(projectId);
   return { success: true, data: tasks };
