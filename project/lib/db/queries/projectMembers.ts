@@ -12,6 +12,11 @@ export const projectMembersQueries = {
       ),
     });
   },
+  getById: async (id: string) => {
+    return db.query.projectMembers.findFirst({
+      where: eq(projectMembers.id, id),
+    });
+  },
   getByProject: async (projectId: string) => {
     return db
       .select({

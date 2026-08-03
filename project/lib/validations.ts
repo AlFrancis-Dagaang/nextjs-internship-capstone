@@ -47,6 +47,21 @@ export const commentCreateSchema = z.object({
   taskId: z.string().uuid(),
 });
 
+// ---------- Project Members ----------
+
+export const projectMemberRoleSchema = z.enum(["editor", "viewer"]);
+
+export const addProjectMemberSchema = z.object({
+  email: z.string().trim().min(1, "Email is required").email("Invalid email"),
+  role: projectMemberRoleSchema.optional(),
+});
+
+export const updateMemberRoleSchema = z.object({
+  role: projectMemberRoleSchema,
+});
+
+export type AddProjectMemberInput = z.infer<typeof addProjectMemberSchema>;
+export type UpdateMemberRoleInput = z.infer<typeof updateMemberRoleSchema>;
 export type CommentCreateInput = z.infer<typeof commentCreateSchema>;
 
 export const taskUpdateSchema = taskCreateSchema.partial();

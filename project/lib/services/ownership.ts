@@ -63,6 +63,8 @@ export async function assertProjectAccess(projectId: string, userId: string) {
     projectId,
     userId,
   );
+  console.log("DEBUG assertProjectAccess", { projectId, userId, membership }); // temp
+
   if (!membership) return { error: "Forbidden" } as const;
 
   return {
