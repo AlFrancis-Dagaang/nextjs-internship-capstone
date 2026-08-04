@@ -5,8 +5,31 @@ import { ProjectCard } from "./project-card";
 import { CreateProjectModal } from "./modals/create-project-modal";
 import type { Project } from "@/lib/db/schema";
 
-export function ProjectsList({ projects }: { projects: Project[] }) {
+type Member = {
+  id: string;
+  userId: string;
+  email?: string;
+  role: "editor" | "viewer";
+};
+
+type ProjectsListProps = {
+  projects: Project[];
+  currentUserId: string;
+  initialMembersMap: Record<string, Member[]>;
+};
+
+export function ProjectsList({
+  projects,
+  currentUserId,
+  initialMembersMap,
+}: ProjectsListProps) {
   const router = useRouter();
+
+  console.log("DEBUG ProjectsList props", {
+    projectsCount: projects?.length,
+    currentUserId,
+    initialMembersMap,
+  });
 
   return (
     <div>
@@ -32,7 +55,12 @@ export function ProjectsList({ projects }: { projects: Project[] }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              currentUserId={currentUserId}
+              initialMembers={initialMembersMap[project.id] ?? []}
+            />
           ))}
         </div>
       )}

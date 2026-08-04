@@ -1,4 +1,4 @@
-import { eq, or } from "drizzle-orm";
+import { eq, or, exists, and } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 import { db } from "../client";
 import { projects, projectMembers } from "../schema";
@@ -35,9 +35,21 @@ export const projectsQueries = {
         updatedAt: projects.updatedAt,
       })
       .from(projects)
-      .leftJoin(projectMembers, eq(projectMembers.projectId, projects.id))
       .where(
-        or(eq(projects.ownerId, userId), eq(projectMembers.userId, userId)),
+        or(
+          eq(projects.ownerId, userId),
+          exists(
+            db
+              .select({ id: projectMembers.id })
+              .from(projectMembers)
+              .where(
+                and(
+                  eq(projectMembers.projectId, projects.id),
+                  eq(projectMembers.userId, userId),
+                ),
+              ),
+          ),
+        ),
       );
   },
   create: async (data: InferInsertModel<typeof projects>) => {

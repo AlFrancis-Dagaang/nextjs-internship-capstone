@@ -6,7 +6,10 @@ import {
   updateMemberRoleSchema,
 } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
-import { assertProjectOwnership } from "@/lib/services/ownership";
+import {
+  assertProjectOwnership,
+  assertProjectViewAccess,
+} from "@/lib/services/ownership";
 import type { ProjectMember } from "../db/schema";
 
 type ActionResult<T> =
@@ -72,9 +75,12 @@ export async function getProjectMembers(
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const ownership = await assertProjectOwnership(projectId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  // Changed from assertProjectOwnership: viewing the member list is part
+  // of viewing the project (matrix: view = all roles ✅). Only
+  // add/remove/updateRole stay owner-only.
+  const access = await assertProjectViewAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const members = await queries.projectMembers.getByProject(projectId);
