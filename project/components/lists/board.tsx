@@ -44,6 +44,7 @@ export function Board({
   const removeList = useBoardStore((s) => s.removeList);
   const reorderLists = useBoardStore((s) => s.reorderLists);
   const addTask = useBoardStore((s) => s.addTask);
+  const insertTaskAt = useBoardStore((s) => s.insertTaskAt);
   const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
   const removeTask = useBoardStore((s) => s.removeTask);
   const reconcileTaskMoved = useBoardStore((s) => s.reconcileTaskMoved);
@@ -173,7 +174,9 @@ export function Board({
                 onTaskCreateConfirmed={replaceOptimisticTask}
                 onTaskUpdated={updateTaskLocal}
                 onTaskDeleted={handleTaskDeleted}
-                onTaskRestoreNeeded={(task) => addTask(task.listId, task)}
+                onTaskRestoreNeeded={(task) =>
+                  insertTaskAt(task.listId, task, task.position)
+                }
                 onTaskMoved={reconcileTaskMoved}
                 onOpenTask={openTaskDetail}
               />

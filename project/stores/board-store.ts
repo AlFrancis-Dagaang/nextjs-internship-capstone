@@ -87,6 +87,7 @@ interface BoardState {
   reorderLists: (updatedLists: List[]) => void;
 
   addTask: (listId: string, task: Task) => void;
+  insertTaskAt: (listId: string, task: Task, index: number) => void;
   updateTaskLocal: (task: Task) => void;
   removeTask: (listId: string, taskId: string) => void;
   reconcileTaskMoved: (movedTask: Task, affectedTasks: Task[]) => void;
@@ -150,6 +151,17 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       lists: s.lists.map((l) =>
         l.id === listId ? { ...l, tasks: [...l.tasks, task] } : l,
       ),
+    })),
+
+  insertTaskAt: (listId, task, index) =>
+    set((s) => ({
+      lists: s.lists.map((l) => {
+        if (l.id !== listId) return l;
+        const newTasks = [...l.tasks];
+        const clampedIndex = Math.max(0, Math.min(index, newTasks.length));
+        newTasks.splice(clampedIndex, 0, task);
+        return { ...l, tasks: newTasks };
+      }),
     })),
 
   // #24 fix, relocated: `task` is a plain Task from updateTask (no
