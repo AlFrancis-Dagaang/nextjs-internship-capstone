@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UserPlus, Users, Calendar } from "lucide-react";
+import { toMemberList } from "@/lib/utils";
 
 type Member = {
   id: string;
@@ -35,10 +36,14 @@ export function ProjectCard({
   project,
   currentUserId,
   initialMembers = [],
+  ownerName,
+  ownerEmail,
 }: {
   project: Project;
   currentUserId: string;
   initialMembers?: Member[];
+  ownerName?: string;
+  ownerEmail?: string;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -95,7 +100,7 @@ export function ProjectCard({
 
       const freshMembers = await getProjectMembers(project.id);
       if (freshMembers.success) {
-        setMembers(freshMembers.data as Member[]);
+        setMembers(toMemberList(freshMembers.data));
       }
       router.refresh();
     });
@@ -268,6 +273,8 @@ export function ProjectCard({
         project={project}
         members={members}
         isOwner={isOwner}
+        ownerName={ownerName}
+        ownerEmail={ownerEmail}
         open={detailOpen}
         onOpenChange={setDetailOpen}
         onMembersChanged={setMembers}

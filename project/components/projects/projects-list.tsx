@@ -12,24 +12,25 @@ type Member = {
   role: "editor" | "viewer";
 };
 
+type OwnerInfo = {
+  name?: string;
+  email?: string;
+};
+
 type ProjectsListProps = {
   projects: Project[];
   currentUserId: string;
   initialMembersMap: Record<string, Member[]>;
+  initialOwnerMap: Record<string, OwnerInfo>;
 };
 
 export function ProjectsList({
   projects,
   currentUserId,
   initialMembersMap,
+  initialOwnerMap,
 }: ProjectsListProps) {
   const router = useRouter();
-
-  console.log("DEBUG ProjectsList props", {
-    projectsCount: projects?.length,
-    currentUserId,
-    initialMembersMap,
-  });
 
   return (
     <div>
@@ -60,6 +61,8 @@ export function ProjectsList({
               project={project}
               currentUserId={currentUserId}
               initialMembers={initialMembersMap[project.id] ?? []}
+              ownerName={initialOwnerMap[project.id]?.name}
+              ownerEmail={initialOwnerMap[project.id]?.email}
             />
           ))}
         </div>

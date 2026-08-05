@@ -11,6 +11,7 @@ import {
   assertProjectViewAccess,
 } from "@/lib/services/ownership";
 import type { ProjectMember } from "../db/schema";
+import { searchUsersSchema } from "@/lib/validations";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -144,4 +145,54 @@ export async function removeProjectMember(
 
   await queries.projectMembers.remove(memberId);
   return { success: true, data: null };
+}
+
+type UserSearchResult = {
+  id: string;
+  email: string;
+  name: string;
+  status: "available" | "member" | "owner";
+  role?: "editor" | "viewer"; // present when status === "member"
+};
+
+export async function searchUsersForInvite(
+  projectId: string,
+  query: string,
+): Promise<ActionResult<UserSearchResult[]>> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const parsed = searchUsersSchema.safeParse({ query });
+  if (!parsed.success) {
+    return { success: true, data: [] };
+  }
+
+  const ownership = await assertProjectOwnership(projectId, authResult.user.id);
+  if ("error" in ownership) {
+    return { success: false, error: ownership.error ?? "Unknown error" };
+  }
+
+  const [existingMembers, results] = await Promise.all([
+    queries.projectMembers.getByProject(projectId),
+    queries.users.searchByEmailPrefix(parsed.data.query),
+  ]);
+
+  const memberRoleById = new Map(
+    existingMembers.map((m) => [m.userId, m.role]),
+  );
+
+  const annotated: UserSearchResult[] = results.map((u) => {
+    if (u.id === ownership.project.ownerId) {
+      return { ...u, status: "owner" };
+    }
+    const role = memberRoleById.get(u.id);
+    if (role) {
+      return { ...u, status: "member", role };
+    }
+    return { ...u, status: "available" };
+  });
+
+  return { success: true, data: annotated };
 }

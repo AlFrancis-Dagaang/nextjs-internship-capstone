@@ -23,6 +23,8 @@ type ProjectDetailModalProps = {
   project: Project;
   members: Member[];
   isOwner: boolean;
+  ownerName?: string;
+  ownerEmail?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onMembersChanged: (members: Member[]) => void;
@@ -32,13 +34,15 @@ export function ProjectDetailModal({
   project,
   members,
   isOwner,
+  ownerName,
+  ownerEmail,
   open,
   onOpenChange,
   onMembersChanged,
 }: ProjectDetailModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[85vh] bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl p-0 flex flex-col overflow-hidden [&>button]:hidden">
+      <DialogContent className="max-w-5xl h-[85vh] bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl p-0 flex flex-col overflow-hidden [&>button]:hidden">
         {/* Header */}
         <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 shrink-0 flex items-center justify-between">
           <div>
@@ -61,11 +65,17 @@ export function ProjectDetailModal({
 
         {/* 2-Column Decoupled Layout Container */}
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-          <ProjectInfo project={project} />
+          {/* ProjectInfo gets a larger flex share for a wider workspace */}
+          <div className="flex-[1.6] flex flex-col overflow-hidden">
+            <ProjectInfo project={project} isOwner={isOwner} />
+          </div>
+
           <ProjectMembers
             project={project}
             members={members}
             isOwner={isOwner}
+            ownerName={ownerName}
+            ownerEmail={ownerEmail}
             onMembersChanged={onMembersChanged}
           />
         </div>

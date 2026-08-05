@@ -1,21 +1,25 @@
 // components/projects/project-list-action.tsx
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   MoreHorizontal,
   ExternalLink,
   Edit2,
-  Users,
   Trash2,
   ChevronLeft,
   X,
   UserPlus,
+  Loader2,
 } from "lucide-react";
 import type { Project } from "@/lib/db/schema";
 import { deleteProject } from "@/lib/actions/projects";
-import { addProjectMember } from "@/lib/actions/project-member";
+import {
+  searchUsersForInvite,
+  addProjectMember,
+  getProjectMembers,
+} from "@/lib/actions/project-member";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -38,7 +42,16 @@ type Member = {
   id: string;
   userId: string;
   email?: string;
+  name?: string;
   role: "editor" | "viewer";
+};
+
+type SearchUser = {
+  id: string;
+  email: string;
+  name: string;
+  status: "available" | "member" | "owner";
+  role?: "editor" | "viewer";
 };
 
 export function ProjectListAction({
@@ -59,21 +72,87 @@ export function ProjectListAction({
   const router = useRouter();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [view, setView] = useState<"menu" | "members">("menu");
+  const [view, setView] = useState<"menu" | "invite">("menu");
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  // Fast-invite state within dropdown
-  const [inviteEmail, setInviteEmail] = useState("");
+  // Live-search invite states inside dropdown view
+  const [query, setQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
   const [inviteRole, setInviteRole] = useState<"editor" | "viewer">("viewer");
   const [isPending, startTransition] = useTransition();
 
-  // Reset view to menu when dropdown closes
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchRequestIdRef = useRef(0);
+
+  // Reset view and state when dropdown closes
   useEffect(() => {
     if (!isOpen) {
-      const timer = setTimeout(() => setView("menu"), 150);
+      const timer = setTimeout(() => {
+        setView("menu");
+        setQuery("");
+        setSelectedUser(null);
+        setSearchResults([]);
+        setShowDropdown(false);
+      }, 150);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  // Click outside listener for the search dropdown container
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Debounced live user search effect
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      setIsLoadingSearch(false);
+      return;
+    }
+
+    setIsLoadingSearch(true);
+    setShowDropdown(true);
+    const currentRequestId = ++searchRequestIdRef.current;
+
+    const timer = setTimeout(async () => {
+      try {
+        const result = await searchUsersForInvite(project.id, trimmed);
+        if (currentRequestId !== searchRequestIdRef.current) return;
+
+        if (result.success) {
+          setSearchResults(result.data.slice(0, 8));
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        if (currentRequestId === searchRequestIdRef.current) {
+          console.error("Failed to search users:", err);
+          setSearchResults([]);
+        }
+      } finally {
+        if (currentRequestId === searchRequestIdRef.current) {
+          setIsLoadingSearch(false);
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query, project.id]);
 
   function handleDelete() {
     startTransition(async () => {
@@ -97,20 +176,22 @@ export function ProjectListAction({
 
   async function handleAddMember(e: React.FormEvent) {
     e.preventDefault();
-    if (!inviteEmail.trim()) return;
+    if (!selectedUser) return;
 
-    const targetEmail = inviteEmail.trim();
+    const targetEmail = selectedUser.email;
+    const targetName = selectedUser.name;
     const assignedRole = inviteRole;
 
     const tempMember: Member = {
       id: `temp-${Date.now()}`,
-      userId: `pending-${Math.random()}`,
+      userId: selectedUser.id,
       email: targetEmail,
+      name: targetName,
       role: assignedRole,
     };
 
     onMembersChanged?.([...members, tempMember]);
-    setInviteEmail("");
+    setIsOpen(false);
 
     startTransition(async () => {
       const result = await addProjectMember(project.id, {
@@ -132,6 +213,19 @@ export function ProjectListAction({
         title: "Member added successfully",
         description: `${targetEmail} added as ${assignedRole}.`,
       });
+
+      const fresh = await getProjectMembers(project.id);
+      if (fresh.success) {
+        onMembersChanged?.(
+          fresh.data.map((m) => ({
+            id: m.id,
+            userId: m.userId,
+            email: m.userEmail,
+            name: m.userName,
+            role: m.role,
+          })),
+        );
+      }
       router.refresh();
     });
   }
@@ -184,16 +278,18 @@ export function ProjectListAction({
                 <span>View details</span>
               </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault();
-                  setView("members");
-                }}
-                className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
-              >
-                <Users size={15} className="text-neutral-400" />
-                <span>Manage members</span>
-              </DropdownMenuItem>
+              {isOwner && (
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setView("invite");
+                  }}
+                  className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                >
+                  <UserPlus size={15} className="text-neutral-400" />
+                  <span>Add members</span>
+                </DropdownMenuItem>
+              )}
 
               {isOwner && (
                 <>
@@ -243,55 +339,120 @@ export function ProjectListAction({
                 </button>
               </div>
 
-              {/* Add Members Form */}
-              {isOwner ? (
-                <form
-                  onSubmit={handleAddMember}
-                  className="space-y-2 px-1 pt-1"
-                >
-                  <span className="text-[10px] font-semibold tracking-wider text-neutral-400 uppercase">
-                    Add Members
-                  </span>
-                  <div className="flex gap-1.5">
-                    <Input
-                      placeholder="email@example.com"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      disabled={isPending}
-                      className="h-8 text-xs bg-neutral-100 dark:bg-neutral-800 border-0 rounded-lg flex-1 focus-visible:ring-1"
-                    />
-                    <Select
-                      value={inviteRole}
-                      onValueChange={(val: "editor" | "viewer") =>
-                        setInviteRole(val)
-                      }
-                    >
-                      <SelectTrigger className="w-[85px] h-8 text-xs bg-neutral-100 dark:bg-neutral-800 border-0 rounded-lg shadow-none focus:ring-0">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl">
-                        <SelectItem value="viewer" className="text-xs">
-                          Viewer
-                        </SelectItem>
-                        <SelectItem value="editor" className="text-xs">
-                          Editor
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button
-                    type="submit"
-                    disabled={isPending || !inviteEmail.trim()}
-                    className="w-full h-8 bg-cyan-400 hover:bg-cyan-500 text-neutral-900 font-medium text-xs shadow-none rounded-lg"
-                  >
-                    <UserPlus size={13} className="mr-1.5" /> Add Member
-                  </Button>
-                </form>
-              ) : (
-                <div className="px-2 py-6 text-center text-xs text-neutral-400">
-                  Only the project owner can add new members.
+              {/* Add Members Live Search Form */}
+              <form
+                onSubmit={handleAddMember}
+                className="space-y-2.5 px-1 pt-1"
+              >
+                <span className="text-[10px] font-semibold tracking-wider text-neutral-400 uppercase">
+                  Add Members
+                </span>
+
+                <div className="space-y-1 relative" ref={dropdownRef}>
+                  <Input
+                    placeholder="Search by name or email..."
+                    value={selectedUser ? selectedUser.email : query}
+                    onChange={(e) => {
+                      setSelectedUser(null);
+                      setQuery(e.target.value);
+                      setShowDropdown(true);
+                    }}
+                    onFocus={() => {
+                      if (!selectedUser && query.trim().length >= 2)
+                        setShowDropdown(true);
+                    }}
+                    disabled={isPending}
+                    className="h-8 text-xs bg-neutral-100 dark:bg-neutral-800 border-0 rounded-lg w-full focus-visible:ring-1"
+                  />
+
+                  {showDropdown &&
+                    !selectedUser &&
+                    query.trim().length >= 2 && (
+                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                        {isLoadingSearch ? (
+                          <div className="flex items-center justify-center py-3 text-xs text-neutral-400 gap-1.5">
+                            <Loader2
+                              size={13}
+                              className="animate-spin text-cyan-500"
+                            />
+                            <span>Searching...</span>
+                          </div>
+                        ) : searchResults.length === 0 ? (
+                          <div className="py-3 text-center text-xs text-neutral-400">
+                            No matching users
+                          </div>
+                        ) : (
+                          <div className="max-h-[160px] overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800">
+                            {searchResults.map((user) => {
+                              const isSelectable = user.status === "available";
+                              return (
+                                <div
+                                  key={user.id}
+                                  onClick={() => {
+                                    if (!isSelectable) return;
+                                    setSelectedUser(user);
+                                    setShowDropdown(false);
+                                  }}
+                                  className={`px-2.5 py-2 flex items-center justify-between transition-colors ${
+                                    isSelectable
+                                      ? "hover:bg-neutral-100 dark:hover:bg-neutral-800/60 cursor-pointer"
+                                      : "opacity-50 cursor-not-allowed"
+                                  }`}
+                                >
+                                  <div className="flex flex-col truncate pr-2">
+                                    <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                                      {user.name}
+                                    </span>
+                                    <span className="text-[10px] text-neutral-400 truncate">
+                                      {user.email}
+                                    </span>
+                                  </div>
+                                  {user.status === "owner" && (
+                                    <span className="text-[9px] font-semibold text-cyan-600 dark:text-cyan-400 uppercase shrink-0">
+                                      Owner
+                                    </span>
+                                  )}
+                                  {user.status === "member" && (
+                                    <span className="text-[9px] font-semibold text-neutral-400 uppercase shrink-0">
+                                      Added
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
                 </div>
-              )}
+
+                <Select
+                  value={inviteRole}
+                  onValueChange={(val: "editor" | "viewer") =>
+                    setInviteRole(val)
+                  }
+                >
+                  <SelectTrigger className="w-full h-8 text-xs bg-neutral-100 dark:bg-neutral-800 border-0 rounded-lg shadow-none focus:ring-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl">
+                    <SelectItem value="viewer" className="text-xs">
+                      Viewer (View-only)
+                    </SelectItem>
+                    <SelectItem value="editor" className="text-xs">
+                      Editor (Manage tasks)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  type="submit"
+                  disabled={isPending || !selectedUser}
+                  className="w-full h-8 bg-cyan-400 hover:bg-cyan-500 text-neutral-900 font-medium text-xs shadow-none rounded-lg"
+                >
+                  <UserPlus size={13} className="mr-1.5" /> Add Member
+                </Button>
+              </form>
             </div>
           )}
         </DropdownMenuContent>

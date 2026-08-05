@@ -68,3 +68,7 @@ export const taskUpdateSchema = taskCreateSchema.partial();
 
 export type TaskCreateInput = z.infer<typeof taskCreateSchema>;
 export type TaskUpdateInput = z.infer<typeof taskUpdateSchema>;
+
+export const searchUsersSchema = z.object({
+  query: z.string().trim().min(2, "Type at least 2 characters"),
+});
