@@ -41,6 +41,14 @@ export function ProjectCard({
   const [detailOpen, setDetailOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>(initialMembers);
 
+  const avatarColors = [
+    "bg-blue-600",
+    "bg-indigo-600",
+    "bg-purple-600",
+    "bg-teal-600",
+    "bg-rose-600",
+  ];
+
   // Inline rename state
   const [isRenaming, setIsRenaming] = useState(false);
   const [name, setName] = useState(project.name);
@@ -164,15 +172,17 @@ export function ProjectCard({
           <div className="flex items-center space-x-2">
             <div className="flex -space-x-1.5">
               <div
-                className="w-5 h-5 rounded-full bg-neutral-800 dark:bg-neutral-700 text-white flex items-center justify-center text-[9px] font-semibold ring-2 ring-white dark:ring-neutral-900 uppercase shadow-sm"
+                className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-semibold ring-2 ring-white dark:ring-neutral-900 uppercase shadow-sm"
                 title={`Owner: ${ownerName || ownerEmail || "Project Owner"}`}
               >
-                {ownerName?.[0] ?? ownerEmail?.[0] ?? "O"}
+                {ownerName?.[0] ?? ownerEmail?.[0] ?? "U"}
               </div>
-              {members.slice(0, 2).map((m) => (
+              {members.slice(0, 2).map((m, i) => (
                 <div
                   key={m.id}
-                  className="w-5 h-5 rounded-full bg-neutral-700 text-neutral-200 flex items-center justify-center text-[9px] font-semibold ring-2 ring-white dark:ring-neutral-900 uppercase shadow-sm"
+                  className={`w-5 h-5 rounded-full text-white flex items-center justify-center text-[9px] font-semibold ring-2 ring-white dark:ring-neutral-900 uppercase shadow-sm ${
+                    avatarColors[i % avatarColors.length]
+                  }`}
                   title={`${m.email ?? "Member"} (${m.role})`}
                 >
                   {m.email?.[0] ?? "U"}

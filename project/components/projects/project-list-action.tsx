@@ -275,7 +275,7 @@ export function ProjectListAction({
                 className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
               >
                 <ExternalLink size={15} className="text-neutral-400" />
-                <span>View details</span>
+                <span>Manage project</span>
               </DropdownMenuItem>
 
               {isOwner && (
