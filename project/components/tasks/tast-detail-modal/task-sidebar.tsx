@@ -14,6 +14,8 @@ type TaskSidebarProps = {
   task: Task;
   projectId: string;
   allLists: ListWithTasks[];
+  assignableUsers: { id: string; name?: string; email?: string }[];
+
   onChanged?: (task: Task) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
   onOpenChange: (open: boolean) => void;
@@ -29,6 +31,7 @@ export function TaskSidebar({
   onMoved,
   onOpenChange,
   onDeleteClick,
+  assignableUsers,
   onArchive,
 }: TaskSidebarProps) {
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
@@ -62,7 +65,11 @@ export function TaskSidebar({
         </div>
 
         <div className="border-t border-neutral-200 dark:border-neutral-800">
-          <TaskMembersSection />
+          <TaskMembersSection
+            task={task}
+            assignableUsers={assignableUsers}
+            onUpdated={handleChanged}
+          />
         </div>
 
         <div className="border-t border-neutral-200 dark:border-neutral-800">

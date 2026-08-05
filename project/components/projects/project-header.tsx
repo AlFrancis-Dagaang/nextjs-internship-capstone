@@ -81,7 +81,7 @@ export function ProjectHeader({
         <div className="hidden lg:flex items-center">
           <div className="flex -space-x-1.5 overflow-hidden">
             <div
-              className="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-neutral-900 bg-amber-500 text-white flex items-center justify-center text-[9px] font-semibold uppercase shadow-sm"
+              className="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-neutral-900 bg-amber-500 text-white flex items-center justify-center text-[9px] font-semibold uppercase shadow-sm leading-none text-center"
               title={`Owner: ${ownerName || ownerEmail || "Project Owner"}`}
             >
               {ownerName?.[0] ?? ownerEmail?.[0] ?? "U"}
@@ -89,7 +89,7 @@ export function ProjectHeader({
             {visibleMembers.map((m, i) => (
               <div
                 key={m.id}
-                className={`inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-neutral-900 text-white flex items-center justify-center text-[9px] font-semibold uppercase shadow-sm ${
+                className={`inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-neutral-900 text-white flex items-center justify-center text-[9px] font-semibold uppercase shadow-sm leading-none text-center ${
                   avatarColors[i % avatarColors.length]
                 }`}
                 title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
@@ -99,7 +99,7 @@ export function ProjectHeader({
             ))}
           </div>
           {extraCount > 0 && (
-            <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-[10px] font-medium border border-neutral-200/60 dark:border-neutral-700/60">
+            <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-[10px] font-medium border border-neutral-200/60 dark:border-neutral-700/60 leading-none">
               +{extraCount}
             </span>
           )}

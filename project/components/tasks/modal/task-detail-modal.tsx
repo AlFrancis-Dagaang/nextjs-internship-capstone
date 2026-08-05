@@ -13,6 +13,8 @@ type TaskDetailModalProps = {
   task: Task;
   projectId: string;
   allLists: ListWithTasks[];
+  assignableUsers: { id: string; name?: string; email?: string }[];
+
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onChanged?: (task: Task) => void;
@@ -26,6 +28,7 @@ export function TaskDetailModal({
   task,
   projectId,
   allLists,
+  assignableUsers,
   open,
   onOpenChange,
   onChanged,
@@ -78,6 +81,7 @@ export function TaskDetailModal({
               task={task}
               projectId={projectId}
               allLists={allLists}
+              assignableUsers={assignableUsers}
               onChanged={onChanged}
               onMoved={onMoved}
               onOpenChange={onOpenChange}

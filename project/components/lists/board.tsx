@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -23,6 +23,7 @@ import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
 import { useUiStore } from "@/stores/ui-store";
 import { useBoardStore } from "@/stores/board-store";
 import { useTrackProjectView } from "@/hooks/use-track-project-view";
+import { getAssignableUsers } from "@/lib/actions/project-member";
 
 export type TaskWithCommentCount = Task & { commentCount?: number };
 export type ListWithTasks = List & { tasks: TaskWithCommentCount[] };
@@ -66,6 +67,16 @@ export function Board({
 
   const [isDeletingTask, startDeleteTaskTransition] = useTransition();
   const replaceOptimisticTask = useBoardStore((s) => s.replaceOptimisticTask);
+
+  const [assignableUsers, setAssignableUsers] = useState<
+    { id: string; name?: string; email?: string }[]
+  >([]);
+
+  useEffect(() => {
+    getAssignableUsers(projectId).then((result) => {
+      if (result.success) setAssignableUsers(result.data);
+    });
+  }, [projectId]);
 
   // Hydrate the store from server-provided data. Re-runs if projectId
   // changes (e.g. client-side nav to a different project) so stale data
@@ -207,6 +218,7 @@ export function Board({
           task={openTask}
           projectId={projectId}
           allLists={lists}
+          assignableUsers={assignableUsers}
           open={true}
           onOpenChange={(open) => {
             if (!open) closeTaskDetail();

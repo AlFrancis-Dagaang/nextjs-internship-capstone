@@ -196,3 +196,33 @@ export async function searchUsersForInvite(
 
   return { success: true, data: annotated };
 }
+
+export async function getAssignableUsers(
+  projectId: string,
+): Promise<ActionResult<{ id: string; name?: string; email?: string }[]>> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const access = await assertProjectViewAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
+  }
+
+  const [owner, members] = await Promise.all([
+    queries.users.getById(access.project.ownerId),
+    queries.projectMembers.getByProject(projectId),
+  ]);
+
+  const assignable = [
+    ...(owner ? [{ id: owner.id, name: owner.name, email: owner.email }] : []),
+    ...members.map((m) => ({
+      id: m.userId,
+      name: m.userName,
+      email: m.userEmail,
+    })),
+  ];
+
+  return { success: true, data: assignable };
+}
