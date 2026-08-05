@@ -5,25 +5,12 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Project } from "@/lib/db/schema";
-import {
-  addProjectMember,
-  getProjectMembers,
-} from "@/lib/actions/project-member";
 import { updateProject } from "@/lib/actions/projects";
 import { ProjectListAction } from "./project-list-action";
 import { ProjectDetailModal } from "./modals/project-detail-modal";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { UserPlus, Users, Calendar } from "lucide-react";
-import { toMemberList } from "@/lib/utils";
+import { Users, Calendar, ArrowRight } from "lucide-react";
 
 type Member = {
   id: string;
@@ -51,60 +38,11 @@ export function ProjectCard({
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>(initialMembers);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"editor" | "viewer">("viewer");
-  const [isAdding, startAddTransition] = useTransition();
 
-  // Inline rename state (matched to TaskCard pattern)
+  // Inline rename state
   const [isRenaming, setIsRenaming] = useState(false);
   const [name, setName] = useState(project.name);
   const [isRenamePending, startRenameTransition] = useTransition();
-
-  async function handleAddMember(e: React.FormEvent) {
-    e.preventDefault();
-    if (!inviteEmail.trim()) return;
-
-    const emailToInvite = inviteEmail.trim();
-    const roleToAssign = inviteRole;
-
-    const tempMember: Member = {
-      id: `temp-${Date.now()}`,
-      userId: `pending-${Math.random()}`,
-      email: emailToInvite,
-      role: roleToAssign,
-    };
-
-    setMembers((prev) => [...prev, tempMember]);
-    setInviteEmail("");
-
-    startAddTransition(async () => {
-      const result = await addProjectMember(project.id, {
-        email: emailToInvite,
-        role: roleToAssign,
-      });
-
-      if (!result.success) {
-        setMembers((prev) => prev.filter((m) => m.id !== tempMember.id));
-        toast({
-          title: "Failed to add member",
-          description: result.error,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Member added",
-        description: `Successfully invited ${emailToInvite} as ${roleToAssign}.`,
-      });
-
-      const freshMembers = await getProjectMembers(project.id);
-      if (freshMembers.success) {
-        setMembers(toMemberList(freshMembers.data));
-      }
-      router.refresh();
-    });
-  }
 
   function handleRenameSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -134,126 +72,94 @@ export function ProjectCard({
 
   return (
     <>
-      <div className="relative bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:shadow-md transition-shadow p-5 flex flex-col justify-between space-y-4">
-        <div>
+      <div className="group relative bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200/80 dark:border-neutral-800 hover:border-cyan-500/50 dark:hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/5 transition-all duration-200 p-5 flex flex-col justify-between space-y-4">
+        {/* Main Card Link Wrapper */}
+        <Link
+          href={`/projects/${project.id}`}
+          className="absolute inset-0 rounded-2xl z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+          aria-label={`Open project ${project.name}`}
+        />
+
+        {/* Content Header */}
+        <div className="relative z-10 space-y-2 pointer-events-none">
           <div className="flex items-start justify-between pr-8">
             {isRenaming ? (
-              <form onSubmit={handleRenameSubmit} className="flex-1">
-                <Input
-                  autoFocus
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onBlur={handleRenameSubmit}
-                  disabled={isRenamePending}
-                  className="h-8 px-2 text-sm font-semibold bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-sm focus-visible:ring-1"
-                />
-              </form>
-            ) : (
-              <Link
-                href={`/projects/${project.id}`}
-                className="group block flex-1"
+              <div
+                className="pointer-events-auto flex-1 mr-2"
+                onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-                  {project.name}
-                </h3>
-              </Link>
+                <form onSubmit={handleRenameSubmit}>
+                  <Input
+                    autoFocus
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onBlur={handleRenameSubmit}
+                    disabled={isRenamePending}
+                    className="h-8 px-2 text-sm font-semibold bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-sm focus-visible:ring-1"
+                  />
+                </form>
+              </div>
+            ) : (
+              <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors line-clamp-1">
+                {project.name}
+              </h3>
             )}
           </div>
 
           {project.description && (
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5 line-clamp-2">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed">
               {project.description}
             </p>
           )}
-
-          {project.dueDate && (
-            <div className="flex items-center space-x-1.5 text-xs text-neutral-400 mt-3">
-              <Calendar size={13} />
-              <span>Due {new Date(project.dueDate).toLocaleDateString()}</span>
-            </div>
-          )}
         </div>
 
-        {/* Member list preview & quick invite for Owners */}
-        <div className="pt-3 border-t border-neutral-100 dark:border-neutral-800 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-1.5 text-xs text-neutral-500">
-              <Users size={13} className="text-neutral-400" />
-              <span>{members.length + 1} members</span>
-            </div>
-
-            {/* Compact avatars/initials */}
-            <div className="flex items-center">
-              <div className="flex -space-x-1.5">
-                <div
-                  className="w-6 h-6 rounded-full bg-cyan-500 text-neutral-900 flex items-center justify-center text-[10px] font-bold ring-2 ring-white dark:ring-neutral-900"
-                  title="Owner"
-                >
-                  👑
-                </div>
-                {members.slice(0, 3).map((m) => (
-                  <div
-                    key={m.id}
-                    className="w-6 h-6 rounded-full bg-neutral-600 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white dark:ring-neutral-900 uppercase"
-                    title={`${m.email ?? "Member"} (${m.role})`}
-                  >
-                    {m.email?.[0] ?? "U"}
-                  </div>
-                ))}
+        {/* Footer Metadata & Preview */}
+        <div className="relative z-10 pt-3 border-t border-neutral-100 dark:border-neutral-800/80 flex items-center justify-between text-xs text-neutral-500">
+          {/* Due date or Member count */}
+          <div className="flex items-center space-x-3">
+            {project.dueDate && (
+              <div className="flex items-center space-x-1.5 text-neutral-400 dark:text-neutral-500">
+                <Calendar size={13} />
+                <span>{new Date(project.dueDate).toLocaleDateString()}</span>
               </div>
-              {members.length > 3 && (
-                <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 text-[10px] font-semibold">
-                  +{members.length - 3}
-                </span>
-              )}
+            )}
+            <div className="flex items-center space-x-1.5 text-neutral-400 dark:text-neutral-500">
+              <Users size={13} />
+              <span>{members.length + 1}</span>
             </div>
           </div>
 
-          {isOwner && (
-            <form
-              onSubmit={handleAddMember}
-              className="flex items-center gap-1.5 pt-1"
-            >
-              <Input
-                placeholder="Add member by email..."
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                disabled={isAdding}
-                className="h-8 text-xs bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 rounded-lg flex-1 focus-visible:ring-1"
-              />
-              <Select
-                value={inviteRole}
-                onValueChange={(val: "editor" | "viewer") => setInviteRole(val)}
+          {/* Avatars & Hover Action Indicator */}
+          <div className="flex items-center space-x-2">
+            <div className="flex -space-x-1.5">
+              <div
+                className="w-5 h-5 rounded-full bg-cyan-500 text-neutral-900 flex items-center justify-center text-[9px] font-bold ring-2 ring-white dark:ring-neutral-900"
+                title="Owner"
               >
-                <SelectTrigger className="w-[85px] h-8 text-xs bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 rounded-lg shadow-none focus:ring-0">
-                  <SelectValue placeholder="Role" />
-                </SelectTrigger>
-                <SelectContent className="z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl">
-                  <SelectItem value="viewer" className="text-xs">
-                    Viewer
-                  </SelectItem>
-                  <SelectItem value="editor" className="text-xs">
-                    Editor
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                type="submit"
-                size="icon"
-                disabled={isAdding || !inviteEmail.trim()}
-                className="h-8 w-8 shrink-0 bg-cyan-400 hover:bg-cyan-500 text-neutral-900 rounded-lg shadow-none"
-                title="Add member"
-              >
-                <UserPlus size={14} />
-              </Button>
-            </form>
-          )}
+                👑
+              </div>
+              {members.slice(0, 2).map((m) => (
+                <div
+                  key={m.id}
+                  className="w-5 h-5 rounded-full bg-neutral-600 text-white flex items-center justify-center text-[9px] font-bold ring-2 ring-white dark:ring-neutral-900 uppercase"
+                  title={`${m.email ?? "Member"} (${m.role})`}
+                >
+                  {m.email?.[0] ?? "U"}
+                </div>
+              ))}
+            </div>
+
+            {/* Subtle arrow indicator that highlights on hover */}
+            <div className="w-6 h-6 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-400 group-hover:bg-cyan-500 group-hover:text-neutral-900 flex items-center justify-center transition-colors">
+              <ArrowRight size={12} />
+            </div>
+          </div>
         </div>
 
-        {/* Absolute corner action menu */}
+        {/* Absolute corner action menu (isolated click layer) */}
         <div
-          className="absolute top-3 right-3"
-          onClick={(e) => e.preventDefault()}
+          className="absolute top-3 right-3 z-20 pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
         >
           <ProjectListAction
             project={project}
