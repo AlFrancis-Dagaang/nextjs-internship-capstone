@@ -22,6 +22,7 @@ import { deleteTask, moveTaskToList } from "@/lib/actions/tasks";
 import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
 import { useUiStore } from "@/stores/ui-store";
 import { useBoardStore } from "@/stores/board-store";
+import { useTrackProjectView } from "@/hooks/use-track-project-view";
 
 export type TaskWithCommentCount = Task & { commentCount?: number };
 export type ListWithTasks = List & { tasks: TaskWithCommentCount[] };
@@ -34,7 +35,7 @@ export function Board({
   initialLists: ListWithTasks[];
 }) {
   const { toast } = useToast();
-
+  useTrackProjectView(projectId);
   // #22 (pass 2) — lists/drag state now live in board-store.ts.
   const lists = useBoardStore((s) => s.lists);
   const activeTask = useBoardStore((s) => s.activeTask);

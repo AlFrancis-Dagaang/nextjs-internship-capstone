@@ -25,12 +25,14 @@ export function ProjectCard({
   initialMembers = [],
   ownerName,
   ownerEmail,
+  myRole,
 }: {
   project: Project;
   currentUserId: string;
   initialMembers?: Member[];
   ownerName?: string;
   ownerEmail?: string;
+  myRole?: "editor" | "viewer";
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -103,6 +105,12 @@ export function ProjectCard({
               <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors line-clamp-1">
                 {project.name}
               </h3>
+            )}
+
+            {myRole && !isRenaming && (
+              <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 capitalize pointer-events-none">
+                {myRole}
+              </span>
             )}
           </div>
 
