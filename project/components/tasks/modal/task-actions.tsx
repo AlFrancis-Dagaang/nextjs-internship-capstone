@@ -35,6 +35,7 @@ export function TaskActions({
   projectId,
   currentListId,
   allLists,
+  canEdit,
   onView,
   onRename,
   onArchive,
@@ -45,6 +46,8 @@ export function TaskActions({
   projectId: string;
   currentListId: string;
   allLists: ListWithTasks[];
+  canEdit: boolean;
+
   onView: () => void;
   onRename: () => void;
   onArchive: () => void;
@@ -178,54 +181,57 @@ export function TaskActions({
               <span>View task</span>
             </DropdownMenuItem>
 
-            <div className="pt-1.5 pb-1 border-t border-neutral-100 dark:border-neutral-800 mt-1">
-              <div className="px-2.5 pb-1 text-[10px] font-semibold tracking-wider text-neutral-400 uppercase">
-                Management
+            {canEdit && (
+              <div className="pt-1.5 pb-1 border-t border-neutral-100 dark:border-neutral-800 mt-1">
+                <div className="px-2.5 pb-1 text-[10px] font-semibold tracking-wider text-neutral-400 uppercase">
+                  Management
+                </div>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setIsOpen(false);
+                    onRename();
+                  }}
+                  className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                >
+                  <Edit2 size={15} className="text-neutral-400" />
+                  <span>Rename task</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setIsOpen(false);
+                    onArchive();
+                  }}
+                  className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                >
+                  <Archive size={15} className="text-neutral-400" />
+                  <span>Archive task</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setView("move");
+                  }}
+                  className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                >
+                  <Move size={15} className="text-neutral-400" />
+                  <span>Move task</span>
+                </DropdownMenuItem>
               </div>
-              <DropdownMenuItem
-                onSelect={() => {
-                  setIsOpen(false);
-                  onRename();
-                }}
-                className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
-              >
-                <Edit2 size={15} className="text-neutral-400" />
-                <span>Rename task</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => {
-                  setIsOpen(false);
-                  onArchive();
-                }}
-                className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
-              >
-                <Archive size={15} className="text-neutral-400" />
-                <span>Archive task</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault();
-                  setView("move");
-                }}
-                className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
-              >
-                <Move size={15} className="text-neutral-400" />
-                <span>Move task</span>
-              </DropdownMenuItem>
-            </div>
-
-            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-1 mt-1">
-              <DropdownMenuItem
-                onSelect={() => {
-                  setIsOpen(false);
-                  onDeleteClick();
-                }}
-                className="cursor-pointer px-2.5 py-2 text-sm text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/50 rounded-lg flex items-center space-x-2.5"
-              >
-                <Trash2 size={15} className="text-red-500" />
-                <span>Remove task</span>
-              </DropdownMenuItem>
-            </div>
+            )}
+            {canEdit && (
+              <div className="border-t border-neutral-100 dark:border-neutral-800 pt-1 mt-1">
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setIsOpen(false);
+                    onDeleteClick();
+                  }}
+                  className="cursor-pointer px-2.5 py-2 text-sm text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/50 rounded-lg flex items-center space-x-2.5"
+                >
+                  <Trash2 size={15} className="text-red-500" />
+                  <span>Remove task</span>
+                </DropdownMenuItem>
+              </div>
+            )}
           </>
         ) : (
           <div className="p-1 space-y-2">

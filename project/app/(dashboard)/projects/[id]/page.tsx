@@ -9,6 +9,8 @@ import { toMemberList } from "@/lib/utils";
 import { Board, type ListWithTasks } from "@/components/lists/board";
 import { ProjectHeader } from "@/components/projects/project-header";
 import type { Task } from "@/lib/db/schema";
+import { getAuthedUserOrError } from "@/lib/services/auth";
+import { assertProjectAccess } from "@/lib/services/ownership";
 
 export default async function ProjectPage({
   params,
@@ -17,12 +19,30 @@ export default async function ProjectPage({
 }) {
   const { id } = await params;
 
-  const [projectResult, listsResult, tasksResult, membersResult] =
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return (
+      <div className="p-6 space-y-2">
+        <p className="text-red-600 dark:text-red-400">
+          {authResult.error ?? "Not authenticated."}
+        </p>
+        <Link
+          href="/projects"
+          className="text-blue_munsell-500 underline text-sm"
+        >
+          Back to projects
+        </Link>
+      </div>
+    );
+  }
+
+  const [projectResult, listsResult, tasksResult, membersResult, accessResult] =
     await Promise.all([
       getProject(id),
       getListsByProject(id),
       getTasksByProject(id),
       getProjectMembers(id),
+      assertProjectAccess(id, authResult.user.id),
     ]);
 
   if (!projectResult.success) {
@@ -48,6 +68,7 @@ export default async function ProjectPage({
   const allTasks = tasksResult.success ? tasksResult.data : [];
   const members = membersResult.success ? toMemberList(membersResult.data) : [];
   const owner = await queries.users.getById(project.ownerId);
+  const role = "error" in accessResult ? "viewer" : accessResult.role;
 
   const tasksByList = new Map<string, Task[]>();
   for (const task of allTasks) {
@@ -88,7 +109,7 @@ export default async function ProjectPage({
         />
       </div>
       <div className="flex-1 min-h-0">
-        <Board projectId={id} initialLists={listsWithTasks} />
+        <Board projectId={id} initialLists={listsWithTasks} role={role} />
       </div>
     </div>
   );

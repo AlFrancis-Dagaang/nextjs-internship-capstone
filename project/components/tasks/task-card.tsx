@@ -119,6 +119,7 @@ export function TaskCard({
   task,
   projectId,
   allLists,
+  canEdit,
   onUpdated,
   onDeleted,
   onDeleteFailed,
@@ -128,6 +129,8 @@ export function TaskCard({
   task: TaskWithCommentCount;
   projectId: string;
   allLists: ListWithTasks[];
+  canEdit: boolean;
+
   onUpdated?: (task: Task) => void;
   onDeleted?: () => void;
   onDeleteFailed?: (task: Task) => void;
@@ -147,7 +150,7 @@ export function TaskCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({ id: task.id, disabled: !canEdit });
 
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
@@ -211,6 +214,7 @@ export function TaskCard({
       projectId={projectId}
       currentListId={task.listId}
       allLists={allLists}
+      canEdit={canEdit}
       onView={onOpenDetail}
       onRename={() => {
         setTitle(task.title);
@@ -228,7 +232,12 @@ export function TaskCard({
 
   return (
     <>
-      <div ref={setNodeRef} style={dragStyle} {...attributes} {...listeners}>
+      <div
+        ref={setNodeRef}
+        style={dragStyle}
+        {...attributes}
+        {...(canEdit ? listeners : {})}
+      >
         {isRenaming ? (
           <div className="relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 space-y-3 overflow-visible">
             {task.priority && (

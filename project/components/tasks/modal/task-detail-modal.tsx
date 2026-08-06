@@ -18,6 +18,7 @@ type TaskDetailModalProps = {
   projectId: string;
   allLists: ListWithTasks[];
   assignableUsers: { id: string; name?: string; email?: string }[];
+  role: "owner" | "editor" | "viewer";
 
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -34,6 +35,7 @@ export function TaskDetailModal({
   allLists,
   assignableUsers,
   open,
+  role,
   onOpenChange,
   onChanged,
   onMoved,
@@ -42,7 +44,7 @@ export function TaskDetailModal({
   onCommentCountChanged,
 }: TaskDetailModalProps) {
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
-
+  const canEdit = role !== "viewer";
   const handleChanged = useCallback(
     (updated: TaskWithCommentCount) => {
       setActivityRefreshKey((k) => k + 1);

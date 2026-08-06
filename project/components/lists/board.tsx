@@ -34,9 +34,11 @@ export type ListWithTasks = List & { tasks: TaskWithCommentCount[] };
 export function Board({
   projectId,
   initialLists,
+  role,
 }: {
   projectId: string;
   initialLists: ListWithTasks[];
+  role: "owner" | "editor" | "viewer";
 }) {
   const { toast } = useToast();
   useTrackProjectView(projectId);
@@ -182,6 +184,7 @@ export function Board({
                 list={list}
                 allLists={lists}
                 totalLists={lists.length}
+                role={role}
                 onRenamed={renameList}
                 onDeleted={removeList}
                 onMoved={reorderLists}
@@ -222,6 +225,7 @@ export function Board({
           projectId={projectId}
           allLists={lists}
           assignableUsers={assignableUsers}
+          role={role}
           open={true}
           onOpenChange={(open) => {
             if (!open) closeTaskDetail();
