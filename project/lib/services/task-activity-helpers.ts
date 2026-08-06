@@ -49,5 +49,14 @@ export function formatActivityLabel(entry: {
   if (entry.action === "priority_changed" && entry.metadata) {
     return `changed priority to ${(entry.metadata as any).to ?? "none"}`;
   }
+  if (entry.action === "assignee_changed" && entry.metadata) {
+    const meta = entry.metadata as any;
+    if (meta.type === "assigned") {
+      return `assigned ${meta.assigneeName} to this task`;
+    }
+    if (meta.type === "unassigned") {
+      return `removed ${meta.assigneeName} from this task`;
+    }
+  }
   return ACTION_LABELS[entry.action] ?? entry.action;
 }

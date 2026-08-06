@@ -6,6 +6,7 @@ import {
   assertTaskViewAccess,
   assertTaskEditAccess,
 } from "@/lib/services/ownership";
+import { logTaskActivity } from "@/lib/services/activity";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -68,6 +69,13 @@ export async function assignUserToTask(
   }
 
   await queries.taskAssignees.add(taskId, userId);
+  const assignedUser = await queries.users.getById(userId); // ← method name TBD
+  await logTaskActivity(taskId, authResult.user.id, "assignee_changed", {
+    type: "assigned",
+    assigneeId: userId,
+    assigneeName: assignedUser?.name ?? "Unknown user",
+  });
+
   return { success: true, data: null };
 }
 
@@ -86,5 +94,12 @@ export async function unassignUserFromTask(
   }
 
   await queries.taskAssignees.remove(taskId, userId);
+  const unassignedUser = await queries.users.getById(userId);
+  await logTaskActivity(taskId, authResult.user.id, "assignee_changed", {
+    type: "unassigned",
+    assigneeId: userId,
+    assigneeName: unassignedUser?.name ?? "Unknown user",
+  });
+
   return { success: true, data: null };
 }
