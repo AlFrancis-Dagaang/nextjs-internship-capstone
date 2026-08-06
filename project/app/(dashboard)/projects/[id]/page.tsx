@@ -56,11 +56,25 @@ export default async function ProjectPage({
     tasksByList.set(task.listId, arr);
   }
 
+  const assigneeRows = await queries.taskAssignees.getByProject(id);
+  const assigneesByTask = new Map<
+    string,
+    { userId: string; name?: string; email?: string }[]
+  >();
+  for (const row of assigneeRows) {
+    const arr = assigneesByTask.get(row.taskId) ?? [];
+    arr.push({ userId: row.userId, name: row.userName, email: row.userEmail });
+    assigneesByTask.set(row.taskId, arr);
+  }
+
   const listsWithTasks: ListWithTasks[] = lists.map((list) => ({
     ...list,
-    tasks: (tasksByList.get(list.id) ?? []).sort(
-      (a, b) => a.position - b.position,
-    ),
+    tasks: (tasksByList.get(list.id) ?? [])
+      .sort((a, b) => a.position - b.position)
+      .map((task) => ({
+        ...task,
+        assignees: assigneesByTask.get(task.id) ?? [],
+      })),
   }));
 
   return (

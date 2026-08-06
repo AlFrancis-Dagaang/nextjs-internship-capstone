@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../client";
-import { taskAssignees, users } from "../schema";
+import { lists, taskAssignees, tasks, users } from "../schema";
 
 export const taskAssigneesQueries = {
   getByTask: async (taskId: string) => {
@@ -38,5 +38,19 @@ export const taskAssigneesQueries = {
       .where(
         and(eq(taskAssignees.taskId, taskId), eq(taskAssignees.userId, userId)),
       );
+  },
+  getByProject: async (projectId: string) => {
+    return db
+      .select({
+        taskId: taskAssignees.taskId,
+        userId: taskAssignees.userId,
+        userName: users.name,
+        userEmail: users.email,
+      })
+      .from(taskAssignees)
+      .innerJoin(tasks, eq(taskAssignees.taskId, tasks.id))
+      .innerJoin(lists, eq(tasks.listId, lists.id))
+      .innerJoin(users, eq(taskAssignees.userId, users.id))
+      .where(eq(lists.projectId, projectId));
   },
 };

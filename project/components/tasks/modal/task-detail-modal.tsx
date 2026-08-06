@@ -3,7 +3,10 @@
 import { X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { Task } from "@/lib/db/schema";
-import type { ListWithTasks } from "@/components/lists/board";
+import type {
+  ListWithTasks,
+  TaskWithCommentCount,
+} from "@/components/lists/board";
 import { TaskHeader } from "@/components/tasks/tast-detail-modal/task-header";
 import { TaskDescription } from "@/components/tasks/tast-detail-modal/task-description";
 import { TaskSidebar } from "@/components/tasks/tast-detail-modal/task-sidebar";
@@ -17,7 +20,7 @@ type TaskDetailModalProps = {
 
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onChanged?: (task: Task) => void;
+  onChanged?: (task: TaskWithCommentCount) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
   onDeleteClick?: () => void;
   onArchive?: () => void;

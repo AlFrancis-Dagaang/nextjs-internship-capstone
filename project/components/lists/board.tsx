@@ -25,7 +25,10 @@ import { useBoardStore } from "@/stores/board-store";
 import { useTrackProjectView } from "@/hooks/use-track-project-view";
 import { getAssignableUsers } from "@/lib/actions/project-member";
 
-export type TaskWithCommentCount = Task & { commentCount?: number };
+export type TaskWithCommentCount = Task & {
+  commentCount?: number;
+  assignees?: { userId: string; name?: string; email?: string }[];
+};
 export type ListWithTasks = List & { tasks: TaskWithCommentCount[] };
 
 export function Board({

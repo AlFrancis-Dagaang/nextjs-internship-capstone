@@ -1,116 +1,147 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Label } from "@/components/ui/label";
-import { Check, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { updateTask } from "@/lib/actions/tasks";
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getTaskAssignees } from "@/lib/actions/task-assignees";
+import { AssignTaskModal } from "../modal/assign-task-modal";
 import type { Task } from "@/lib/db/schema";
+import type { TaskWithCommentCount } from "@/components/lists/board";
 
-type Assignee = {
-  id: string; // this is users.id, matches task.assigneeId
+type AssigneeUser = {
+  id: string;
   name?: string;
   email?: string;
 };
 
+type TaskAssignee = {
+  id: string;
+  taskId: string;
+  userId: string;
+  createdAt: Date;
+  userName: string;
+  userEmail: string;
+};
+
 type TaskMembersSectionProps = {
   task: Task;
-  assignableUsers: Assignee[]; // project owner + members, passed from parent
-  onUpdated?: (task: Task) => void;
+  projectId: string;
+  assignableUsers: AssigneeUser[];
+  onUpdated?: (task: TaskWithCommentCount) => void;
 };
 
 export function TaskMembersSection({
   task,
+  projectId,
   assignableUsers = [],
   onUpdated,
 }: TaskMembersSectionProps) {
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [assignees, setAssignees] = useState<TaskAssignee[]>([]);
 
-  const currentAssignee = assignableUsers.find((u) => u.id === task.assigneeId);
+  const taskRef = useRef(task);
+  taskRef.current = task;
 
-  function handleAssign(userId: string | null) {
-    setOpen(false);
-    startTransition(async () => {
-      const result = await updateTask(task.id, { assigneeId: userId });
-      if (!result.success) {
-        toast({
-          title: "Failed to update assignee",
-          description: result.error,
-          variant: "destructive",
-        });
-        return;
-      }
-      onUpdated?.(result.data);
-    });
-  }
+  const fetchAssignees = useCallback(async () => {
+    const result = await getTaskAssignees(task.id);
+    if (result.success) {
+      setAssignees(result.data);
+      onUpdated?.({
+        ...taskRef.current,
+        assignees: result.data.map((a) => ({
+          userId: a.userId,
+          name: a.userName,
+          email: a.userEmail,
+        })),
+      });
+    } else {
+      toast({
+        title: "Failed to load assignees",
+        description: result.error,
+        variant: "destructive",
+      });
+    }
+  }, [task.id, onUpdated, toast]);
+
+  useEffect(() => {
+    fetchAssignees();
+  }, [fetchAssignees]);
+
+  const visibleAssignees = assignees.slice(0, 3);
+  const extraCount = assignees.length > 3 ? assignees.length - 3 : 0;
+
+  const currentAssigneeUsers: AssigneeUser[] = assignees.map((a) => ({
+    id: a.userId,
+    name: a.userName,
+    email: a.userEmail,
+  }));
 
   return (
     <div className="space-y-2">
       <Label className="text-[10px] text-neutral-500 uppercase font-semibold tracking-wider">
-        Assignee
+        Assignees
       </Label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            disabled={isPending}
-            className="flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg p-1 -m-1 transition-colors"
-          >
-            {currentAssignee ? (
-              <>
-                <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/40 border-2 border-white dark:border-neutral-900 flex items-center justify-center text-xs font-medium text-blue-700 dark:text-blue-300 uppercase">
-                  {currentAssignee.name?.[0] ??
-                    currentAssignee.email?.[0] ??
-                    "U"}
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg p-1 -m-1 transition-colors"
+        >
+          {assignees.length > 0 ? (
+            <div className="flex items-center space-x-1.5">
+              <div className="flex items-center">
+                <div className="flex -space-x-1.5">
+                  {visibleAssignees.map((a) => (
+                    <div
+                      key={a.id}
+                      className="h-7 w-7 rounded-full bg-blue-100 dark:bg-blue-900/40 border-2 border-white dark:border-neutral-900 flex items-center justify-center text-[10px] font-medium text-blue-700 dark:text-blue-300 uppercase"
+                      title={`${a.userName || a.userEmail}`}
+                    >
+                      {a.userName?.[0] ?? a.userEmail?.[0] ?? "U"}
+                    </div>
+                  ))}
                 </div>
-                <span className="text-xs text-neutral-700 dark:text-neutral-300">
-                  {currentAssignee.name ?? currentAssignee.email}
-                </span>
-              </>
-            ) : (
-              <>
-                <div className="h-8 w-8 rounded-full border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center">
-                  <Plus size={14} className="text-neutral-400" />
-                </div>
-                <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Assign
-                </span>
-              </>
-            )}
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-56 p-1" align="start">
-          <button
-            onClick={() => handleAssign(null)}
-            className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500"
-          >
-            Unassigned
-            {!task.assigneeId && <Check size={13} />}
-          </button>
-          {assignableUsers.map((u) => (
-            <button
-              key={u.id}
-              onClick={() => handleAssign(u.id)}
-              className="w-full flex items-center justify-between px-2 py-1.5 text-xs rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800"
-            >
-              <span className="flex items-center gap-2">
-                <div className="h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-[9px] font-medium text-blue-700 dark:text-blue-300 uppercase">
-                  {u.name?.[0] ?? u.email?.[0] ?? "U"}
-                </div>
-                {u.name ?? u.email}
+                {extraCount > 0 && (
+                  <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 text-[10px] font-semibold">
+                    +{extraCount}
+                  </span>
+                )}
+              </div>
+              <div className="h-6 w-6 rounded-full border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors">
+                <Plus size={12} className="text-neutral-400" />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="h-7 w-7 rounded-full border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center">
+                <Plus size={14} className="text-neutral-400" />
+              </div>
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                Assign
               </span>
-              {task.assigneeId === u.id && <Check size={13} />}
-            </button>
-          ))}
-        </PopoverContent>
-      </Popover>
+            </>
+          )}
+
+          {assignees.length > 0 && (
+            <span className="text-xs text-neutral-700 dark:text-neutral-300 ml-1">
+              {assignees.length} assigned
+            </span>
+          )}
+        </button>
+      </div>
+
+      <AssignTaskModal
+        taskId={task.id}
+        projectId={projectId}
+        assignableUsers={assignableUsers}
+        currentAssignees={currentAssigneeUsers}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onSuccess={fetchAssignees}
+      />
     </div>
   );
 }

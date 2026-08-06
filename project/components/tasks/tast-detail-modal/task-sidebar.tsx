@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { Task } from "@/lib/db/schema";
-import type { ListWithTasks } from "@/components/lists/board";
+import type {
+  ListWithTasks,
+  TaskWithCommentCount,
+} from "@/components/lists/board";
 import { TaskActivityFeed } from "./task-activity-feed";
 import { TaskPrioritySection } from "./task-priority-section";
 import { TaskDatesSection } from "./task-dates-section";
@@ -16,7 +19,7 @@ type TaskSidebarProps = {
   allLists: ListWithTasks[];
   assignableUsers: { id: string; name?: string; email?: string }[];
 
-  onChanged?: (task: Task) => void;
+  onChanged?: (task: TaskWithCommentCount) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
   onOpenChange: (open: boolean) => void;
   onDeleteClick?: () => void;
@@ -36,15 +39,21 @@ export function TaskSidebar({
 }: TaskSidebarProps) {
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
 
-  function handleChanged(updated: Task) {
-    setActivityRefreshKey((k) => k + 1);
-    onChanged?.(updated);
-  }
+  const handleChanged = useCallback(
+    (updated: TaskWithCommentCount) => {
+      setActivityRefreshKey((k) => k + 1);
+      onChanged?.(updated);
+    },
+    [onChanged],
+  );
 
-  function handleMoved(movedTask: Task, affectedTasks: Task[]) {
-    setActivityRefreshKey((k) => k + 1);
-    onMoved?.(movedTask, affectedTasks);
-  }
+  const handleMoved = useCallback(
+    (movedTask: Task, affectedTasks: Task[]) => {
+      setActivityRefreshKey((k) => k + 1);
+      onMoved?.(movedTask, affectedTasks);
+    },
+    [onMoved],
+  );
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -67,6 +76,7 @@ export function TaskSidebar({
         <div className="border-t border-neutral-200 dark:border-neutral-800">
           <TaskMembersSection
             task={task}
+            projectId={projectId}
             assignableUsers={assignableUsers}
             onUpdated={handleChanged}
           />

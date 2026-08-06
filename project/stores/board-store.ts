@@ -175,7 +175,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
               ...l,
               tasks: l.tasks.map((t) =>
                 t.id === task.id
-                  ? { ...task, commentCount: t.commentCount }
+                  ? {
+                      ...task,
+                      commentCount: t.commentCount,
+                      assignees:
+                        (task as TaskWithCommentCount).assignees ?? t.assignees,
+                    }
                   : t,
               ),
             }
@@ -207,8 +212,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   // Same #24 fix as updateTaskLocal, for moveTaskToList's affectedTasks.
   reconcileTaskMoved: (movedTask, affectedTasks) =>
     set((s) => {
+      const allExistingTasks = s.lists.flatMap((l) => l.tasks);
       const commentCountMap = new Map(
-        s.lists.flatMap((l) => l.tasks).map((t) => [t.id, t.commentCount]),
+        allExistingTasks.map((t) => [t.id, t.commentCount]),
+      );
+      const assigneesMap = new Map(
+        allExistingTasks.map((t) => [t.id, t.assignees]),
       );
       const affectedListIds = new Set(affectedTasks.map((t) => t.listId));
       return {
@@ -217,12 +226,15 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           const tasksForThisList = affectedTasks
             .filter((t) => t.listId === l.id)
             .sort((a, b) => a.position - b.position)
-            .map((t) => ({ ...t, commentCount: commentCountMap.get(t.id) }));
+            .map((t) => ({
+              ...t,
+              commentCount: commentCountMap.get(t.id),
+              assignees: assigneesMap.get(t.id),
+            }));
           return { ...l, tasks: tasksForThisList };
         }),
       };
     }),
-
   changeCommentCount: (taskId, delta) =>
     set((s) => ({
       lists: s.lists.map((l) => ({
