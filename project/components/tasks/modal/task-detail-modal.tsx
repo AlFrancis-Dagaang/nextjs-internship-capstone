@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import { X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { Task } from "@/lib/db/schema";
@@ -40,15 +41,36 @@ export function TaskDetailModal({
   onArchive,
   onCommentCountChanged,
 }: TaskDetailModalProps) {
+  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
+
+  const handleChanged = useCallback(
+    (updated: TaskWithCommentCount) => {
+      setActivityRefreshKey((k) => k + 1);
+      onChanged?.(updated);
+    },
+    [onChanged],
+  );
+
+  const handleMoved = useCallback(
+    (movedTask: Task, affectedTasks: Task[]) => {
+      setActivityRefreshKey((k) => k + 1);
+      onMoved?.(movedTask, affectedTasks);
+    },
+    [onMoved],
+  );
+
+  const bumpActivity = useCallback(() => {
+    setActivityRefreshKey((k) => k + 1);
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* Added gap-0 and space-y-0 to force the dialog role div to have zero internal vertical spacing */}
       <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden bg-white dark:bg-neutral-950 flex flex-col [&>button]:hidden">
         {" "}
         {/* Header - Fixed & Pinned */}
         <div className="px-6 py-3 border-b border-neutral-200 dark:border-neutral-800 shrink-0 flex items-start justify-between gap-4">
           <div className="flex-1">
-            <TaskHeader task={task} onChanged={onChanged} />
+            <TaskHeader task={task} onChanged={handleChanged} />
           </div>
           <button
             type="button"
@@ -62,18 +84,19 @@ export function TaskDetailModal({
             <X className="h-5 w-5" />
           </button>
         </div>
-        {/* 2-Column Layout Container - Sits completely flush against the header border */}
+        {/* 2-Column Layout Container */}
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* Left Content */}
           <div className="flex-1 p-6 flex flex-col overflow-hidden">
             <div className="shrink-0 pb-6 border-b border-neutral-100 dark:border-neutral-900">
-              <TaskDescription task={task} onChanged={onChanged} />
+              <TaskDescription task={task} onChanged={handleChanged} />
             </div>
 
             <div className="flex-1 pt-6 overflow-hidden flex flex-col">
               <TaskComments
                 taskId={task.id}
                 onCommentCountChanged={onCommentCountChanged}
+                onActivityChanged={bumpActivity}
               />
             </div>
           </div>
@@ -85,8 +108,9 @@ export function TaskDetailModal({
               projectId={projectId}
               allLists={allLists}
               assignableUsers={assignableUsers}
-              onChanged={onChanged}
-              onMoved={onMoved}
+              onChanged={handleChanged}
+              onMoved={handleMoved}
+              activityRefreshKey={activityRefreshKey}
               onOpenChange={onOpenChange}
               onDeleteClick={onDeleteClick}
               onArchive={onArchive}

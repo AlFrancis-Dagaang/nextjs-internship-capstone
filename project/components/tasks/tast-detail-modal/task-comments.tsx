@@ -33,12 +33,14 @@ type TaskCommentsProps = {
   taskId: string;
   previewCount?: number;
   onCommentCountChanged?: (taskId: string, delta: number) => void;
+  onActivityChanged?: () => void;
 };
 
 export function TaskComments({
   taskId,
   previewCount = 4,
   onCommentCountChanged,
+  onActivityChanged,
 }: TaskCommentsProps) {
   const { toast } = useToast();
   const [comments, setComments] = useState<CommentWithAuthor[] | null>(null);
@@ -103,6 +105,7 @@ export function TaskComments({
         return;
       }
       refresh(); // real data replaces the temp entry wholesale
+      onActivityChanged?.();
     });
   }
 
@@ -123,6 +126,7 @@ export function TaskComments({
         return;
       }
       refresh();
+      onActivityChanged?.();
       onCommentCountChanged?.(taskId, -1);
     });
   }

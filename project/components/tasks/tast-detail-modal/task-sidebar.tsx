@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useCallback } from "react";
 import type { Task } from "@/lib/db/schema";
 import type {
   ListWithTasks,
@@ -18,6 +17,7 @@ type TaskSidebarProps = {
   projectId: string;
   allLists: ListWithTasks[];
   assignableUsers: { id: string; name?: string; email?: string }[];
+  activityRefreshKey: number;
 
   onChanged?: (task: TaskWithCommentCount) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
@@ -32,45 +32,23 @@ export function TaskSidebar({
   allLists,
   onChanged,
   onMoved,
+  activityRefreshKey,
   onOpenChange,
   onDeleteClick,
   assignableUsers,
   onArchive,
 }: TaskSidebarProps) {
-  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
-
-  const handleChanged = useCallback(
-    (updated: TaskWithCommentCount) => {
-      setActivityRefreshKey((k) => k + 1);
-      onChanged?.(updated);
-    },
-    [onChanged],
-  );
-
-  const handleMoved = useCallback(
-    (movedTask: Task, affectedTasks: Task[]) => {
-      setActivityRefreshKey((k) => k + 1);
-      onMoved?.(movedTask, affectedTasks);
-    },
-    [onMoved],
-  );
-
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Added pt-2 and pb-6 so top inputs and bottom inputs never clip */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-1 pb-6 min-h-0 px-1">
-        <TaskPrioritySection task={task} onChanged={handleChanged} />
+        <TaskPrioritySection task={task} onChanged={onChanged} />
 
         <div className="border-t border-neutral-200 dark:border-neutral-800">
-          <TaskDatesSection task={task} onChanged={handleChanged} />
+          <TaskDatesSection task={task} onChanged={onChanged} />
         </div>
 
         <div className="border-t border-neutral-200 dark:border-neutral-800">
-          <TaskMoveSection
-            task={task}
-            allLists={allLists}
-            onMoved={handleMoved}
-          />
+          <TaskMoveSection task={task} allLists={allLists} onMoved={onMoved} />
         </div>
 
         <div className="border-t border-neutral-200 dark:border-neutral-800">
@@ -78,7 +56,7 @@ export function TaskSidebar({
             task={task}
             projectId={projectId}
             assignableUsers={assignableUsers}
-            onUpdated={handleChanged}
+            onUpdated={onChanged}
           />
         </div>
 
@@ -90,7 +68,6 @@ export function TaskSidebar({
         </div>
       </div>
 
-      {/* Pinned Quick Actions Footer */}
       <div className="shrink-0 pt-3 mt-2 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
         <TaskQuickActions
           task={task}
