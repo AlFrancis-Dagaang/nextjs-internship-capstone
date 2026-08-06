@@ -72,7 +72,11 @@ export function TaskDetailModal({
         {/* Header - Fixed & Pinned */}
         <div className="px-6 py-3 border-b border-neutral-200 dark:border-neutral-800 shrink-0 flex items-start justify-between gap-4">
           <div className="flex-1">
-            <TaskHeader task={task} onChanged={handleChanged} />
+            <TaskHeader
+              task={task}
+              canEdit={canEdit}
+              onChanged={handleChanged}
+            />
           </div>
           <button
             type="button"
@@ -91,7 +95,11 @@ export function TaskDetailModal({
           {/* Left Content */}
           <div className="flex-1 p-6 flex flex-col overflow-hidden">
             <div className="shrink-0 pb-6 border-b border-neutral-100 dark:border-neutral-900">
-              <TaskDescription task={task} onChanged={handleChanged} />
+              <TaskDescription
+                task={task}
+                canEdit={canEdit}
+                onChanged={handleChanged}
+              />
             </div>
 
             <div className="flex-1 pt-6 overflow-hidden flex flex-col">
@@ -99,6 +107,7 @@ export function TaskDetailModal({
                 taskId={task.id}
                 onCommentCountChanged={onCommentCountChanged}
                 onActivityChanged={bumpActivity}
+                canEdit={canEdit}
               />
             </div>
           </div>
@@ -110,6 +119,7 @@ export function TaskDetailModal({
               projectId={projectId}
               allLists={allLists}
               assignableUsers={assignableUsers}
+              canEdit={canEdit}
               onChanged={handleChanged}
               onMoved={handleMoved}
               activityRefreshKey={activityRefreshKey}

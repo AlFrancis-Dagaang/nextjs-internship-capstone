@@ -17,9 +17,11 @@ import { useBoardStore } from "@/stores/board-store";
 export function TaskPrioritySection({
   task,
   onChanged,
+  canEdit,
 }: {
   task: Task;
   onChanged?: (task: Task) => void;
+  canEdit: boolean;
 }) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -57,7 +59,7 @@ export function TaskPrioritySection({
       <Select
         value={priority}
         onValueChange={handlePriorityChange}
-        disabled={isPending}
+        disabled={isPending || !canEdit}
       >
         <SelectTrigger className="w-full bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 h-9 text-xs focus:ring-1 focus:ring-cyan-400">
           <SelectValue placeholder="None" />

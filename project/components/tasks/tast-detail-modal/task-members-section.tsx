@@ -28,6 +28,7 @@ type TaskMembersSectionProps = {
   task: Task;
   projectId: string;
   assignableUsers: AssigneeUser[];
+  canEdit: boolean;
   onUpdated?: (task: TaskWithCommentCount) => void;
 };
 
@@ -35,6 +36,7 @@ export function TaskMembersSection({
   task,
   projectId,
   assignableUsers = [],
+  canEdit,
   onUpdated,
 }: TaskMembersSectionProps) {
   const { toast } = useToast();
@@ -87,8 +89,13 @@ export function TaskMembersSection({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg p-1 -m-1 transition-colors"
+          onClick={canEdit ? () => setModalOpen(true) : undefined}
+          disabled={!canEdit}
+          className={`flex items-center gap-2 rounded-lg p-1 -m-1 transition-colors ${
+            canEdit
+              ? "hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer"
+              : "cursor-default"
+          }`}
         >
           {assignees.length > 0 ? (
             <div className="flex items-center space-x-1.5">
@@ -110,11 +117,13 @@ export function TaskMembersSection({
                   </span>
                 )}
               </div>
-              <div className="h-6 w-6 rounded-full border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors">
-                <Plus size={12} className="text-neutral-400" />
-              </div>
+              {canEdit && (
+                <div className="h-6 w-6 rounded-full border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors">
+                  <Plus size={12} className="text-neutral-400" />
+                </div>
+              )}
             </div>
-          ) : (
+          ) : canEdit ? (
             <>
               <div className="h-7 w-7 rounded-full border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center">
                 <Plus size={14} className="text-neutral-400" />
@@ -123,6 +132,10 @@ export function TaskMembersSection({
                 Assign
               </span>
             </>
+          ) : (
+            <span className="text-xs text-neutral-400 dark:text-neutral-500 italic">
+              No assignees
+            </span>
           )}
 
           {assignees.length > 0 && (
@@ -133,15 +146,29 @@ export function TaskMembersSection({
         </button>
       </div>
 
-      <AssignTaskModal
-        taskId={task.id}
-        projectId={projectId}
-        assignableUsers={assignableUsers}
-        currentAssignees={currentAssigneeUsers}
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        onSuccess={fetchAssignees}
-      />
+      {canEdit && (
+        <AssignTaskModal
+          taskId={task.id}
+          projectId={projectId}
+          assignableUsers={assignableUsers}
+          currentAssignees={currentAssigneeUsers}
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          onSuccess={fetchAssignees}
+        />
+      )}
+
+      {canEdit && (
+        <AssignTaskModal
+          taskId={task.id}
+          projectId={projectId}
+          assignableUsers={assignableUsers}
+          currentAssignees={currentAssigneeUsers}
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          onSuccess={fetchAssignees}
+        />
+      )}
     </div>
   );
 }

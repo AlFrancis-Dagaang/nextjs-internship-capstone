@@ -18,7 +18,7 @@ type TaskSidebarProps = {
   allLists: ListWithTasks[];
   assignableUsers: { id: string; name?: string; email?: string }[];
   activityRefreshKey: number;
-
+  canEdit: boolean;
   onChanged?: (task: TaskWithCommentCount) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
   onOpenChange: (open: boolean) => void;
@@ -30,6 +30,7 @@ export function TaskSidebar({
   task,
   projectId,
   allLists,
+  canEdit,
   onChanged,
   onMoved,
   activityRefreshKey,
@@ -41,20 +42,34 @@ export function TaskSidebar({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto space-y-4 pr-1 pb-6 min-h-0 px-1">
-        <TaskPrioritySection task={task} onChanged={onChanged} />
+        <TaskPrioritySection
+          task={task}
+          canEdit={canEdit}
+          onChanged={onChanged}
+        />
 
         <div className="border-t border-neutral-200 dark:border-neutral-800">
-          <TaskDatesSection task={task} onChanged={onChanged} />
+          <TaskDatesSection
+            task={task}
+            canEdit={canEdit}
+            onChanged={onChanged}
+          />
         </div>
 
         <div className="border-t border-neutral-200 dark:border-neutral-800">
-          <TaskMoveSection task={task} allLists={allLists} onMoved={onMoved} />
+          <TaskMoveSection
+            task={task}
+            canEdit={canEdit}
+            allLists={allLists}
+            onMoved={onMoved}
+          />
         </div>
 
         <div className="border-t border-neutral-200 dark:border-neutral-800">
           <TaskMembersSection
             task={task}
             projectId={projectId}
+            canEdit={canEdit}
             assignableUsers={assignableUsers}
             onUpdated={onChanged}
           />
@@ -73,6 +88,7 @@ export function TaskSidebar({
           task={task}
           onDeleteClick={onDeleteClick}
           onArchive={onArchive}
+          canEdit={canEdit}
         />
       </div>
     </div>

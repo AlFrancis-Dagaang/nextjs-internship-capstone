@@ -18,11 +18,13 @@ import { useBoardStore } from "@/stores/board-store";
 export function TaskMoveSection({
   task,
   allLists,
+  canEdit,
   onMoved,
 }: {
   task: Task;
   allLists: ListWithTasks[];
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
+  canEdit: boolean;
 }) {
   const { toast } = useToast();
   const [isMoving, startMoveTransition] = useTransition();
@@ -103,7 +105,7 @@ export function TaskMoveSection({
           <Select
             value={targetListId}
             onValueChange={setTargetListId}
-            disabled={isMoving}
+            disabled={isMoving || !canEdit}
           >
             <SelectTrigger className="w-full h-8 text-xs bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus:ring-1 focus:ring-cyan-400">
               <SelectValue placeholder="Select list" />
@@ -129,7 +131,7 @@ export function TaskMoveSection({
           <Select
             value={position}
             onValueChange={setPosition}
-            disabled={isMoving}
+            disabled={isMoving || !canEdit}
           >
             <SelectTrigger className="w-full h-8 text-xs bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus:ring-1 focus:ring-cyan-400">
               <SelectValue placeholder="1" />
@@ -149,7 +151,7 @@ export function TaskMoveSection({
         </div>
       </div>
 
-      {hasChanges && (
+      {hasChanges && canEdit && (
         <Button
           className="w-full bg-cyan-400 hover:bg-cyan-500 text-neutral-900 font-medium h-8 text-xs shadow-none mt-2"
           disabled={isMoving}

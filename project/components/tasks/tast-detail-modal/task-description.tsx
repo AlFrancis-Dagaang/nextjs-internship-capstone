@@ -21,9 +21,11 @@ import { useBoardStore } from "@/stores/board-store";
 
 export function TaskDescription({
   task,
+  canEdit,
   onChanged,
 }: {
   task: Task;
+  canEdit: boolean;
   onChanged?: (task: Task) => void;
 }) {
   const { toast } = useToast();
@@ -68,7 +70,7 @@ export function TaskDescription({
         <h3 className="text-sm font-semibold flex items-center gap-2 text-neutral-900 dark:text-neutral-100">
           <span className="text-neutral-500">≡</span> Description
         </h3>
-        {!isEditing && (
+        {!isEditing && canEdit && (
           <Button
             variant="outline"
             size="sm"
@@ -194,8 +196,12 @@ export function TaskDescription({
       ) : (
         /* Fixed view box with internal scrolling when text is long */
         <div
-          onClick={() => setIsEditing(true)}
-          className="min-h-25 max-h-40 overflow-y-auto p-3 rounded-md bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 cursor-pointer transition-colors whitespace-pre-wrap text-sm text-neutral-700 dark:text-neutral-300 pr-2"
+          onClick={canEdit ? () => setIsEditing(true) : undefined}
+          className={`min-h-25 max-h-40 overflow-y-auto p-3 rounded-md bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800 transition-colors whitespace-pre-wrap text-sm text-neutral-700 dark:text-neutral-300 pr-2 ${
+            canEdit
+              ? "hover:border-neutral-300 dark:hover:border-neutral-700 cursor-pointer"
+              : ""
+          }`}
         >
           {task.description ? (
             task.description

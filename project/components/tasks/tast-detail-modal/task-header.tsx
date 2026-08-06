@@ -7,10 +7,11 @@ import type { Task } from "@/lib/db/schema";
 
 type TaskHeaderProps = {
   task: Task;
+  canEdit: boolean;
   onChanged?: (task: Task) => void;
 };
 
-export function TaskHeader({ task, onChanged }: TaskHeaderProps) {
+export function TaskHeader({ task, canEdit, onChanged }: TaskHeaderProps) {
   const { toast } = useToast();
   const [title, setTitle] = useState(task.title);
   const [isEditing, setIsEditing] = useState(false);
@@ -58,9 +59,9 @@ export function TaskHeader({ task, onChanged }: TaskHeaderProps) {
           />
         ) : (
           <h2
-            onClick={() => setIsEditing(true)}
+            onClick={canEdit ? () => setIsEditing(true) : undefined}
             className="w-full bg-transparent text-xl font-bold cursor-text px-2 py-1 -ml-2 text-neutral-900 dark:text-white rounded hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
-            title="Click to edit title"
+            title={canEdit ? "Click to edit title" : undefined}
           >
             {task.title}
           </h2>
