@@ -86,6 +86,23 @@ export const taskActivity = pgTable("task_activity", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const taskAssignees = pgTable(
+  "task_assignees",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueAssignment: unique().on(table.taskId, table.userId),
+  }),
+);
+
 export const comments = pgTable("comments", {
   id: uuid("id").defaultRandom().primaryKey(),
   content: text("content").notNull(),
@@ -180,6 +197,17 @@ export const taskActivityRelations = relations(taskActivity, ({ one }) => ({
   }),
 }));
 
+export const taskAssigneesRelations = relations(taskAssignees, ({ one }) => ({
+  task: one(tasks, {
+    fields: [taskAssignees.taskId],
+    references: [tasks.id],
+  }),
+  user: one(users, {
+    fields: [taskAssignees.userId],
+    references: [users.id],
+  }),
+}));
+
 export const commentsRelations = relations(comments, ({ one }) => ({
   task: one(tasks, {
     fields: [comments.taskId],
@@ -207,3 +235,5 @@ export type TaskActivity = typeof taskActivity.$inferSelect;
 export type NewTaskActivity = typeof taskActivity.$inferInsert;
 export type ProjectMember = typeof projectMembers.$inferSelect;
 export type NewProjectMember = typeof projectMembers.$inferInsert;
+export type TaskAssignee = typeof taskAssignees.$inferSelect;
+export type NewTaskAssignee = typeof taskAssignees.$inferInsert;
