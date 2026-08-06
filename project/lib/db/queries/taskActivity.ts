@@ -4,8 +4,8 @@ import { taskActivity, users } from "../schema";
 import type { InferInsertModel } from "drizzle-orm";
 
 export const taskActivityQueries = {
-  getByTask: async (taskId: string) => {
-    const rows = await db
+  getByTask: async (taskId: string, limit?: number) => {
+    const query = db
       .select({
         id: taskActivity.id,
         taskId: taskActivity.taskId,
@@ -23,7 +23,11 @@ export const taskActivityQueries = {
       .where(eq(taskActivity.taskId, taskId))
       .orderBy(desc(taskActivity.createdAt));
 
-    return rows;
+    if (limit) {
+      return query.limit(limit);
+    }
+
+    return query;
   },
   create: async (data: InferInsertModel<typeof taskActivity>) => {
     const [entry] = await db.insert(taskActivity).values(data).returning();

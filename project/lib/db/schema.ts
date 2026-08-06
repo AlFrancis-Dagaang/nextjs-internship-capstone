@@ -7,6 +7,7 @@ import {
   uuid,
   jsonb,
   unique,
+  index,
 } from "drizzle-orm/pg-core";
 
 // ---------- Tables ----------
@@ -58,33 +59,42 @@ export const tasks = pgTable("tasks", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const taskActivity = pgTable("task_activity", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  taskId: uuid("task_id")
-    .notNull()
-    .references(() => tasks.id, { onDelete: "cascade" }),
-  actorId: uuid("actor_id")
-    .notNull()
-    .references(() => users.id),
-  action: text("action", {
-    enum: [
-      "created",
-      "updated",
-      "moved",
-      "priority_changed",
-      "due_date_changed",
-      "assignee_changed",
-      "description_changed",
-      "comment_added",
-      "comment_deleted",
-      "archived",
-      "restored",
-      "deleted",
-    ],
-  }).notNull(),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const taskActivity = pgTable(
+  "task_activity",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id")
+      .notNull()
+      .references(() => users.id),
+    action: text("action", {
+      enum: [
+        "created",
+        "updated",
+        "moved",
+        "priority_changed",
+        "due_date_changed",
+        "assignee_changed",
+        "description_changed",
+        "comment_added",
+        "comment_deleted",
+        "archived",
+        "restored",
+        "deleted",
+      ],
+    }).notNull(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    taskIdCreatedAtIdx: index("task_activity_task_id_created_at_idx").on(
+      table.taskId,
+      table.createdAt,
+    ),
+  }),
+);
 
 export const taskAssignees = pgTable(
   "task_assignees",

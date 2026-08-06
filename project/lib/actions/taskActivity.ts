@@ -10,15 +10,19 @@ type ActionResult<T> =
 
 export async function getTaskActivity(
   taskId: string,
+  limit?: number,
 ): Promise<
   ActionResult<Awaited<ReturnType<typeof queries.taskActivity.getByTask>>>
 > {
-  const authResult = await getAuthedUserOrError();
+  const [authResult, task] = await Promise.all([
+    getAuthedUserOrError(),
+    queries.tasks.getById(taskId),
+  ]);
+
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const task = await queries.tasks.getById(taskId);
   if (!task) {
     return { success: false, error: "Not found" };
   }
@@ -28,6 +32,6 @@ export async function getTaskActivity(
     return { success: false, error: access.error ?? "Unknown error" };
   }
 
-  const activity = await queries.taskActivity.getByTask(taskId);
+  const activity = await queries.taskActivity.getByTask(taskId, limit);
   return { success: true, data: activity };
 }
