@@ -1,5 +1,6 @@
 import { queries } from "@/lib/db";
 import type { ProjectMember } from "../db/schema";
+import { cache } from "react";
 
 type ProjectWithLists = NonNullable<
   Awaited<ReturnType<typeof queries.projects.getById>>
@@ -66,30 +67,29 @@ export async function assertTaskAccess(taskId: string, userId: string) {
  * single source of truth). Falls through to project_members for
  * everyone else.
  */
-export async function assertProjectAccess(
-  projectId: string,
-  userId: string,
-): Promise<ProjectAccessResult> {
-  const project = await queries.projects.getById(projectId);
-  if (!project) return { error: "Not found" };
+export const assertProjectAccess = cache(
+  async (projectId: string, userId: string): Promise<ProjectAccessResult> => {
+    const project = await queries.projects.getById(projectId);
+    if (!project) return { error: "Not found" };
 
-  if (project.ownerId === userId) {
-    return { project, role: "owner", isOwner: true };
-  }
+    if (project.ownerId === userId) {
+      return { project, role: "owner", isOwner: true };
+    }
 
-  const membership = await queries.projectMembers.getByProjectAndUser(
-    projectId,
-    userId,
-  );
-  if (!membership) return { error: "Forbidden" };
+    const membership = await queries.projectMembers.getByProjectAndUser(
+      projectId,
+      userId,
+    );
+    if (!membership) return { error: "Forbidden" };
 
-  return {
-    project,
-    role: membership.role,
-    isOwner: false,
-    membership,
-  };
-}
+    return {
+      project,
+      role: membership.role,
+      isOwner: false,
+      membership,
+    };
+  },
+);
 
 /**
  * View access: owner, editor, or viewer — anyone with a role at all.
