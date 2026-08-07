@@ -1,17 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getTaskActivity } from "@/lib/actions/taskActivity";
 import {
   formatRelativeTime,
   getInitials,
   formatActivityLabel,
+  ACTION_LABELS,
 } from "@/lib/services/task-activity-helpers";
 import type { ActivityWithActor } from "./task-activity-feed";
 
@@ -26,6 +35,8 @@ export function TaskActivityModal({
 }) {
   const [activity, setActivity] = useState<ActivityWithActor[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [nameQuery, setNameQuery] = useState("");
+  const [actionFilter, setActionFilter] = useState<string>("all");
 
   useEffect(() => {
     if (!open) return;
@@ -33,6 +44,8 @@ export function TaskActivityModal({
     let cancelled = false;
     setActivity(null);
     setError(null);
+    setNameQuery("");
+    setActionFilter("all");
 
     getTaskActivity(taskId).then((result) => {
       if (cancelled) return;
@@ -48,12 +61,51 @@ export function TaskActivityModal({
     };
   }, [taskId, open]);
 
+  const filteredActivity = useMemo(() => {
+    if (!activity) return [];
+    const q = nameQuery.trim().toLowerCase();
+    return activity.filter((entry) => {
+      const matchesName = q
+        ? (entry.actor?.name ?? "").toLowerCase().includes(q)
+        : true;
+      const matchesAction =
+        actionFilter === "all" ? true : entry.action === actionFilter;
+      return matchesName && matchesAction;
+    });
+  }, [activity, nameQuery, actionFilter]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Activity log</DialogTitle>
         </DialogHeader>
+
+        {activity !== null && activity.length > 0 && (
+          <div className="flex gap-2 shrink-0">
+            <Input
+              placeholder="Search by name..."
+              value={nameQuery}
+              onChange={(e) => setNameQuery(e.target.value)}
+              className="h-8 text-xs flex-1"
+            />
+            <Select value={actionFilter} onValueChange={setActionFilter}>
+              <SelectTrigger className="h-8 text-xs w-40 shrink-0">
+                <SelectValue placeholder="All actions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">
+                  All actions
+                </SelectItem>
+                {Object.entries(ACTION_LABELS).map(([action, label]) => (
+                  <SelectItem key={action} value={action} className="text-xs">
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {error && (
           <p className="text-red-500 text-xs">
@@ -75,9 +127,17 @@ export function TaskActivityModal({
           </ul>
         )}
 
-        {activity !== null && (
+        {activity !== null && filteredActivity.length === 0 && (
+          <p className="text-neutral-400 text-xs py-6 text-center">
+            {activity.length === 0
+              ? "No activity yet."
+              : "No matching activity."}
+          </p>
+        )}
+
+        {activity !== null && filteredActivity.length > 0 && (
           <ul className="flex-1 overflow-y-auto space-y-4 pr-2">
-            {activity.map((entry) => (
+            {filteredActivity.map((entry) => (
               <li key={entry.id} className="flex items-start gap-3">
                 <div className="h-6 w-6 shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700">
                   {entry.actor ? getInitials(entry.actor.name) : "?"}
