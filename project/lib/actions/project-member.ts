@@ -12,6 +12,7 @@ import {
 } from "@/lib/services/ownership";
 import type { ProjectMember } from "../db/schema";
 import { searchUsersSchema } from "@/lib/validations";
+import { logTaskActivity } from "@/lib/services/activity";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -142,6 +143,34 @@ export async function removeProjectMember(
   if (!existingMember || existingMember.projectId !== projectId) {
     return { success: false, error: "Not found" };
   }
+
+  // Clear the removed member's task assignments before removing membership
+  // itself, so no orphaned task_assignees rows reference a user who no
+  // longer has any access to this project (#65's follow-up gap).
+  const affectedAssignments = await queries.taskAssignees.getByProjectAndUser(
+    projectId,
+    existingMember.userId,
+  );
+
+  await Promise.all(
+    affectedAssignments.map(async (assignment) => {
+      await queries.taskAssignees.remove(
+        assignment.taskId,
+        existingMember.userId,
+      );
+      await logTaskActivity(
+        assignment.taskId,
+        authResult.user.id,
+        "assignee_changed",
+        {
+          type: "unassigned",
+          assigneeId: existingMember.userId,
+          assigneeName: assignment.userName ?? "Unknown user",
+          reason: "removed_from_project",
+        },
+      );
+    }),
+  );
 
   await queries.projectMembers.remove(memberId);
   return { success: true, data: null };
