@@ -150,7 +150,6 @@ export function TaskMembersSection({
         <AssignTaskModal
           taskId={task.id}
           projectId={projectId}
-          assignableUsers={assignableUsers}
           currentAssignees={currentAssigneeUsers}
           open={modalOpen}
           onOpenChange={setModalOpen}
@@ -162,7 +161,6 @@ export function TaskMembersSection({
         <AssignTaskModal
           taskId={task.id}
           projectId={projectId}
-          assignableUsers={assignableUsers}
           currentAssignees={currentAssigneeUsers}
           open={modalOpen}
           onOpenChange={setModalOpen}

@@ -1,8 +1,7 @@
-// components/tasks/task-detail-modal/assign-task-modal.tsx
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
-import { X, Search, Loader2, UserMinus, Plus } from "lucide-react";
+import { X, Search, Loader2, UserMinus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +16,7 @@ import {
   assignUserToTask,
   unassignUserFromTask,
 } from "@/lib/actions/task-assignees";
+import { getAssignableUsers } from "@/lib/actions/project-member";
 
 type AssigneeUser = {
   id: string;
@@ -27,7 +27,6 @@ type AssigneeUser = {
 type AssignTaskModalProps = {
   taskId: string;
   projectId: string;
-  assignableUsers: AssigneeUser[];
   currentAssignees: AssigneeUser[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,7 +35,7 @@ type AssignTaskModalProps = {
 
 export function AssignTaskModal({
   taskId,
-  assignableUsers,
+  projectId,
   currentAssignees,
   open,
   onOpenChange,
@@ -49,17 +48,42 @@ export function AssignTaskModal({
   );
   const [isPending, startTransition] = useTransition();
 
-  // Reset checked state and search whenever modal opens
+  const [assignableUsers, setAssignableUsers] = useState<AssigneeUser[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  // Fetch a fresh member list every time the modal opens, instead of
+  // trusting Board's one-time-fetched prop, which never re-syncs after
+  // a member is added/removed elsewhere in the project.
   useEffect(() => {
-    if (open) {
-      setSearchQuery("");
-      setSelectedUserIds(new Set(currentAssignees.map((u) => u.id)));
-    }
-  }, [open, currentAssignees]);
+    if (!open) return;
+
+    let cancelled = false;
+    setSearchQuery("");
+    setSelectedUserIds(new Set(currentAssignees.map((u) => u.id)));
+    setIsLoadingUsers(true);
+
+    getAssignableUsers(projectId).then((result) => {
+      if (cancelled) return;
+      setIsLoadingUsers(false);
+      if (result.success) {
+        setAssignableUsers(result.data);
+      } else {
+        toast({
+          title: "Failed to load members",
+          description: result.error,
+          variant: "destructive",
+        });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, projectId]);
 
   const originalIds = new Set(currentAssignees.map((u) => u.id));
 
-  // Split assignable pool into currently assigned vs available to add
   const currentlyAssignedUsers = assignableUsers.filter((u) =>
     selectedUserIds.has(u.id),
   );
@@ -67,7 +91,6 @@ export function AssignTaskModal({
     (u) => !selectedUserIds.has(u.id),
   );
 
-  // Filter available users based on search query
   const filteredAvailableUsers = availableUsers.filter((u) => {
     const q = searchQuery.toLowerCase();
     const nameMatch = u.name?.toLowerCase().includes(q) ?? false;
@@ -158,114 +181,121 @@ export function AssignTaskModal({
         </div>
 
         <div className="space-y-4 pt-4 max-h-[70vh] overflow-y-auto pr-1 px-1">
-          {/* Section 1: Current Assignees */}
-          {currentlyAssignedUsers.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
-                Currently Assigned ({currentlyAssignedUsers.length})
-              </label>
-              <div className="divide-y divide-neutral-100 dark:divide-neutral-800 border border-neutral-100 dark:border-neutral-800 rounded-lg overflow-hidden bg-neutral-50/50 dark:bg-neutral-800/20">
-                {currentlyAssignedUsers.map((user) => {
-                  const initials = user.name?.[0] ?? user.email?.[0] ?? "U";
-                  return (
-                    <div
-                      key={user.id}
-                      className="px-3 py-2 flex items-center justify-between transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-medium uppercase">
-                          {initials}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100">
-                            {user.name ?? user.email}
-                          </span>
-                          {user.name && user.email && (
-                            <span className="text-[10px] text-neutral-400">
-                              {user.email}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleUser(user.id)}
-                        className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md"
-                      >
-                        <UserMinus size={13} className="mr-1.5" />
-                        Remove
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
+          {isLoadingUsers ? (
+            <div className="flex items-center justify-center py-8 text-xs text-neutral-400 gap-2">
+              <Loader2 size={14} className="animate-spin text-cyan-500" />
+              <span>Loading members...</span>
             </div>
-          )}
-
-          {/* Section 2: Add Members with Search & Checkboxes */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
-              Add Members
-            </label>
-            <div className="relative">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
-                size={14}
-              />
-              <Input
-                placeholder="Search available members..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-xs bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 rounded-lg w-full focus-visible:ring-1"
-              />
-            </div>
-
-            <div className="max-h-48 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800 border border-neutral-100 dark:border-neutral-800 rounded-lg">
-              {filteredAvailableUsers.length === 0 ? (
-                <div className="py-6 text-center text-xs text-neutral-400">
-                  {assignableUsers.length === currentlyAssignedUsers.length
-                    ? "All project members are already assigned"
-                    : "No matching members found"}
+          ) : (
+            <>
+              {currentlyAssignedUsers.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                    Currently Assigned ({currentlyAssignedUsers.length})
+                  </label>
+                  <div className="divide-y divide-neutral-100 dark:divide-neutral-800 border border-neutral-100 dark:border-neutral-800 rounded-lg overflow-hidden bg-neutral-50/50 dark:bg-neutral-800/20">
+                    {currentlyAssignedUsers.map((user) => {
+                      const initials = user.name?.[0] ?? user.email?.[0] ?? "U";
+                      return (
+                        <div
+                          key={user.id}
+                          className="px-3 py-2 flex items-center justify-between transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-medium uppercase">
+                              {initials}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100">
+                                {user.name ?? user.email}
+                              </span>
+                              {user.name && user.email && (
+                                <span className="text-[10px] text-neutral-400">
+                                  {user.email}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleToggleUser(user.id)}
+                            className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md"
+                          >
+                            <UserMinus size={13} className="mr-1.5" />
+                            Remove
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              ) : (
-                filteredAvailableUsers.map((user) => {
-                  const isChecked = selectedUserIds.has(user.id);
-                  const initials = user.name?.[0] ?? user.email?.[0] ?? "U";
-
-                  return (
-                    <div
-                      key={user.id}
-                      onClick={() => handleToggleUser(user.id)}
-                      className="px-3 py-2.5 flex items-center justify-between hover:bg-neutral-50 dark:hover:bg-neutral-800/60 cursor-pointer transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-medium uppercase">
-                          {initials}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100">
-                            {user.name ?? user.email}
-                          </span>
-                          {user.name && user.email && (
-                            <span className="text-[10px] text-neutral-400">
-                              {user.email}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Checkbox
-                        checked={isChecked}
-                        onCheckedChange={() => handleToggleUser(user.id)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                  );
-                })
               )}
-            </div>
-          </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                  Add Members
+                </label>
+                <div className="relative">
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+                    size={14}
+                  />
+                  <Input
+                    placeholder="Search available members..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-9 text-xs bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 rounded-lg w-full focus-visible:ring-1"
+                  />
+                </div>
+
+                <div className="max-h-48 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800 border border-neutral-100 dark:border-neutral-800 rounded-lg">
+                  {filteredAvailableUsers.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-neutral-400">
+                      {assignableUsers.length === currentlyAssignedUsers.length
+                        ? "All project members are already assigned"
+                        : "No matching members found"}
+                    </div>
+                  ) : (
+                    filteredAvailableUsers.map((user) => {
+                      const isChecked = selectedUserIds.has(user.id);
+                      const initials = user.name?.[0] ?? user.email?.[0] ?? "U";
+
+                      return (
+                        <div
+                          key={user.id}
+                          onClick={() => handleToggleUser(user.id)}
+                          className="px-3 py-2.5 flex items-center justify-between hover:bg-neutral-50 dark:hover:bg-neutral-800/60 cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-medium uppercase">
+                              {initials}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100">
+                                {user.name ?? user.email}
+                              </span>
+                              {user.name && user.email && (
+                                <span className="text-[10px] text-neutral-400">
+                                  {user.email}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <Checkbox
+                            checked={isChecked}
+                            onCheckedChange={() => handleToggleUser(user.id)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="flex justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
             <Button
@@ -282,7 +312,7 @@ export function AssignTaskModal({
               type="button"
               size="sm"
               onClick={handleSave}
-              disabled={isPending}
+              disabled={isPending || isLoadingUsers}
               className="h-9 px-4 bg-cyan-400 hover:bg-cyan-500 text-neutral-900 text-xs font-medium rounded-lg shadow-none"
             >
               {isPending && (
