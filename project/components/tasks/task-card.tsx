@@ -131,7 +131,7 @@ export function TaskCard({
   allLists: ListWithTasks[];
   canEdit: boolean;
 
-  onUpdated?: (task: Task) => void;
+  onUpdated?: (task: TaskWithCommentCount) => void;
   onDeleted?: () => void;
   onDeleteFailed?: (task: Task) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
@@ -227,6 +227,10 @@ export function TaskCard({
       onMoved={(movedTask, affectedTasks) =>
         onMoved?.(movedTask, affectedTasks)
       }
+      onAssigned={(assignee) => {
+        const updatedAssignees = [...(task.assignees ?? []), assignee];
+        onUpdated?.({ ...task, assignees: updatedAssignees });
+      }}
     />
   );
 
