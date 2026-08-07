@@ -176,7 +176,7 @@ export async function searchUsersForInvite(
 
   const [existingMembers, results] = await Promise.all([
     queries.projectMembers.getByProject(projectId),
-    queries.users.searchByEmailPrefix(parsed.data.query),
+    queries.users.searchByNameOrEmailPrefix(parsed.data.query),
   ]);
 
   const memberRoleById = new Map(

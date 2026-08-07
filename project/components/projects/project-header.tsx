@@ -1,9 +1,10 @@
-// components/projects/project-header.tsx
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search, UserPlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Project } from "@/lib/db/schema";
+import { InviteMemberModal } from "./modals/invite-member-modal";
 
 type Member = {
   id: string;
@@ -24,14 +26,19 @@ type Member = {
 export function ProjectHeader({
   project,
   members,
+  isOwner,
   ownerName,
   ownerEmail,
 }: {
   project: Project;
   members: Member[];
+  isOwner: boolean;
   ownerName?: string;
   ownerEmail?: string;
 }) {
+  const [membersState, setMembersState] = useState(members);
+  const [inviteOpen, setInviteOpen] = useState(false);
+
   const avatarColors = [
     "bg-blue-600",
     "bg-indigo-600",
@@ -40,8 +47,8 @@ export function ProjectHeader({
     "bg-rose-600",
   ];
 
-  const visibleMembers = members.slice(0, 3);
-  const extraCount = members.length > 3 ? members.length - 3 : 0;
+  const visibleMembers = membersState.slice(0, 3);
+  const extraCount = membersState.length > 3 ? membersState.length - 3 : 0;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 bg-transparent px-0 py-0 m-0">
@@ -103,6 +110,17 @@ export function ProjectHeader({
               +{extraCount}
             </span>
           )}
+          {isOwner && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setInviteOpen(true)}
+              className="ml-1.5 h-6 w-6 rounded-full border border-dashed border-neutral-300 dark:border-neutral-700 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:border-neutral-400 dark:hover:border-neutral-500"
+              aria-label="Add members"
+            >
+              <UserPlus size={12} />
+            </Button>
+          )}
         </div>
 
         {/* Group By selector */}
@@ -128,6 +146,15 @@ export function ProjectHeader({
           </Select>
         </div>
       </div>
+      {isOwner && (
+        <InviteMemberModal
+          project={project}
+          members={membersState}
+          open={inviteOpen}
+          onOpenChange={setInviteOpen}
+          onMembersChanged={setMembersState}
+        />
+      )}
     </div>
   );
 }

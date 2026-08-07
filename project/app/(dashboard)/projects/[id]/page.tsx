@@ -104,6 +104,7 @@ export default async function ProjectPage({
         <ProjectHeader
           project={project}
           members={members}
+          isOwner={role === "owner"}
           ownerName={owner?.name}
           ownerEmail={owner?.email}
         />

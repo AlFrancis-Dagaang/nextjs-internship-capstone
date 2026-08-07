@@ -1,4 +1,4 @@
-import { eq, ilike } from "drizzle-orm";
+import { eq, ilike, or } from "drizzle-orm";
 import { db } from "../client";
 import { users } from "../schema";
 
@@ -24,11 +24,13 @@ export const usersQueries = {
     const [created] = await db.insert(users).values(data).returning();
     return created;
   },
-  searchByEmailPrefix: async (query: string, limit = 8) => {
+  searchByNameOrEmailPrefix: async (query: string, limit = 8) => {
     return db
       .select({ id: users.id, email: users.email, name: users.name })
       .from(users)
-      .where(ilike(users.email, `${query}%`))
+      .where(
+        or(ilike(users.name, `%${query}%`), ilike(users.email, `%${query}%`)),
+      )
       .limit(limit);
   },
   getById: async (id: string) => {
