@@ -1,4 +1,3 @@
-import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getProject } from "@/lib/actions/projects";
 import { getListsByProject } from "@/lib/actions/lists";
@@ -36,14 +35,21 @@ export default async function ProjectPage({
     );
   }
 
-  const [projectResult, listsResult, tasksResult, membersResult, accessResult] =
-    await Promise.all([
-      getProject(id),
-      getListsByProject(id),
-      getTasksByProject(id),
-      getProjectMembers(id),
-      assertProjectAccess(id, authResult.user.id),
-    ]);
+  const [
+    projectResult,
+    listsResult,
+    tasksResult,
+    membersResult,
+    accessResult,
+    assigneeRows,
+  ] = await Promise.all([
+    getProject(id),
+    getListsByProject(id),
+    getTasksByProject(id),
+    getProjectMembers(id),
+    assertProjectAccess(id, authResult.user.id),
+    queries.taskAssignees.getByProject(id),
+  ]);
 
   if (!projectResult.success) {
     return (
@@ -77,7 +83,6 @@ export default async function ProjectPage({
     tasksByList.set(task.listId, arr);
   }
 
-  const assigneeRows = await queries.taskAssignees.getByProject(id);
   const assigneesByTask = new Map<
     string,
     { userId: string; name?: string; email?: string }[]
