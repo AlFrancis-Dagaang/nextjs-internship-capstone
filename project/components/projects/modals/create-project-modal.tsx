@@ -17,7 +17,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 type CreateProjectModalProps = {
-  onCreated?: () => void;
+  onCreated?: (project: Project) => void;
+  onUpdated?: (project: Project) => void;
   project?: Project;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -26,6 +27,7 @@ type CreateProjectModalProps = {
 
 export function CreateProjectModal({
   onCreated,
+  onUpdated,
   project,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
@@ -79,7 +81,12 @@ export function CreateProjectModal({
         description: name,
       });
       setOpen(false);
-      onCreated?.();
+      if (isEdit) {
+        onUpdated?.(result.data);
+      } else {
+        onCreated?.(result.data);
+      }
+      setOpen(false);
     });
   }
 

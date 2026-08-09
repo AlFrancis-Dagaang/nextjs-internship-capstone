@@ -1,10 +1,11 @@
 "use client";
-
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ProjectCard } from "./project-card";
 import { CreateProjectModal } from "./modals/create-project-modal";
 import { RecentlyViewedStrip } from "./recently-viewed-strip";
 import type { Project } from "@/lib/db/schema";
+import { useProjectStore } from "@/stores/project-store";
 
 type Member = {
   id: string;
@@ -20,19 +21,30 @@ type OwnerInfo = {
 };
 
 type ProjectsListProps = {
-  projects: Project[];
+  initialProjects: Project[];
   currentUserId: string;
   initialMembersMap: Record<string, Member[]>;
   initialOwnerMap: Record<string, OwnerInfo>;
 };
 
 export function ProjectsList({
-  projects,
+  initialProjects,
   currentUserId,
   initialMembersMap,
   initialOwnerMap,
 }: ProjectsListProps) {
   const router = useRouter();
+
+  const projects = useProjectStore((s) => s.projects);
+  const setInitialProjects = useProjectStore((s) => s.setInitialProjects);
+  const addProject = useProjectStore((s) => s.addProject);
+  const setInitialMembersMap = useProjectStore((s) => s.setInitialMembersMap);
+
+  useEffect(() => {
+    setInitialProjects(initialProjects);
+    setInitialMembersMap(initialMembersMap);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const ownedProjects = projects.filter((p) => p.ownerId === currentUserId);
   const sharedProjects = projects.filter((p) => p.ownerId !== currentUserId);
@@ -53,7 +65,7 @@ export function ProjectsList({
             Manage and organize your team projects
           </p>
         </div>
-        <CreateProjectModal onCreated={() => router.refresh()} />
+        <CreateProjectModal onCreated={(project) => addProject(project)} />{" "}
       </div>
 
       <RecentlyViewedStrip

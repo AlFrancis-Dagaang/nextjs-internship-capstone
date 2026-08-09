@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import type { Project } from "@/lib/db/schema";
 import { InviteMemberModal } from "./modals/invite-member-modal";
+import { useEffect } from "react";
+import { useProjectStore } from "@/stores/project-store";
 
 type Member = {
   id: string;
@@ -25,18 +27,32 @@ type Member = {
 
 export function ProjectHeader({
   project,
-  members,
+  initialMembers,
   isOwner,
   ownerName,
   ownerEmail,
 }: {
   project: Project;
-  members: Member[];
+  initialMembers: Member[];
   isOwner: boolean;
   ownerName?: string;
   ownerEmail?: string;
 }) {
-  const [membersState, setMembersState] = useState(members);
+  const membersState = useProjectStore(
+    (s) => s.membersMap[project.id] ?? initialMembers,
+  );
+  const setProjectMembers = useProjectStore((s) => s.setProjectMembers);
+  const addMember = useProjectStore((s) => s.addMember);
+  const replaceOptimisticMember = useProjectStore(
+    (s) => s.replaceOptimisticMember,
+  );
+  const removeMember = useProjectStore((s) => s.removeMember);
+
+  useEffect(() => {
+    setProjectMembers(project.id, initialMembers);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project.id]);
+
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const avatarColors = [
@@ -149,10 +165,11 @@ export function ProjectHeader({
       {isOwner && (
         <InviteMemberModal
           project={project}
-          members={membersState}
           open={inviteOpen}
           onOpenChange={setInviteOpen}
-          onMembersChanged={setMembersState}
+          onMemberAdded={addMember}
+          onMemberAddConfirmed={replaceOptimisticMember}
+          onMemberRemoved={removeMember}
         />
       )}
     </div>

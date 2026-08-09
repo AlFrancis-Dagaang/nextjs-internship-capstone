@@ -27,7 +27,14 @@ type ProjectDetailModalProps = {
   ownerEmail?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onMembersChanged: (members: Member[]) => void;
+  onMemberAdded: (projectId: string, member: Member) => void;
+  onMemberAddConfirmed: (
+    projectId: string,
+    tempId: string,
+    realMember: Member,
+  ) => void;
+  onMemberRoleChanged: (projectId: string, member: Member) => void;
+  onMemberRemoved: (projectId: string, memberId: string) => void;
 };
 
 export function ProjectDetailModal({
@@ -38,7 +45,10 @@ export function ProjectDetailModal({
   ownerEmail,
   open,
   onOpenChange,
-  onMembersChanged,
+  onMemberAdded,
+  onMemberAddConfirmed,
+  onMemberRoleChanged,
+  onMemberRemoved,
 }: ProjectDetailModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -76,7 +86,10 @@ export function ProjectDetailModal({
             isOwner={isOwner}
             ownerName={ownerName}
             ownerEmail={ownerEmail}
-            onMembersChanged={onMembersChanged}
+            onMemberAdded={onMemberAdded}
+            onMemberAddConfirmed={onMemberAddConfirmed}
+            onMemberRoleChanged={onMemberRoleChanged}
+            onMemberRemoved={onMemberRemoved}
           />
         </div>
       </DialogContent>

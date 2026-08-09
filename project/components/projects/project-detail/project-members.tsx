@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useTransition, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { Trash2, Shield, UserPlus, Search } from "lucide-react";
 import type { Project } from "@/lib/db/schema";
 import {
@@ -36,7 +35,14 @@ type ProjectMembersProps = {
   isOwner: boolean;
   ownerName?: string;
   ownerEmail?: string;
-  onMembersChanged: (members: Member[]) => void;
+  onMemberAdded: (projectId: string, member: Member) => void;
+  onMemberAddConfirmed: (
+    projectId: string,
+    tempId: string,
+    realMember: Member,
+  ) => void;
+  onMemberRoleChanged: (projectId: string, member: Member) => void;
+  onMemberRemoved: (projectId: string, memberId: string) => void;
 };
 
 export function ProjectMembers({
@@ -45,9 +51,11 @@ export function ProjectMembers({
   isOwner,
   ownerName,
   ownerEmail,
-  onMembersChanged,
+  onMemberAdded,
+  onMemberAddConfirmed,
+  onMemberRoleChanged,
+  onMemberRemoved,
 }: ProjectMembersProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
@@ -74,17 +82,17 @@ export function ProjectMembers({
     memberId: string,
     newRole: "editor" | "viewer",
   ) {
-    const prevMembers = [...members];
-    onMembersChanged(
-      members.map((m) => (m.id === memberId ? { ...m, role: newRole } : m)),
-    );
+    const target = members.find((m) => m.id === memberId);
+    if (!target) return;
+    const prev = target;
+    onMemberRoleChanged(project.id, { ...target, role: newRole });
 
     startTransition(async () => {
       const result = await updateMemberRole(project.id, memberId, {
         role: newRole,
       });
       if (!result.success) {
-        onMembersChanged(prevMembers);
+        onMemberRoleChanged(project.id, prev);
         toast({
           title: "Failed to update role",
           description: result.error,
@@ -93,7 +101,6 @@ export function ProjectMembers({
         return;
       }
       toast({ title: "Role updated" });
-      router.refresh();
     });
   }
 
@@ -101,14 +108,12 @@ export function ProjectMembers({
     if (!memberToRemove) return;
     const member = memberToRemove;
     setMemberToRemove(null);
-
-    const prevMembers = [...members];
-    onMembersChanged(members.filter((m) => m.id !== member.id));
+    onMemberRemoved(project.id, member.id);
 
     startTransition(async () => {
       const result = await removeProjectMember(project.id, member.id);
       if (!result.success) {
-        onMembersChanged(prevMembers);
+        onMemberAdded(project.id, member);
         toast({
           title: "Failed to remove member",
           description: result.error,
@@ -120,10 +125,8 @@ export function ProjectMembers({
         title: "Member removed",
         description: `${member.name ?? member.email ?? "User"} was removed from the project.`,
       });
-      router.refresh();
     });
   }
-
   return (
     <>
       <div className="w-full md:w-[480px] shrink-0 p-6 flex flex-col overflow-y-auto bg-neutral-50/50 dark:bg-neutral-900/30 space-y-5 border-t md:border-t-0 md:border-l border-neutral-200 dark:border-neutral-800">
@@ -275,10 +278,11 @@ export function ProjectMembers({
 
       <InviteMemberModal
         project={project}
-        members={members}
         open={inviteModalOpen}
         onOpenChange={setInviteModalOpen}
-        onMembersChanged={onMembersChanged}
+        onMemberAdded={onMemberAdded}
+        onMemberAddConfirmed={onMemberAddConfirmed}
+        onMemberRemoved={onMemberRemoved}
       />
 
       <DeleteMemberModal

@@ -13,6 +13,14 @@ type Member = {
 interface ProjectState {
   projects: Project[];
   membersMap: Record<string, Member[]>;
+  addMember: (projectId: string, member: Member) => void;
+  replaceOptimisticMember: (
+    projectId: string,
+    tempId: string,
+    realMember: Member,
+  ) => void;
+  updateMemberLocal: (projectId: string, member: Member) => void;
+  removeMember: (projectId: string, memberId: string) => void;
 
   setInitialProjects: (projects: Project[]) => void;
   setInitialMembersMap: (map: Record<string, Member[]>) => void;
@@ -48,5 +56,45 @@ export const useProjectStore = create<ProjectState>((set) => ({
   setProjectMembers: (projectId, members) =>
     set((s) => ({
       membersMap: { ...s.membersMap, [projectId]: members },
+    })),
+  addMember: (projectId, member) =>
+    set((s) => ({
+      membersMap: {
+        ...s.membersMap,
+        [projectId]: [...(s.membersMap[projectId] ?? []), member],
+      },
+    })),
+
+  // Mirrors replaceOptimisticTask: swaps a temp-id member (from an
+  // optimistic invite) for the server-confirmed row once addProjectMember
+  // resolves.
+  replaceOptimisticMember: (projectId, tempId, realMember) =>
+    set((s) => ({
+      membersMap: {
+        ...s.membersMap,
+        [projectId]: (s.membersMap[projectId] ?? []).map((m) =>
+          m.id === tempId ? realMember : m,
+        ),
+      },
+    })),
+
+  updateMemberLocal: (projectId, member) =>
+    set((s) => ({
+      membersMap: {
+        ...s.membersMap,
+        [projectId]: (s.membersMap[projectId] ?? []).map((m) =>
+          m.id === member.id ? member : m,
+        ),
+      },
+    })),
+
+  removeMember: (projectId, memberId) =>
+    set((s) => ({
+      membersMap: {
+        ...s.membersMap,
+        [projectId]: (s.membersMap[projectId] ?? []).filter(
+          (m) => m.id !== memberId,
+        ),
+      },
     })),
 }));

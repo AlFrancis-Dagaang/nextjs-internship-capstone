@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useTransition, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import {
   MoreHorizontal,
   ExternalLink,
@@ -57,19 +56,26 @@ type SearchUser = {
 export function ProjectListAction({
   project,
   isOwner,
+  onDeleted,
   onViewDetails,
   onRename,
-  members = [],
-  onMembersChanged,
+  onMemberAdded,
+  onMemberAddConfirmed,
+  onMemberRemoved,
 }: {
   project: Project;
   isOwner: boolean;
+  onDeleted: (projectId: string) => void;
   onViewDetails: () => void;
   onRename: () => void;
-  members?: Member[];
-  onMembersChanged?: (members: Member[]) => void;
+  onMemberAdded: (projectId: string, member: Member) => void;
+  onMemberAddConfirmed: (
+    projectId: string,
+    tempId: string,
+    realMember: Member,
+  ) => void;
+  onMemberRemoved: (projectId: string, memberId: string) => void;
 }) {
-  const router = useRouter();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"menu" | "invite">("menu");
@@ -163,7 +169,7 @@ export function ProjectListAction({
           description: `"${project.name}" was permanently deleted.`,
         });
         setDeleteOpen(false);
-        router.refresh();
+        onDeleted(project.id);
       } else {
         toast({
           title: "Failed to delete project",
@@ -181,16 +187,17 @@ export function ProjectListAction({
     const targetEmail = selectedUser.email;
     const targetName = selectedUser.name;
     const assignedRole = inviteRole;
+    const tempId = `temp-${Date.now()}`;
 
     const tempMember: Member = {
-      id: `temp-${Date.now()}`,
+      id: tempId,
       userId: selectedUser.id,
       email: targetEmail,
       name: targetName,
       role: assignedRole,
     };
 
-    onMembersChanged?.([...members, tempMember]);
+    onMemberAdded(project.id, tempMember);
     setIsOpen(false);
 
     startTransition(async () => {
@@ -200,7 +207,7 @@ export function ProjectListAction({
       });
 
       if (!result.success) {
-        onMembersChanged?.(members.filter((m) => m.id !== tempMember.id));
+        onMemberRemoved(project.id, tempId);
         toast({
           title: "Failed to add member",
           description: result.error,
@@ -209,24 +216,18 @@ export function ProjectListAction({
         return;
       }
 
+      onMemberAddConfirmed(project.id, tempId, {
+        id: result.data.id,
+        userId: result.data.userId,
+        role: result.data.role,
+        email: targetEmail,
+        name: targetName,
+      });
+
       toast({
         title: "Member added successfully",
         description: `${targetEmail} added as ${assignedRole}.`,
       });
-
-      const fresh = await getProjectMembers(project.id);
-      if (fresh.success) {
-        onMembersChanged?.(
-          fresh.data.map((m) => ({
-            id: m.id,
-            userId: m.userId,
-            email: m.userEmail,
-            name: m.userName,
-            role: m.role,
-          })),
-        );
-      }
-      router.refresh();
     });
   }
 

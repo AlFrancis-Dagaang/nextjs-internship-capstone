@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { X, UserPlus, Loader2 } from "lucide-react";
 import type { Project } from "@/lib/db/schema";
 import {
@@ -45,20 +44,25 @@ type SearchUser = {
 
 type InviteMemberModalProps = {
   project: Project;
-  members: Member[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onMembersChanged: (members: Member[]) => void;
+  onMemberAdded: (projectId: string, member: Member) => void;
+  onMemberAddConfirmed: (
+    projectId: string,
+    tempId: string,
+    realMember: Member,
+  ) => void;
+  onMemberRemoved: (projectId: string, memberId: string) => void;
 };
 
 export function InviteMemberModal({
   project,
-  members,
   open,
   onOpenChange,
-  onMembersChanged,
+  onMemberAdded,
+  onMemberAddConfirmed,
+  onMemberRemoved,
 }: InviteMemberModalProps) {
-  const router = useRouter();
   const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
@@ -139,16 +143,17 @@ export function InviteMemberModal({
     const targetEmail = selectedUser.email;
     const targetName = selectedUser.name;
     const assignedRole = role;
+    const tempId = `temp-${Date.now()}`;
 
     const tempMember: Member = {
-      id: `temp-${Date.now()}`,
+      id: tempId,
       userId: selectedUser.id,
       email: targetEmail,
       name: targetName,
       role: assignedRole,
     };
 
-    onMembersChanged([...members, tempMember]);
+    onMemberAdded(project.id, tempMember);
     onOpenChange(false);
 
     startTransition(async () => {
@@ -158,7 +163,7 @@ export function InviteMemberModal({
       });
 
       if (!result.success) {
-        onMembersChanged(members.filter((m) => m.id !== tempMember.id));
+        onMemberRemoved(project.id, tempId);
         toast({
           title: "Failed to add member",
           description: result.error,
@@ -167,24 +172,18 @@ export function InviteMemberModal({
         return;
       }
 
+      onMemberAddConfirmed(project.id, tempId, {
+        id: result.data.id,
+        userId: result.data.userId,
+        role: result.data.role,
+        email: targetEmail,
+        name: targetName,
+      });
+
       toast({
         title: "Member added successfully",
         description: `${targetEmail} added as ${assignedRole}.`,
       });
-
-      const fresh = await getProjectMembers(project.id);
-      if (fresh.success) {
-        onMembersChanged(
-          fresh.data.map((m) => ({
-            id: m.id,
-            userId: m.userId,
-            email: m.userEmail,
-            name: m.userName,
-            role: m.role,
-          })),
-        );
-      }
-      router.refresh();
     });
   }
 

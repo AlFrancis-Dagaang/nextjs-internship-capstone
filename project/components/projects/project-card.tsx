@@ -1,7 +1,8 @@
 // components/projects/project-card.tsx
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
+import { useProjectStore } from "@/stores/project-store";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Project } from "@/lib/db/schema";
@@ -35,11 +36,30 @@ export function ProjectCard({
   myRole?: "editor" | "viewer";
 }) {
   const router = useRouter();
+
+  const updateProjectLocal = useProjectStore((s) => s.updateProjectLocal);
+  const removeProject = useProjectStore((s) => s.removeProject);
+
+  const members = useProjectStore(
+    (s) => s.membersMap[project.id] ?? initialMembers,
+  );
+  const setProjectMembers = useProjectStore((s) => s.setProjectMembers);
+  const addMember = useProjectStore((s) => s.addMember);
+  const replaceOptimisticMember = useProjectStore(
+    (s) => s.replaceOptimisticMember,
+  );
+  const updateMemberLocal = useProjectStore((s) => s.updateMemberLocal);
+  const removeMember = useProjectStore((s) => s.removeMember);
+
+  useEffect(() => {
+    setProjectMembers(project.id, initialMembers);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project.id]);
+
   const { toast } = useToast();
   const isOwner = project.ownerId === currentUserId;
 
   const [detailOpen, setDetailOpen] = useState(false);
-  const [members, setMembers] = useState<Member[]>(initialMembers);
 
   const avatarColors = [
     "bg-blue-600",
@@ -62,11 +82,14 @@ export function ProjectCard({
       return;
     }
     const submittedName = name;
+    const prevProject = project;
     setIsRenaming(false);
+    updateProjectLocal({ ...project, name: submittedName });
 
     startRenameTransition(async () => {
       const result = await updateProject(project.id, { name: submittedName });
       if (!result.success) {
+        updateProjectLocal(prevProject);
         toast({
           title: "Failed to rename project",
           description: result.error,
@@ -76,7 +99,6 @@ export function ProjectCard({
         return;
       }
       toast({ title: "Project updated", description: result.data?.name });
-      router.refresh();
     });
   }
 
@@ -215,12 +237,13 @@ export function ProjectCard({
               setName(project.name);
               setIsRenaming(true);
             }}
-            members={members}
-            onMembersChanged={setMembers}
+            onDeleted={removeProject}
+            onMemberAdded={addMember}
+            onMemberAddConfirmed={replaceOptimisticMember}
+            onMemberRemoved={removeMember}
           />
         </div>
       </div>
-
       <ProjectDetailModal
         project={project}
         members={members}
@@ -229,7 +252,10 @@ export function ProjectCard({
         ownerEmail={ownerEmail}
         open={detailOpen}
         onOpenChange={setDetailOpen}
-        onMembersChanged={setMembers}
+        onMemberAdded={addMember}
+        onMemberAddConfirmed={replaceOptimisticMember}
+        onMemberRoleChanged={updateMemberLocal}
+        onMemberRemoved={removeMember}
       />
     </>
   );

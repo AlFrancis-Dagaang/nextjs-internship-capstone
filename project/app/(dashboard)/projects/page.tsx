@@ -54,7 +54,7 @@ export default async function ProjectsPage() {
   return (
     <div className="space-y-6">
       <ProjectsList
-        projects={result.data}
+        initialProjects={result.data}
         currentUserId={authResult.user.id}
         initialMembersMap={initialMembersMap}
         initialOwnerMap={initialOwnerMap}

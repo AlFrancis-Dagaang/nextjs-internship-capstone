@@ -108,7 +108,7 @@ export default async function ProjectPage({
       <div className="shrink-0">
         <ProjectHeader
           project={project}
-          members={members}
+          initialMembers={members}
           isOwner={role === "owner"}
           ownerName={owner?.name}
           ownerEmail={owner?.email}
