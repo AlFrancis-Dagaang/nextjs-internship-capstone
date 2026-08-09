@@ -9,6 +9,7 @@ import {
 } from "@/lib/services/ownership";
 import { logTaskActivity } from "@/lib/services/activity";
 import type { Comment } from "@/lib/db/schema";
+import { revalidatePath } from "next/cache";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -50,6 +51,7 @@ export async function createComment(
     authResult.user.id,
     "comment_added",
   );
+  revalidatePath(`/projects/${access.project.id}`);
 
   return { success: true, data: comment };
 }
@@ -106,6 +108,7 @@ export async function deleteComment(id: string): Promise<ActionResult<null>> {
     authResult.user.id,
     "comment_deleted",
   );
+  revalidatePath(`/projects/${access.project.id}`);
 
   return { success: true, data: null };
 }
@@ -141,5 +144,8 @@ export async function updateComment(
   }
 
   const updated = await queries.comments.update(id, { content });
+
+  revalidatePath(`/projects/${access.project.id}`);
+
   return { success: true, data: updated };
 }

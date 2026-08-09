@@ -8,7 +8,7 @@ import {
   assertProjectViewAccess,
 } from "@/lib/services/ownership";
 import { Project } from "../db/schema";
-
+import { revalidatePath } from "next/cache";
 type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string; fieldErrors?: Record<string, string[]> };
@@ -35,6 +35,7 @@ export async function createProject(
     ownerId: authResult.user.id,
   });
 
+  revalidatePath("/projects");
   return { success: true, data: project };
 }
 
@@ -90,6 +91,9 @@ export async function updateProject(
   }
 
   const updated = await queries.projects.update(id, parsed.data);
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${id}`);
   return { success: true, data: updated };
 }
 
@@ -105,5 +109,7 @@ export async function deleteProject(id: string): Promise<ActionResult<null>> {
   }
 
   await queries.projects.delete(id);
+  revalidatePath("/projects");
+
   return { success: true, data: null };
 }

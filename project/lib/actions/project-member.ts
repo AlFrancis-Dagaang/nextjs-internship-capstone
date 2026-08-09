@@ -13,6 +13,7 @@ import {
 import type { ProjectMember } from "../db/schema";
 import { searchUsersSchema } from "@/lib/validations";
 import { logTaskActivity } from "@/lib/services/activity";
+import { revalidatePath } from "next/cache";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -63,6 +64,9 @@ export async function addProjectMember(
     userId: targetUser.id,
     role: parsed.data.role ?? "viewer",
   });
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
 
   return { success: true, data: member };
 }
@@ -122,6 +126,9 @@ export async function updateMemberRole(
     memberId,
     parsed.data.role,
   );
+
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
   return { success: true, data: updated };
 }
 
@@ -173,6 +180,8 @@ export async function removeProjectMember(
   );
 
   await queries.projectMembers.remove(memberId);
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
   return { success: true, data: null };
 }
 

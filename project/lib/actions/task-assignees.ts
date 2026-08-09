@@ -7,6 +7,7 @@ import {
   assertTaskEditAccess,
 } from "@/lib/services/ownership";
 import { logTaskActivity } from "@/lib/services/activity";
+import { revalidatePath } from "next/cache";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -76,6 +77,8 @@ export async function assignUserToTask(
     assigneeName: assignedUser?.name ?? "Unknown user",
   });
 
+  revalidatePath(`/projects/${access.project.id}`);
+
   return { success: true, data: null };
 }
 
@@ -100,6 +103,7 @@ export async function unassignUserFromTask(
     assigneeId: userId,
     assigneeName: unassignedUser?.name ?? "Unknown user",
   });
+  revalidatePath(`/projects/${access.project.id}`);
 
   return { success: true, data: null };
 }

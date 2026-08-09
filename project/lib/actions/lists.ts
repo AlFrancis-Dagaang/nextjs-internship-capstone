@@ -8,6 +8,7 @@ import {
   assertProjectViewAccess,
 } from "@/lib/services/ownership";
 import { List } from "../db/schema";
+import { revalidatePath } from "next/cache";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -46,6 +47,8 @@ export async function createList(
     projectId: parsed.data.projectId,
     position,
   });
+
+  revalidatePath(`/projects/${parsed.data.projectId}`);
 
   return { success: true, data: list };
 }
@@ -107,6 +110,9 @@ export async function updateList(
   } = parsed.data;
 
   const updated = await queries.lists.update(id, safeUpdate);
+
+  revalidatePath(`/projects/${existingList.projectId}`);
+
   return { success: true, data: updated };
 }
 
@@ -130,6 +136,9 @@ export async function deleteList(id: string): Promise<ActionResult<null>> {
   }
 
   await queries.lists.delete(id);
+
+  revalidatePath(`/projects/${existingList.projectId}`);
+
   return { success: true, data: null };
 }
 
@@ -173,6 +182,8 @@ export async function moveList(
     .map((list) => queries.lists.update(list.id, { position: list.position }));
 
   await Promise.all(updates);
+
+  revalidatePath(`/projects/${existingList.projectId}`);
 
   return { success: true, data: finalLists };
 }

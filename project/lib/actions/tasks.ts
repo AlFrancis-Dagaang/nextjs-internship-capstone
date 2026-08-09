@@ -11,6 +11,7 @@ import {
 import { resolveAssigneeId } from "@/lib/services/assignee";
 import { logTaskActivity } from "@/lib/services/activity";
 import { Task } from "../db/schema";
+import { revalidatePath } from "next/cache";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -68,6 +69,8 @@ export async function createTask(
   });
 
   await logTaskActivity(task.id, authResult.user.id, "created");
+
+  revalidatePath(`/projects/${access.project.id}`);
 
   return { success: true, data: task };
 }
@@ -181,6 +184,8 @@ export async function updateTask(
     });
   }
 
+  revalidatePath(`/projects/${access.project.id}`);
+
   return { success: true, data: updated };
 }
 
@@ -204,6 +209,9 @@ export async function deleteTask(id: string): Promise<ActionResult<null>> {
   }
 
   await queries.tasks.delete(id);
+
+  revalidatePath(`/projects/${access.project.id}`);
+
   return { success: true, data: null };
 }
 
@@ -291,6 +299,8 @@ export async function moveTaskToList(
   const sourceTasksFinal = movedAcrossLists
     ? await queries.tasks.getByList(sourceListId)
     : [];
+
+  revalidatePath(`/projects/${destAccess.list.projectId}`);
 
   return {
     success: true,
