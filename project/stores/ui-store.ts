@@ -60,21 +60,29 @@ import { create } from "zustand";
 interface UiState {
   openTaskId: string | null;
   deleteTaskOpen: boolean;
+  archiveModalOpen: boolean; // Add this
 
   openTaskDetail: (taskId: string) => void;
   closeTaskDetail: () => void;
 
   openDeleteTaskDialog: () => void;
   closeDeleteTaskDialog: () => void;
+
+  openArchiveModal: () => void; // Add this
+  closeArchiveModal: () => void; // Add this
 }
 
 export const useUiStore = create<UiState>((set) => ({
   openTaskId: null,
   deleteTaskOpen: false,
+  archiveModalOpen: false,
 
   openTaskDetail: (taskId) => set({ openTaskId: taskId }),
   closeTaskDetail: () => set({ openTaskId: null, deleteTaskOpen: false }),
 
   openDeleteTaskDialog: () => set({ deleteTaskOpen: true }),
   closeDeleteTaskDialog: () => set({ deleteTaskOpen: false }),
+
+  openArchiveModal: () => set({ archiveModalOpen: true }),
+  closeArchiveModal: () => set({ archiveModalOpen: false }),
 }));

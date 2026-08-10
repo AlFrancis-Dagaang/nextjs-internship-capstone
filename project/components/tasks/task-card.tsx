@@ -120,6 +120,7 @@ export function TaskCard({
   projectId,
   allLists,
   canEdit,
+  onArchived,
   onUpdated,
   onDeleted,
   onDeleteFailed,
@@ -136,6 +137,7 @@ export function TaskCard({
   onDeleteFailed?: (task: Task) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
   onOpenDetail: () => void;
+  onArchived?: () => void;
 }) {
   const { toast } = useToast();
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -221,6 +223,7 @@ export function TaskCard({
         setIsRenaming(true);
       }}
       onArchive={() => {
+        onArchived?.();
         toast({ title: "Task archived", description: task.title });
       }}
       onDeleteClick={() => setDeleteOpen(true)}

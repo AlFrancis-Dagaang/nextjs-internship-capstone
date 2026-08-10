@@ -45,12 +45,14 @@ export function TaskMembersSection({
 
   const taskRef = useRef(task);
   taskRef.current = task;
+  const onUpdatedRef = useRef(onUpdated);
+  onUpdatedRef.current = onUpdated;
 
   const fetchAssignees = useCallback(async () => {
     const result = await getTaskAssignees(task.id);
     if (result.success) {
       setAssignees(result.data);
-      onUpdated?.({
+      onUpdatedRef.current?.({
         ...taskRef.current,
         assignees: result.data.map((a) => ({
           userId: a.userId,
@@ -65,7 +67,7 @@ export function TaskMembersSection({
         variant: "destructive",
       });
     }
-  }, [task.id, onUpdated, toast]);
+  }, [task.id, toast]);
 
   useEffect(() => {
     fetchAssignees();
@@ -145,17 +147,6 @@ export function TaskMembersSection({
           )}
         </button>
       </div>
-
-      {canEdit && (
-        <AssignTaskModal
-          taskId={task.id}
-          projectId={projectId}
-          currentAssignees={currentAssigneeUsers}
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          onSuccess={fetchAssignees}
-        />
-      )}
 
       {canEdit && (
         <AssignTaskModal

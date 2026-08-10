@@ -112,6 +112,7 @@ export default async function ProjectPage({
           isOwner={role === "owner"}
           ownerName={owner?.name}
           ownerEmail={owner?.email}
+          role={role}
         />
       </div>
       <div className="flex-1 min-h-0">

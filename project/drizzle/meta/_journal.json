@@ -36,6 +36,13 @@
       "when": 1785993548856,
       "tag": "0004_nappy_quicksilver",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786339517654,
+      "tag": "0005_majestic_garia",
+      "breakpoints": true
     }
   ]
 }

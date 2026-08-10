@@ -18,7 +18,7 @@ import { AddListForm } from "./add-list-form";
 import type { List, Task } from "@/lib/db/schema";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
-import { deleteTask, moveTaskToList } from "@/lib/actions/tasks";
+import { deleteTask, moveTaskToList, archiveTask } from "@/lib/actions/tasks";
 import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
 import { useUiStore } from "@/stores/ui-store";
 import { useBoardStore } from "@/stores/board-store";
@@ -109,10 +109,24 @@ export function Board({
     }),
   );
 
-  const openTask =
-    openTaskId != null
-      ? (lists.flatMap((l) => l.tasks).find((t) => t.id === openTaskId) ?? null)
-      : null;
+  const [openTask, setOpenTask] = useState<TaskWithCommentCount | null>(null);
+
+  useEffect(() => {
+    if (openTaskId == null) {
+      setOpenTask(null);
+      return;
+    }
+    const found = lists
+      .flatMap((l) => l.tasks)
+      .find((t) => t.id === openTaskId);
+    if (found) {
+      setOpenTask(found);
+    }
+    // If not found (e.g. archived while open), intentionally keep the
+    // last-known snapshot instead of clearing it — that's what lets the
+    // modal stay open after archiving, showing the task as it was right
+    // before archive, until the user explicitly closes it.
+  }, [openTaskId, lists]);
 
   function handleTaskDeleted(listId: string, taskId: string) {
     removeTask(listId, taskId);
@@ -208,6 +222,11 @@ export function Board({
     );
   }
 
+  function handleTaskArchived(listId: string, taskId: string) {
+    removeTask(listId, taskId);
+    if (openTaskId === taskId) closeTaskDetail();
+  }
+
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
       <DndContext
@@ -239,6 +258,7 @@ export function Board({
                   onTaskCreateConfirmed={replaceOptimisticTask}
                   onTaskUpdated={updateTaskLocal}
                   onTaskDeleted={handleTaskDeleted}
+                  onTaskArchived={handleTaskArchived}
                   onTaskRestoreNeeded={(task) =>
                     insertTaskAt(task.listId, task, task.position)
                   }
@@ -309,9 +329,6 @@ export function Board({
           onChanged={updateTaskLocal}
           onMoved={reconcileTaskMoved}
           onDeleteClick={openDeleteTaskDialog}
-          onArchive={() => {
-            toast({ title: "Task archived", description: openTask.title });
-          }}
           onCommentCountChanged={changeCommentCount}
         />
       )}

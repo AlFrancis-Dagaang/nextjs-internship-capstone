@@ -30,6 +30,7 @@ export function ListColumn({
   onTaskCreated,
   onTaskCreateConfirmed,
   onTaskUpdated,
+  onTaskArchived,
   onTaskDeleted,
   onTaskRestoreNeeded,
   onTaskMoved,
@@ -46,6 +47,7 @@ export function ListColumn({
   onTaskCreateConfirmed?: (tempId: string, realTask: Task) => void;
   onTaskUpdated?: (task: Task) => void;
   onTaskDeleted?: (listId: string, taskId: string) => void;
+  onTaskArchived?: (listId: string, taskId: string) => void;
   onTaskRestoreNeeded?: (task: Task) => void;
   onTaskMoved?: (task: Task, affectedTasks: Task[]) => void;
   onOpenTask: (taskId: string) => void;
@@ -212,6 +214,7 @@ export function ListColumn({
                   onUpdated={onTaskUpdated}
                   onDeleted={() => onTaskDeleted?.(list.id, task.id)}
                   onDeleteFailed={onTaskRestoreNeeded}
+                  onArchived={() => onTaskArchived?.(list.id, task.id)}
                   onMoved={(movedTask, affectedTasks) =>
                     onTaskMoved?.(movedTask, affectedTasks)
                   }

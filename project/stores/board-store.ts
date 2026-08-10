@@ -28,6 +28,9 @@ interface BoardState {
   removeList: (listId: string) => void;
   reorderLists: (updatedLists: List[]) => void;
 
+  archiveTaskLocally: (taskId: string) => ListWithTasks[];
+  revertArchiveSnapshot: (snapshot: ListWithTasks[]) => void;
+
   addTask: (listId: string, task: Task) => void;
   insertTaskAt: (listId: string, task: Task, index: number) => void;
   updateTaskLocal: (task: Task) => void;
@@ -325,6 +328,20 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const { dragSnapshot } = get();
     if (dragSnapshot) set({ lists: dragSnapshot, dragSnapshot: null });
   },
+
+  archiveTaskLocally: (taskId) => {
+    const { lists } = get();
+    const snapshot = lists;
+    set({
+      lists: lists.map((l) => ({
+        ...l,
+        tasks: l.tasks.filter((t) => t.id !== taskId),
+      })),
+    });
+    return snapshot;
+  },
+
+  revertArchiveSnapshot: (snapshot) => set({ lists: snapshot }),
   applyOptimisticMove: (taskId, targetListId, targetPosition) => {
     const { lists } = get();
     const snapshot = lists;

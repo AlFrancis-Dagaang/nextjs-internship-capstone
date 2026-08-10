@@ -19,6 +19,8 @@ type TaskSidebarProps = {
   assignableUsers: { id: string; name?: string; email?: string }[];
   activityRefreshKey: number;
   canEdit: boolean;
+  role: "owner" | "editor" | "viewer";
+  onRestored?: () => void;
   onChanged?: (task: TaskWithCommentCount) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
   onOpenChange: (open: boolean) => void;
@@ -33,9 +35,11 @@ export function TaskSidebar({
   canEdit,
   onChanged,
   onMoved,
+  onRestored,
   activityRefreshKey,
   onOpenChange,
   onDeleteClick,
+  role,
   assignableUsers,
   onArchive,
 }: TaskSidebarProps) {
@@ -56,14 +60,16 @@ export function TaskSidebar({
           />
         </div>
 
-        <div className="border-t border-neutral-200 dark:border-neutral-800">
-          <TaskMoveSection
-            task={task}
-            canEdit={canEdit}
-            allLists={allLists}
-            onMoved={onMoved}
-          />
-        </div>
+        {!task.isArchived && (
+          <div className="border-t border-neutral-200 dark:border-neutral-800">
+            <TaskMoveSection
+              task={task}
+              canEdit={canEdit}
+              allLists={allLists}
+              onMoved={onMoved}
+            />
+          </div>
+        )}
 
         <div className="border-t border-neutral-200 dark:border-neutral-800">
           <TaskMembersSection
@@ -89,6 +95,8 @@ export function TaskSidebar({
           onDeleteClick={onDeleteClick}
           onArchive={onArchive}
           canEdit={canEdit}
+          role={role}
+          onRestored={onRestored}
         />
       </div>
     </div>

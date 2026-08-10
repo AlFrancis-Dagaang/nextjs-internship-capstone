@@ -8,6 +8,7 @@ import {
   jsonb,
   unique,
   index,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 // ---------- Tables ----------
@@ -55,6 +56,7 @@ export const tasks = pgTable("tasks", {
   priority: text("priority", { enum: ["low", "medium", "high"] }),
   dueDate: timestamp("due_date"),
   position: integer("position").notNull(),
+  isArchived: boolean("is_archived").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

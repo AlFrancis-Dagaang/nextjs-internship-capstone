@@ -16,6 +16,8 @@ import type { Project } from "@/lib/db/schema";
 import { InviteMemberModal } from "./modals/invite-member-modal";
 import { useEffect } from "react";
 import { useProjectStore } from "@/stores/project-store";
+import { useUiStore } from "@/stores/ui-store";
+import { ArchivedTasksModal } from "../tasks/modal/archived-tasks-modal";
 
 type Member = {
   id: string;
@@ -31,12 +33,14 @@ export function ProjectHeader({
   isOwner,
   ownerName,
   ownerEmail,
+  role,
 }: {
   project: Project;
   initialMembers: Member[];
   isOwner: boolean;
   ownerName?: string;
   ownerEmail?: string;
+  role: "owner" | "editor" | "viewer";
 }) {
   const membersState = useProjectStore(
     (s) => s.membersMap[project.id] ?? initialMembers,
@@ -65,6 +69,10 @@ export function ProjectHeader({
 
   const visibleMembers = membersState.slice(0, 3);
   const extraCount = membersState.length > 3 ? membersState.length - 3 : 0;
+
+  const openArchiveModal = useUiStore((s) => s.openArchiveModal);
+  const archiveModalOpen = useUiStore((s) => s.archiveModalOpen);
+  const closeArchiveModal = useUiStore((s) => s.closeArchiveModal);
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 bg-transparent px-0 py-0 m-0">
@@ -99,6 +107,14 @@ export function ProjectHeader({
             placeholder="Search tasks..."
           />
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={openArchiveModal}
+          className="h-8 text-xs bg-neutral-50/50 dark:bg-neutral-900/50 border-neutral-200/80 dark:border-neutral-800 rounded-lg shadow-sm"
+        >
+          Archived tasks
+        </Button>
 
         {/* Member Avatars */}
         <div className="hidden lg:flex items-center">
@@ -172,6 +188,16 @@ export function ProjectHeader({
           onMemberRemoved={removeMember}
         />
       )}
+
+      {/* Archive Modal */}
+      <ArchivedTasksModal
+        projectId={project.id}
+        open={archiveModalOpen}
+        onOpenChange={(open) =>
+          open ? openArchiveModal() : closeArchiveModal()
+        }
+        role={role}
+      />
     </div>
   );
 }
