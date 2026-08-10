@@ -17,7 +17,7 @@ export type ActivityWithActor = TaskActivity & {
 type TaskActivityFeedProps = {
   taskId: string;
   refreshKey?: number;
-  previewCount?: number; // how many entries to show inline, default 2
+  previewCount?: number; // how many entries to show inline, default 3
 };
 
 export function TaskActivityFeed({
@@ -26,6 +26,7 @@ export function TaskActivityFeed({
   previewCount = 3,
 }: TaskActivityFeedProps) {
   const [activity, setActivity] = useState<ActivityWithActor[] | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAllOpen, setShowAllOpen] = useState(false);
 
@@ -34,19 +35,21 @@ export function TaskActivityFeed({
     setActivity(null);
     setError(null);
 
-    getTaskActivity(taskId).then((result) => {
+    getTaskActivity(taskId, previewCount + 1).then((result) => {
       if (cancelled) return;
       if (!result.success) {
         setError(result.error);
         return;
       }
-      setActivity(result.data as ActivityWithActor[]);
+      const data = result.data as ActivityWithActor[];
+      setHasMore(data.length > previewCount);
+      setActivity(data.slice(0, previewCount));
     });
 
     return () => {
       cancelled = true;
     };
-  }, [taskId, refreshKey]);
+  }, [taskId, refreshKey, previewCount]);
 
   if (error) {
     return (
@@ -78,13 +81,10 @@ export function TaskActivityFeed({
     );
   }
 
-  const preview = activity.slice(0, previewCount);
-  const hasMore = activity.length > previewCount;
-
   return (
     <>
       <ul className="space-y-4">
-        {preview.map((entry) => (
+        {activity.map((entry) => (
           <li key={entry.id} className="flex items-start gap-3">
             <div className="h-6 w-6 shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700">
               {entry.actor ? getInitials(entry.actor.name) : "?"}
@@ -109,12 +109,12 @@ export function TaskActivityFeed({
           onClick={() => setShowAllOpen(true)}
           className="mt-2 text-xs text-cyan-600 hover:text-cyan-700 hover:underline font-medium"
         >
-          See all activity ({activity.length})
+          See all activity
         </button>
       )}
 
       <TaskActivityModal
-        activity={activity}
+        taskId={taskId}
         open={showAllOpen}
         onOpenChange={setShowAllOpen}
       />

@@ -3,8 +3,12 @@
 import { queries } from "@/lib/db";
 import { listCreateSchema, listUpdateSchema } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
-import { assertProjectOwnership } from "@/lib/services/ownership";
+import {
+  assertProjectEditAccess,
+  assertProjectViewAccess,
+} from "@/lib/services/ownership";
 import { List } from "../db/schema";
+import { revalidatePath } from "next/cache";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -27,17 +31,14 @@ export async function createList(
     };
   }
 
-  const ownership = await assertProjectOwnership(
+  const access = await assertProjectEditAccess(
     parsed.data.projectId,
     authResult.user.id,
   );
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
-  // Position is always computed server-side — client-supplied `position`
-  // (allowed by the schema, since it's optional) is intentionally ignored
-  // here. Explicit reordering is #21's job; #16 only ever appends.
   const existingLists = await queries.lists.getByProject(parsed.data.projectId);
   const position = existingLists.length;
 
@@ -46,6 +47,8 @@ export async function createList(
     projectId: parsed.data.projectId,
     position,
   });
+
+  revalidatePath(`/projects/${parsed.data.projectId}`);
 
   return { success: true, data: list };
 }
@@ -60,9 +63,9 @@ export async function getListsByProject(
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const ownership = await assertProjectOwnership(projectId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectViewAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const lists = await queries.lists.getByProject(projectId);
@@ -92,18 +95,14 @@ export async function updateList(
     return { success: false, error: "Not found" };
   }
 
-  const ownership = await assertProjectOwnership(
+  const access = await assertProjectEditAccess(
     existingList.projectId,
     authResult.user.id,
   );
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
-  // `position` and `projectId` are stripped even though listUpdateSchema
-  // (a .partial() of listCreateSchema) technically allows them — reordering
-  // is #21's job, and moving a list to a different project isn't in scope
-  // for #16 at all. Only `name` is actually mutable here.
   const {
     position: _ignoredPosition,
     projectId: _ignoredProjectId,
@@ -111,6 +110,9 @@ export async function updateList(
   } = parsed.data;
 
   const updated = await queries.lists.update(id, safeUpdate);
+
+  revalidatePath(`/projects/${existingList.projectId}`);
+
   return { success: true, data: updated };
 }
 
@@ -125,15 +127,18 @@ export async function deleteList(id: string): Promise<ActionResult<null>> {
     return { success: false, error: "Not found" };
   }
 
-  const ownership = await assertProjectOwnership(
+  const access = await assertProjectEditAccess(
     existingList.projectId,
     authResult.user.id,
   );
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   await queries.lists.delete(id);
+
+  revalidatePath(`/projects/${existingList.projectId}`);
+
   return { success: true, data: null };
 }
 
@@ -151,12 +156,12 @@ export async function moveList(
     return { success: false, error: "Not found" };
   }
 
-  const ownership = await assertProjectOwnership(
+  const access = await assertProjectEditAccess(
     existingList.projectId,
     authResult.user.id,
   );
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const projectLists = await queries.lists.getByProject(existingList.projectId);
@@ -177,6 +182,8 @@ export async function moveList(
     .map((list) => queries.lists.update(list.id, { position: list.position }));
 
   await Promise.all(updates);
+
+  revalidatePath(`/projects/${existingList.projectId}`);
 
   return { success: true, data: finalLists };
 }

@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { eq, or, exists, and } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 import { db } from "../client";
-import { projects } from "../schema";
+import { projects, projectMembers } from "../schema";
 
 export const projectsQueries = {
   getAll: async () => {
@@ -15,6 +15,42 @@ export const projectsQueries = {
   },
   getByOwner: async (ownerId: string) => {
     return db.select().from(projects).where(eq(projects.ownerId, ownerId));
+  },
+  /**
+   * Dashboard visibility fix (#29): owned projects + projects where the
+   * user has a project_members row. leftJoin so owners with no
+   * membership row still match; the unique (projectId, userId)
+   * constraint on project_members means at most one membership row per
+   * user per project, so no duplicate rows to dedupe.
+   */
+  getByOwnerOrMember: async (userId: string) => {
+    return db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        description: projects.description,
+        ownerId: projects.ownerId,
+        dueDate: projects.dueDate,
+        createdAt: projects.createdAt,
+        updatedAt: projects.updatedAt,
+      })
+      .from(projects)
+      .where(
+        or(
+          eq(projects.ownerId, userId),
+          exists(
+            db
+              .select({ id: projectMembers.id })
+              .from(projectMembers)
+              .where(
+                and(
+                  eq(projectMembers.projectId, projects.id),
+                  eq(projectMembers.userId, userId),
+                ),
+              ),
+          ),
+        ),
+      );
   },
   create: async (data: InferInsertModel<typeof projects>) => {
     const [project] = await db.insert(projects).values(data).returning();

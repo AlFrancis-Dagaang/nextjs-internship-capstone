@@ -87,6 +87,7 @@ interface BoardState {
   reorderLists: (updatedLists: List[]) => void;
 
   addTask: (listId: string, task: Task) => void;
+  insertTaskAt: (listId: string, task: Task, index: number) => void;
   updateTaskLocal: (task: Task) => void;
   removeTask: (listId: string, taskId: string) => void;
   reconcileTaskMoved: (movedTask: Task, affectedTasks: Task[]) => void;
@@ -152,6 +153,17 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       ),
     })),
 
+  insertTaskAt: (listId, task, index) =>
+    set((s) => ({
+      lists: s.lists.map((l) => {
+        if (l.id !== listId) return l;
+        const newTasks = [...l.tasks];
+        const clampedIndex = Math.max(0, Math.min(index, newTasks.length));
+        newTasks.splice(clampedIndex, 0, task);
+        return { ...l, tasks: newTasks };
+      }),
+    })),
+
   // #24 fix, relocated: `task` is a plain Task from updateTask (no
   // commentCount, which is client-only) — merge instead of replace so the
   // comment count on the card doesn't silently reset to 0.
@@ -163,7 +175,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
               ...l,
               tasks: l.tasks.map((t) =>
                 t.id === task.id
-                  ? { ...task, commentCount: t.commentCount }
+                  ? {
+                      ...task,
+                      commentCount: t.commentCount,
+                      assignees:
+                        (task as TaskWithCommentCount).assignees ?? t.assignees,
+                    }
                   : t,
               ),
             }
@@ -195,8 +212,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   // Same #24 fix as updateTaskLocal, for moveTaskToList's affectedTasks.
   reconcileTaskMoved: (movedTask, affectedTasks) =>
     set((s) => {
+      const allExistingTasks = s.lists.flatMap((l) => l.tasks);
       const commentCountMap = new Map(
-        s.lists.flatMap((l) => l.tasks).map((t) => [t.id, t.commentCount]),
+        allExistingTasks.map((t) => [t.id, t.commentCount]),
+      );
+      const assigneesMap = new Map(
+        allExistingTasks.map((t) => [t.id, t.assignees]),
       );
       const affectedListIds = new Set(affectedTasks.map((t) => t.listId));
       return {
@@ -205,12 +226,15 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           const tasksForThisList = affectedTasks
             .filter((t) => t.listId === l.id)
             .sort((a, b) => a.position - b.position)
-            .map((t) => ({ ...t, commentCount: commentCountMap.get(t.id) }));
+            .map((t) => ({
+              ...t,
+              commentCount: commentCountMap.get(t.id),
+              assignees: assigneesMap.get(t.id),
+            }));
           return { ...l, tasks: tasksForThisList };
         }),
       };
     }),
-
   changeCommentCount: (taskId, delta) =>
     set((s) => ({
       lists: s.lists.map((l) => ({

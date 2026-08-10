@@ -1,3 +1,4 @@
+// components/tasks/task-card.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -38,6 +39,10 @@ export function TaskCardView({
   cornerActions?: React.ReactNode;
   className?: string;
 }) {
+  const assignees = task.assignees ?? [];
+  const visibleAssignees = assignees.slice(0, 3);
+  const extraCount = assignees.length > 3 ? assignees.length - 3 : 0;
+
   return (
     <div
       onClick={interactive ? onOpenDetail : undefined}
@@ -85,22 +90,26 @@ export function TaskCardView({
           </div>
         </div>
 
-        <div className="flex items-center">
-          <div className="flex -space-x-1.5">
-            <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white">
-              U
+        {assignees.length > 0 && (
+          <div className="flex items-center">
+            <div className="flex -space-x-1.5">
+              {visibleAssignees.map((a) => (
+                <div
+                  key={a.userId}
+                  className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 border-2 border-white dark:border-neutral-900 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-bold uppercase"
+                  title={a.name ?? a.email}
+                >
+                  {a.name?.[0] ?? a.email?.[0] ?? "U"}
+                </div>
+              ))}
             </div>
-            <div className="w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white">
-              U
-            </div>
-            <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white">
-              U
-            </div>
+            {extraCount > 0 && (
+              <span className="ml-1 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-cyan-400 text-neutral-900 text-[10px] font-semibold">
+                +{extraCount}
+              </span>
+            )}
           </div>
-          <span className="ml-1 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-cyan-400 text-neutral-900 text-[10px] font-semibold">
-            +2
-          </span>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -110,6 +119,7 @@ export function TaskCard({
   task,
   projectId,
   allLists,
+  canEdit,
   onUpdated,
   onDeleted,
   onDeleteFailed,
@@ -119,12 +129,10 @@ export function TaskCard({
   task: TaskWithCommentCount;
   projectId: string;
   allLists: ListWithTasks[];
-  onUpdated?: (task: Task) => void;
+  canEdit: boolean;
+
+  onUpdated?: (task: TaskWithCommentCount) => void;
   onDeleted?: () => void;
-  // #23 — called if the server delete fails, so the caller (ultimately
-  // board.tsx's addTask) can re-add the task that was optimistically
-  // removed. Not needed for rename, since a failed rename can just
-  // reapply the original `task` object via onUpdated instead.
   onDeleteFailed?: (task: Task) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
   onOpenDetail: () => void;
@@ -135,11 +143,6 @@ export function TaskCard({
   const [title, setTitle] = useState(task.title);
   const [isPending, startTransition] = useTransition();
 
-  // #21 — makes the card draggable within/between columns. `id` matches
-  // what board.tsx's DndContext/list-column.tsx's SortableContext expect
-  // (task.id). Lives directly on the card's own root div now, rather than
-  // in a separate wrapper component, so drag styling shares the same node
-  // as the card's existing hover/shadow/rounded styling.
   const {
     attributes,
     listeners,
@@ -147,7 +150,7 @@ export function TaskCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({ id: task.id, disabled: !canEdit });
 
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
@@ -163,8 +166,6 @@ export function TaskCard({
       return;
     }
     const submittedTitle = title;
-    // #23 — apply immediately (optimistic), close the rename input right
-    // away instead of waiting for the server round-trip.
     setIsRenaming(false);
     onUpdated?.({ ...task, title: submittedTitle });
 
@@ -177,18 +178,15 @@ export function TaskCard({
           variant: "destructive",
         });
         setTitle(task.title);
-        onUpdated?.(task); // revert to the pre-edit task
+        onUpdated?.(task);
         return;
       }
       toast({ title: "Task updated", description: result.data?.title });
-      onUpdated?.(result.data); // reconcile with server's version
+      onUpdated?.(result.data);
     });
   }
 
   function handleDelete() {
-    // #23 — remove immediately (optimistic); keep a reference to the task
-    // itself since it's already available as a prop, so a failed delete
-    // can hand it straight back for re-insertion via onDeleteFailed.
     setDeleteOpen(false);
     onDeleted?.();
 
@@ -216,6 +214,7 @@ export function TaskCard({
       projectId={projectId}
       currentListId={task.listId}
       allLists={allLists}
+      canEdit={canEdit}
       onView={onOpenDetail}
       onRename={() => {
         setTitle(task.title);
@@ -228,15 +227,22 @@ export function TaskCard({
       onMoved={(movedTask, affectedTasks) =>
         onMoved?.(movedTask, affectedTasks)
       }
+      onAssigned={(assignee) => {
+        const updatedAssignees = [...(task.assignees ?? []), assignee];
+        onUpdated?.({ ...task, assignees: updatedAssignees });
+      }}
     />
   );
 
   return (
     <>
-      <div ref={setNodeRef} style={dragStyle} {...attributes} {...listeners}>
+      <div
+        ref={setNodeRef}
+        style={dragStyle}
+        {...attributes}
+        {...(canEdit ? listeners : {})}
+      >
         {isRenaming ? (
-          // Rename mode swaps the title for an input; not draggable-relevant,
-          // kept as its own small override on top of the shared view's shell.
           <div className="relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 space-y-3 overflow-visible">
             {task.priority && (
               <div

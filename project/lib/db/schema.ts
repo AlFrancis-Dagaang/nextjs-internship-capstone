@@ -6,6 +6,8 @@ import {
   integer,
   uuid,
   jsonb,
+  unique,
+  index,
 } from "drizzle-orm/pg-core";
 
 // ---------- Tables ----------
@@ -57,33 +59,59 @@ export const tasks = pgTable("tasks", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const taskActivity = pgTable("task_activity", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  taskId: uuid("task_id")
-    .notNull()
-    .references(() => tasks.id, { onDelete: "cascade" }),
-  actorId: uuid("actor_id")
-    .notNull()
-    .references(() => users.id),
-  action: text("action", {
-    enum: [
-      "created",
-      "updated",
-      "moved",
-      "priority_changed",
-      "due_date_changed",
-      "assignee_changed",
-      "description_changed",
-      "comment_added",
-      "comment_deleted",
-      "archived",
-      "restored",
-      "deleted",
-    ],
-  }).notNull(),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const taskActivity = pgTable(
+  "task_activity",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id")
+      .notNull()
+      .references(() => users.id),
+    action: text("action", {
+      enum: [
+        "created",
+        "updated",
+        "moved",
+        "priority_changed",
+        "due_date_changed",
+        "assignee_changed",
+        "description_changed",
+        "comment_added",
+        "comment_deleted",
+        "archived",
+        "restored",
+        "deleted",
+      ],
+    }).notNull(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    taskIdCreatedAtIdx: index("task_activity_task_id_created_at_idx").on(
+      table.taskId,
+      table.createdAt,
+    ),
+  }),
+);
+
+export const taskAssignees = pgTable(
+  "task_assignees",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueAssignment: unique().on(table.taskId, table.userId),
+  }),
+);
 
 export const comments = pgTable("comments", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -98,12 +126,33 @@ export const comments = pgTable("comments", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const projectMembers = pgTable(
+  "project_members",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["editor", "viewer"] })
+      .notNull()
+      .default("viewer"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueMembership: unique().on(table.projectId, table.userId),
+  }),
+);
+
 // ---------- Relations ----------
 
 export const usersRelations = relations(users, ({ many }) => ({
   ownedProjects: many(projects),
   assignedTasks: many(tasks),
   comments: many(comments),
+  projectMemberships: many(projectMembers),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -112,6 +161,18 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     references: [users.id],
   }),
   lists: many(lists),
+  members: many(projectMembers),
+}));
+
+export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectMembers.projectId],
+    references: [projects.id],
+  }),
+  user: one(users, {
+    fields: [projectMembers.userId],
+    references: [users.id],
+  }),
 }));
 
 export const listsRelations = relations(lists, ({ one, many }) => ({
@@ -146,6 +207,17 @@ export const taskActivityRelations = relations(taskActivity, ({ one }) => ({
   }),
 }));
 
+export const taskAssigneesRelations = relations(taskAssignees, ({ one }) => ({
+  task: one(tasks, {
+    fields: [taskAssignees.taskId],
+    references: [tasks.id],
+  }),
+  user: one(users, {
+    fields: [taskAssignees.userId],
+    references: [users.id],
+  }),
+}));
+
 export const commentsRelations = relations(comments, ({ one }) => ({
   task: one(tasks, {
     fields: [comments.taskId],
@@ -171,3 +243,7 @@ export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;
 export type TaskActivity = typeof taskActivity.$inferSelect;
 export type NewTaskActivity = typeof taskActivity.$inferInsert;
+export type ProjectMember = typeof projectMembers.$inferSelect;
+export type NewProjectMember = typeof projectMembers.$inferInsert;
+export type TaskAssignee = typeof taskAssignees.$inferSelect;
+export type NewTaskAssignee = typeof taskAssignees.$inferInsert;

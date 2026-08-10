@@ -20,6 +20,7 @@ export function ListColumn({
   list,
   totalLists,
   allLists,
+  role,
   onOpenTask,
   onRenamed,
   onDeleted,
@@ -34,6 +35,8 @@ export function ListColumn({
   list: ListWithTasks;
   totalLists: number;
   allLists: ListWithTasks[];
+  role: "owner" | "editor" | "viewer";
+
   onRenamed?: (updated: List) => void;
   onDeleted?: (listId: string) => void;
   onMoved?: (updatedLists: List[]) => void;
@@ -56,6 +59,7 @@ export function ListColumn({
   const [name, setName] = useState(list.name);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const canEdit = role !== "viewer";
 
   // #21 — column itself is a droppable target (id = list.id) so a task can
   // be dropped into an empty column, in addition to the SortableContext
@@ -142,7 +146,7 @@ export function ListColumn({
             </div>
           )}
 
-          {!isRenaming && (
+          {!isRenaming && canEdit && (
             <ListActions
               listId={list.id}
               listName={list.name}
@@ -161,7 +165,7 @@ export function ListColumn({
         {/* Scrollable Tasks Container (grows organically, scrolls if content exceeds screen bounds) */}
         <div
           ref={setDroppableRef}
-          className="overflow-y-auto overflow-x-visible space-y-3 pr-1 max-h-[calc(100vh-14rem)] min-h-[2rem]"
+          className="overflow-y-auto overflow-x-visible space-y-3 pr-1 max-h-[calc(100vh-14rem)] min-h-8"
         >
           <SortableContext
             items={list.tasks.map((t) => t.id)}
@@ -173,6 +177,7 @@ export function ListColumn({
                 task={task}
                 projectId={list.projectId}
                 allLists={allLists}
+                canEdit={canEdit}
                 onUpdated={onTaskUpdated}
                 onDeleted={() => onTaskDeleted?.(list.id, task.id)}
                 onDeleteFailed={onTaskRestoreNeeded}
@@ -185,17 +190,18 @@ export function ListColumn({
           </SortableContext>
         </div>
 
-        {/* Create Task Footer (sits right beneath the tasks, moves down with them) */}
-        <div className="pt-3 mt-2 shrink-0 bg-neutral-100 dark:bg-neutral-800">
-          <CreateTaskModal
-            listId={list.id}
-            onCreated={(task) => onTaskCreated?.(list.id, task)}
-            onConfirmed={(tempId, realTask) =>
-              onTaskCreateConfirmed?.(tempId, realTask)
-            }
-            onFailed={(tempId) => onTaskDeleted?.(list.id, tempId)}
-          />
-        </div>
+        {canEdit && (
+          <div className="pt-3 mt-2 shrink-0 bg-neutral-100 dark:bg-neutral-800">
+            <CreateTaskModal
+              listId={list.id}
+              onCreated={(task) => onTaskCreated?.(list.id, task)}
+              onConfirmed={(tempId, realTask) =>
+                onTaskCreateConfirmed?.(tempId, realTask)
+              }
+              onFailed={(tempId) => onTaskDeleted?.(list.id, tempId)}
+            />
+          </div>
+        )}
       </div>
 
       <DeleteListDialog

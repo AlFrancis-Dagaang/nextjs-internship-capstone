@@ -8,12 +8,15 @@ import type { Task } from "@/lib/db/schema";
 export function TaskQuickActions({
   task,
   onArchive,
+  canEdit,
   onDeleteClick,
 }: {
   task: Task;
   onArchive?: () => void;
   onDeleteClick?: () => void;
+  canEdit: boolean;
 }) {
+  if (!canEdit) return null;
   return (
     <div className="space-y-2">
       <Label className="text-[10px] text-neutral-500 uppercase font-semibold tracking-wider">

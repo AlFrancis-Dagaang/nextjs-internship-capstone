@@ -29,7 +29,7 @@ export function useMoveTask() {
   function moveTask(
     taskId: string,
     newListId: string,
-    onSuccess?: (task: Task) => void, // <-- accept the task
+    onSuccess?: (task: Task) => void,
   ) {
     startMoveTransition(async () => {
       const result = await moveTaskToList(taskId, newListId);
@@ -42,7 +42,7 @@ export function useMoveTask() {
         return;
       }
       toast({ title: "Task moved" });
-      onSuccess?.(result.data); // <-- pass it through
+      onSuccess?.(result.data.movedTask);
     });
   }
 

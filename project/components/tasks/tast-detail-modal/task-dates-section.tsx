@@ -17,9 +17,11 @@ function toDateInputValue(d: Date | string | null | undefined): string {
 export function TaskDatesSection({
   task,
   onChanged,
+  canEdit,
 }: {
   task: Task;
   onChanged?: (task: Task) => void;
+  canEdit: boolean;
 }) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -61,7 +63,7 @@ export function TaskDatesSection({
           type="date"
           value={dueDate}
           onChange={handleDateChange}
-          disabled={isPending}
+          disabled={isPending || !canEdit}
           className="bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 h-9 text-sm focus-visible:ring-1 focus-visible:ring-cyan-400"
         />
       </div>

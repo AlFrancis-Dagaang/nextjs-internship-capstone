@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -22,19 +22,26 @@ import { deleteTask, moveTaskToList } from "@/lib/actions/tasks";
 import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
 import { useUiStore } from "@/stores/ui-store";
 import { useBoardStore } from "@/stores/board-store";
+import { useTrackProjectView } from "@/hooks/use-track-project-view";
+import { getAssignableUsers } from "@/lib/actions/project-member";
 
-export type TaskWithCommentCount = Task & { commentCount?: number };
+export type TaskWithCommentCount = Task & {
+  commentCount?: number;
+  assignees?: { userId: string; name?: string; email?: string }[];
+};
 export type ListWithTasks = List & { tasks: TaskWithCommentCount[] };
 
 export function Board({
   projectId,
   initialLists,
+  role,
 }: {
   projectId: string;
   initialLists: ListWithTasks[];
+  role: "owner" | "editor" | "viewer";
 }) {
   const { toast } = useToast();
-
+  useTrackProjectView(projectId);
   // #22 (pass 2) — lists/drag state now live in board-store.ts.
   const lists = useBoardStore((s) => s.lists);
   const activeTask = useBoardStore((s) => s.activeTask);
@@ -44,6 +51,7 @@ export function Board({
   const removeList = useBoardStore((s) => s.removeList);
   const reorderLists = useBoardStore((s) => s.reorderLists);
   const addTask = useBoardStore((s) => s.addTask);
+  const insertTaskAt = useBoardStore((s) => s.insertTaskAt);
   const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
   const removeTask = useBoardStore((s) => s.removeTask);
   const reconcileTaskMoved = useBoardStore((s) => s.reconcileTaskMoved);
@@ -64,6 +72,16 @@ export function Board({
 
   const [isDeletingTask, startDeleteTaskTransition] = useTransition();
   const replaceOptimisticTask = useBoardStore((s) => s.replaceOptimisticTask);
+
+  const [assignableUsers, setAssignableUsers] = useState<
+    { id: string; name?: string; email?: string }[]
+  >([]);
+
+  useEffect(() => {
+    getAssignableUsers(projectId).then((result) => {
+      if (result.success) setAssignableUsers(result.data);
+    });
+  }, [projectId]);
 
   // Hydrate the store from server-provided data. Re-runs if projectId
   // changes (e.g. client-side nav to a different project) so stale data
@@ -166,6 +184,7 @@ export function Board({
                 list={list}
                 allLists={lists}
                 totalLists={lists.length}
+                role={role}
                 onRenamed={renameList}
                 onDeleted={removeList}
                 onMoved={reorderLists}
@@ -173,7 +192,9 @@ export function Board({
                 onTaskCreateConfirmed={replaceOptimisticTask}
                 onTaskUpdated={updateTaskLocal}
                 onTaskDeleted={handleTaskDeleted}
-                onTaskRestoreNeeded={(task) => addTask(task.listId, task)}
+                onTaskRestoreNeeded={(task) =>
+                  insertTaskAt(task.listId, task, task.position)
+                }
                 onTaskMoved={reconcileTaskMoved}
                 onOpenTask={openTaskDetail}
               />
@@ -203,6 +224,8 @@ export function Board({
           task={openTask}
           projectId={projectId}
           allLists={lists}
+          assignableUsers={assignableUsers}
+          role={role}
           open={true}
           onOpenChange={(open) => {
             if (!open) closeTaskDetail();

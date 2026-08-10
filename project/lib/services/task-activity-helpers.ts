@@ -49,5 +49,58 @@ export function formatActivityLabel(entry: {
   if (entry.action === "priority_changed" && entry.metadata) {
     return `changed priority to ${(entry.metadata as any).to ?? "none"}`;
   }
+  if (entry.action === "assignee_changed" && entry.metadata) {
+    const meta = entry.metadata as any;
+    if (meta.type === "assigned") {
+      return `assigned ${meta.assigneeName} to this task`;
+    }
+    if (meta.type === "unassigned") {
+      return `removed ${meta.assigneeName} from this task`;
+    }
+  }
   return ACTION_LABELS[entry.action] ?? entry.action;
+}
+
+export function formatDayLabel(d: Date | string) {
+  const date = typeof d === "string" ? new Date(d) : d;
+  const now = new Date();
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
+  const startOfDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
+  const diffDays = Math.round(
+    (startOfToday.getTime() - startOfDate.getTime()) / 86400000,
+  );
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7)
+    return date.toLocaleDateString(undefined, { weekday: "long" });
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+  });
+}
+
+export function groupActivityByDay<T extends { createdAt: Date | string }>(
+  items: T[],
+) {
+  const groups: { label: string; entries: T[] }[] = [];
+  for (const item of items) {
+    const label = formatDayLabel(item.createdAt);
+    const last = groups[groups.length - 1];
+    if (last && last.label === label) {
+      last.entries.push(item);
+    } else {
+      groups.push({ label, entries: [item] });
+    }
+  }
+  return groups;
 }
