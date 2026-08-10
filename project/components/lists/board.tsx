@@ -267,7 +267,7 @@ export function Board({
               const draggedList = lists.find((l) => l.id === activeListId);
               if (!draggedList) return null;
               return (
-                <div className="w-80 rotate-1 rounded-xl bg-neutral-100 dark:bg-neutral-800 border-2 border-blue-munsell/60 shadow-2xl p-3 opacity-95 flex flex-col max-h-[80vh]">
+                <div className="w-80 rotate-1 rounded-xl bg-neutral-100 dark:bg-neutral-800 shadow-2xl p-3 opacity-95 flex flex-col max-h-[80vh]">
                   {/* List Header Preview */}
                   <div className="flex items-center justify-between pb-3 px-1 shrink-0">
                     <span className="font-bold text-xs uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
