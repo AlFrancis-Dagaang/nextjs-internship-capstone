@@ -5,7 +5,7 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
-  closestCorners,
+  rectIntersection,
   useSensor,
   useSensors,
   type DragStartEvent,
@@ -24,6 +24,11 @@ import { useUiStore } from "@/stores/ui-store";
 import { useBoardStore } from "@/stores/board-store";
 import { useTrackProjectView } from "@/hooks/use-track-project-view";
 import { getAssignableUsers } from "@/lib/actions/project-member";
+import { moveList } from "@/lib/actions/lists";
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 export type TaskWithCommentCount = Task & {
   commentCount?: number;
@@ -72,6 +77,13 @@ export function Board({
 
   const [isDeletingTask, startDeleteTaskTransition] = useTransition();
   const replaceOptimisticTask = useBoardStore((s) => s.replaceOptimisticTask);
+
+  const activeListId = useBoardStore((s) => s.activeListId);
+  const startListDrag = useBoardStore((s) => s.startListDrag);
+  const clearActiveList = useBoardStore((s) => s.clearActiveList);
+  const dragListOver = useBoardStore((s) => s.dragListOver);
+  const endListDrag = useBoardStore((s) => s.endListDrag);
+  const revertListSnapshot = useBoardStore((s) => s.revertListSnapshot);
 
   const [assignableUsers, setAssignableUsers] = useState<
     { id: string; name?: string; email?: string }[]
@@ -127,19 +139,50 @@ export function Board({
       }
     });
   }
-
   function handleDragStart(event: DragStartEvent) {
-    startDrag(event.active.id as string);
+    const type = event.active.data.current?.type;
+    if (type === "list") {
+      const listId = event.active.data.current?.listId as string;
+      startListDrag(listId);
+    } else {
+      startDrag(event.active.id as string);
+    }
   }
 
   function handleDragOver(event: DragOverEvent) {
     const { active, over } = event;
     if (!over) return;
-    dragOverAction(active.id as string, over.id as string);
+    if (active.data.current?.type === "list") {
+      dragListOver(active.id as string, over.id as string);
+    } else {
+      dragOverAction(active.id as string, over.id as string);
+    }
   }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
+
+    if (active.data.current?.type === "list") {
+      clearActiveList();
+      if (!over) return;
+      const result = endListDrag(active.id as string, over.id as string);
+      if (!result) return;
+
+      moveList(result.listId, result.finalPosition).then((res) => {
+        if (res.success) {
+          reorderLists(res.data);
+        } else {
+          revertListSnapshot();
+          toast({
+            title: "Failed to move list",
+            description: res.error,
+            variant: "destructive",
+          });
+        }
+      });
+      return;
+    }
+
     clearActiveTask();
     if (!over) return;
 
@@ -170,7 +213,7 @@ export function Board({
       <DndContext
         id="kanban-board"
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={rectIntersection} // <-- Updated here
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
@@ -178,34 +221,38 @@ export function Board({
         {/* Scrollable container pinned to the bottom */}
         <div className="flex-1 w-full overflow-x-auto overflow-y-hidden pb-6">
           <div className="flex items-start space-x-6 min-w-max h-full px-1">
-            {lists.map((list) => (
-              <ListColumn
-                key={list.id}
-                list={list}
-                allLists={lists}
-                totalLists={lists.length}
-                role={role}
-                onRenamed={renameList}
-                onDeleted={removeList}
-                onMoved={reorderLists}
-                onTaskCreated={addTask}
-                onTaskCreateConfirmed={replaceOptimisticTask}
-                onTaskUpdated={updateTaskLocal}
-                onTaskDeleted={handleTaskDeleted}
-                onTaskRestoreNeeded={(task) =>
-                  insertTaskAt(task.listId, task, task.position)
-                }
-                onTaskMoved={reconcileTaskMoved}
-                onOpenTask={openTaskDetail}
-              />
-            ))}
+            <SortableContext
+              items={lists.map((l) => `list-sort-${l.id}`)}
+              strategy={horizontalListSortingStrategy}
+            >
+              {lists.map((list) => (
+                <ListColumn
+                  key={list.id}
+                  list={list}
+                  allLists={lists}
+                  totalLists={lists.length}
+                  role={role}
+                  onRenamed={renameList}
+                  onDeleted={removeList}
+                  onMoved={reorderLists}
+                  onTaskCreated={addTask}
+                  onTaskCreateConfirmed={replaceOptimisticTask}
+                  onTaskUpdated={updateTaskLocal}
+                  onTaskDeleted={handleTaskDeleted}
+                  onTaskRestoreNeeded={(task) =>
+                    insertTaskAt(task.listId, task, task.position)
+                  }
+                  onTaskMoved={reconcileTaskMoved}
+                  onOpenTask={openTaskDetail}
+                />
+              ))}
+            </SortableContext>
 
             <div className="shrink-0 w-80">
               <AddListForm projectId={projectId} onCreated={addList} />
             </div>
           </div>
         </div>
-
         <DragOverlay>
           {activeTask ? (
             <div className="w-72 rotate-2">
@@ -215,6 +262,35 @@ export function Board({
                 className="shadow-lg cursor-grabbing"
               />
             </div>
+          ) : activeListId ? (
+            (() => {
+              const draggedList = lists.find((l) => l.id === activeListId);
+              if (!draggedList) return null;
+              return (
+                <div className="w-80 rotate-1 rounded-xl bg-neutral-100 dark:bg-neutral-800 border-2 border-blue-munsell/60 shadow-2xl p-3 opacity-95 flex flex-col max-h-[80vh]">
+                  {/* List Header Preview */}
+                  <div className="flex items-center justify-between pb-3 px-1 shrink-0">
+                    <span className="font-bold text-xs uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                      {draggedList.name}
+                    </span>
+                    <span className="text-xs text-neutral-500 font-semibold">
+                      {draggedList.tasks.length}
+                    </span>
+                  </div>
+                  {/* Tasks Preview Container */}
+                  <div className="space-y-3 overflow-hidden pr-1">
+                    {draggedList.tasks.map((task) => (
+                      <TaskCardView
+                        key={task.id}
+                        task={task}
+                        interactive={false}
+                        className="shadow-sm"
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })()
           ) : null}
         </DragOverlay>
       </DndContext>

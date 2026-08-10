@@ -15,6 +15,8 @@ import { ListActions } from "./modal/list-actions";
 import { DeleteListDialog } from "./modal/delete-list-dialog";
 import type { List, Task } from "@/lib/db/schema";
 import type { ListWithTasks } from "./board";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export function ListColumn({
   list,
@@ -41,15 +43,9 @@ export function ListColumn({
   onDeleted?: (listId: string) => void;
   onMoved?: (updatedLists: List[]) => void;
   onTaskCreated?: (listId: string, task: Task) => void;
-  // #23 — optimistic create outcomes: confirm swaps the temp task for the
-  // server's real one, fail removes the temp task (reuses onTaskDeleted's
-  // removal logic since removing a temp task is structurally identical).
   onTaskCreateConfirmed?: (tempId: string, realTask: Task) => void;
   onTaskUpdated?: (task: Task) => void;
   onTaskDeleted?: (listId: string, taskId: string) => void;
-  // #23 — called when a task's delete fails after being optimistically
-  // removed; forwards the full task so board.tsx can re-add it via
-  // the store's addTask.
   onTaskRestoreNeeded?: (task: Task) => void;
   onTaskMoved?: (task: Task, affectedTasks: Task[]) => void;
   onOpenTask: (taskId: string) => void;
@@ -61,13 +57,30 @@ export function ListColumn({
   const [isPending, startTransition] = useTransition();
   const canEdit = role !== "viewer";
 
-  // #21 — column itself is a droppable target (id = list.id) so a task can
-  // be dropped into an empty column, in addition to the SortableContext
-  // below handling reorder/insert among existing task cards.
+  // 1. Droppable target ONLY for dropping tasks inside this list
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: list.id,
     data: { type: "list", listId: list.id },
   });
+
+  // 2. Sortable target ONLY for moving the entire list column horizontally
+  const {
+    attributes: listDragAttributes,
+    listeners: listDragListeners,
+    setNodeRef: setListSortableRef,
+    transform: listTransform,
+    transition: listTransition,
+    isDragging: isListDragging,
+  } = useSortable({
+    id: `list-sort-${list.id}`,
+    disabled: !canEdit,
+    data: { type: "list", listId: list.id },
+  });
+
+  const listDragStyle = {
+    transform: CSS.Transform.toString(listTransform),
+    transition: listTransition,
+  };
 
   function handleRenameSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -116,14 +129,25 @@ export function ListColumn({
 
   return (
     <>
-      {/* Changed h-full to h-fit and max-h-full so it only grows with tasks, but caps at container height */}
+      {/* Outer wrapper handles ONLY column horizontal sorting */}
       <div
-        className={`shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col h-fit max-h-full relative isolate transition-colors ${
-          isOver ? "ring-2 ring-blue-munsell/60" : ""
+        ref={setListSortableRef}
+        style={listDragStyle}
+        {...(canEdit ? listDragAttributes : {})}
+        {...(canEdit ? listDragListeners : {})}
+        className={`shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col h-fit max-h-full relative isolate transition-colors cursor-grab active:cursor-grabbing ${
+          isListDragging ? "opacity-40" : ""
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 px-1 shrink-0">
+        <div
+          className="flex items-center justify-between pb-3 px-1 shrink-0"
+          onPointerDown={(e) => {
+            if ((e.target as HTMLElement).closest("button, input, form")) {
+              e.stopPropagation();
+            }
+          }}
+        >
           {isRenaming ? (
             <form onSubmit={handleRenameSubmit} className="flex-1 mr-2">
               <Input
@@ -162,46 +186,54 @@ export function ListColumn({
           )}
         </div>
 
-        {/* Scrollable Tasks Container (grows organically, scrolls if content exceeds screen bounds) */}
+        {/* Task Drop Zone Container — handles dropping tasks, featuring a fixed hit area to prevent layout loops */}
         <div
           ref={setDroppableRef}
-          className="overflow-y-auto overflow-x-visible space-y-3 pr-1 max-h-[calc(100vh-14rem)] min-h-8"
+          onPointerDown={(e) => e.stopPropagation()}
+          className={`flex flex-col rounded-lg transition-colors min-h-[50px] ${
+            isOver
+              ? "ring-2 ring-blue-500/40 bg-blue-50/20 dark:bg-blue-950/10 p-1"
+              : ""
+          }`}
         >
-          <SortableContext
-            items={list.tasks.map((t) => t.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            {list.tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                projectId={list.projectId}
-                allLists={allLists}
-                canEdit={canEdit}
-                onUpdated={onTaskUpdated}
-                onDeleted={() => onTaskDeleted?.(list.id, task.id)}
-                onDeleteFailed={onTaskRestoreNeeded}
-                onMoved={(movedTask, affectedTasks) =>
-                  onTaskMoved?.(movedTask, affectedTasks)
-                }
-                onOpenDetail={() => onOpenTask(task.id)}
-              />
-            ))}
-          </SortableContext>
-        </div>
-
-        {canEdit && (
-          <div className="pt-3 mt-2 shrink-0 bg-neutral-100 dark:bg-neutral-800">
-            <CreateTaskModal
-              listId={list.id}
-              onCreated={(task) => onTaskCreated?.(list.id, task)}
-              onConfirmed={(tempId, realTask) =>
-                onTaskCreateConfirmed?.(tempId, realTask)
-              }
-              onFailed={(tempId) => onTaskDeleted?.(list.id, tempId)}
-            />
+          {/* Scrollable Tasks List */}
+          <div className="overflow-y-auto overflow-x-visible space-y-3 pr-1 max-h-[calc(100vh-14rem)]">
+            <SortableContext
+              items={list.tasks.map((t) => t.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {list.tasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  projectId={list.projectId}
+                  allLists={allLists}
+                  canEdit={canEdit}
+                  onUpdated={onTaskUpdated}
+                  onDeleted={() => onTaskDeleted?.(list.id, task.id)}
+                  onDeleteFailed={onTaskRestoreNeeded}
+                  onMoved={(movedTask, affectedTasks) =>
+                    onTaskMoved?.(movedTask, affectedTasks)
+                  }
+                  onOpenDetail={() => onOpenTask(task.id)}
+                />
+              ))}
+            </SortableContext>
           </div>
-        )}
+
+          {canEdit && (
+            <div className="pt-3 mt-2 shrink-0 bg-transparent">
+              <CreateTaskModal
+                listId={list.id}
+                onCreated={(task) => onTaskCreated?.(list.id, task)}
+                onConfirmed={(tempId, realTask) =>
+                  onTaskCreateConfirmed?.(tempId, realTask)
+                }
+                onFailed={(tempId) => onTaskDeleted?.(list.id, tempId)}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <DeleteListDialog
