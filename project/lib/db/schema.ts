@@ -57,6 +57,7 @@ export const tasks = pgTable("tasks", {
   dueDate: timestamp("due_date"),
   position: integer("position").notNull(),
   isArchived: boolean("is_archived").notNull().default(false),
+  isCompleted: boolean("is_completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -85,6 +86,8 @@ export const taskActivity = pgTable(
         "archived",
         "restored",
         "deleted",
+        "completed",
+        "reopened",
       ],
     }).notNull(),
     metadata: jsonb("metadata"),

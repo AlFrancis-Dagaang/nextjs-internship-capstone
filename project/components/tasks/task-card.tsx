@@ -6,12 +6,17 @@ import { Calendar, MessageSquare } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@/lib/db/schema";
-import { deleteTask, updateTask } from "@/lib/actions/tasks";
+import {
+  deleteTask,
+  updateTask,
+  toggleTaskComplete,
+} from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
 import { TaskActions } from "./modal/task-actions";
 import { DeleteTaskDialog } from "./modal/delete-task-dialog";
 import { Input } from "@/components/ui/input";
 import { ListWithTasks, TaskWithCommentCount } from "../lists/board";
+import { useBoardStore } from "@/stores/board-store";
 
 const priorityBarStyles: Record<string, string> = {
   low: "bg-blue-400",
@@ -29,12 +34,14 @@ const priorityBarStyles: Record<string, string> = {
 export function TaskCardView({
   task,
   interactive = true,
+  onToggleComplete,
   onOpenDetail,
   cornerActions,
   className = "",
 }: {
   task: TaskWithCommentCount;
   interactive?: boolean;
+  onToggleComplete?: () => void;
   onOpenDetail?: () => void;
   cornerActions?: React.ReactNode;
   className?: string;
@@ -42,6 +49,7 @@ export function TaskCardView({
   const assignees = task.assignees ?? [];
   const visibleAssignees = assignees.slice(0, 3);
   const extraCount = assignees.length > 3 ? assignees.length - 3 : 0;
+  const tooltipText = task.isCompleted ? "Mark incomplete" : "Mark completed";
 
   return (
     <div
@@ -64,8 +72,37 @@ export function TaskCardView({
 
       <div className="flex items-start justify-between pr-8">
         <div className="flex items-center space-x-2.5 flex-1">
-          <div className="w-4 h-4 rounded-full border border-neutral-300 dark:border-neutral-600 shrink-0" />
-          <h4 className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">
+          {onToggleComplete ? (
+            <button
+              type="button"
+              title={tooltipText}
+              aria-label={tooltipText}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleComplete();
+              }}
+              className={`w-4 h-4 rounded-full border shrink-0 transition-colors flex items-center justify-center ${
+                task.isCompleted
+                  ? "bg-green-500 border-green-500"
+                  : "border-neutral-300 dark:border-neutral-600 hover:border-green-400"
+              }`}
+            />
+          ) : (
+            <div
+              className={`w-4 h-4 rounded-full border shrink-0 ${
+                task.isCompleted
+                  ? "bg-green-500 border-green-500"
+                  : "border-neutral-300 dark:border-neutral-600"
+              }`}
+            />
+          )}
+          <h4
+            className={`font-medium text-sm ${
+              task.isCompleted
+                ? "line-through text-neutral-400 dark:text-neutral-500"
+                : "text-neutral-900 dark:text-neutral-100"
+            }`}
+          >
             {task.title}
           </h4>
         </div>
@@ -145,6 +182,11 @@ export function TaskCard({
   const [title, setTitle] = useState(task.title);
   const [isPending, startTransition] = useTransition();
 
+  const toggleTaskCompleteLocally = useBoardStore(
+    (state) => state.toggleTaskCompleteLocally,
+  );
+  const revertTaskComplete = useBoardStore((state) => state.revertTaskComplete);
+
   const {
     attributes,
     listeners,
@@ -159,6 +201,24 @@ export function TaskCard({
     transition,
   };
   const isTemp = task.id.startsWith("temp-");
+
+  function handleToggleComplete() {
+    const previousValue = toggleTaskCompleteLocally(task.id);
+
+    startTransition(async () => {
+      const result = await toggleTaskComplete(task.id);
+      if (!result.success) {
+        revertTaskComplete(task.id, previousValue);
+        toast({
+          title: "Failed to update task",
+          description: result.error,
+          variant: "destructive",
+        });
+        return;
+      }
+      onUpdated?.(result.data as TaskWithCommentCount);
+    });
+  }
 
   function handleRenameSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -272,6 +332,9 @@ export function TaskCard({
           <TaskCardView
             task={task}
             interactive={!isTemp}
+            onToggleComplete={
+              canEdit && !isTemp ? handleToggleComplete : undefined
+            }
             onOpenDetail={isTemp ? undefined : onOpenDetail}
             cornerActions={isTemp ? undefined : cornerActions}
             className={isDragging ? "opacity-40 cursor-grabbing shadow-lg" : ""}

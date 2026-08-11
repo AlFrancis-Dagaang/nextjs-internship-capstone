@@ -31,6 +31,9 @@ interface BoardState {
   archiveTaskLocally: (taskId: string) => ListWithTasks[];
   revertArchiveSnapshot: (snapshot: ListWithTasks[]) => void;
 
+  toggleTaskCompleteLocally: (taskId: string) => boolean; // returns previous value for revert
+  revertTaskComplete: (taskId: string, previousValue: boolean) => void;
+
   addTask: (listId: string, task: Task) => void;
   insertTaskAt: (listId: string, task: Task, index: number) => void;
   updateTaskLocal: (task: Task) => void;
@@ -382,4 +385,31 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   revertMoveSnapshot: (snapshot) => set({ lists: snapshot }),
+
+  toggleTaskCompleteLocally: (taskId) => {
+    const { lists } = get();
+    const task = lists.flatMap((l) => l.tasks).find((t) => t.id === taskId);
+    const previousValue = task?.isCompleted ?? false;
+
+    set({
+      lists: lists.map((l) => ({
+        ...l,
+        tasks: l.tasks.map((t) =>
+          t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t,
+        ),
+      })),
+    });
+
+    return previousValue;
+  },
+
+  revertTaskComplete: (taskId, previousValue) =>
+    set((s) => ({
+      lists: s.lists.map((l) => ({
+        ...l,
+        tasks: l.tasks.map((t) =>
+          t.id === taskId ? { ...t, isCompleted: previousValue } : t,
+        ),
+      })),
+    })),
 }));

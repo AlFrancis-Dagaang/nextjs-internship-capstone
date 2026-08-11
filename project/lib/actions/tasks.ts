@@ -484,3 +484,38 @@ export async function getArchivedTasksByProject(
 
   return { success: true, data: archivedWithDetails };
 }
+
+export async function toggleTaskComplete(
+  id: string,
+): Promise<ActionResult<Task>> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const existingTask = await queries.tasks.getById(id);
+  if (!existingTask) {
+    return { success: false, error: "Not found" };
+  }
+
+  const access = await assertListEditAccess(
+    existingTask.listId,
+    authResult.user.id,
+  );
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
+  }
+
+  const newValue = !existingTask.isCompleted;
+  const updated = await queries.tasks.update(id, { isCompleted: newValue });
+
+  await logTaskActivity(
+    id,
+    authResult.user.id,
+    newValue ? "completed" : "reopened",
+  );
+
+  revalidatePath(`/projects/${access.project.id}`);
+
+  return { success: true, data: updated };
+}
