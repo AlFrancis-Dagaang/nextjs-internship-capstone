@@ -1,3 +1,4 @@
+// app/(dashboard)/layout.tsx
 import { requireAuthedUser } from "@/lib/services/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
 

@@ -10,6 +10,7 @@ import {
 import { logTaskActivity } from "@/lib/services/activity";
 import type { Comment } from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
+import { notifyTaskAssignees } from "@/lib/services/notifications";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -51,6 +52,14 @@ export async function createComment(
     authResult.user.id,
     "comment_added",
   );
+  await notifyTaskAssignees({
+    taskId: parsed.data.taskId,
+    projectId: access.project.id,
+    type: "task_comment_added",
+    message: "New comment on a task you're assigned to",
+    actorId: authResult.user.id,
+    excludeUserId: authResult.user.id,
+  });
   revalidatePath(`/projects/${access.project.id}`);
 
   return { success: true, data: comment };

@@ -8,6 +8,7 @@ import {
 } from "@/lib/services/ownership";
 import { logTaskActivity } from "@/lib/services/activity";
 import { revalidatePath } from "next/cache";
+import { createNotification } from "@/lib/services/notifications";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -70,11 +71,21 @@ export async function assignUserToTask(
   }
 
   await queries.taskAssignees.add(taskId, userId);
-  const assignedUser = await queries.users.getById(userId); // ← method name TBD
+  const assignedUser = await queries.users.getById(userId);
+  const actor = await queries.users.getById(authResult.user.id);
+
   await logTaskActivity(taskId, authResult.user.id, "assignee_changed", {
     type: "assigned",
     assigneeId: userId,
     assigneeName: assignedUser?.name ?? "Unknown user",
+  });
+  await createNotification({
+    userId,
+    type: "task_assigned",
+    message: `${actor?.name ?? "Someone"} assigned you to a task`, // FIXED — use actor, not assignedUser
+    projectId: access.project.id,
+    taskId,
+    actorId: authResult.user.id,
   });
 
   revalidatePath(`/projects/${access.project.id}`);
@@ -98,10 +109,20 @@ export async function unassignUserFromTask(
 
   await queries.taskAssignees.remove(taskId, userId);
   const unassignedUser = await queries.users.getById(userId);
+  const actor = await queries.users.getById(authResult.user.id); // ADD THIS
+
   await logTaskActivity(taskId, authResult.user.id, "assignee_changed", {
     type: "unassigned",
     assigneeId: userId,
     assigneeName: unassignedUser?.name ?? "Unknown user",
+  });
+  await createNotification({
+    userId,
+    type: "task_unassigned",
+    message: `${actor?.name ?? "Someone"} removed you from a task`, // FIXED
+    projectId: access.project.id,
+    taskId,
+    actorId: authResult.user.id,
   });
   revalidatePath(`/projects/${access.project.id}`);
 

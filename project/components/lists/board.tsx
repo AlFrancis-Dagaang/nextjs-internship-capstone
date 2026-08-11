@@ -29,6 +29,7 @@ import {
   SortableContext,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { useSearchParams } from "next/navigation";
 
 export type TaskWithCommentCount = Task & {
   commentCount?: number;
@@ -84,6 +85,16 @@ export function Board({
   const dragListOver = useBoardStore((s) => s.dragListOver);
   const endListDrag = useBoardStore((s) => s.endListDrag);
   const revertListSnapshot = useBoardStore((s) => s.revertListSnapshot);
+
+  const searchParams = useSearchParams();
+  const openTaskParam = searchParams.get("openTask");
+
+  // Auto-open task from notification search param once on mount
+  useEffect(() => {
+    if (openTaskParam) {
+      openTaskDetail(openTaskParam);
+    }
+  }, [openTaskParam, openTaskDetail]);
 
   const [assignableUsers, setAssignableUsers] = useState<
     { id: string; name?: string; email?: string }[]

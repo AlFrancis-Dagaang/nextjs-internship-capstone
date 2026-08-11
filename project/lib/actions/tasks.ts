@@ -14,6 +14,7 @@ import { Task } from "../db/schema";
 import { revalidatePath } from "next/cache";
 import type { TaskWithCommentCount } from "@/components/lists/board";
 import { getTaskAssignees } from "./task-assignees";
+import { notifyTaskAssignees } from "@/lib/services/notifications";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -295,6 +296,15 @@ export async function moveTaskToList(
     });
   }
 
+  await notifyTaskAssignees({
+    taskId,
+    projectId: destAccess.list.projectId,
+    type: "task_moved",
+    message: `Task moved to "${destAccess.list.name}"`,
+    actorId: authResult.user.id,
+    excludeUserId: authResult.user.id,
+  });
+
   // Fetch the authoritative, fully up-to-date state for both affected
   // lists so the client can apply it directly with no local guessing.
   const destTasksFinal = await queries.tasks.getByList(newListId);
@@ -353,6 +363,15 @@ export async function archiveTask(id: string): Promise<ActionResult<Task>> {
 
   const updated = await queries.tasks.update(id, { isArchived: true });
   await logTaskActivity(id, authResult.user.id, "archived");
+
+  await notifyTaskAssignees({
+    taskId: id,
+    projectId: access.project.id,
+    type: "task_archived",
+    message: `Task "${existingTask.title}" was archived`,
+    actorId: authResult.user.id,
+    excludeUserId: authResult.user.id,
+  });
   revalidatePath(`/projects/${access.project.id}`);
 
   return { success: true, data: updated };

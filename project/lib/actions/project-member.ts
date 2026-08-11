@@ -14,6 +14,7 @@ import type { ProjectMember } from "../db/schema";
 import { searchUsersSchema } from "@/lib/validations";
 import { logTaskActivity } from "@/lib/services/activity";
 import { revalidatePath } from "next/cache";
+import { createNotification } from "@/lib/services/notifications";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -63,6 +64,15 @@ export async function addProjectMember(
     projectId,
     userId: targetUser.id,
     role: parsed.data.role ?? "viewer",
+  });
+
+  const actor = await queries.users.getById(authResult.user.id);
+  await createNotification({
+    userId: targetUser.id,
+    type: "project_added",
+    message: `${actor?.name ?? "Someone"} added you to "${ownership.project.name}"`,
+    projectId,
+    actorId: authResult.user.id,
   });
 
   revalidatePath("/projects");
@@ -180,6 +190,15 @@ export async function removeProjectMember(
   );
 
   await queries.projectMembers.remove(memberId);
+
+  const actor = await queries.users.getById(authResult.user.id);
+  await createNotification({
+    userId: existingMember.userId,
+    type: "project_removed",
+    message: `${actor?.name ?? "Someone"} removed you from "${ownership.project.name}"`,
+    projectId,
+    actorId: authResult.user.id,
+  });
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
   return { success: true, data: null };

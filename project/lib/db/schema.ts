@@ -148,6 +148,45 @@ export const projectMembers = pgTable(
   }),
 );
 
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type", {
+      enum: [
+        "project_added",
+        "project_removed",
+        "task_assigned",
+        "task_unassigned",
+        "task_comment_added",
+        "task_moved",
+        "task_archived",
+        "task_due_soon_24h",
+        "task_due_soon_today",
+      ],
+    }).notNull(),
+    projectId: uuid("project_id").references(() => projects.id, {
+      onDelete: "cascade",
+    }),
+    taskId: uuid("task_id").references(() => tasks.id, {
+      onDelete: "cascade",
+    }),
+    actorId: uuid("actor_id").references(() => users.id),
+    message: text("message").notNull(),
+    isRead: boolean("is_read").notNull().default(false),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdCreatedAtIdx: index("notifications_user_id_created_at_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+  }),
+);
+
 // ---------- Relations ----------
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -231,6 +270,19 @@ export const commentsRelations = relations(comments, ({ one }) => ({
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, { fields: [notifications.userId], references: [users.id] }),
+  project: one(projects, {
+    fields: [notifications.projectId],
+    references: [projects.id],
+  }),
+  task: one(tasks, { fields: [notifications.taskId], references: [tasks.id] }),
+  actor: one(users, {
+    fields: [notifications.actorId],
+    references: [users.id],
+  }),
+}));
+
 // ---------- Inferred types ----------
 
 export type User = typeof users.$inferSelect;
@@ -249,3 +301,6 @@ export type ProjectMember = typeof projectMembers.$inferSelect;
 export type NewProjectMember = typeof projectMembers.$inferInsert;
 export type TaskAssignee = typeof taskAssignees.$inferSelect;
 export type NewTaskAssignee = typeof taskAssignees.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;
+export type NotificationType = Notification["type"];
