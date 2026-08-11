@@ -379,13 +379,28 @@ export async function restoreTask(
     return { success: false, error: access.error ?? "Unknown error" };
   }
 
+  // Bug fix: appending with `currentListTasks.length` collided with
+  // existing tasks whenever the list had gaps from prior archives (gaps
+  // aren't renormalized on archive). Fix: append to the array, then
+  // reassign positions 0..n contiguously for the whole list — same
+  // approach moveTaskToList already uses. Self-heals any pre-existing
+  // gaps in this list as a side effect.
   const currentListTasks = await queries.tasks.getByList(existingTask.listId);
-  const newPosition = currentListTasks.length;
+  const reordered = [...currentListTasks, existingTask];
 
-  const updated = await queries.tasks.update(id, {
-    isArchived: false,
-    position: newPosition,
+  let updatedTask: Task | undefined;
+  const updates = reordered.map(async (t, index) => {
+    if (t.id === id) {
+      updatedTask = await queries.tasks.update(id, {
+        isArchived: false,
+        position: index,
+      });
+    } else if (t.position !== index) {
+      await queries.tasks.update(t.id, { position: index });
+    }
   });
+
+  await Promise.all(updates);
 
   await logTaskActivity(id, authResult.user.id, "restored");
   revalidatePath(`/projects/${access.project.id}`);
@@ -404,7 +419,7 @@ export async function restoreTask(
   return {
     success: true,
     data: {
-      ...updated,
+      ...updatedTask!,
       commentCount: commentRows.length,
       assignees,
     },
