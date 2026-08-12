@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import {
+  type CollisionDetection,
   DndContext,
   DragOverlay,
   PointerSensor,
@@ -141,6 +142,24 @@ export function Board({
     // before archive, until the user explicitly closes it.
   }, [openTaskId, lists]);
 
+  // Type the function using dnd-kit's built-in CollisionDetection type
+  const customCollisionDetection: CollisionDetection = (args) => {
+    const isDraggingList = args.active.data.current?.type === "list";
+
+    if (isDraggingList) {
+      // When dragging a list, only look for intersections with other list sortables
+      return rectIntersection({
+        ...args,
+        droppableContainers: args.droppableContainers.filter(
+          (container) => container.data.current?.type === "list",
+        ),
+      });
+    }
+
+    // Default behavior for tasks
+    return rectIntersection(args);
+  };
+
   function handleTaskDeleted(listId: string, taskId: string) {
     removeTask(listId, taskId);
     if (openTaskId === taskId) closeTaskDetail();
@@ -245,7 +264,7 @@ export function Board({
       <DndContext
         id="kanban-board"
         sensors={sensors}
-        collisionDetection={rectIntersection} // <-- Updated here
+        collisionDetection={customCollisionDetection} // <-- Replace rectIntersection with this
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
