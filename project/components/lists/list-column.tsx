@@ -226,6 +226,7 @@ export function ListColumn({
         </div>
 
         {/* Task Drop Zone Container */}
+        {/* Task Drop Zone Container */}
         <div
           ref={setDroppableRef}
           onPointerDown={(e) => e.stopPropagation()}
@@ -235,8 +236,8 @@ export function ListColumn({
               : ""
           }`}
         >
-          {/* Scrollable Tasks List - ensure overflow-x-visible and proper padding */}
-          <div className="overflow-y-auto overflow-x-visible space-y-3 px-1.5 max-h-[calc(100vh-14rem)]">
+          {/* Scrollable Tasks List — Added py-1.5 to prevent first/last card underlapping/clipping */}
+          <div className="overflow-y-auto overflow-x-visible space-y-3 px-1.5 py-1.5 max-h-[calc(100vh-14rem)]">
             <SortableContext
               items={list.tasks.map((t) => t.id)}
               strategy={verticalListSortingStrategy}
