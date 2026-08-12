@@ -3,7 +3,7 @@ import { getProjectMembers } from "@/lib/actions/project-member";
 import { ProjectsList } from "@/components/projects/projects-list";
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import { queries } from "@/lib/db";
-import { toMemberList } from "@/lib/utils";
+import { toMemberList } from "@/lib/utils/utils";
 
 export default async function ProjectsPage() {
   const [result, authResult] = await Promise.all([

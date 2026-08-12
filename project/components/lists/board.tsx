@@ -41,10 +41,12 @@ export function Board({
   projectId,
   initialLists,
   role,
+  currentUserId,
 }: {
   projectId: string;
   initialLists: ListWithTasks[];
   role: "owner" | "editor" | "viewer";
+  currentUserId: string;
 }) {
   const { toast } = useToast();
   useTrackProjectView(projectId);
@@ -262,6 +264,7 @@ export function Board({
                   allLists={lists}
                   totalLists={lists.length}
                   role={role}
+                  currentUserId={currentUserId}
                   onRenamed={renameList}
                   onDeleted={removeList}
                   onMoved={reorderLists}

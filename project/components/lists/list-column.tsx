@@ -17,12 +17,18 @@ import type { List, Task } from "@/lib/db/schema";
 import type { ListWithTasks } from "./board";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useUiStore } from "@/stores/ui-store";
+import {
+  taskMatchesFilters,
+  isFilteringActive,
+} from "@/lib/utils/task-filters";
 
 export function ListColumn({
   list,
   totalLists,
   allLists,
   role,
+  currentUserId,
   onOpenTask,
   onRenamed,
   onDeleted,
@@ -39,6 +45,7 @@ export function ListColumn({
   totalLists: number;
   allLists: ListWithTasks[];
   role: "owner" | "editor" | "viewer";
+  currentUserId: string;
 
   onRenamed?: (updated: List) => void;
   onDeleted?: (listId: string) => void;
@@ -58,6 +65,35 @@ export function ListColumn({
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const canEdit = role !== "viewer";
+
+  // #70 item 5 — search & filter state, read from ui-store. Filtering is
+  // pure client-side derivation over already-loaded board data.
+  const searchQuery = useUiStore((s) => s.searchQuery);
+  const filterCompleted = useUiStore((s) => s.filterCompleted);
+  const filterPriority = useUiStore((s) => s.filterPriority);
+  const filterDueDate = useUiStore((s) => s.filterDueDate);
+  const filterAssignedToMe = useUiStore((s) => s.filterAssignedToMe);
+  const filterAssigneeId = useUiStore((s) => s.filterAssigneeId);
+
+  const filters = {
+    searchQuery,
+    filterCompleted,
+    filterPriority,
+    filterDueDate,
+    filterAssignedToMe,
+    filterAssigneeId,
+  };
+  const filtering = isFilteringActive(filters);
+
+  console.log("DEBUG filter check:", {
+    currentUserId,
+    filterAssignedToMe,
+    sampleTaskAssignees: list.tasks[0]?.assignees,
+  });
+
+  const visibleTasks = list.tasks.filter((task) =>
+    taskMatchesFilters(task, filters, currentUserId),
+  );
 
   // 1. Droppable target ONLY for dropping tasks inside this list
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
@@ -167,7 +203,9 @@ export function ListColumn({
                 {list.name}
               </h3>
               <span className="text-xs text-neutral-500 font-semibold">
-                {list.tasks.length}
+                {filtering
+                  ? `${visibleTasks.length}/${list.tasks.length}`
+                  : list.tasks.length}
               </span>
             </div>
           )}
@@ -192,7 +230,7 @@ export function ListColumn({
         <div
           ref={setDroppableRef}
           onPointerDown={(e) => e.stopPropagation()}
-          className={`flex flex-col rounded-lg transition-colors min-h-[50px] ${
+          className={`flex flex-col rounded-lg transition-colors min-h-12.5 ${
             isOver
               ? "ring-2 ring-blue-500/40 bg-blue-50/20 dark:bg-blue-950/10 p-1"
               : ""
@@ -204,13 +242,14 @@ export function ListColumn({
               items={list.tasks.map((t) => t.id)}
               strategy={verticalListSortingStrategy}
             >
-              {list.tasks.map((task) => (
+              {visibleTasks.map((task) => (
                 <TaskCard
                   key={task.id}
                   task={task}
                   projectId={list.projectId}
                   allLists={allLists}
                   canEdit={canEdit}
+                  dragDisabled={filtering}
                   onUpdated={onTaskUpdated}
                   onDeleted={() => onTaskDeleted?.(list.id, task.id)}
                   onDeleteFailed={onTaskRestoreNeeded}

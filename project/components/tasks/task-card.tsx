@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Calendar, MessageSquare } from "lucide-react";
+import { Calendar, MessageSquare, Check } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@/lib/db/schema";
@@ -83,18 +83,22 @@ export function TaskCardView({
               }}
               className={`w-4 h-4 rounded-full border shrink-0 transition-colors flex items-center justify-center ${
                 task.isCompleted
-                  ? "bg-green-500 border-green-500"
+                  ? "bg-green-500 border-green-500 text-white"
                   : "border-neutral-300 dark:border-neutral-600 hover:border-green-400"
               }`}
-            />
+            >
+              {task.isCompleted && <Check size={10} strokeWidth={3} />}
+            </button>
           ) : (
             <div
-              className={`w-4 h-4 rounded-full border shrink-0 ${
+              className={`w-4 h-4 rounded-full border shrink-0 flex items-center justify-center ${
                 task.isCompleted
-                  ? "bg-green-500 border-green-500"
+                  ? "bg-green-500 border-green-500 text-white"
                   : "border-neutral-300 dark:border-neutral-600"
               }`}
-            />
+            >
+              {task.isCompleted && <Check size={10} strokeWidth={3} />}
+            </div>
           )}
           <h4
             className={`font-medium text-sm ${
@@ -157,6 +161,7 @@ export function TaskCard({
   projectId,
   allLists,
   canEdit,
+  dragDisabled = false,
   onArchived,
   onUpdated,
   onDeleted,
@@ -168,6 +173,7 @@ export function TaskCard({
   projectId: string;
   allLists: ListWithTasks[];
   canEdit: boolean;
+  dragDisabled?: boolean;
 
   onUpdated?: (task: TaskWithCommentCount) => void;
   onDeleted?: () => void;
@@ -194,7 +200,7 @@ export function TaskCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id, disabled: !canEdit });
+  } = useSortable({ id: task.id, disabled: !canEdit || dragDisabled });
 
   const dragStyle = {
     transform: CSS.Transform.toString(transform),

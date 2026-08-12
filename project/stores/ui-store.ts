@@ -1,53 +1,3 @@
-// TODO: Task 5.3 - Set up client-side state management with Zustand
-
-/*
-TODO: Implementation Notes for Interns:
-
-UI state management store for:
-- Modal states (create project, create task, etc.)
-- Sidebar state
-- Theme preferences
-- Loading states
-- Error states
-- Notifications/toasts
-
-Install: pnpm add zustand
-
-Example structure:
-import { create } from 'zustand'
-
-interface UIState {
-  // Modal states
-  isCreateProjectModalOpen: boolean
-  isCreateTaskModalOpen: boolean
-  isTaskDetailModalOpen: boolean
-  selectedTaskId: string | null
-
-  // UI states
-  sidebarOpen: boolean
-  theme: 'light' | 'dark'
-
-  // Loading states
-  isLoading: boolean
-  loadingMessage: string
-
-  // Actions
-  openCreateProjectModal: () => void
-  closeCreateProjectModal: () => void
-  openCreateTaskModal: () => void
-  closeCreateTaskModal: () => void
-  openTaskDetailModal: (taskId: string) => void
-  closeTaskDetailModal: () => void
-  toggleSidebar: () => void
-  setTheme: (theme: 'light' | 'dark') => void
-  setLoading: (loading: boolean, message?: string) => void
-}
-
-export const useUIStore = create<UIState>((set) => ({
-  // ... implementation
-}))
-*/
-
 import { create } from "zustand";
 
 /**
@@ -70,6 +20,23 @@ interface UiState {
 
   openArchiveModal: () => void; // Add this
   closeArchiveModal: () => void; // Add this
+
+  // #70 item 5 — search & filtering. Pure client-side view state, no
+  // server round-trip; board-store already holds every task locally.
+  searchQuery: string;
+  filterCompleted: "all" | "completed" | "incomplete";
+  filterPriority: "all" | "low" | "medium" | "high";
+  filterDueDate: "all" | "overdue" | "today" | "this_week" | "none";
+  filterAssignedToMe: boolean;
+  filterAssigneeId: string | null;
+
+  setSearchQuery: (query: string) => void;
+  setFilterCompleted: (value: UiState["filterCompleted"]) => void;
+  setFilterPriority: (value: UiState["filterPriority"]) => void;
+  setFilterDueDate: (value: UiState["filterDueDate"]) => void;
+  setFilterAssignedToMe: (value: boolean) => void;
+  setFilterAssigneeId: (value: string | null) => void;
+  clearAllFilters: () => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -85,4 +52,27 @@ export const useUiStore = create<UiState>((set) => ({
 
   openArchiveModal: () => set({ archiveModalOpen: true }),
   closeArchiveModal: () => set({ archiveModalOpen: false }),
+
+  searchQuery: "",
+  filterCompleted: "all",
+  filterPriority: "all",
+  filterDueDate: "all",
+  filterAssignedToMe: false,
+  filterAssigneeId: null,
+
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  setFilterCompleted: (value) => set({ filterCompleted: value }),
+  setFilterPriority: (value) => set({ filterPriority: value }),
+  setFilterDueDate: (value) => set({ filterDueDate: value }),
+  setFilterAssignedToMe: (value) => set({ filterAssignedToMe: value }),
+  setFilterAssigneeId: (value) => set({ filterAssigneeId: value }),
+  clearAllFilters: () =>
+    set({
+      searchQuery: "",
+      filterCompleted: "all",
+      filterPriority: "all",
+      filterDueDate: "all",
+      filterAssignedToMe: false,
+      filterAssigneeId: null,
+    }),
 }));
