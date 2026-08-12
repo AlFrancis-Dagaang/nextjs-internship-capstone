@@ -22,6 +22,7 @@ import {
   taskMatchesFilters,
   isFilteringActive,
 } from "@/lib/utils/task-filters";
+import { Check } from "lucide-react";
 
 export function ListColumn({
   list,
@@ -75,6 +76,10 @@ export function ListColumn({
   const filterAssignedToMe = useUiStore((s) => s.filterAssignedToMe);
   const filterAssigneeId = useUiStore((s) => s.filterAssigneeId);
 
+  const selectionMode = useUiStore((s) => s.selectionMode);
+  const selectedTaskIds = useUiStore((s) => s.selectedTaskIds);
+  const toggleTaskSelected = useUiStore((s) => s.toggleTaskSelected);
+
   const filters = {
     searchQuery,
     filterCompleted,
@@ -84,12 +89,6 @@ export function ListColumn({
     filterAssigneeId,
   };
   const filtering = isFilteringActive(filters);
-
-  console.log("DEBUG filter check:", {
-    currentUserId,
-    filterAssignedToMe,
-    sampleTaskAssignees: list.tasks[0]?.assignees,
-  });
 
   const visibleTasks = list.tasks.filter((task) =>
     taskMatchesFilters(task, filters, currentUserId),
@@ -173,7 +172,7 @@ export function ListColumn({
         style={listDragStyle}
         {...(canEdit ? listDragAttributes : {})}
         {...(canEdit ? listDragListeners : {})}
-        className={`shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col h-fit max-h-full relative isolate transition-colors cursor-grab active:cursor-grabbing ${
+        className={`shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col h-fit max-h-full transition-colors cursor-grab active:cursor-grabbing ${
           isListDragging ? "opacity-40" : ""
         }`}
       >
@@ -226,7 +225,7 @@ export function ListColumn({
           )}
         </div>
 
-        {/* Task Drop Zone Container — handles dropping tasks, featuring a fixed hit area to prevent layout loops */}
+        {/* Task Drop Zone Container */}
         <div
           ref={setDroppableRef}
           onPointerDown={(e) => e.stopPropagation()}
@@ -236,8 +235,8 @@ export function ListColumn({
               : ""
           }`}
         >
-          {/* Scrollable Tasks List */}
-          <div className="overflow-y-auto overflow-x-visible space-y-3 pr-1 max-h-[calc(100vh-14rem)]">
+          {/* Scrollable Tasks List - ensure overflow-x-visible and proper padding */}
+          <div className="overflow-y-auto overflow-x-visible space-y-3 px-1.5 max-h-[calc(100vh-14rem)]">
             <SortableContext
               items={list.tasks.map((t) => t.id)}
               strategy={verticalListSortingStrategy}
@@ -249,7 +248,10 @@ export function ListColumn({
                   projectId={list.projectId}
                   allLists={allLists}
                   canEdit={canEdit}
-                  dragDisabled={filtering}
+                  dragDisabled={filtering || selectionMode}
+                  selectionMode={selectionMode}
+                  isSelected={selectedTaskIds.includes(task.id)}
+                  onToggleSelected={() => toggleTaskSelected(task.id)}
                   onUpdated={onTaskUpdated}
                   onDeleted={() => onTaskDeleted?.(list.id, task.id)}
                   onDeleteFailed={onTaskRestoreNeeded}

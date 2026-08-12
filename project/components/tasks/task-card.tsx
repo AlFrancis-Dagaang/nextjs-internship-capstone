@@ -37,6 +37,9 @@ export function TaskCardView({
   onToggleComplete,
   onOpenDetail,
   cornerActions,
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelected,
   className = "",
 }: {
   task: TaskWithCommentCount;
@@ -44,6 +47,9 @@ export function TaskCardView({
   onToggleComplete?: () => void;
   onOpenDetail?: () => void;
   cornerActions?: React.ReactNode;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelected?: () => void;
   className?: string;
 }) {
   const assignees = task.assignees ?? [];
@@ -53,8 +59,14 @@ export function TaskCardView({
 
   return (
     <div
-      onClick={interactive ? onOpenDetail : undefined}
-      className={`relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:shadow-md transition-shadow space-y-3 overflow-visible ${
+      onClick={
+        interactive
+          ? selectionMode
+            ? onToggleSelected
+            : onOpenDetail
+          : undefined
+      }
+      className={`relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:shadow-md transition-shadow space-y-3 overflow-hidden ${
         interactive ? "cursor-pointer" : ""
       } ${className}`}
     >
@@ -72,7 +84,23 @@ export function TaskCardView({
 
       <div className="flex items-start justify-between pr-8">
         <div className="flex items-center space-x-2.5 flex-1">
-          {onToggleComplete ? (
+          {selectionMode ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSelected?.();
+              }}
+              className={`w-4 h-4 rounded border shrink-0 transition-colors flex items-center justify-center ${
+                isSelected
+                  ? "bg-cyan-500 border-cyan-500 text-white"
+                  : "border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900"
+              }`}
+              aria-label={isSelected ? "Deselect task" : "Select task"}
+            >
+              {isSelected && <Check size={10} strokeWidth={3} />}
+            </button>
+          ) : onToggleComplete ? (
             <button
               type="button"
               title={tooltipText}
@@ -162,6 +190,9 @@ export function TaskCard({
   allLists,
   canEdit,
   dragDisabled = false,
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelected,
   onArchived,
   onUpdated,
   onDeleted,
@@ -174,6 +205,9 @@ export function TaskCard({
   allLists: ListWithTasks[];
   canEdit: boolean;
   dragDisabled?: boolean;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelected?: () => void;
 
   onUpdated?: (task: TaskWithCommentCount) => void;
   onDeleted?: () => void;
@@ -260,18 +294,18 @@ export function TaskCard({
 
     startTransition(async () => {
       const result = await deleteTask(task.id);
-      if (result.success) {
-        toast({
-          title: "Task deleted",
-          description: `"${task.title}" was deleted.`,
-        });
-      } else {
+      if (!result.success) {
         toast({
           title: "Failed to delete task",
           description: result.error,
           variant: "destructive",
         });
         onDeleteFailed?.(task);
+      } else {
+        toast({
+          title: "Task deleted",
+          description: `"${task.title}" was deleted.`,
+        });
       }
     });
   }
@@ -312,7 +346,7 @@ export function TaskCard({
         {...(canEdit ? listeners : {})}
       >
         {isRenaming ? (
-          <div className="relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 space-y-3 overflow-visible">
+          <div className="relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 space-y-3 overflow-hidden">
             {task.priority && (
               <div
                 className={`absolute top-0 left-0 right-0 h-1 rounded-t-xl ${
@@ -335,16 +369,35 @@ export function TaskCard({
             </div>
           </div>
         ) : (
-          <TaskCardView
-            task={task}
-            interactive={!isTemp}
-            onToggleComplete={
-              canEdit && !isTemp ? handleToggleComplete : undefined
-            }
-            onOpenDetail={isTemp ? undefined : onOpenDetail}
-            cornerActions={isTemp ? undefined : cornerActions}
-            className={isDragging ? "opacity-40 cursor-grabbing shadow-lg" : ""}
-          />
+          <div className="relative">
+            <TaskCardView
+              task={task}
+              interactive={!isTemp}
+              selectionMode={selectionMode}
+              isSelected={isSelected}
+              onToggleSelected={onToggleSelected}
+              onToggleComplete={
+                canEdit && !isTemp && !selectionMode
+                  ? handleToggleComplete
+                  : undefined
+              }
+              onOpenDetail={
+                isTemp || selectionMode
+                  ? selectionMode && canEdit
+                    ? onToggleSelected
+                    : undefined
+                  : onOpenDetail
+              }
+              cornerActions={
+                isTemp || selectionMode ? undefined : cornerActions
+              }
+              className={`${isDragging ? "opacity-40 cursor-grabbing shadow-lg" : ""} ${
+                isSelected
+                  ? "ring-2 ring-cyan-500 bg-cyan-50/10 dark:bg-cyan-950/20"
+                  : ""
+              }`}
+            />
+          </div>
         )}
       </div>
 

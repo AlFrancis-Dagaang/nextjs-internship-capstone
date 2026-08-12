@@ -37,12 +37,25 @@ interface UiState {
   setFilterAssignedToMe: (value: boolean) => void;
   setFilterAssigneeId: (value: string | null) => void;
   clearAllFilters: () => void;
+
+  selectionMode: boolean;
+  selectedTaskIds: string[];
+  bulkDeleteRequestToken: number;
+  requestBulkDelete: () => void;
+
+  enterSelectionMode: () => void;
+  exitSelectionMode: () => void;
+  toggleTaskSelected: (taskId: string) => void;
+  selectAllVisible: (taskIds: string[]) => void;
+  clearSelection: () => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
   openTaskId: null,
   deleteTaskOpen: false,
   archiveModalOpen: false,
+  selectionMode: false,
+  selectedTaskIds: [],
 
   openTaskDetail: (taskId) => set({ openTaskId: taskId }),
   closeTaskDetail: () => set({ openTaskId: null, deleteTaskOpen: false }),
@@ -75,4 +88,21 @@ export const useUiStore = create<UiState>((set) => ({
       filterAssignedToMe: false,
       filterAssigneeId: null,
     }),
+
+  enterSelectionMode: () => set({ selectionMode: true, selectedTaskIds: [] }),
+  exitSelectionMode: () => set({ selectionMode: false, selectedTaskIds: [] }),
+
+  toggleTaskSelected: (taskId) =>
+    set((s) => ({
+      selectedTaskIds: s.selectedTaskIds.includes(taskId)
+        ? s.selectedTaskIds.filter((id) => id !== taskId)
+        : [...s.selectedTaskIds, taskId],
+    })),
+
+  selectAllVisible: (taskIds) => set({ selectedTaskIds: taskIds }),
+  clearSelection: () => set({ selectedTaskIds: [] }),
+
+  bulkDeleteRequestToken: 0,
+  requestBulkDelete: () =>
+    set((s) => ({ bulkDeleteRequestToken: s.bulkDeleteRequestToken + 1 })),
 }));

@@ -79,6 +79,12 @@ export function Board({
   const openDeleteTaskDialog = useUiStore((s) => s.openDeleteTaskDialog);
   const closeDeleteTaskDialog = useUiStore((s) => s.closeDeleteTaskDialog);
 
+  const selectionMode = useUiStore((s) => s.selectionMode);
+  const selectedTaskIds = useUiStore((s) => s.selectedTaskIds);
+  const exitSelectionMode = useUiStore((s) => s.exitSelectionMode);
+  const selectAllVisible = useUiStore((s) => s.selectAllVisible);
+  const requestBulkDelete = useUiStore((s) => s.requestBulkDelete);
+
   const [isDeletingTask, startDeleteTaskTransition] = useTransition();
   const replaceOptimisticTask = useBoardStore((s) => s.replaceOptimisticTask);
 
@@ -108,6 +114,47 @@ export function Board({
       if (result.success) setAssignableUsers(result.data);
     });
   }, [projectId]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement;
+      const isTyping =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+
+      if (e.key === "Escape") {
+        if (selectionMode) exitSelectionMode();
+        return;
+      }
+
+      if (!selectionMode || isTyping) return;
+
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedTaskIds.length > 0) {
+          e.preventDefault();
+          requestBulkDelete();
+        }
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        const allTaskIds = lists.flatMap((l) => l.tasks.map((t) => t.id));
+        selectAllVisible(allTaskIds);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    selectionMode,
+    selectedTaskIds,
+    lists,
+    exitSelectionMode,
+    selectAllVisible,
+    requestBulkDelete,
+  ]);
 
   // Hydrate the store from server-provided data. Re-runs if projectId
   // changes (e.g. client-side nav to a different project) so stale data
