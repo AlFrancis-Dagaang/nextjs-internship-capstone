@@ -11,6 +11,7 @@ import {
   CheckCheck,
   FolderKanban,
   CheckSquare,
+  Loader2,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -99,15 +100,17 @@ export function Header({ setSidebarOpen }: HeaderProps) {
     if (searchQuery.trim().length < 2) {
       setSearchResults({ projects: [], tasks: [] });
       setSearchOpen(false);
+      setIsSearching(false);
       return;
     }
 
     setIsSearching(true);
+    setSearchOpen(true); // Open dropdown immediately to show loading state
+
     const handle = setTimeout(async () => {
       const res = await globalSearch(searchQuery);
       if (res.success) {
         setSearchResults(res.data);
-        setSearchOpen(true);
       }
       setIsSearching(false);
     }, 300);
@@ -204,7 +207,7 @@ export function Header({ setSidebarOpen }: HeaderProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => {
-                if (hasResults) {
+                if (searchQuery.trim().length >= 2) {
                   setSearchOpen(true);
                 }
               }}
@@ -219,8 +222,9 @@ export function Header({ setSidebarOpen }: HeaderProps) {
                 onMouseDown={(e) => e.preventDefault()} // Prevents blur closure on clicking scrollbar or results
               >
                 {isSearching ? (
-                  <div className="py-6 text-center text-xs text-neutral-400 animate-pulse">
-                    Searching database...
+                  <div className="py-6 flex items-center justify-center space-x-2 text-xs text-neutral-400">
+                    <Loader2 size={16} className="animate-spin text-blue-500" />
+                    <span>Searching...</span>
                   </div>
                 ) : !hasResults ? (
                   <div className="py-8 text-center text-xs text-neutral-400">
