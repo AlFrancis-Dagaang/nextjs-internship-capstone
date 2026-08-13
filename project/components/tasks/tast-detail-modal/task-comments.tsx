@@ -32,6 +32,7 @@ import { getRealtimeClientId } from "@/lib/realtime/client";
 
 type TaskCommentsProps = {
   taskId: string;
+  refreshKey?: number;
   previewCount?: number;
   canEdit: boolean;
   onCommentCountChanged?: (taskId: string, delta: number) => void;
@@ -40,6 +41,7 @@ type TaskCommentsProps = {
 
 export function TaskComments({
   taskId,
+  refreshKey,
   previewCount = 4,
   canEdit,
   onCommentCountChanged,
@@ -68,10 +70,14 @@ export function TaskComments({
   }
 
   useEffect(() => {
-    refresh();
     getCurrentUserId().then(setCurrentUserId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
+
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId, refreshKey]);
 
   function handlePost() {
     if (!content.trim()) return;

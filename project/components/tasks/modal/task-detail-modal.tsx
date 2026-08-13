@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { Task } from "@/lib/db/schema";
@@ -55,6 +55,10 @@ export function TaskDetailModal({
   const bumpActivity = useCallback(() => {
     setActivityRefreshKey((prev) => prev + 1);
   }, []);
+
+  useEffect(() => {
+    bumpActivity();
+  }, [task, bumpActivity]);
 
   // Force strict boolean evaluation so falsy/null DB values don't break archive checks
   const isArchived = Boolean(task.isArchived);
@@ -134,6 +138,7 @@ export function TaskDetailModal({
             <div className="flex-1 pt-6 overflow-hidden flex flex-col">
               <TaskComments
                 taskId={task.id}
+                refreshKey={activityRefreshKey}
                 onCommentCountChanged={onCommentCountChanged}
                 onActivityChanged={bumpActivity}
                 canEdit={canEdit}

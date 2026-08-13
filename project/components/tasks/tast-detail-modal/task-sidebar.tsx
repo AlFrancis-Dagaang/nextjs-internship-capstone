@@ -78,6 +78,7 @@ export function TaskSidebar({
             canEdit={canEdit}
             assignableUsers={assignableUsers}
             onUpdated={onChanged}
+            refreshKey={activityRefreshKey}
           />
         </div>
 

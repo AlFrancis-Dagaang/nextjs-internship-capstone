@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -58,6 +58,16 @@ export function TaskMoveSection({
   const positionOptions = Array.from({ length: destTaskCount + 1 }, (_, i) =>
     String(i + 1),
   );
+
+  useEffect(() => {
+    setTargetListId(task.listId);
+    setPosition(
+      currentIndexInCurrentList >= 0
+        ? String(currentIndexInCurrentList + 1)
+        : "1",
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task.listId, currentIndexInCurrentList]);
 
   function handleMove() {
     const zeroIndexedPosition = parseInt(position, 10) - 1;

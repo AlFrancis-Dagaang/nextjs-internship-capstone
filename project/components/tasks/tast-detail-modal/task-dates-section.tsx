@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { updateTask } from "@/lib/actions/tasks";
@@ -27,7 +27,9 @@ export function TaskDatesSection({
   const [isPending, startTransition] = useTransition();
   const [dueDate, setDueDate] = useState(toDateInputValue(task.dueDate));
   const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
-
+  useEffect(() => {
+    setDueDate(toDateInputValue(task.dueDate));
+  }, [task.dueDate]);
   function handleDateChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newDate = e.target.value;
     setDueDate(newDate);
