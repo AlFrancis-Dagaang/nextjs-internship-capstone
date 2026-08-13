@@ -28,6 +28,7 @@ import {
   type CommentWithAuthor,
 } from "./task-comments/comment-row";
 import { TaskCommentsModal } from "./task-comments/task-comments-modal";
+import { getRealtimeClientId } from "@/lib/realtime/client";
 
 type TaskCommentsProps = {
   taskId: string;
@@ -93,7 +94,10 @@ export function TaskComments({
     onCommentCountChanged?.(taskId, 1);
 
     startTransition(async () => {
-      const result = await createComment({ taskId, content: submittedContent });
+      const result = await createComment(
+        { taskId, content: submittedContent },
+        getRealtimeClientId(),
+      );
       if (!result.success) {
         toast({
           title: "Failed to post comment",
@@ -118,7 +122,7 @@ export function TaskComments({
 
   function handleDelete(id: string) {
     startTransition(async () => {
-      const result = await deleteComment(id);
+      const result = await deleteComment(id, getRealtimeClientId());
       if (!result.success) {
         toast({
           title: "Failed to delete comment",
