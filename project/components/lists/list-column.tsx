@@ -22,7 +22,7 @@ import {
   taskMatchesFilters,
   isFilteringActive,
 } from "@/lib/utils/task-filters";
-import { Check } from "lucide-react";
+import { getRealtimeClientId } from "@/lib/realtime/client";
 
 export function ListColumn({
   list,
@@ -127,7 +127,7 @@ export function ListColumn({
       return;
     }
     startTransition(async () => {
-      const result = await updateList(list.id, { name });
+      const result = await updateList(list.id, { name }, getRealtimeClientId());
       if (!result.success) {
         toast({
           title: "Failed to rename list",
@@ -146,7 +146,7 @@ export function ListColumn({
 
   function handleDelete() {
     startTransition(async () => {
-      const result = await deleteList(list.id);
+      const result = await deleteList(list.id, getRealtimeClientId());
       if (result.success) {
         toast({
           title: "List deleted",

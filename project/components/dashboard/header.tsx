@@ -29,9 +29,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { checkProjectAccess } from "@/lib/actions/notifications";
 import { globalSearch, type SearchResult } from "@/lib/actions/search";
-
+import { useRealtimeNotifications } from "@/hooks/use-realtime-notifications";
+import type { NotificationRealtimePayload } from "@/lib/realtime/server"; // Ensure this type or similar is imported if needed, or matched
 interface HeaderProps {
   setSidebarOpen: (open: boolean) => void;
+  currentUserId: string;
 }
 
 type Notification = {
@@ -58,7 +60,7 @@ function formatRelativeTime(dateStr: Date | string) {
   return `${diffInDays}d ago`;
 }
 
-export function Header({ setSidebarOpen }: HeaderProps) {
+export function Header({ setSidebarOpen, currentUserId }: HeaderProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -89,11 +91,27 @@ export function Header({ setSidebarOpen }: HeaderProps) {
   };
 
   // Poll unread count on mount and periodically (every 45s)
-  useEffect(() => {
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 45000);
-    return () => clearInterval(interval);
-  }, []);
+  // useEffect(() => {
+  //   fetchUnreadCount();
+  //   const interval = setInterval(fetchUnreadCount, 45000);
+  //   return () => clearInterval(interval);
+  // }, []);
+
+  useRealtimeNotifications(currentUserId, (notification) => {
+    setNotifications((prev) => [
+      {
+        id: notification.id,
+        type: notification.type,
+        message: notification.message,
+        projectId: notification.projectId,
+        taskId: notification.taskId,
+        isRead: notification.isRead,
+        createdAt: notification.createdAt,
+      },
+      ...prev,
+    ]);
+    setUnreadCount((prev) => prev + 1);
+  });
 
   // Debounced search effect
   useEffect(() => {

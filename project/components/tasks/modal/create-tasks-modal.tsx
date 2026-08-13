@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+import { getRealtimeClientId } from "@/lib/realtime/client";
 
 type CreateTaskModalProps = {
   listId: string;
@@ -55,7 +56,11 @@ export function CreateTaskModal({
       onCreated?.({ ...task, title: submittedTitle });
 
       startTransition(async () => {
-        const result = await updateTask(task.id, { title: submittedTitle });
+        const result = await updateTask(
+          task.id,
+          { title: submittedTitle },
+          getRealtimeClientId(),
+        );
         if (!result.success) {
           if (result.fieldErrors) setFieldErrors(result.fieldErrors);
           else setGenericError(result.error);
@@ -102,8 +107,10 @@ export function CreateTaskModal({
     onCreated?.(optimisticTask);
 
     startTransition(async () => {
-      const result = await createTask({ title: submittedTitle, listId });
-
+      const result = await createTask(
+        { title: submittedTitle, listId },
+        getRealtimeClientId(),
+      );
       if (!result.success) {
         // Re-open the form with the failed title so field errors (if any)
         // are still visible — don't leave the user with just a toast and

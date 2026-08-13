@@ -9,6 +9,7 @@ import {
 import { logTaskActivity } from "@/lib/services/activity";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/lib/services/notifications";
+import { publishBoardEvent } from "@/lib/realtime/server";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -36,6 +37,7 @@ export async function getTaskAssignees(
 export async function assignUserToTask(
   taskId: string,
   userId: string,
+  originClientId?: string,
 ): Promise<ActionResult<null>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -88,6 +90,25 @@ export async function assignUserToTask(
     actorId: authResult.user.id,
   });
 
+  const [assigneeRows, updatedTask] = await Promise.all([
+    queries.taskAssignees.getByTask(taskId),
+    queries.tasks.getById(taskId),
+  ]);
+  const assignees = assigneeRows.map((row) => ({
+    userId: row.userId,
+    name: row.userName,
+    email: row.userEmail,
+  }));
+  await publishBoardEvent(
+    access.project.id,
+    {
+      type: "task_assignees_updated",
+      taskId,
+      listId: updatedTask!.listId,
+      assignees,
+    },
+    originClientId,
+  );
   revalidatePath(`/projects/${access.project.id}`);
 
   return { success: true, data: null };
@@ -96,6 +117,7 @@ export async function assignUserToTask(
 export async function unassignUserFromTask(
   taskId: string,
   userId: string,
+  originClientId?: string,
 ): Promise<ActionResult<null>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -124,6 +146,27 @@ export async function unassignUserFromTask(
     taskId,
     actorId: authResult.user.id,
   });
+
+  const [assigneeRows, updatedTask] = await Promise.all([
+    queries.taskAssignees.getByTask(taskId),
+    queries.tasks.getById(taskId),
+  ]);
+  const assignees = assigneeRows.map((row) => ({
+    userId: row.userId,
+    name: row.userName,
+    email: row.userEmail,
+  }));
+  await publishBoardEvent(
+    access.project.id,
+    {
+      type: "task_assignees_updated",
+      taskId,
+      listId: updatedTask!.listId,
+      assignees,
+    },
+    originClientId,
+  );
+
   revalidatePath(`/projects/${access.project.id}`);
 
   return { success: true, data: null };

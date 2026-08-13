@@ -21,6 +21,7 @@ import { Loader2 } from "lucide-react";
 import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
 import { TaskCardView } from "@/components/tasks/task-card";
 import { getAssignableUsers } from "@/lib/actions/project-member";
+import { getRealtimeClientId } from "@/lib/realtime/client";
 
 export function ArchivedTasksModal({
   projectId,
@@ -76,7 +77,7 @@ export function ArchivedTasksModal({
 
   const handleRestore = (task: Task) => {
     startTransition(async () => {
-      const res = await restoreTask(task.id);
+      const res = await restoreTask(task.id, getRealtimeClientId());
       if (res.success) {
         toast({
           title: "Task restored",
@@ -99,7 +100,7 @@ export function ArchivedTasksModal({
 
   const handlePermanentDelete = (task: Task) => {
     startTransition(async () => {
-      const res = await deleteTask(task.id);
+      const res = await deleteTask(task.id, getRealtimeClientId());
       if (res.success) {
         toast({
           title: "Task deleted permanently",

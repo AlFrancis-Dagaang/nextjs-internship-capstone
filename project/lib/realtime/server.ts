@@ -1,6 +1,6 @@
 import "server-only";
 import Pusher from "pusher";
-import type { Task, List } from "@/lib/db/schema";
+import type { Task, List, Project, ProjectMember } from "@/lib/db/schema";
 import type { TaskWithCommentCount } from "@/components/lists/board";
 
 // Server-only Pusher client. Never import this from a Client Component.
@@ -45,6 +45,34 @@ export type BoardRealtimeEvent =
   | { type: "list_updated"; list: List }
   | { type: "list_moved"; lists: List[] }
   | { type: "list_deleted"; listId: string };
+
+export type ProjectMemberInfo = {
+  memberId: string;
+  userId: string;
+  name?: string;
+  email?: string;
+  role: string;
+};
+
+// Separate discriminated union + separate Pusher event name ("project-event")
+// on the same project-{projectId} channel — deliberately not merged into
+// BoardRealtimeEvent/"board-event" so board-store's applyRemoteEvent (which
+// only owns lists/tasks) is untouched by project-level changes.
+export type ProjectRealtimeEvent =
+  | { type: "project_updated"; project: Project }
+  | { type: "member_added"; member: ProjectMemberInfo }
+  | { type: "member_removed"; memberId: string; userId: string };
+
+export async function publishProjectEvent(
+  projectId: string,
+  event: ProjectRealtimeEvent,
+  originClientId?: string,
+) {
+  await pusherServer.trigger(`project-${projectId}`, "project-event", {
+    ...event,
+    originClientId,
+  });
+}
 
 export type NotificationRealtimePayload = {
   id: string;

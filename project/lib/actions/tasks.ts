@@ -15,6 +15,7 @@ import { revalidatePath } from "next/cache";
 import type { TaskWithCommentCount } from "@/components/lists/board";
 import { getTaskAssignees } from "./task-assignees";
 import { notifyTaskAssignees } from "@/lib/services/notifications";
+import { publishBoardEvent } from "@/lib/realtime/server";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -24,6 +25,7 @@ type CreateTaskInput = { assignToMe?: boolean } & Record<string, unknown>;
 
 export async function createTask(
   rawInput: CreateTaskInput,
+  originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.tasks.create>>>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -75,6 +77,21 @@ export async function createTask(
 
   revalidatePath(`/projects/${access.project.id}`);
 
+  // #70 item 7 — a brand-new task can't have join-table assignees or
+  // comments yet (this function only sets the legacy single assigneeId
+  // column), so the enriched shape is safe to construct inline with no
+  // extra queries.
+  const enrichedTask: TaskWithCommentCount = {
+    ...task,
+    commentCount: 0,
+    assignees: [],
+  };
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_created", task: enrichedTask },
+    originClientId,
+  );
+
   return { success: true, data: task };
 }
 
@@ -100,6 +117,7 @@ type UpdateTaskInput = { assignToMe?: boolean } & Record<string, unknown>;
 export async function updateTask(
   id: string,
   rawInput: UpdateTaskInput,
+  originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.tasks.update>>>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -189,10 +207,19 @@ export async function updateTask(
 
   revalidatePath(`/projects/${access.project.id}`);
 
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_updated", task: updated },
+    originClientId,
+  );
+
   return { success: true, data: updated };
 }
 
-export async function deleteTask(id: string): Promise<ActionResult<null>> {
+export async function deleteTask(
+  id: string,
+  originClientId?: string,
+): Promise<ActionResult<null>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
@@ -215,6 +242,12 @@ export async function deleteTask(id: string): Promise<ActionResult<null>> {
 
   revalidatePath(`/projects/${access.project.id}`);
 
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_deleted", taskId: id, listId: existingTask.listId },
+    originClientId,
+  );
+
   return { success: true, data: null };
 }
 
@@ -222,6 +255,7 @@ export async function moveTaskToList(
   taskId: string,
   newListId: string,
   newPosition?: number,
+  originClientId?: string,
 ): Promise<ActionResult<{ movedTask: Task; affectedTasks: Task[] }>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -314,6 +348,16 @@ export async function moveTaskToList(
 
   revalidatePath(`/projects/${destAccess.list.projectId}`);
 
+  await publishBoardEvent(
+    destAccess.list.projectId,
+    {
+      type: "task_moved",
+      task: updatedTask!,
+      affectedTasks: [...sourceTasksFinal, ...destTasksFinal],
+    },
+    originClientId,
+  );
+
   return {
     success: true,
     data: {
@@ -342,7 +386,10 @@ export async function getTasksByProject(
   return { success: true, data: tasks };
 }
 
-export async function archiveTask(id: string): Promise<ActionResult<Task>> {
+export async function archiveTask(
+  id: string,
+  originClientId?: string,
+): Promise<ActionResult<Task>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
@@ -374,11 +421,18 @@ export async function archiveTask(id: string): Promise<ActionResult<Task>> {
   });
   revalidatePath(`/projects/${access.project.id}`);
 
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_archived", taskId: id },
+    originClientId,
+  );
+
   return { success: true, data: updated };
 }
 
 export async function restoreTask(
   id: string,
+  originClientId?: string,
 ): Promise<ActionResult<TaskWithCommentCount>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -435,13 +489,21 @@ export async function restoreTask(
     email: row.userEmail,
   }));
 
+  const enrichedTask: TaskWithCommentCount = {
+    ...updatedTask!,
+    commentCount: commentRows.length,
+    assignees,
+  };
+
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_restored", task: enrichedTask },
+    originClientId,
+  );
+
   return {
     success: true,
-    data: {
-      ...updatedTask!,
-      commentCount: commentRows.length,
-      assignees,
-    },
+    data: enrichedTask,
   };
 }
 
@@ -487,6 +549,7 @@ export async function getArchivedTasksByProject(
 
 export async function toggleTaskComplete(
   id: string,
+  originClientId?: string,
 ): Promise<ActionResult<Task>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -516,6 +579,15 @@ export async function toggleTaskComplete(
   );
 
   revalidatePath(`/projects/${access.project.id}`);
+
+  // #70 item 7 — not in the original 5-category list, but isCompleted is
+  // a plain task field, same shape as any other task_updated change, so
+  // other clients should see completion toggle live too.
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_updated", task: updated },
+    originClientId,
+  );
 
   return { success: true, data: updated };
 }

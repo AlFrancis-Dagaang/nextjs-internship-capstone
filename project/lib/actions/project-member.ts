@@ -15,6 +15,7 @@ import { searchUsersSchema } from "@/lib/validations";
 import { logTaskActivity } from "@/lib/services/activity";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/lib/services/notifications";
+import { publishProjectEvent } from "@/lib/realtime/server";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -23,6 +24,7 @@ type ActionResult<T> =
 export async function addProjectMember(
   projectId: string,
   input: unknown,
+  originClientId?: string,
 ): Promise<ActionResult<ProjectMember>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -74,6 +76,21 @@ export async function addProjectMember(
     projectId,
     actorId: authResult.user.id,
   });
+
+  await publishProjectEvent(
+    projectId,
+    {
+      type: "member_added",
+      member: {
+        memberId: member.id,
+        userId: targetUser.id,
+        name: targetUser.name,
+        email: targetUser.email,
+        role: member.role,
+      },
+    },
+    originClientId,
+  );
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
@@ -145,6 +162,7 @@ export async function updateMemberRole(
 export async function removeProjectMember(
   projectId: string,
   memberId: string,
+  originClientId?: string,
 ): Promise<ActionResult<null>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -199,6 +217,12 @@ export async function removeProjectMember(
     projectId,
     actorId: authResult.user.id,
   });
+
+  await publishProjectEvent(
+    projectId,
+    { type: "member_removed", memberId, userId: existingMember.userId },
+    originClientId,
+  );
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
   return { success: true, data: null };

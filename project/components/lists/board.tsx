@@ -31,6 +31,8 @@ import {
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useSearchParams } from "next/navigation";
+import { useRealtimeBoard } from "@/hooks/use-realtime-board";
+import { getRealtimeClientId } from "@/lib/realtime/client";
 
 export type TaskWithCommentCount = Task & {
   commentCount?: number;
@@ -51,6 +53,7 @@ export function Board({
 }) {
   const { toast } = useToast();
   useTrackProjectView(projectId);
+  useRealtimeBoard(projectId);
   // #22 (pass 2) — lists/drag state now live in board-store.ts.
   const lists = useBoardStore((s) => s.lists);
   const activeTask = useBoardStore((s) => s.activeTask);
@@ -194,7 +197,6 @@ export function Board({
     const isDraggingList = args.active.data.current?.type === "list";
 
     if (isDraggingList) {
-      // When dragging a list, only look for intersections with other list sortables
       return rectIntersection({
         ...args,
         droppableContainers: args.droppableContainers.filter(
@@ -203,8 +205,13 @@ export function Board({
       });
     }
 
-    // Default behavior for tasks
-    return rectIntersection(args);
+    // For tasks, restrict collision checking to task containers only to prevent layout thrashing
+    return rectIntersection({
+      ...args,
+      droppableContainers: args.droppableContainers.filter(
+        (container) => container.data.current?.type !== "list",
+      ),
+    });
   };
 
   function handleTaskDeleted(listId: string, taskId: string) {
@@ -215,7 +222,7 @@ export function Board({
   function handleConfirmDeleteTask() {
     if (!openTask) return;
     startDeleteTaskTransition(async () => {
-      const result = await deleteTask(openTask.id);
+      const result = await deleteTask(openTask.id, getRealtimeClientId());
       if (result.success) {
         toast({
           title: "Task deleted",
@@ -285,20 +292,23 @@ export function Board({
     const result = endDragAction(activeId, overId);
     if (!result) return;
 
-    moveTaskToList(activeId, result.finalListId, result.finalPosition).then(
-      (res) => {
-        if (res.success) {
-          reconcileTaskMoved(res.data.movedTask, res.data.affectedTasks);
-        } else {
-          revertToSnapshot();
-          toast({
-            title: "Failed to move task",
-            description: res.error,
-            variant: "destructive",
-          });
-        }
-      },
-    );
+    moveTaskToList(
+      activeId,
+      result.finalListId,
+      result.finalPosition,
+      getRealtimeClientId(),
+    ).then((res) => {
+      if (res.success) {
+        reconcileTaskMoved(res.data.movedTask, res.data.affectedTasks);
+      } else {
+        revertToSnapshot();
+        toast({
+          title: "Failed to move task",
+          description: res.error,
+          variant: "destructive",
+        });
+      }
+    });
   }
 
   function handleTaskArchived(listId: string, taskId: string) {

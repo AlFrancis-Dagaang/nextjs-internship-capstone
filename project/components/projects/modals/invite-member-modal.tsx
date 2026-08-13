@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { getRealtimeClientId } from "@/lib/realtime/client";
 
 type Member = {
   id: string;
@@ -157,10 +158,11 @@ export function InviteMemberModal({
     onOpenChange(false);
 
     startTransition(async () => {
-      const result = await addProjectMember(project.id, {
-        email: targetEmail,
-        role: assignedRole,
-      });
+      const result = await addProjectMember(
+        project.id,
+        { email: targetEmail, role: assignedRole },
+        getRealtimeClientId(),
+      );
 
       if (!result.success) {
         onMemberRemoved(project.id, tempId);

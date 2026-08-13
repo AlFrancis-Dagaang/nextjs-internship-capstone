@@ -12,6 +12,7 @@ import { revalidatePath } from "next/cache";
 type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string; fieldErrors?: Record<string, string[]> };
+import { publishProjectEvent } from "@/lib/realtime/server"; // ← add
 
 export async function createProject(
   input: unknown,
@@ -70,6 +71,7 @@ export async function getProject(id: string): Promise<ActionResult<Project>> {
 export async function updateProject(
   id: string,
   input: unknown,
+  originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.projects.update>>>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -91,6 +93,12 @@ export async function updateProject(
   }
 
   const updated = await queries.projects.update(id, parsed.data);
+
+  await publishProjectEvent(
+    id,
+    { type: "project_updated", project: updated },
+    originClientId,
+  );
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${id}`);

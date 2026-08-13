@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition } from "react";
+import { useState, useEffect, useRef, useTransition, useCallback } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -40,6 +40,8 @@ import { ArchivedTasksModal } from "../tasks/modal/archived-tasks-modal";
 import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
 import { moveTaskToList, deleteTask } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeProject } from "@/hooks/use-realtime-project";
+import type { ProjectRealtimeEvent } from "@/lib/realtime/server";
 
 type Member = {
   id: string;
@@ -246,6 +248,33 @@ export function ProjectHeader({
     })),
   ];
 
+  // project prop is static (server-rendered once) — track a local live
+  // copy so title updates from other clients can render without reload.
+  const [liveProject, setLiveProject] = useState(project);
+  useEffect(() => {
+    setLiveProject(project);
+  }, [project]);
+
+  const handleProjectEvent = useCallback(
+    (event: ProjectRealtimeEvent) => {
+      if (event.type === "project_updated") {
+        setLiveProject(event.project);
+      } else if (event.type === "member_added") {
+        addMember(project.id, {
+          id: event.member.memberId,
+          userId: event.member.userId,
+          email: event.member.email,
+          name: event.member.name,
+          role: event.member.role as "editor" | "viewer",
+        });
+      } else if (event.type === "member_removed") {
+        removeMember(project.id, event.memberId);
+      }
+    },
+    [project.id, addMember, removeMember],
+  );
+  useRealtimeProject(project.id, handleProjectEvent);
+
   return (
     <div className="flex flex-col gap-2 bg-transparent px-0 py-0 m-0">
       <div className="flex flex-wrap items-center justify-between gap-4 py-1">
@@ -260,7 +289,7 @@ export function ProjectHeader({
           </Link>
           <div className="flex items-center space-x-3 min-w-0">
             <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 truncate tracking-tight">
-              {project.name}
+              {liveProject.name}
             </h1>
 
             <div className="hidden sm:flex items-center">
