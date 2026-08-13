@@ -36,6 +36,31 @@ export async function createProject(
     ownerId: authResult.user.id,
   });
 
+  // Seed every new project with a standard Todo/In Progress/Done
+  // structure + one sample task, so it isn't a blank board on first
+  // load. No realtime publish needed here — nobody else can be
+  // subscribed to this project's channel yet, since it didn't exist
+  // until this line.
+  const [todoList] = await Promise.all([
+    queries.lists.create({ name: "Todo", projectId: project.id, position: 0 }),
+    queries.lists.create({
+      name: "In Progress",
+      projectId: project.id,
+      position: 1,
+    }),
+    queries.lists.create({ name: "Done", projectId: project.id, position: 2 }),
+  ]);
+
+  await queries.tasks.create({
+    title: "Sample task",
+    description: null,
+    listId: todoList.id,
+    assigneeId: null,
+    priority: null,
+    dueDate: null,
+    position: 0,
+  });
+
   revalidatePath("/projects");
   return { success: true, data: project };
 }

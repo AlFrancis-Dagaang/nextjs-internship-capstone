@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 type CreateProjectModalProps = {
   onCreated?: (project: Project) => void;
@@ -38,7 +39,7 @@ export function CreateProjectModal({
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = setControlledOpen ?? setUncontrolledOpen;
-
+  const router = useRouter();
   const [name, setName] = useState(project?.name ?? "");
   const [description, setDescription] = useState(project?.description ?? "");
   const [fieldErrors, setFieldErrors] = useState<
@@ -85,8 +86,8 @@ export function CreateProjectModal({
         onUpdated?.(result.data);
       } else {
         onCreated?.(result.data);
+        router.push(`/projects/${result.data.id}`);
       }
-      setOpen(false);
     });
   }
 

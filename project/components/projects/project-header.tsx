@@ -88,7 +88,6 @@ export function ProjectHeader({
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [actionsDropdownOpen, setActionsDropdownOpen] = useState(false);
   const [bulkActionsDropdownOpen, setBulkActionsDropdownOpen] = useState(false);
-  const [moveSubmenuOpen, setMoveSubmenuOpen] = useState(false);
 
   // UI Store — search & filters
   const searchQuery = useUiStore((s) => s.searchQuery);
@@ -220,16 +219,23 @@ export function ProjectHeader({
     });
   }
 
-  const avatarColors = [
-    "bg-blue-600",
-    "bg-indigo-600",
-    "bg-purple-600",
-    "bg-teal-600",
-    "bg-rose-600",
+  const allMembersList = [
+    {
+      id: project.ownerId,
+      name: ownerName || "Project Owner",
+      email: ownerEmail,
+      role: "owner" as const,
+    },
+    ...membersState.map((m) => ({
+      id: m.userId,
+      name: m.name,
+      email: m.email,
+      role: m.role,
+    })),
   ];
 
-  const visibleMembers = membersState.slice(0, 3);
-  const extraCount = membersState.length > 3 ? membersState.length - 3 : 0;
+  const visibleMembers = allMembersList.slice(0, 3);
+  const extraCount = allMembersList.length > 3 ? allMembersList.length - 3 : 0;
 
   const openArchiveModal = useUiStore((s) => s.openArchiveModal);
   const archiveModalOpen = useUiStore((s) => s.archiveModalOpen);
@@ -248,8 +254,6 @@ export function ProjectHeader({
     })),
   ];
 
-  // project prop is static (server-rendered once) — track a local live
-  // copy so title updates from other clients can render without reload.
   const [liveProject, setLiveProject] = useState(project);
   useEffect(() => {
     setLiveProject(project);
@@ -292,28 +296,55 @@ export function ProjectHeader({
               {liveProject.name}
             </h1>
 
+            {/* Avatars with Canva-inspired Dropdown Card on click */}
             <div className="hidden sm:flex items-center">
-              <div className="flex -space-x-1.5 overflow-hidden">
-                <div
-                  className="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-neutral-900 bg-amber-500 text-white flex items-center justify-center text-[9px] font-semibold uppercase shadow-sm leading-none text-center"
-                  title={`Owner: ${ownerName || ownerEmail || "Project Owner"}`}
-                >
-                  {ownerName?.[0] ?? ownerEmail?.[0] ?? "U"}
-                </div>
-                {visibleMembers.map((m, i) => (
-                  <div
-                    key={m.id}
-                    className={`inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-neutral-900 text-white flex items-center justify-center text-[9px] font-semibold uppercase shadow-sm leading-none text-center ${
-                      avatarColors[i % avatarColors.length]
-                    }`}
-                    title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
-                  >
-                    {m.name?.[0] ?? m.email?.[0] ?? "U"}
-                  </div>
-                ))}
+              <div className="flex -space-x-1.5">
+                {visibleMembers.map((m) => {
+                  const roleLabel =
+                    m.role === "owner"
+                      ? "Owner"
+                      : m.role === "editor"
+                        ? "Editor"
+                        : "Viewer";
+
+                  return (
+                    <DropdownMenu key={m.id}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/40 border-2 border-white dark:border-neutral-900 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-bold uppercase transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                          title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
+                        >
+                          {m.name?.[0] ?? m.email?.[0] ?? "U"}
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="start"
+                        sideOffset={8}
+                        className="w-72 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xl p-4 flex items-center space-x-3 z-50"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-base font-bold uppercase shrink-0">
+                          {m.name?.[0] ?? m.email?.[0] ?? "U"}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
+                            {m.name || m.email || "User"}
+                          </span>
+                          <span className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                            {m.email}
+                          </span>
+                          <span className="text-xs font-medium text-cyan-600 dark:text-cyan-400 mt-0.5">
+                            {roleLabel}
+                          </span>
+                        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                })}
               </div>
+
               {extraCount > 0 && (
-                <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-[10px] font-medium border border-neutral-200/60 dark:border-neutral-700/60 leading-none">
+                <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-cyan-400 text-neutral-900 text-[10px] font-semibold">
                   +{extraCount}
                 </span>
               )}

@@ -97,7 +97,7 @@ export function ListColumn({
   // 1. Droppable target ONLY for dropping tasks inside this list
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: list.id,
-    data: { type: "list", listId: list.id },
+    data: { type: "list-dropzone", listId: list.id },
   });
 
   // 2. Sortable target ONLY for moving the entire list column horizontally
