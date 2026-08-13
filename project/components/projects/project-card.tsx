@@ -165,61 +165,71 @@ export function ProjectCard({
         </div>
 
         {/* Footer Metadata & SaaS Actions */}
-        <div className="relative z-10 pt-3 border-t border-neutral-100 dark:border-neutral-800/60 flex items-center justify-between text-xs text-neutral-500">
-          {/* Metadata stack */}
-          <div className="flex items-center space-x-3">
-            {project.dueDate && (
+        <div className="relative z-10 pt-3 border-t border-neutral-100 dark:border-neutral-800/60 flex flex-col gap-3">
+          {/* Owner Info Row */}
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-semibold uppercase shadow-sm">
+              {ownerName?.[0] ?? ownerEmail?.[0] ?? "U"}
+            </div>
+            <span className="text-[11px] text-neutral-500 dark:text-neutral-400">
+              Owner:{" "}
+              <span className="font-medium text-neutral-700 dark:text-neutral-200">
+                {isOwner ? "You" : ownerName || ownerEmail || "Project Owner"}
+              </span>
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between text-xs text-neutral-500">
+            {/* Metadata stack */}
+            <div className="flex items-center space-x-3">
+              {project.dueDate && (
+                <div className="flex items-center space-x-1.5 text-neutral-400 dark:text-neutral-500">
+                  <Calendar
+                    size={13}
+                    className="text-neutral-400 dark:text-neutral-500"
+                  />
+                  <span className="font-medium text-[11px]">
+                    {new Date(project.dueDate).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center space-x-1.5 text-neutral-400 dark:text-neutral-500">
-                <Calendar
+                <Users
                   size={13}
                   className="text-neutral-400 dark:text-neutral-500"
                 />
                 <span className="font-medium text-[11px]">
-                  {new Date(project.dueDate).toLocaleDateString()}
+                  {members.length + 1}
                 </span>
               </div>
-            )}
-            <div className="flex items-center space-x-1.5 text-neutral-400 dark:text-neutral-500">
-              <Users
-                size={13}
-                className="text-neutral-400 dark:text-neutral-500"
-              />
-              <span className="font-medium text-[11px]">
-                {members.length + 1}
-              </span>
             </div>
-          </div>
 
-          {/* Avatars Stack & Hover Indicator */}
-          <div className="flex items-center space-x-2">
-            <div className="flex -space-x-1.5">
-              <div
-                className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-semibold ring-2 ring-white dark:ring-neutral-900 uppercase shadow-sm"
-                title={`Owner: ${ownerName || ownerEmail || "Project Owner"}`}
-              >
-                {ownerName?.[0] ?? ownerEmail?.[0] ?? "U"}
+            {/* Unified Avatar Stack */}
+            <div className="flex items-center">
+              <div className="flex -space-x-1.5">
+                {/* Member Avatars */}
+                {members.slice(0, 3).map((m) => (
+                  <div
+                    key={m.id}
+                    className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/40 border-2 border-white dark:border-neutral-900 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-bold uppercase"
+                    title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
+                  >
+                    {m.name?.[0] ?? m.email?.[0] ?? "U"}
+                  </div>
+                ))}
               </div>
-              {members.slice(0, 2).map((m, i) => (
-                <div
-                  key={m.id}
-                  className={`w-5 h-5 rounded-full text-white flex items-center justify-center text-[9px] font-semibold ring-2 ring-white dark:ring-neutral-900 uppercase shadow-sm ${
-                    avatarColors[i % avatarColors.length]
-                  }`}
-                  title={`${m.email ?? "Member"} (${m.role})`}
-                >
-                  {m.email?.[0] ?? "U"}
-                </div>
-              ))}
-              {members.length > 2 && (
-                <div className="w-5 h-5 rounded-full bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 flex items-center justify-center text-[9px] font-bold ring-2 ring-white dark:ring-neutral-900">
-                  +{members.length - 2}
-                </div>
-              )}
-            </div>
 
-            {/* SaaS interactive navigation cue icon */}
-            <div className="w-6 h-6 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 text-neutral-400 group-hover:bg-cyan-500 group-hover:text-neutral-950 flex items-center justify-center transition-all duration-200 shadow-sm">
-              <ArrowUpRight size={13} />
+              {/* Extra Count Badge */}
+              {members.length > 3 && (
+                <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-cyan-400 text-neutral-900 text-[10px] font-semibold">
+                  +{members.length - 3}
+                </span>
+              )}
+
+              {/* SaaS interactive navigation cue icon */}
+              <div className="ml-3 w-6 h-6 rounded-lg bg-neutral-100 dark:bg-neutral-800/80 text-neutral-400 group-hover:bg-cyan-500 group-hover:text-neutral-950 flex items-center justify-center transition-all duration-200 shadow-sm">
+                <ArrowUpRight size={13} />
+              </div>
             </div>
           </div>
         </div>
