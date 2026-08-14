@@ -12,6 +12,10 @@ import { resolveAssigneeId } from "@/lib/services/assignee";
 import { logTaskActivity } from "@/lib/services/activity";
 import { Task } from "../db/schema";
 import { revalidatePath } from "next/cache";
+import type { TaskWithCommentCount } from "@/components/lists/board";
+import { getTaskAssignees } from "./task-assignees";
+import { notifyTaskAssignees } from "@/lib/services/notifications";
+import { publishBoardEvent } from "@/lib/realtime/server";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -21,6 +25,7 @@ type CreateTaskInput = { assignToMe?: boolean } & Record<string, unknown>;
 
 export async function createTask(
   rawInput: CreateTaskInput,
+  originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.tasks.create>>>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -72,6 +77,21 @@ export async function createTask(
 
   revalidatePath(`/projects/${access.project.id}`);
 
+  // #70 item 7 — a brand-new task can't have join-table assignees or
+  // comments yet (this function only sets the legacy single assigneeId
+  // column), so the enriched shape is safe to construct inline with no
+  // extra queries.
+  const enrichedTask: TaskWithCommentCount = {
+    ...task,
+    commentCount: 0,
+    assignees: [],
+  };
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_created", task: enrichedTask },
+    originClientId,
+  );
+
   return { success: true, data: task };
 }
 
@@ -97,6 +117,7 @@ type UpdateTaskInput = { assignToMe?: boolean } & Record<string, unknown>;
 export async function updateTask(
   id: string,
   rawInput: UpdateTaskInput,
+  originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.tasks.update>>>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -186,10 +207,19 @@ export async function updateTask(
 
   revalidatePath(`/projects/${access.project.id}`);
 
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_updated", task: updated },
+    originClientId,
+  );
+
   return { success: true, data: updated };
 }
 
-export async function deleteTask(id: string): Promise<ActionResult<null>> {
+export async function deleteTask(
+  id: string,
+  originClientId?: string,
+): Promise<ActionResult<null>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
@@ -212,6 +242,12 @@ export async function deleteTask(id: string): Promise<ActionResult<null>> {
 
   revalidatePath(`/projects/${access.project.id}`);
 
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_deleted", taskId: id, listId: existingTask.listId },
+    originClientId,
+  );
+
   return { success: true, data: null };
 }
 
@@ -219,6 +255,7 @@ export async function moveTaskToList(
   taskId: string,
   newListId: string,
   newPosition?: number,
+  originClientId?: string,
 ): Promise<ActionResult<{ movedTask: Task; affectedTasks: Task[] }>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -293,6 +330,15 @@ export async function moveTaskToList(
     });
   }
 
+  await notifyTaskAssignees({
+    taskId,
+    projectId: destAccess.list.projectId,
+    type: "task_moved",
+    message: `Task moved to "${destAccess.list.name}"`,
+    actorId: authResult.user.id,
+    excludeUserId: authResult.user.id,
+  });
+
   // Fetch the authoritative, fully up-to-date state for both affected
   // lists so the client can apply it directly with no local guessing.
   const destTasksFinal = await queries.tasks.getByList(newListId);
@@ -301,6 +347,16 @@ export async function moveTaskToList(
     : [];
 
   revalidatePath(`/projects/${destAccess.list.projectId}`);
+
+  await publishBoardEvent(
+    destAccess.list.projectId,
+    {
+      type: "task_moved",
+      task: updatedTask!,
+      affectedTasks: [...sourceTasksFinal, ...destTasksFinal],
+    },
+    originClientId,
+  );
 
   return {
     success: true,
@@ -328,4 +384,210 @@ export async function getTasksByProject(
 
   const tasks = await queries.tasks.getByProject(projectId);
   return { success: true, data: tasks };
+}
+
+export async function archiveTask(
+  id: string,
+  originClientId?: string,
+): Promise<ActionResult<Task>> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const existingTask = await queries.tasks.getById(id);
+  if (!existingTask) {
+    return { success: false, error: "Not found" };
+  }
+
+  const access = await assertListEditAccess(
+    existingTask.listId,
+    authResult.user.id,
+  );
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
+  }
+
+  const updated = await queries.tasks.update(id, { isArchived: true });
+  await logTaskActivity(id, authResult.user.id, "archived");
+
+  await notifyTaskAssignees({
+    taskId: id,
+    projectId: access.project.id,
+    type: "task_archived",
+    message: `Task "${existingTask.title}" was archived`,
+    actorId: authResult.user.id,
+    excludeUserId: authResult.user.id,
+  });
+  revalidatePath(`/projects/${access.project.id}`);
+
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_archived", taskId: id },
+    originClientId,
+  );
+
+  return { success: true, data: updated };
+}
+
+export async function restoreTask(
+  id: string,
+  originClientId?: string,
+): Promise<ActionResult<TaskWithCommentCount>> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const existingTask = await queries.tasks.getById(id);
+  if (!existingTask) {
+    return { success: false, error: "Not found" };
+  }
+
+  const access = await assertListEditAccess(
+    existingTask.listId,
+    authResult.user.id,
+  );
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
+  }
+
+  // Bug fix: appending with `currentListTasks.length` collided with
+  // existing tasks whenever the list had gaps from prior archives (gaps
+  // aren't renormalized on archive). Fix: append to the array, then
+  // reassign positions 0..n contiguously for the whole list — same
+  // approach moveTaskToList already uses. Self-heals any pre-existing
+  // gaps in this list as a side effect.
+  const currentListTasks = await queries.tasks.getByList(existingTask.listId);
+  const reordered = [...currentListTasks, existingTask];
+
+  let updatedTask: Task | undefined;
+  const updates = reordered.map(async (t, index) => {
+    if (t.id === id) {
+      updatedTask = await queries.tasks.update(id, {
+        isArchived: false,
+        position: index,
+      });
+    } else if (t.position !== index) {
+      await queries.tasks.update(t.id, { position: index });
+    }
+  });
+
+  await Promise.all(updates);
+
+  await logTaskActivity(id, authResult.user.id, "restored");
+  revalidatePath(`/projects/${access.project.id}`);
+
+  const [assigneeRows, commentRows] = await Promise.all([
+    queries.taskAssignees.getByTask(id),
+    queries.comments.getByTask(id),
+  ]);
+
+  const assignees = assigneeRows.map((row) => ({
+    userId: row.userId,
+    name: row.userName,
+    email: row.userEmail,
+  }));
+
+  const enrichedTask: TaskWithCommentCount = {
+    ...updatedTask!,
+    commentCount: commentRows.length,
+    assignees,
+  };
+
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_restored", task: enrichedTask },
+    originClientId,
+  );
+
+  return {
+    success: true,
+    data: enrichedTask,
+  };
+}
+
+export async function getArchivedTasksByProject(
+  projectId: string,
+): Promise<ActionResult<TaskWithCommentCount[]>> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const access = await assertProjectViewAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
+  }
+
+  const archived = await queries.tasks.getArchivedByProject(projectId);
+
+  // Fetch assignees and comment counts for each archived task concurrently
+  const archivedWithDetails = await Promise.all(
+    archived.map(async (task) => {
+      const [assigneeRows, commentRows] = await Promise.all([
+        queries.taskAssignees.getByTask(task.id).catch(() => []),
+        queries.comments.getByTask(task.id).catch(() => []),
+      ]);
+
+      const assignees = assigneeRows.map((row) => ({
+        userId: row.userId,
+        name: row.userName,
+        email: row.userEmail,
+      }));
+
+      return {
+        ...task,
+        commentCount: commentRows.length,
+        assignees,
+      };
+    }),
+  );
+
+  return { success: true, data: archivedWithDetails };
+}
+
+export async function toggleTaskComplete(
+  id: string,
+  originClientId?: string,
+): Promise<ActionResult<Task>> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const existingTask = await queries.tasks.getById(id);
+  if (!existingTask) {
+    return { success: false, error: "Not found" };
+  }
+
+  const access = await assertListEditAccess(
+    existingTask.listId,
+    authResult.user.id,
+  );
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
+  }
+
+  const newValue = !existingTask.isCompleted;
+  const updated = await queries.tasks.update(id, { isCompleted: newValue });
+
+  await logTaskActivity(
+    id,
+    authResult.user.id,
+    newValue ? "completed" : "reopened",
+  );
+
+  revalidatePath(`/projects/${access.project.id}`);
+
+  // #70 item 7 — not in the original 5-category list, but isCompleted is
+  // a plain task field, same shape as any other task_updated change, so
+  // other clients should see completion toggle live too.
+  await publishBoardEvent(
+    access.project.id,
+    { type: "task_updated", task: updated },
+    originClientId,
+  );
+
+  return { success: true, data: updated };
 }

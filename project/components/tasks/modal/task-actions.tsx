@@ -1,4 +1,3 @@
-// components/tasks/modal/task-actions.tsx
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -33,7 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { Task } from "@/lib/db/schema";
-import { moveTaskToList } from "@/lib/actions/tasks";
+import { moveTaskToList, archiveTask } from "@/lib/actions/tasks";
 import {
   getTaskAssignees,
   assignUserToTask,
@@ -91,10 +90,12 @@ export function TaskActions({
   );
   const [assignSearchQuery, setAssignSearchQuery] = useState("");
   const [isLoadingAssignees, setIsLoadingAssignees] = useState(false);
-  const [isAssigning, startAssignTransition] = useTransition();
+  const [, startAssignTransition] = useTransition();
 
   const applyOptimisticMove = useBoardStore((s) => s.applyOptimisticMove);
   const revertMoveSnapshot = useBoardStore((s) => s.revertMoveSnapshot);
+  const archiveTaskLocally = useBoardStore((s) => s.archiveTaskLocally);
+  const revertArchiveSnapshot = useBoardStore((s) => s.revertArchiveSnapshot);
 
   // Reset target/position defaults whenever the move panel opens
   useEffect(() => {
@@ -285,9 +286,24 @@ export function TaskActions({
                   <span>Rename task</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => {
+                  onSelect={async () => {
                     setIsOpen(false);
-                    onArchive();
+                    const snapshot = archiveTaskLocally(taskId);
+                    const result = await archiveTask(taskId);
+                    if (result.success) {
+                      toast({
+                        title: "Task archived",
+                        description: "Task has been successfully archived.",
+                      });
+                      onArchive();
+                    } else {
+                      revertArchiveSnapshot(snapshot);
+                      toast({
+                        title: "Failed to archive task",
+                        description: result.error,
+                        variant: "destructive",
+                      });
+                    }
                   }}
                   className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
                 >

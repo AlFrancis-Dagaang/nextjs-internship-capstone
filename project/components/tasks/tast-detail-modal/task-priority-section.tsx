@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -27,6 +27,10 @@ export function TaskPrioritySection({
   const [isPending, startTransition] = useTransition();
   const [priority, setPriority] = useState(task.priority ?? "");
   const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
+
+  useEffect(() => {
+    setPriority(task.priority ?? "");
+  }, [task.priority]);
 
   function handlePriorityChange(newPriority: string) {
     setPriority(newPriority);

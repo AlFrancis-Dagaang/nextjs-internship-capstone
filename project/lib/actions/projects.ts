@@ -12,6 +12,7 @@ import { revalidatePath } from "next/cache";
 type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string; fieldErrors?: Record<string, string[]> };
+import { publishProjectEvent } from "@/lib/realtime/server"; // ← add
 
 export async function createProject(
   input: unknown,
@@ -33,6 +34,31 @@ export async function createProject(
   const project = await queries.projects.create({
     ...parsed.data,
     ownerId: authResult.user.id,
+  });
+
+  // Seed every new project with a standard Todo/In Progress/Done
+  // structure + one sample task, so it isn't a blank board on first
+  // load. No realtime publish needed here — nobody else can be
+  // subscribed to this project's channel yet, since it didn't exist
+  // until this line.
+  const [todoList] = await Promise.all([
+    queries.lists.create({ name: "Todo", projectId: project.id, position: 0 }),
+    queries.lists.create({
+      name: "In Progress",
+      projectId: project.id,
+      position: 1,
+    }),
+    queries.lists.create({ name: "Done", projectId: project.id, position: 2 }),
+  ]);
+
+  await queries.tasks.create({
+    title: "Sample task",
+    description: null,
+    listId: todoList.id,
+    assigneeId: null,
+    priority: null,
+    dueDate: null,
+    position: 0,
   });
 
   revalidatePath("/projects");
@@ -70,6 +96,7 @@ export async function getProject(id: string): Promise<ActionResult<Project>> {
 export async function updateProject(
   id: string,
   input: unknown,
+  originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.projects.update>>>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -91,6 +118,12 @@ export async function updateProject(
   }
 
   const updated = await queries.projects.update(id, parsed.data);
+
+  await publishProjectEvent(
+    id,
+    { type: "project_updated", project: updated },
+    originClientId,
+  );
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${id}`);

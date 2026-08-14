@@ -6,7 +6,13 @@ import { Suspense, useState } from "react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+export function DashboardShell({
+  children,
+  currentUserId,
+}: {
+  children: React.ReactNode;
+  currentUserId: string;
+}) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -14,8 +20,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <div className="lg:pl-64 flex flex-col min-h-screen">
-        <Header setSidebarOpen={setSidebarOpen} />
-
+        <Header setSidebarOpen={setSidebarOpen} currentUserId={currentUserId} />
         {/* Standard padding for all regular pages */}
         <main className="flex-1 py-8 px-4 sm:px-6 lg:px-8">
           <Suspense

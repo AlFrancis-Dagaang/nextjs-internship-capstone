@@ -6,6 +6,7 @@ import { taskActivityQueries } from "./taskActivity";
 import { commentsQueries } from "./comments";
 import { projectMembersQueries } from "./projectMembers";
 import { taskAssigneesQueries } from "./task-assignees";
+import { notificationsQueries } from "./notifications";
 
 export const queries = {
   users: usersQueries,
@@ -16,4 +17,5 @@ export const queries = {
   comments: commentsQueries,
   projectMembers: projectMembersQueries,
   taskAssignees: taskAssigneesQueries,
+  notifications: notificationsQueries,
 };

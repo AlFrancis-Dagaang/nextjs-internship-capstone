@@ -12,7 +12,9 @@ type TaskActivityAction =
   | "comment_deleted"
   | "archived"
   | "restored"
-  | "deleted";
+  | "deleted"
+  | "completed"
+  | "reopened";
 
 /**
  * Shared logging helper (resolves #62's open question in favor of a shared

@@ -28,9 +28,11 @@ import {
   type CommentWithAuthor,
 } from "./task-comments/comment-row";
 import { TaskCommentsModal } from "./task-comments/task-comments-modal";
+import { getRealtimeClientId } from "@/lib/realtime/client";
 
 type TaskCommentsProps = {
   taskId: string;
+  refreshKey?: number;
   previewCount?: number;
   canEdit: boolean;
   onCommentCountChanged?: (taskId: string, delta: number) => void;
@@ -39,6 +41,7 @@ type TaskCommentsProps = {
 
 export function TaskComments({
   taskId,
+  refreshKey,
   previewCount = 4,
   canEdit,
   onCommentCountChanged,
@@ -67,10 +70,14 @@ export function TaskComments({
   }
 
   useEffect(() => {
-    refresh();
     getCurrentUserId().then(setCurrentUserId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
+
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId, refreshKey]);
 
   function handlePost() {
     if (!content.trim()) return;
@@ -93,7 +100,10 @@ export function TaskComments({
     onCommentCountChanged?.(taskId, 1);
 
     startTransition(async () => {
-      const result = await createComment({ taskId, content: submittedContent });
+      const result = await createComment(
+        { taskId, content: submittedContent },
+        getRealtimeClientId(),
+      );
       if (!result.success) {
         toast({
           title: "Failed to post comment",
@@ -118,7 +128,7 @@ export function TaskComments({
 
   function handleDelete(id: string) {
     startTransition(async () => {
-      const result = await deleteComment(id);
+      const result = await deleteComment(id, getRealtimeClientId());
       if (!result.success) {
         toast({
           title: "Failed to delete comment",

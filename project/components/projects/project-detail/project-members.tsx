@@ -20,6 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { InviteMemberModal } from "../modals/invite-member-modal";
 import { DeleteMemberModal } from "../modals/delete-member-modal";
+import { getRealtimeClientId } from "@/lib/realtime/client";
 
 type Member = {
   id: string;
@@ -111,7 +112,11 @@ export function ProjectMembers({
     onMemberRemoved(project.id, member.id);
 
     startTransition(async () => {
-      const result = await removeProjectMember(project.id, member.id);
+      const result = await removeProjectMember(
+        project.id,
+        member.id,
+        getRealtimeClientId(),
+      );
       if (!result.success) {
         onMemberAdded(project.id, member);
         toast({

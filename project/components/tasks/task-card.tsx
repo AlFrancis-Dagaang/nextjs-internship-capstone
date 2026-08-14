@@ -2,16 +2,21 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Calendar, MessageSquare } from "lucide-react";
+import { Calendar, MessageSquare, Check } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@/lib/db/schema";
-import { deleteTask, updateTask } from "@/lib/actions/tasks";
+import {
+  deleteTask,
+  updateTask,
+  toggleTaskComplete,
+} from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
 import { TaskActions } from "./modal/task-actions";
 import { DeleteTaskDialog } from "./modal/delete-task-dialog";
 import { Input } from "@/components/ui/input";
 import { ListWithTasks, TaskWithCommentCount } from "../lists/board";
+import { useBoardStore } from "@/stores/board-store";
 
 const priorityBarStyles: Record<string, string> = {
   low: "bg-blue-400",
@@ -29,24 +34,39 @@ const priorityBarStyles: Record<string, string> = {
 export function TaskCardView({
   task,
   interactive = true,
+  onToggleComplete,
   onOpenDetail,
   cornerActions,
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelected,
   className = "",
 }: {
   task: TaskWithCommentCount;
   interactive?: boolean;
+  onToggleComplete?: () => void;
   onOpenDetail?: () => void;
   cornerActions?: React.ReactNode;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelected?: () => void;
   className?: string;
 }) {
   const assignees = task.assignees ?? [];
   const visibleAssignees = assignees.slice(0, 3);
   const extraCount = assignees.length > 3 ? assignees.length - 3 : 0;
+  const tooltipText = task.isCompleted ? "Mark incomplete" : "Mark completed";
 
   return (
     <div
-      onClick={interactive ? onOpenDetail : undefined}
-      className={`relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:shadow-md transition-shadow space-y-3 overflow-visible ${
+      onClick={
+        interactive
+          ? selectionMode
+            ? onToggleSelected
+            : onOpenDetail
+          : undefined
+      }
+      className={`relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:shadow-md transition-shadow space-y-3 overflow-hidden ${
         interactive ? "cursor-pointer" : ""
       } ${className}`}
     >
@@ -64,8 +84,57 @@ export function TaskCardView({
 
       <div className="flex items-start justify-between pr-8">
         <div className="flex items-center space-x-2.5 flex-1">
-          <div className="w-4 h-4 rounded-full border border-neutral-300 dark:border-neutral-600 shrink-0" />
-          <h4 className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">
+          {selectionMode ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSelected?.();
+              }}
+              className={`w-4 h-4 rounded border shrink-0 transition-colors flex items-center justify-center ${
+                isSelected
+                  ? "bg-cyan-500 border-cyan-500 text-white"
+                  : "border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900"
+              }`}
+              aria-label={isSelected ? "Deselect task" : "Select task"}
+            >
+              {isSelected && <Check size={10} strokeWidth={3} />}
+            </button>
+          ) : onToggleComplete ? (
+            <button
+              type="button"
+              title={tooltipText}
+              aria-label={tooltipText}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleComplete();
+              }}
+              className={`w-4 h-4 rounded-full border shrink-0 transition-colors flex items-center justify-center ${
+                task.isCompleted
+                  ? "bg-green-500 border-green-500 text-white"
+                  : "border-neutral-300 dark:border-neutral-600 hover:border-green-400"
+              }`}
+            >
+              {task.isCompleted && <Check size={10} strokeWidth={3} />}
+            </button>
+          ) : (
+            <div
+              className={`w-4 h-4 rounded-full border shrink-0 flex items-center justify-center ${
+                task.isCompleted
+                  ? "bg-green-500 border-green-500 text-white"
+                  : "border-neutral-300 dark:border-neutral-600"
+              }`}
+            >
+              {task.isCompleted && <Check size={10} strokeWidth={3} />}
+            </div>
+          )}
+          <h4
+            className={`font-medium text-sm ${
+              task.isCompleted
+                ? "line-through text-neutral-400 dark:text-neutral-500"
+                : "text-neutral-900 dark:text-neutral-100"
+            }`}
+          >
             {task.title}
           </h4>
         </div>
@@ -120,6 +189,11 @@ export function TaskCard({
   projectId,
   allLists,
   canEdit,
+  dragDisabled = false,
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelected,
+  onArchived,
   onUpdated,
   onDeleted,
   onDeleteFailed,
@@ -130,18 +204,28 @@ export function TaskCard({
   projectId: string;
   allLists: ListWithTasks[];
   canEdit: boolean;
+  dragDisabled?: boolean;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelected?: () => void;
 
   onUpdated?: (task: TaskWithCommentCount) => void;
   onDeleted?: () => void;
   onDeleteFailed?: (task: Task) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
   onOpenDetail: () => void;
+  onArchived?: () => void;
 }) {
   const { toast } = useToast();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [isPending, startTransition] = useTransition();
+
+  const toggleTaskCompleteLocally = useBoardStore(
+    (state) => state.toggleTaskCompleteLocally,
+  );
+  const revertTaskComplete = useBoardStore((state) => state.revertTaskComplete);
 
   const {
     attributes,
@@ -150,13 +234,31 @@ export function TaskCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id, disabled: !canEdit });
+  } = useSortable({ id: task.id, disabled: !canEdit || dragDisabled });
 
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
   const isTemp = task.id.startsWith("temp-");
+
+  function handleToggleComplete() {
+    const previousValue = toggleTaskCompleteLocally(task.id);
+
+    startTransition(async () => {
+      const result = await toggleTaskComplete(task.id);
+      if (!result.success) {
+        revertTaskComplete(task.id, previousValue);
+        toast({
+          title: "Failed to update task",
+          description: result.error,
+          variant: "destructive",
+        });
+        return;
+      }
+      onUpdated?.(result.data as TaskWithCommentCount);
+    });
+  }
 
   function handleRenameSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -192,18 +294,18 @@ export function TaskCard({
 
     startTransition(async () => {
       const result = await deleteTask(task.id);
-      if (result.success) {
-        toast({
-          title: "Task deleted",
-          description: `"${task.title}" was deleted.`,
-        });
-      } else {
+      if (!result.success) {
         toast({
           title: "Failed to delete task",
           description: result.error,
           variant: "destructive",
         });
         onDeleteFailed?.(task);
+      } else {
+        toast({
+          title: "Task deleted",
+          description: `"${task.title}" was deleted.`,
+        });
       }
     });
   }
@@ -221,6 +323,7 @@ export function TaskCard({
         setIsRenaming(true);
       }}
       onArchive={() => {
+        onArchived?.();
         toast({ title: "Task archived", description: task.title });
       }}
       onDeleteClick={() => setDeleteOpen(true)}
@@ -243,7 +346,7 @@ export function TaskCard({
         {...(canEdit ? listeners : {})}
       >
         {isRenaming ? (
-          <div className="relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 space-y-3 overflow-visible">
+          <div className="relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 space-y-3 overflow-hidden">
             {task.priority && (
               <div
                 className={`absolute top-0 left-0 right-0 h-1 rounded-t-xl ${
@@ -266,13 +369,35 @@ export function TaskCard({
             </div>
           </div>
         ) : (
-          <TaskCardView
-            task={task}
-            interactive={!isTemp}
-            onOpenDetail={isTemp ? undefined : onOpenDetail}
-            cornerActions={isTemp ? undefined : cornerActions}
-            className={isDragging ? "opacity-40 cursor-grabbing shadow-lg" : ""}
-          />
+          <div className="relative">
+            <TaskCardView
+              task={task}
+              interactive={!isTemp}
+              selectionMode={selectionMode}
+              isSelected={isSelected}
+              onToggleSelected={onToggleSelected}
+              onToggleComplete={
+                canEdit && !isTemp && !selectionMode
+                  ? handleToggleComplete
+                  : undefined
+              }
+              onOpenDetail={
+                isTemp || selectionMode
+                  ? selectionMode && canEdit
+                    ? onToggleSelected
+                    : undefined
+                  : onOpenDetail
+              }
+              cornerActions={
+                isTemp || selectionMode ? undefined : cornerActions
+              }
+              className={`${isDragging ? "opacity-40 cursor-grabbing shadow-lg" : ""} ${
+                isSelected
+                  ? "ring-2 ring-cyan-500 bg-cyan-50/10 dark:bg-cyan-950/20"
+                  : ""
+              }`}
+            />
+          </div>
         )}
       </div>
 

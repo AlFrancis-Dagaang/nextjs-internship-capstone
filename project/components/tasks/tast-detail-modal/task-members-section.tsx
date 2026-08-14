@@ -29,6 +29,7 @@ type TaskMembersSectionProps = {
   projectId: string;
   assignableUsers: AssigneeUser[];
   canEdit: boolean;
+  refreshKey?: number;
   onUpdated?: (task: TaskWithCommentCount) => void;
 };
 
@@ -37,27 +38,41 @@ export function TaskMembersSection({
   projectId,
   assignableUsers = [],
   canEdit,
+  refreshKey,
   onUpdated,
 }: TaskMembersSectionProps) {
   const { toast } = useToast();
   const [modalOpen, setModalOpen] = useState(false);
   const [assignees, setAssignees] = useState<TaskAssignee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const taskRef = useRef(task);
   taskRef.current = task;
+  const onUpdatedRef = useRef(onUpdated);
+  onUpdatedRef.current = onUpdated;
+  const lastAssigneeIdsRef = useRef<string>("");
 
   const fetchAssignees = useCallback(async () => {
+    setIsLoading(true);
     const result = await getTaskAssignees(task.id);
     if (result.success) {
       setAssignees(result.data);
-      onUpdated?.({
-        ...taskRef.current,
-        assignees: result.data.map((a) => ({
-          userId: a.userId,
-          name: a.userName,
-          email: a.userEmail,
-        })),
-      });
+
+      const newIds = result.data
+        .map((a) => a.userId)
+        .sort()
+        .join(",");
+      if (newIds !== lastAssigneeIdsRef.current) {
+        lastAssigneeIdsRef.current = newIds;
+        onUpdatedRef.current?.({
+          ...taskRef.current,
+          assignees: result.data.map((a) => ({
+            userId: a.userId,
+            name: a.userName,
+            email: a.userEmail,
+          })),
+        });
+      }
     } else {
       toast({
         title: "Failed to load assignees",
@@ -65,11 +80,12 @@ export function TaskMembersSection({
         variant: "destructive",
       });
     }
-  }, [task.id, onUpdated, toast]);
+    setIsLoading(false);
+  }, [task.id, toast]);
 
   useEffect(() => {
     fetchAssignees();
-  }, [fetchAssignees]);
+  }, [fetchAssignees, refreshKey]);
 
   const visibleAssignees = assignees.slice(0, 3);
   const extraCount = assignees.length > 3 ? assignees.length - 3 : 0;
@@ -97,7 +113,15 @@ export function TaskMembersSection({
               : "cursor-default"
           }`}
         >
-          {assignees.length > 0 ? (
+          {isLoading ? (
+            <div className="flex items-center space-x-1.5 animate-pulse">
+              <div className="flex -space-x-1.5">
+                <div className="h-7 w-7 rounded-full bg-neutral-200 dark:bg-neutral-800 border-2 border-white dark:border-neutral-900" />
+                <div className="h-7 w-7 rounded-full bg-neutral-200 dark:bg-neutral-800 border-2 border-white dark:border-neutral-900" />
+              </div>
+              <div className="h-3 w-16 bg-neutral-200 dark:bg-neutral-800 rounded ml-1" />
+            </div>
+          ) : assignees.length > 0 ? (
             <div className="flex items-center space-x-1.5">
               <div className="flex items-center">
                 <div className="flex -space-x-1.5">
@@ -125,7 +149,8 @@ export function TaskMembersSection({
             </div>
           ) : canEdit ? (
             <>
-              <div className="h-7 w-7 rounded-full border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center">
+              {/* Added hover transition styles here */}
+              <div className="h-7 w-7 rounded-full border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors">
                 <Plus size={14} className="text-neutral-400" />
               </div>
               <span className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -138,24 +163,13 @@ export function TaskMembersSection({
             </span>
           )}
 
-          {assignees.length > 0 && (
+          {!isLoading && assignees.length > 0 && (
             <span className="text-xs text-neutral-700 dark:text-neutral-300 ml-1">
               {assignees.length} assigned
             </span>
           )}
         </button>
       </div>
-
-      {canEdit && (
-        <AssignTaskModal
-          taskId={task.id}
-          projectId={projectId}
-          currentAssignees={currentAssigneeUsers}
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          onSuccess={fetchAssignees}
-        />
-      )}
 
       {canEdit && (
         <AssignTaskModal

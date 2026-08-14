@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { List } from "@/lib/db/schema";
+import { getRealtimeClientId } from "@/lib/realtime/client";
 
 export function AddListForm({
   projectId,
@@ -28,7 +29,10 @@ export function AddListForm({
     if (!name.trim()) return;
 
     startTransition(async () => {
-      const result = await createList({ projectId, name });
+      const result = await createList(
+        { projectId, name },
+        getRealtimeClientId(),
+      );
       if (!result.success) {
         setFieldErrors(result.fieldErrors);
         toast({

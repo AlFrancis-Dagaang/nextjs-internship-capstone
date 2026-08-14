@@ -10,6 +10,8 @@ import {
 import { logTaskActivity } from "@/lib/services/activity";
 import type { Comment } from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
+import { notifyTaskAssignees } from "@/lib/services/notifications";
+import { publishBoardEvent } from "@/lib/realtime/server";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -17,6 +19,7 @@ type ActionResult<T> =
 
 export async function createComment(
   input: unknown,
+  originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.comments.create>>>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -51,6 +54,24 @@ export async function createComment(
     authResult.user.id,
     "comment_added",
   );
+  await notifyTaskAssignees({
+    taskId: parsed.data.taskId,
+    projectId: access.project.id,
+    type: "task_comment_added",
+    message: "New comment on a task you're assigned to",
+    actorId: authResult.user.id,
+    excludeUserId: authResult.user.id,
+  });
+
+  await publishBoardEvent(
+    access.project.id,
+    {
+      type: "task_comment_count_changed",
+      taskId: parsed.data.taskId,
+      delta: 1,
+    },
+    originClientId,
+  );
   revalidatePath(`/projects/${access.project.id}`);
 
   return { success: true, data: comment };
@@ -75,7 +96,10 @@ export async function getCommentsByTask(
   return { success: true, data: comments };
 }
 
-export async function deleteComment(id: string): Promise<ActionResult<null>> {
+export async function deleteComment(
+  id: string,
+  originClientId?: string,
+): Promise<ActionResult<null>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
@@ -107,6 +131,15 @@ export async function deleteComment(id: string): Promise<ActionResult<null>> {
     existingComment.taskId,
     authResult.user.id,
     "comment_deleted",
+  );
+  await publishBoardEvent(
+    access.project.id,
+    {
+      type: "task_comment_count_changed",
+      taskId: existingComment.taskId,
+      delta: -1,
+    },
+    originClientId,
   );
   revalidatePath(`/projects/${access.project.id}`);
 

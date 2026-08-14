@@ -9,6 +9,7 @@ import {
 } from "@/lib/services/ownership";
 import { List } from "../db/schema";
 import { revalidatePath } from "next/cache";
+import { publishBoardEvent } from "@/lib/realtime/server";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -16,6 +17,7 @@ type ActionResult<T> =
 
 export async function createList(
   input: unknown,
+  originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.lists.create>>>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -48,6 +50,12 @@ export async function createList(
     position,
   });
 
+  await publishBoardEvent(
+    parsed.data.projectId,
+    { type: "list_created", list },
+    originClientId,
+  );
+
   revalidatePath(`/projects/${parsed.data.projectId}`);
 
   return { success: true, data: list };
@@ -75,6 +83,7 @@ export async function getListsByProject(
 export async function updateList(
   id: string,
   input: unknown,
+  originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.lists.update>>>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -111,12 +120,21 @@ export async function updateList(
 
   const updated = await queries.lists.update(id, safeUpdate);
 
+  await publishBoardEvent(
+    existingList.projectId,
+    { type: "list_updated", list: updated },
+    originClientId,
+  );
+
   revalidatePath(`/projects/${existingList.projectId}`);
 
   return { success: true, data: updated };
 }
 
-export async function deleteList(id: string): Promise<ActionResult<null>> {
+export async function deleteList(
+  id: string,
+  originClientId?: string,
+): Promise<ActionResult<null>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
@@ -137,6 +155,12 @@ export async function deleteList(id: string): Promise<ActionResult<null>> {
 
   await queries.lists.delete(id);
 
+  await publishBoardEvent(
+    existingList.projectId,
+    { type: "list_deleted", listId: id },
+    originClientId,
+  );
+
   revalidatePath(`/projects/${existingList.projectId}`);
 
   return { success: true, data: null };
@@ -145,6 +169,7 @@ export async function deleteList(id: string): Promise<ActionResult<null>> {
 export async function moveList(
   id: string,
   newPosition: number,
+  originClientId?: string,
 ): Promise<ActionResult<List[]>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -182,6 +207,12 @@ export async function moveList(
     .map((list) => queries.lists.update(list.id, { position: list.position }));
 
   await Promise.all(updates);
+
+  await publishBoardEvent(
+    existingList.projectId,
+    { type: "list_moved", lists: finalLists },
+    originClientId,
+  );
 
   revalidatePath(`/projects/${existingList.projectId}`);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { updateTask } from "@/lib/actions/tasks";
@@ -27,7 +27,9 @@ export function TaskDatesSection({
   const [isPending, startTransition] = useTransition();
   const [dueDate, setDueDate] = useState(toDateInputValue(task.dueDate));
   const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
-
+  useEffect(() => {
+    setDueDate(toDateInputValue(task.dueDate));
+  }, [task.dueDate]);
   function handleDateChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newDate = e.target.value;
     setDueDate(newDate);
@@ -52,6 +54,27 @@ export function TaskDatesSection({
     });
   }
 
+  // Completed always wins over overdue — a completed task past its due
+  // date is not "overdue," it's just done late. Mutually exclusive.
+  const isOverdue =
+    !task.isCompleted &&
+    task.dueDate != null &&
+    new Date(task.dueDate) < new Date();
+
+  const statusLabel = task.isCompleted
+    ? {
+        text: "Completed",
+        className:
+          "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400",
+      }
+    : isOverdue
+      ? {
+          text: "Overdue",
+          className:
+            "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400",
+        }
+      : null;
+
   return (
     <div className="space-y-2">
       <Label className="text-[10px] text-neutral-500 uppercase font-semibold tracking-wider">
@@ -66,6 +89,13 @@ export function TaskDatesSection({
           disabled={isPending || !canEdit}
           className="bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 h-9 text-sm focus-visible:ring-1 focus-visible:ring-cyan-400"
         />
+        {statusLabel && (
+          <span
+            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${statusLabel.className}`}
+          >
+            {statusLabel.text}
+          </span>
+        )}
       </div>
     </div>
   );

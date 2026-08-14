@@ -1,61 +1,3 @@
-// TODO: Task 5.3 - Set up client-side state management with Zustand
-// TODO: Task 5.4 - Implement optimistic UI updates for smooth interactions
-
-/*
-TODO: Implementation Notes for Interns:
-
-Board state management for Kanban functionality:
-- Current project data
-- Lists/columns
-- Tasks
-- Drag and drop state
-- Optimistic updates
-- Sync with server
-
-Key features:
-- Optimistic task creation/updates
-- Drag and drop state management
-- Real-time synchronization
-- Conflict resolution
-- Offline support (optional)
-
-Example structure:
-import { create } from 'zustand'
-import { subscribeWithSelector } from 'zustand/middleware'
-
-interface BoardState {
-  // Data
-  currentProject: Project | null
-  lists: List[]
-  tasks: Task[]
-  
-  // UI state
-  draggedTask: Task | null
-  draggedOverList: string | null
-  
-  // Loading states
-  isLoading: boolean
-  isSaving: boolean
-  
-  // Actions
-  loadProject: (projectId: string) => Promise<void>
-  createTask: (listId: string, task: Partial<Task>) => Promise<void>
-  updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>
-  moveTask: (taskId: string, newListId: string, newPosition: number) => Promise<void>
-  deleteTask: (taskId: string) => Promise<void>
-  
-  // Drag and drop
-  setDraggedTask: (task: Task | null) => void
-  setDraggedOverList: (listId: string | null) => void
-}
-
-export const useBoardStore = create<BoardState>()(
-  subscribeWithSelector((set, get) => ({
-    // ... implementation
-  }))
-)
-*/
-
 import { create } from "zustand";
 import { arrayMove } from "@dnd-kit/sortable";
 import type { List, Task } from "@/lib/db/schema";
@@ -63,6 +5,7 @@ import type {
   ListWithTasks,
   TaskWithCommentCount,
 } from "@/components/lists/board";
+import type { BoardRealtimeEvent } from "@/lib/realtime/server";
 
 /**
  * #22 (pass 2) — board/task data + drag-in-progress state, extracted from
@@ -86,6 +29,12 @@ interface BoardState {
   removeList: (listId: string) => void;
   reorderLists: (updatedLists: List[]) => void;
 
+  archiveTaskLocally: (taskId: string) => ListWithTasks[];
+  revertArchiveSnapshot: (snapshot: ListWithTasks[]) => void;
+
+  toggleTaskCompleteLocally: (taskId: string) => boolean; // returns previous value for revert
+  revertTaskComplete: (taskId: string, previousValue: boolean) => void;
+
   addTask: (listId: string, task: Task) => void;
   insertTaskAt: (listId: string, task: Task, index: number) => void;
   updateTaskLocal: (task: Task) => void;
@@ -98,6 +47,14 @@ interface BoardState {
   // (CreateTaskModal) doesn't need to track which list beyond what it
   // already passed to addTask.
   replaceOptimisticTask: (tempId: string, realTask: Task) => void;
+  // #70 item 7 — assignee changes come from task-assignees.ts, which
+  // doesn't return a full Task, so this sets just the assignees field
+  // rather than going through updateTaskLocal's Task-shaped merge.
+  updateTaskAssigneesLocal: (
+    listId: string,
+    taskId: string,
+    assignees: TaskWithCommentCount["assignees"],
+  ) => void;
 
   startDrag: (taskId: string) => void;
   clearActiveTask: () => void;
@@ -113,12 +70,75 @@ interface BoardState {
     targetPosition: number,
   ) => ListWithTasks[];
   revertMoveSnapshot: (snapshot: ListWithTasks[]) => void;
+
+  activeListId: string | null;
+  listDragSnapshot: ListWithTasks[] | null;
+
+  startListDrag: (listId: string) => void;
+  clearActiveList: () => void;
+  dragListOver: (activeSortId: string, overSortId: string) => void;
+  endListDrag: (
+    activeSortId: string,
+    overSortId: string,
+  ) => { listId: string; finalPosition: number } | null;
+  revertListSnapshot: () => void;
+
+  // #70 item 7 — apply an event received from another client over Pusher.
+  // Routes to the same local-update actions the optimistic path already
+  // uses; the only difference is this data is server-confirmed, so there's
+  // no snapshot/revert step. Deliberately does NOT duplicate any reconcile
+  // logic that already exists above.
+  applyRemoteEvent: (event: BoardRealtimeEvent) => void;
 }
 
 export const useBoardStore = create<BoardState>((set, get) => ({
   lists: [],
   activeTask: null,
   dragSnapshot: null,
+  activeListId: null,
+  listDragSnapshot: null,
+
+  startListDrag: (listId) => {
+    const { lists } = get();
+    set({ activeListId: listId, listDragSnapshot: lists });
+  },
+
+  clearActiveList: () => set({ activeListId: null }),
+
+  // Lists are a single row (no cross-container concept like tasks have),
+  // so — unlike task dragOver — this does the actual reorder live, on
+  // every hover. endListDrag just reads back the resulting index.
+  // Lists are a single row, so this reorders live on every hover.
+  dragListOver: (activeSortId, overSortId) => {
+    if (activeSortId === overSortId) return;
+    set((s) => {
+      // Normalize IDs by stripping the prefix if present, allowing compatibility with both sortable and droppable IDs
+      const cleanActiveId = activeSortId.toString().replace("list-sort-", "");
+      const cleanOverId = overSortId.toString().replace("list-sort-", "");
+
+      const oldIndex = s.lists.findIndex((l) => l.id === cleanActiveId);
+      const newIndex = s.lists.findIndex((l) => l.id === cleanOverId);
+
+      if (oldIndex === -1 || newIndex === -1) return s;
+      const reordered = arrayMove(s.lists, oldIndex, newIndex);
+      return { lists: reordered.map((l, i) => ({ ...l, position: i })) };
+    });
+  },
+
+  endListDrag: (activeSortId, _overSortId) => {
+    const { lists } = get();
+    const cleanActiveId = activeSortId.toString().replace("list-sort-", "");
+    const activeList = lists.find((l) => l.id === cleanActiveId);
+    if (!activeList) return null;
+    const finalPosition = lists.findIndex((l) => l.id === activeList.id);
+    return { listId: activeList.id, finalPosition };
+  },
+  revertListSnapshot: () => {
+    const { listDragSnapshot } = get();
+    if (listDragSnapshot) {
+      set({ lists: listDragSnapshot, listDragSnapshot: null });
+    }
+  },
 
   setInitialLists: (lists) => set({ lists }),
 
@@ -207,6 +227,20 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             : t,
         ),
       })),
+    })),
+
+  updateTaskAssigneesLocal: (listId, taskId, assignees) =>
+    set((s) => ({
+      lists: s.lists.map((l) =>
+        l.id === listId
+          ? {
+              ...l,
+              tasks: l.tasks.map((t) =>
+                t.id === taskId ? { ...t, assignees } : t,
+              ),
+            }
+          : l,
+      ),
     })),
 
   // Same #24 fix as updateTaskLocal, for moveTaskToList's affectedTasks.
@@ -327,6 +361,20 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const { dragSnapshot } = get();
     if (dragSnapshot) set({ lists: dragSnapshot, dragSnapshot: null });
   },
+
+  archiveTaskLocally: (taskId) => {
+    const { lists } = get();
+    const snapshot = lists;
+    set({
+      lists: lists.map((l) => ({
+        ...l,
+        tasks: l.tasks.filter((t) => t.id !== taskId),
+      })),
+    });
+    return snapshot;
+  },
+
+  revertArchiveSnapshot: (snapshot) => set({ lists: snapshot }),
   applyOptimisticMove: (taskId, targetListId, targetPosition) => {
     const { lists } = get();
     const snapshot = lists;
@@ -367,4 +415,81 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   revertMoveSnapshot: (snapshot) => set({ lists: snapshot }),
+
+  toggleTaskCompleteLocally: (taskId) => {
+    const { lists } = get();
+    const task = lists.flatMap((l) => l.tasks).find((t) => t.id === taskId);
+    const previousValue = task?.isCompleted ?? false;
+
+    set({
+      lists: lists.map((l) => ({
+        ...l,
+        tasks: l.tasks.map((t) =>
+          t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t,
+        ),
+      })),
+    });
+
+    return previousValue;
+  },
+
+  revertTaskComplete: (taskId, previousValue) =>
+    set((s) => ({
+      lists: s.lists.map((l) => ({
+        ...l,
+        tasks: l.tasks.map((t) =>
+          t.id === taskId ? { ...t, isCompleted: previousValue } : t,
+        ),
+      })),
+    })),
+
+  // #70 item 7 — dispatch table for remote board events. Each case calls
+  // an existing action rather than reimplementing its logic.
+  applyRemoteEvent: (event) => {
+    const actions = get();
+    switch (event.type) {
+      case "task_created":
+        actions.addTask(event.task.listId, event.task);
+        break;
+      case "task_updated":
+        actions.updateTaskLocal(event.task);
+        break;
+      case "task_moved":
+        actions.reconcileTaskMoved(event.task, event.affectedTasks);
+        break;
+      case "task_deleted":
+        actions.removeTask(event.listId, event.taskId);
+        break;
+      case "task_archived":
+        // archiveTaskLocally already searches/filters across all lists by
+        // taskId, so no listId is needed here — same as the local path.
+        actions.archiveTaskLocally(event.taskId);
+        break;
+      case "task_restored":
+        actions.addTask(event.task.listId, event.task);
+        break;
+      case "task_assignees_updated":
+        actions.updateTaskAssigneesLocal(
+          event.listId,
+          event.taskId,
+          event.assignees,
+        );
+        break;
+      case "task_comment_count_changed":
+        actions.changeCommentCount(event.taskId, event.delta);
+        break;
+      case "list_created":
+        actions.addList(event.list);
+        break;
+      case "list_updated":
+        actions.renameList(event.list);
+        break;
+      case "list_moved":
+        actions.reorderLists(event.lists);
+        break;
+      case "list_deleted":
+        actions.removeList(event.listId);
+        break;
+    }
+  },
 }));

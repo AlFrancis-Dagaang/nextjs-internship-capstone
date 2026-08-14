@@ -8,6 +8,8 @@ import {
 } from "@/lib/services/ownership";
 import { logTaskActivity } from "@/lib/services/activity";
 import { revalidatePath } from "next/cache";
+import { createNotification } from "@/lib/services/notifications";
+import { publishBoardEvent } from "@/lib/realtime/server";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -35,6 +37,7 @@ export async function getTaskAssignees(
 export async function assignUserToTask(
   taskId: string,
   userId: string,
+  originClientId?: string,
 ): Promise<ActionResult<null>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -70,13 +73,42 @@ export async function assignUserToTask(
   }
 
   await queries.taskAssignees.add(taskId, userId);
-  const assignedUser = await queries.users.getById(userId); // ← method name TBD
+  const assignedUser = await queries.users.getById(userId);
+  const actor = await queries.users.getById(authResult.user.id);
+
   await logTaskActivity(taskId, authResult.user.id, "assignee_changed", {
     type: "assigned",
     assigneeId: userId,
     assigneeName: assignedUser?.name ?? "Unknown user",
   });
+  await createNotification({
+    userId,
+    type: "task_assigned",
+    message: `${actor?.name ?? "Someone"} assigned you to a task`, // FIXED — use actor, not assignedUser
+    projectId: access.project.id,
+    taskId,
+    actorId: authResult.user.id,
+  });
 
+  const [assigneeRows, updatedTask] = await Promise.all([
+    queries.taskAssignees.getByTask(taskId),
+    queries.tasks.getById(taskId),
+  ]);
+  const assignees = assigneeRows.map((row) => ({
+    userId: row.userId,
+    name: row.userName,
+    email: row.userEmail,
+  }));
+  await publishBoardEvent(
+    access.project.id,
+    {
+      type: "task_assignees_updated",
+      taskId,
+      listId: updatedTask!.listId,
+      assignees,
+    },
+    originClientId,
+  );
   revalidatePath(`/projects/${access.project.id}`);
 
   return { success: true, data: null };
@@ -85,6 +117,7 @@ export async function assignUserToTask(
 export async function unassignUserFromTask(
   taskId: string,
   userId: string,
+  originClientId?: string,
 ): Promise<ActionResult<null>> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
@@ -98,11 +131,42 @@ export async function unassignUserFromTask(
 
   await queries.taskAssignees.remove(taskId, userId);
   const unassignedUser = await queries.users.getById(userId);
+  const actor = await queries.users.getById(authResult.user.id); // ADD THIS
+
   await logTaskActivity(taskId, authResult.user.id, "assignee_changed", {
     type: "unassigned",
     assigneeId: userId,
     assigneeName: unassignedUser?.name ?? "Unknown user",
   });
+  await createNotification({
+    userId,
+    type: "task_unassigned",
+    message: `${actor?.name ?? "Someone"} removed you from a task`, // FIXED
+    projectId: access.project.id,
+    taskId,
+    actorId: authResult.user.id,
+  });
+
+  const [assigneeRows, updatedTask] = await Promise.all([
+    queries.taskAssignees.getByTask(taskId),
+    queries.tasks.getById(taskId),
+  ]);
+  const assignees = assigneeRows.map((row) => ({
+    userId: row.userId,
+    name: row.userName,
+    email: row.userEmail,
+  }));
+  await publishBoardEvent(
+    access.project.id,
+    {
+      type: "task_assignees_updated",
+      taskId,
+      listId: updatedTask!.listId,
+      assignees,
+    },
+    originClientId,
+  );
+
   revalidatePath(`/projects/${access.project.id}`);
 
   return { success: true, data: null };

@@ -4,7 +4,7 @@ import { getListsByProject } from "@/lib/actions/lists";
 import { getTasksByProject } from "@/lib/actions/tasks";
 import { getProjectMembers } from "@/lib/actions/project-member";
 import { queries } from "@/lib/db";
-import { toMemberList } from "@/lib/utils";
+import { toMemberList } from "@/lib/utils/utils";
 import { Board, type ListWithTasks } from "@/components/lists/board";
 import { ProjectHeader } from "@/components/projects/project-header";
 import type { Task } from "@/lib/db/schema";
@@ -112,10 +112,16 @@ export default async function ProjectPage({
           isOwner={role === "owner"}
           ownerName={owner?.name}
           ownerEmail={owner?.email}
+          role={role}
         />
       </div>
       <div className="flex-1 min-h-0">
-        <Board projectId={id} initialLists={listsWithTasks} role={role} />
+        <Board
+          projectId={id}
+          initialLists={listsWithTasks}
+          role={role}
+          currentUserId={authResult.user.id}
+        />
       </div>
     </div>
   );
