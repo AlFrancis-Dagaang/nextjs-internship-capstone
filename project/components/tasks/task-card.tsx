@@ -19,9 +19,9 @@ import { ListWithTasks, TaskWithCommentCount } from "../lists/board";
 import { useBoardStore } from "@/stores/board-store";
 
 const priorityBarStyles: Record<string, string> = {
-  low: "bg-blue-400",
-  medium: "bg-amber-400",
-  high: "bg-red-500",
+  low: "bg-blue-500",
+  medium: "bg-amber-500",
+  high: "bg-destructive",
 };
 
 /**
@@ -66,14 +66,14 @@ export function TaskCardView({
             : onOpenDetail
           : undefined
       }
-      className={`relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:shadow-md transition-shadow space-y-3 overflow-hidden ${
+      className={`relative p-3.5 pt-4 bg-card rounded-xl border border-border hover:shadow-md transition-shadow space-y-3 overflow-hidden shadow-sm ${
         interactive ? "cursor-pointer" : ""
       } ${className}`}
     >
       {task.priority && (
         <div
           className={`absolute top-0 left-0 right-0 h-1 rounded-t-xl ${
-            priorityBarStyles[task.priority] || "bg-neutral-300"
+            priorityBarStyles[task.priority] || "bg-border"
           }`}
         />
       )}
@@ -93,8 +93,8 @@ export function TaskCardView({
               }}
               className={`w-4 h-4 rounded border shrink-0 transition-colors flex items-center justify-center ${
                 isSelected
-                  ? "bg-cyan-500 border-cyan-500 text-white"
-                  : "border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900"
+                  ? "bg-primary border-primary text-primary-foreground"
+                  : "border-border bg-card"
               }`}
               aria-label={isSelected ? "Deselect task" : "Select task"}
             >
@@ -111,8 +111,8 @@ export function TaskCardView({
               }}
               className={`w-4 h-4 rounded-full border shrink-0 transition-colors flex items-center justify-center ${
                 task.isCompleted
-                  ? "bg-green-500 border-green-500 text-white"
-                  : "border-neutral-300 dark:border-neutral-600 hover:border-green-400"
+                  ? "bg-primary border-primary text-primary-foreground"
+                  : "border-border hover:border-primary"
               }`}
             >
               {task.isCompleted && <Check size={10} strokeWidth={3} />}
@@ -121,8 +121,8 @@ export function TaskCardView({
             <div
               className={`w-4 h-4 rounded-full border shrink-0 flex items-center justify-center ${
                 task.isCompleted
-                  ? "bg-green-500 border-green-500 text-white"
-                  : "border-neutral-300 dark:border-neutral-600"
+                  ? "bg-primary border-primary text-primary-foreground"
+                  : "border-border"
               }`}
             >
               {task.isCompleted && <Check size={10} strokeWidth={3} />}
@@ -131,8 +131,8 @@ export function TaskCardView({
           <h4
             className={`font-medium text-sm ${
               task.isCompleted
-                ? "line-through text-neutral-400 dark:text-neutral-500"
-                : "text-neutral-900 dark:text-neutral-100"
+                ? "line-through text-muted-foreground/60"
+                : "text-foreground"
             }`}
           >
             {task.title}
@@ -140,11 +140,11 @@ export function TaskCardView({
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400 pt-1">
+      <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
         <div className="flex items-center space-x-3">
           {task.dueDate && (
             <div className="flex items-center space-x-1">
-              <Calendar size={13} className="text-neutral-400" />
+              <Calendar size={13} className="text-muted-foreground" />
               <span>
                 {new Date(task.dueDate).toLocaleDateString("en-US", {
                   month: "short",
@@ -154,7 +154,7 @@ export function TaskCardView({
             </div>
           )}
           <div className="flex items-center space-x-1">
-            <MessageSquare size={13} className="text-neutral-400" />
+            <MessageSquare size={13} className="text-muted-foreground" />
             <span>{task.commentCount ?? 0}</span>
           </div>
         </div>
@@ -165,7 +165,7 @@ export function TaskCardView({
               {visibleAssignees.map((a) => (
                 <div
                   key={a.userId}
-                  className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 border-2 border-white dark:border-neutral-900 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-bold uppercase"
+                  className="w-6 h-6 rounded-full bg-secondary border-2 border-card text-secondary-foreground flex items-center justify-center text-[10px] font-bold uppercase shadow-sm"
                   title={a.name ?? a.email}
                 >
                   {a.name?.[0] ?? a.email?.[0] ?? "U"}
@@ -173,7 +173,7 @@ export function TaskCardView({
               ))}
             </div>
             {extraCount > 0 && (
-              <span className="ml-1 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-cyan-400 text-neutral-900 text-[10px] font-semibold">
+              <span className="ml-1 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold border border-border">
                 +{extraCount}
               </span>
             )}
@@ -346,16 +346,16 @@ export function TaskCard({
         {...(canEdit ? listeners : {})}
       >
         {isRenaming ? (
-          <div className="relative p-3.5 pt-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 space-y-3 overflow-hidden">
+          <div className="relative p-3.5 pt-4 bg-card rounded-xl border border-border space-y-3 overflow-hidden shadow-sm">
             {task.priority && (
               <div
                 className={`absolute top-0 left-0 right-0 h-1 rounded-t-xl ${
-                  priorityBarStyles[task.priority] || "bg-neutral-300"
+                  priorityBarStyles[task.priority] || "bg-border"
                 }`}
               />
             )}
             <div className="flex items-center space-x-2.5 pr-8">
-              <div className="w-4 h-4 rounded-full border border-neutral-300 dark:border-neutral-600 shrink-0" />
+              <div className="w-4 h-4 rounded-full border border-border shrink-0" />
               <form onSubmit={handleRenameSubmit} className="flex-1">
                 <Input
                   autoFocus
@@ -363,7 +363,7 @@ export function TaskCard({
                   onChange={(e) => setTitle(e.target.value)}
                   onBlur={handleRenameSubmit}
                   disabled={isPending}
-                  className="h-7 px-1.5 text-sm font-medium bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded shadow-sm focus-visible:ring-1"
+                  className="h-7 px-1.5 text-sm font-medium bg-card border border-input rounded shadow-sm focus-visible:ring-1"
                 />
               </form>
             </div>
@@ -392,9 +392,7 @@ export function TaskCard({
                 isTemp || selectionMode ? undefined : cornerActions
               }
               className={`${isDragging ? "opacity-40 cursor-grabbing shadow-lg" : ""} ${
-                isSelected
-                  ? "ring-2 ring-cyan-500 bg-cyan-50/10 dark:bg-cyan-950/20"
-                  : ""
+                isSelected ? "ring-2 ring-primary bg-primary/10" : ""
               }`}
             />
           </div>

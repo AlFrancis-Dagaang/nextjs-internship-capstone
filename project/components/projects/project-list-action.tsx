@@ -17,7 +17,6 @@ import { deleteProject } from "@/lib/actions/projects";
 import {
   searchUsersForInvite,
   addProjectMember,
-  getProjectMembers,
 } from "@/lib/actions/project-member";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -239,7 +238,7 @@ export function ProjectListAction({
             variant="ghost"
             size="icon"
             onClick={(e) => e.stopPropagation()}
-            className="h-7 w-7 shrink-0 text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
           >
             <MoreHorizontal size={16} />
           </Button>
@@ -247,7 +246,7 @@ export function ProjectListAction({
 
         <DropdownMenuContent
           align="end"
-          className="w-72 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-2xl p-2 space-y-1 text-left z-50"
+          className="w-72 bg-card border border-border rounded-xl shadow-2xl p-2 space-y-1 text-left z-50"
           onClick={(e) => e.stopPropagation()}
           onInteractOutside={(e) => {
             const target = e.target as Element;
@@ -258,11 +257,11 @@ export function ProjectListAction({
         >
           {view === "menu" ? (
             <>
-              <div className="flex items-center justify-between px-2 py-1 text-xs font-semibold text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 mb-1">
+              <div className="flex items-center justify-between px-2 py-1 text-xs font-semibold text-muted-foreground border-b border-border mb-1">
                 <span>Project Options</span>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <X size={14} />
                 </button>
@@ -273,9 +272,9 @@ export function ProjectListAction({
                   setIsOpen(false);
                   onViewDetails();
                 }}
-                className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-muted rounded-lg flex items-center space-x-2.5"
               >
-                <ExternalLink size={15} className="text-neutral-400" />
+                <ExternalLink size={15} className="text-muted-foreground" />
                 <span>Manage project</span>
               </DropdownMenuItem>
 
@@ -285,38 +284,38 @@ export function ProjectListAction({
                     e.preventDefault();
                     setView("invite");
                   }}
-                  className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                  className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-muted rounded-lg flex items-center space-x-2.5"
                 >
-                  <UserPlus size={15} className="text-neutral-400" />
+                  <UserPlus size={15} className="text-muted-foreground" />
                   <span>Add members</span>
                 </DropdownMenuItem>
               )}
 
               {isOwner && (
                 <>
-                  <div className="pt-1.5 pb-1 border-t border-neutral-100 dark:border-neutral-800 mt-1">
+                  <div className="pt-1.5 pb-1 border-t border-border mt-1">
                     <DropdownMenuItem
                       onSelect={() => {
                         setIsOpen(false);
                         onRename();
                       }}
-                      className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                      className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-muted rounded-lg flex items-center space-x-2.5"
                     >
-                      <Edit2 size={15} className="text-neutral-400" />
+                      <Edit2 size={15} className="text-muted-foreground" />
                       <span>Rename project</span>
                     </DropdownMenuItem>
                   </div>
 
-                  <div className="border-t border-neutral-100 dark:border-neutral-800 pt-1 mt-1">
+                  <div className="border-t border-border pt-1 mt-1">
                     <DropdownMenuItem
                       onSelect={(e) => {
                         e.preventDefault();
                         setIsOpen(false);
                         setDeleteOpen(true);
                       }}
-                      className="cursor-pointer px-2.5 py-2 text-sm text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/50 rounded-lg flex items-center space-x-2.5"
+                      className="cursor-pointer px-2.5 py-2 text-sm text-destructive focus:bg-destructive/10 rounded-lg flex items-center space-x-2.5"
                     >
-                      <Trash2 size={15} className="text-red-500" />
+                      <Trash2 size={15} className="text-destructive" />
                       <span>Delete project</span>
                     </DropdownMenuItem>
                   </div>
@@ -325,16 +324,16 @@ export function ProjectListAction({
             </>
           ) : (
             <div className="p-1 space-y-3">
-              <div className="flex items-center justify-between px-1.5 py-1 border-b border-neutral-100 dark:border-neutral-800">
+              <div className="flex items-center justify-between px-1.5 py-1 border-b border-border">
                 <button
                   onClick={() => setView("menu")}
-                  className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-0.5 flex items-center gap-1 text-xs font-semibold"
+                  className="text-muted-foreground hover:text-foreground p-0.5 flex items-center gap-1 text-xs font-semibold"
                 >
                   <ChevronLeft size={15} /> Back
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-0.5"
+                  className="text-muted-foreground hover:text-foreground p-0.5"
                 >
                   <X size={14} />
                 </button>
@@ -345,7 +344,7 @@ export function ProjectListAction({
                 onSubmit={handleAddMember}
                 className="space-y-2.5 px-1 pt-1"
               >
-                <span className="text-[10px] font-semibold tracking-wider text-neutral-400 uppercase">
+                <span className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
                   Add Members
                 </span>
 
@@ -363,27 +362,27 @@ export function ProjectListAction({
                         setShowDropdown(true);
                     }}
                     disabled={isPending}
-                    className="h-8 text-xs bg-neutral-100 dark:bg-neutral-800 border-0 rounded-lg w-full focus-visible:ring-1"
+                    className="h-8 text-xs bg-muted border-input text-foreground rounded-lg w-full focus-visible:ring-1"
                   />
 
                   {showDropdown &&
                     !selectedUser &&
                     query.trim().length >= 2 && (
-                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                      <div className="absolute top-full left-0 right-0 mt-1.5 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden py-1">
                         {isLoadingSearch ? (
-                          <div className="flex items-center justify-center py-3 text-xs text-neutral-400 gap-1.5">
+                          <div className="flex items-center justify-center py-3 text-xs text-muted-foreground gap-1.5">
                             <Loader2
                               size={13}
-                              className="animate-spin text-cyan-500"
+                              className="animate-spin text-foreground"
                             />
                             <span>Searching...</span>
                           </div>
                         ) : searchResults.length === 0 ? (
-                          <div className="py-3 text-center text-xs text-neutral-400">
+                          <div className="py-3 text-center text-xs text-muted-foreground">
                             No matching users
                           </div>
                         ) : (
-                          <div className="max-h-[160px] overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800">
+                          <div className="max-h-[160px] overflow-y-auto divide-y divide-border">
                             {searchResults.map((user) => {
                               const isSelectable = user.status === "available";
                               return (
@@ -396,25 +395,25 @@ export function ProjectListAction({
                                   }}
                                   className={`px-2.5 py-2 flex items-center justify-between transition-colors ${
                                     isSelectable
-                                      ? "hover:bg-neutral-100 dark:hover:bg-neutral-800/60 cursor-pointer"
+                                      ? "hover:bg-muted cursor-pointer"
                                       : "opacity-50 cursor-not-allowed"
                                   }`}
                                 >
                                   <div className="flex flex-col truncate pr-2">
-                                    <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                                    <span className="text-xs font-medium text-foreground truncate">
                                       {user.name}
                                     </span>
-                                    <span className="text-[10px] text-neutral-400 truncate">
+                                    <span className="text-[10px] text-muted-foreground truncate">
                                       {user.email}
                                     </span>
                                   </div>
                                   {user.status === "owner" && (
-                                    <span className="text-[9px] font-semibold text-cyan-600 dark:text-cyan-400 uppercase shrink-0">
+                                    <span className="text-[9px] font-semibold text-foreground uppercase shrink-0">
                                       Owner
                                     </span>
                                   )}
                                   {user.status === "member" && (
-                                    <span className="text-[9px] font-semibold text-neutral-400 uppercase shrink-0">
+                                    <span className="text-[9px] font-semibold text-muted-foreground uppercase shrink-0">
                                       Added
                                     </span>
                                   )}
@@ -433,10 +432,10 @@ export function ProjectListAction({
                     setInviteRole(val)
                   }
                 >
-                  <SelectTrigger className="w-full h-8 text-xs bg-neutral-100 dark:bg-neutral-800 border-0 rounded-lg shadow-none focus:ring-0">
+                  <SelectTrigger className="w-full h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none focus:ring-0">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl">
+                  <SelectContent className="z-50 bg-card border border-border rounded-xl shadow-xl">
                     <SelectItem value="viewer" className="text-xs">
                       Viewer (View-only)
                     </SelectItem>
@@ -449,7 +448,7 @@ export function ProjectListAction({
                 <Button
                   type="submit"
                   disabled={isPending || !selectedUser}
-                  className="w-full h-8 bg-cyan-400 hover:bg-cyan-500 text-neutral-900 font-medium text-xs shadow-none rounded-lg"
+                  className="w-full h-8 bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-xs shadow-none rounded-lg"
                 >
                   <UserPlus size={13} className="mr-1.5" /> Add Member
                 </Button>

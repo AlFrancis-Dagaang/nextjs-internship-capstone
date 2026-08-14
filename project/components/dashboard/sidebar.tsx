@@ -1,3 +1,4 @@
+// components/sidebar.tsx
 "use client";
 
 import Link from "next/link";
@@ -24,9 +25,14 @@ const navigation = [
 interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  isCollapsed: boolean;
 }
 
-export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
+export function Sidebar({
+  sidebarOpen,
+  setSidebarOpen,
+  isCollapsed,
+}: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -34,34 +40,49 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       {/* Mobile Backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-background/85 backdrop-blur-sm lg:hidden transition-opacity"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-outer_space-500 border-r border-french_gray-300 dark:border-paynes_gray-400 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 bg-card border-r border-border flex flex-col shrink-0 transition-[width] duration-300 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } ${isCollapsed ? "w-64 lg:w-20" : "w-64"}`}
       >
-        <div className="flex items-center justify-between h-16 px-6 border-b border-french_gray-300 dark:border-paynes_gray-400">
+        {/* Brand Header */}
+        <div className="flex items-center justify-between h-16 px-4 border-b border-border shrink-0">
           <Link
             href="/"
-            className="text-2xl font-bold text-blue_munsell-500 tracking-tight"
+            className="flex items-center gap-3 font-bold text-foreground tracking-tight whitespace-nowrap overflow-hidden"
           >
-            ProjectFlow
+            <div className="h-8 w-8 rounded-md bg-foreground flex items-center justify-center text-background font-semibold text-sm shrink-0">
+              G
+            </div>
+            <span
+              className={`transition-all duration-300 origin-left truncate ${
+                isCollapsed
+                  ? "lg:opacity-0 lg:scale-95 lg:w-0"
+                  : "opacity-100 scale-100 w-auto"
+              }`}
+            >
+              GenZpace
+            </span>
           </Link>
+
+          {/* Mobile Close Button */}
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-lg hover:bg-platinum-500 dark:hover:bg-paynes_gray-400 text-outer_space-500 dark:text-platinum-500 transition-colors"
+            className="lg:hidden p-2 rounded-lg hover:bg-muted text-foreground transition-colors ml-auto"
             aria-label="Close sidebar"
           >
             <X size={20} />
           </button>
         </div>
 
-        <nav className="mt-6 px-3">
+        {/* Navigation Links */}
+        <nav className="flex-1 mt-6 px-3 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1.5">
             {navigation.map((item) => {
               const current = pathname === item.href;
@@ -70,21 +91,30 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className={`flex items-center gap-x-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                    title={isCollapsed ? item.name : undefined}
+                    className={`flex items-center gap-x-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors group relative whitespace-nowrap ${
                       current
-                        ? "bg-blue_munsell-100 dark:bg-blue_munsell-900/50 text-blue_munsell-700 dark:text-blue_munsell-300"
-                        : "text-outer_space-500 dark:text-platinum-500 hover:bg-platinum-500 dark:hover:bg-paynes_gray-400"
-                    }`}
+                        ? "bg-secondary text-foreground font-semibold"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    } ${isCollapsed ? "lg:justify-center" : ""}`}
                   >
                     <Icon
                       size={20}
                       className={
                         current
-                          ? "text-blue_munsell-600 dark:text-blue_munsell-400"
-                          : ""
+                          ? "text-foreground shrink-0"
+                          : "text-muted-foreground shrink-0"
                       }
                     />
-                    {item.name}
+                    <span
+                      className={`transition-all duration-300 origin-left truncate ${
+                        isCollapsed
+                          ? "lg:opacity-0 lg:scale-95 lg:w-0 lg:overflow-hidden"
+                          : "opacity-100 scale-100 w-auto"
+                      }`}
+                    >
+                      {item.name}
+                    </span>
                   </Link>
                 </li>
               );

@@ -1,3 +1,4 @@
+// components/projects/modals/delete-member-modal.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -25,15 +26,15 @@ export function DeleteMemberModal({
 }: DeleteMemberModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl">
+      <DialogContent className="sm:max-w-md bg-card border border-border rounded-xl shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="text-center font-bold text-neutral-900 dark:text-neutral-100">
+          <DialogTitle className="text-center font-bold text-foreground">
             Remove Member
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="bg-red-100 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-md p-3">
-            <p className="text-xs font-medium text-red-900 dark:text-red-200 leading-tight">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
+            <p className="text-xs font-medium text-destructive leading-tight">
               &quot;{memberName}&quot; will lose access to this project
               immediately. They can be re-added later if needed.
             </p>
@@ -46,7 +47,7 @@ export function DeleteMemberModal({
               size="sm"
               onClick={onClose}
               disabled={isPending}
-              className="rounded-lg border-neutral-200 dark:border-neutral-700"
+              className="rounded-lg border-border bg-card text-foreground hover:bg-muted"
             >
               Cancel
             </Button>
