@@ -14,22 +14,50 @@ export function DashboardShell({
   currentUserId: string;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-white/90 dark:bg-outer_space-600 transition-colors">
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+    <div className="min-h-screen w-full bg-background text-foreground flex overflow-x-hidden">
+      {/* Sidebar handles its own fixed/sticky responsive behavior */}
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        isCollapsed={isCollapsed}
+      />
 
-      <div className="lg:pl-64 flex flex-col min-h-screen">
-        <Header setSidebarOpen={setSidebarOpen} currentUserId={currentUserId} />
-        {/* Standard padding for all regular pages */}
-        <main className="flex-1 py-8 px-4 sm:px-6 lg:px-8">
-          <Suspense
-            fallback={
-              <div className="flex justify-center p-12">Loading...</div>
-            }
-          >
-            {children}
-          </Suspense>
+      {/* Main Content Area: Synchronized margin and width adjustment */}
+      <div
+        className={`flex flex-col flex-1 min-h-screen min-w-0 transition-[margin,width] duration-300 ease-in-out ${
+          isCollapsed
+            ? "lg:ml-20 lg:w-[calc(100%-5rem)]"
+            : "lg:ml-64 lg:w-[calc(100%-16rem)]"
+        }`}
+      >
+        {/* Sticky Header Container */}
+        <div className="sticky top-0 z-30 w-full">
+          <Header
+            setSidebarOpen={setSidebarOpen}
+            currentUserId={currentUserId}
+            isCollapsed={isCollapsed}
+            setIsCollapsed={setIsCollapsed}
+          />
+        </div>
+
+        {/* Scrollable Main Content Area */}
+        <main className="flex-1 w-full min-w-0 p-6 sm:p-8 lg:p-10">
+          {/* Removed max-w-7xl if you want it to fluidly scale, or keep it if you want a max boundary. 
+              Using w-full ensures children adapt to the available container width. */}
+          <div className="mx-auto w-full min-w-0">
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
+                  Loading...
+                </div>
+              }
+            >
+              {children}
+            </Suspense>
+          </div>
         </main>
       </div>
     </div>

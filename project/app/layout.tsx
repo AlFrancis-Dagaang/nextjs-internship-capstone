@@ -22,7 +22,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
-        <body className={inter.className}>
+        <body
+          className={`${inter.className} bg-background text-foreground min-h-screen antialiased selection:bg-foreground selection:text-background`}
+        >
           <ThemeProvider>
             {children}
             <Toaster />
