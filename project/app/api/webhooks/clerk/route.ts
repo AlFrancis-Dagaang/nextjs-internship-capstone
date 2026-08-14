@@ -2,6 +2,7 @@ import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { queries } from "@/lib/db";
+import { syncUserFromClerkData } from "@/lib/services/users";
 
 export async function POST(req: Request) {
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
@@ -55,11 +56,7 @@ export async function POST(req: Request) {
 
     const name = [first_name, last_name].filter(Boolean).join(" ") || "Unknown";
 
-    const result = await queries.users.upsert({
-      clerkId: id,
-      email: primaryEmail,
-      name,
-    });
+    const result = await syncUserFromClerkData(id, primaryEmail, name);
     console.log("Upsert result:", result);
   }
 
