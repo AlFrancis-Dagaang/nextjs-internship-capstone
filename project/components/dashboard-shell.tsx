@@ -33,8 +33,14 @@ export function DashboardShell({
             : "lg:ml-64 lg:w-[calc(100%-16rem)]"
         }`}
       >
-        {/* Sticky Header Container */}
-        <div className="sticky top-0 z-30 w-full">
+        {/* Fixed Header Container pinned to top viewport */}
+        <div
+          className={`fixed top-0 right-0 z-30 transition-[left,width] duration-300 ease-in-out bg-card border-b border-border shadow-sm ${
+            isCollapsed
+              ? "lg:left-20 lg:w-[calc(100%-5rem)]"
+              : "lg:left-64 lg:w-[calc(100%-16rem)]"
+          } left-0 w-full`}
+        >
           <Header
             setSidebarOpen={setSidebarOpen}
             currentUserId={currentUserId}
@@ -43,10 +49,8 @@ export function DashboardShell({
           />
         </div>
 
-        {/* Scrollable Main Content Area */}
-        <main className="flex-1 w-full min-w-0 p-6 sm:p-8 lg:p-10">
-          {/* Removed max-w-7xl if you want it to fluidly scale, or keep it if you want a max boundary. 
-              Using w-full ensures children adapt to the available container width. */}
+        {/* Main Content Container with an explicit mt-16 (64px) to push it below the fixed header */}
+        <main className="flex-1 w-full min-w-0 mt-16 p-6 sm:p-8 lg:p-10">
           <div className="mx-auto w-full min-w-0">
             <Suspense
               fallback={

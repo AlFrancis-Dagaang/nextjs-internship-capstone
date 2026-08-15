@@ -203,7 +203,7 @@ export function Header({
     searchResults.projects.length > 0 || searchResults.tasks.length > 0;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-x-4 border-b border-border bg-card/80 backdrop-blur-md px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+    <header className="flex h-16 items-center gap-x-4 border-b border-border bg-card/80 backdrop-blur-md px-4 sm:gap-x-6 sm:px-6 lg:px-8 w-full">
       {/* Left side: Mobile menu toggle, Desktop sidebar collapse toggle, and Search */}
       <div className="flex items-center gap-x-3 flex-1">
         {/* Mobile menu trigger */}
