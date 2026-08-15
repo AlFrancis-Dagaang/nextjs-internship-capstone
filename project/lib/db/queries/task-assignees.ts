@@ -69,4 +69,19 @@ export const taskAssigneesQueries = {
         and(eq(lists.projectId, projectId), eq(taskAssignees.userId, userId)),
       );
   },
+  getActiveCountByProjectAndUser: async (projectId: string, userId: string) => {
+    const rows = await db
+      .select({ taskId: taskAssignees.taskId })
+      .from(taskAssignees)
+      .innerJoin(tasks, eq(taskAssignees.taskId, tasks.id))
+      .innerJoin(lists, eq(tasks.listId, lists.id))
+      .where(
+        and(
+          eq(lists.projectId, projectId),
+          eq(taskAssignees.userId, userId),
+          eq(tasks.isArchived, false),
+        ),
+      );
+    return rows.length;
+  },
 };

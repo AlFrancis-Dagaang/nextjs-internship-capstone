@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, lt, or } from "drizzle-orm";
 import { db } from "../client";
-import { taskActivity, users } from "../schema";
+import { lists, taskActivity, tasks, users } from "../schema";
 import type { InferInsertModel } from "drizzle-orm";
 
 export const taskActivityQueries = {
@@ -32,6 +32,30 @@ export const taskActivityQueries = {
   create: async (data: InferInsertModel<typeof taskActivity>) => {
     const [entry] = await db.insert(taskActivity).values(data).returning();
     return entry;
+  },
+  getByProjectAndActor: async (
+    projectId: string,
+    actorId: string,
+    limit = 5,
+  ) => {
+    return db
+      .select({
+        id: taskActivity.id,
+        taskId: taskActivity.taskId,
+        actorId: taskActivity.actorId,
+        action: taskActivity.action,
+        metadata: taskActivity.metadata,
+        createdAt: taskActivity.createdAt,
+        taskTitle: tasks.title,
+      })
+      .from(taskActivity)
+      .innerJoin(tasks, eq(taskActivity.taskId, tasks.id))
+      .innerJoin(lists, eq(tasks.listId, lists.id))
+      .where(
+        and(eq(lists.projectId, projectId), eq(taskActivity.actorId, actorId)),
+      )
+      .orderBy(desc(taskActivity.createdAt))
+      .limit(limit);
   },
   getByTaskPaginated: async (
     taskId: string,
