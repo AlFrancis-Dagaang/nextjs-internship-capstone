@@ -42,14 +42,6 @@ export type TaskWithCommentCount = Task & {
 };
 export type ListWithTasks = List & { tasks: TaskWithCommentCount[] };
 
-// Disable the default "fly back to origin" drop animation. Board already
-// applies optimistic state updates synchronously in onDragEnd, so the real
-// card re-renders at its new position the instant you drop. dnd-kit's
-// built-in drop animation then tries to animate the overlay clone toward a
-// now-stale target position, and for a few frames both the real card and
-// the animating clone are visible at once — this is what reads as a
-// "duplicate card" during fast or cross-column drags. Setting this to null
-// makes the overlay disappear immediately on drop instead.
 const dropAnimation: DropAnimation | null = null;
 
 export function Board({
@@ -208,10 +200,21 @@ export function Board({
       });
     }
 
+    const taskCardCollisions = rectIntersection({
+      ...args,
+      droppableContainers: args.droppableContainers.filter(
+        (container) => container.data.current?.type === undefined,
+      ),
+    });
+
+    if (taskCardCollisions.length > 0) {
+      return taskCardCollisions;
+    }
+
     return rectIntersection({
       ...args,
       droppableContainers: args.droppableContainers.filter(
-        (container) => container.data.current?.type !== "list",
+        (container) => container.data.current?.type === "list-dropzone",
       ),
     });
   };
@@ -267,9 +270,6 @@ export function Board({
 
     if (active.data.current?.type === "list") {
       clearActiveList();
-      // Dropped outside any valid target — the optimistic dragListOver
-      // reorder from earlier in the drag never gets persisted, so revert
-      // it here or local state silently drifts from the server.
       if (!over) {
         revertListSnapshot();
         return;
@@ -293,9 +293,6 @@ export function Board({
     }
 
     clearActiveTask();
-    // Same as above, for task drags: dropping outside any valid target
-    // means the optimistic dragOver move is never persisted to the
-    // server, so revert the local snapshot to keep state in sync.
     if (!over) {
       revertToSnapshot();
       return;
@@ -332,7 +329,7 @@ export function Board({
   }
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden">
+    <div className="flex flex-col h-full w-full overflow-hidden bg-background text-foreground">
       <DndContext
         id="kanban-board"
         sensors={sensors}
@@ -383,7 +380,7 @@ export function Board({
               <TaskCardView
                 task={activeTask}
                 interactive={false}
-                className="shadow-lg cursor-grabbing"
+                className="shadow-lg cursor-grabbing bg-card text-card-foreground border-border"
               />
             </div>
           ) : activeListId ? (
@@ -391,8 +388,7 @@ export function Board({
               const draggedList = lists.find((l) => l.id === activeListId);
               if (!draggedList) return null;
               return (
-                <div className="w-80 rotate-1 rounded-xl bg-card border border-border shadow-2xl p-3 opacity-95 flex flex-col max-h-[80vh]">
-                  {/* List Header Preview */}
+                <div className="w-80 rotate-1 rounded-xl bg-card border border-border shadow-2xl p-3 opacity-95 flex flex-col max-h-[80vh] text-card-foreground">
                   <div className="flex items-center justify-between pb-3 px-1 shrink-0">
                     <span className="font-bold text-xs uppercase tracking-wider text-foreground">
                       {draggedList.name}
@@ -401,14 +397,13 @@ export function Board({
                       {draggedList.tasks.length}
                     </span>
                   </div>
-                  {/* Tasks Preview Container */}
                   <div className="space-y-3 overflow-hidden pr-1">
                     {draggedList.tasks.map((task) => (
                       <TaskCardView
                         key={task.id}
                         task={task}
                         interactive={false}
-                        className="shadow-sm"
+                        className="shadow-sm bg-card text-card-foreground border-border"
                       />
                     ))}
                   </div>
