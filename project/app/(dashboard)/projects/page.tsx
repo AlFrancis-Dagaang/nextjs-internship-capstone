@@ -1,3 +1,4 @@
+// app/projects/page.tsx
 import { getProjects } from "@/lib/actions/projects";
 import { getProjectMembers } from "@/lib/actions/project-member";
 import { ProjectsList } from "@/components/projects/projects-list";
@@ -13,17 +14,17 @@ export default async function ProjectsPage() {
 
   if ("error" in authResult) {
     return (
-      <p className="text-red-600 dark:text-red-400">
+      <div className="p-6 rounded-lg bg-card border border-border text-destructive">
         Error loading user: {authResult.error}
-      </p>
+      </div>
     );
   }
 
   if (!result.success) {
     return (
-      <p className="text-red-600 dark:text-red-400">
+      <div className="p-6 rounded-lg bg-card border border-border text-destructive">
         Error loading projects: {result.error}
-      </p>
+      </div>
     );
   }
 
@@ -42,17 +43,20 @@ export default async function ProjectsPage() {
       ] as const;
     }),
   );
+
   const initialMembersMap = Object.fromEntries(
     membersByProject.map(([id, v]) => [id, v.members]),
   );
+
   const initialOwnerMap = Object.fromEntries(
     membersByProject.map(([id, v]) => [
       id,
       { name: v.ownerName, email: v.ownerEmail },
     ]),
   );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full min-w-0">
       <ProjectsList
         initialProjects={result.data}
         currentUserId={authResult.user.id}

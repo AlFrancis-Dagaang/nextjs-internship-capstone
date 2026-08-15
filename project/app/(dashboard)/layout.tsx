@@ -1,6 +1,5 @@
 // app/(dashboard)/layout.tsx
-import { requireAuthedUser } from "@/lib/services/auth";
-import { queries } from "@/lib/db";
+import { requireAuthedDbUser } from "@/lib/services/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
 
 export default async function DashboardGroupLayout({
@@ -8,8 +7,8 @@ export default async function DashboardGroupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const clerkUserId = await requireAuthedUser();
-  const user = await queries.users.getByClerkId(clerkUserId);
+  const user = await requireAuthedDbUser();
 
-  return <DashboardShell currentUserId={user!.id}>{children}</DashboardShell>;
+  // Clean layout return without redundant wrappers
+  return <DashboardShell currentUserId={user.id}>{children}</DashboardShell>;
 }

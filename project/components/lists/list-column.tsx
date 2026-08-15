@@ -1,3 +1,4 @@
+// components/projects/list-column.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -172,7 +173,7 @@ export function ListColumn({
         style={listDragStyle}
         {...(canEdit ? listDragAttributes : {})}
         {...(canEdit ? listDragListeners : {})}
-        className={`shrink-0 w-80 bg-neutral-100 dark:bg-neutral-800 rounded-xl p-3 flex flex-col h-fit max-h-full transition-colors cursor-grab active:cursor-grabbing ${
+        className={`shrink-0 w-80 bg-muted/60 border border-border rounded-xl p-3 flex flex-col h-fit max-h-full transition-colors cursor-grab active:cursor-grabbing shadow-sm ${
           isListDragging ? "opacity-40" : ""
         }`}
       >
@@ -193,15 +194,15 @@ export function ListColumn({
                 onChange={(e) => setName(e.target.value)}
                 onBlur={handleRenameSubmit}
                 disabled={isPending}
-                className="h-7 px-2 text-xs font-bold uppercase tracking-wider bg-white dark:bg-neutral-900 dark:border-neutral-700 rounded shadow-sm focus-visible:ring-1 focus-visible:ring-neutral-400 dark:focus-visible:ring-neutral-600"
+                className="h-7 px-2 text-xs font-bold uppercase tracking-wider bg-card border-border text-foreground rounded shadow-sm focus-visible:ring-1 focus-visible:ring-ring"
               />
             </form>
           ) : (
             <div className="flex items-center space-x-2">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-foreground">
                 {list.name}
               </h3>
-              <span className="text-xs text-neutral-500 font-semibold">
+              <span className="text-xs text-muted-foreground font-semibold">
                 {filtering
                   ? `${visibleTasks.length}/${list.tasks.length}`
                   : list.tasks.length}
@@ -226,14 +227,11 @@ export function ListColumn({
         </div>
 
         {/* Task Drop Zone Container */}
-        {/* Task Drop Zone Container */}
         <div
           ref={setDroppableRef}
           onPointerDown={(e) => e.stopPropagation()}
           className={`flex flex-col rounded-lg transition-colors min-h-12.5 ${
-            isOver
-              ? "ring-2 ring-blue-500/40 bg-blue-50/20 dark:bg-blue-950/10 p-1"
-              : ""
+            isOver ? "ring-2 ring-primary/40 bg-primary/10 p-1" : ""
           }`}
         >
           {/* Scrollable Tasks List — Added py-1.5 to prevent first/last card underlapping/clipping */}

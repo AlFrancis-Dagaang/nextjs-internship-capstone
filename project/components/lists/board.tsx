@@ -1,3 +1,4 @@
+// components/projects/board.tsx
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
@@ -54,7 +55,7 @@ export function Board({
   const { toast } = useToast();
   useTrackProjectView(projectId);
   useRealtimeBoard(projectId);
-  // #22 (pass 2) — lists/drag state now live in board-store.ts.
+
   const lists = useBoardStore((s) => s.lists);
   const activeTask = useBoardStore((s) => s.activeTask);
   const setInitialLists = useBoardStore((s) => s.setInitialLists);
@@ -74,7 +75,6 @@ export function Board({
   const endDragAction = useBoardStore((s) => s.endDrag);
   const revertToSnapshot = useBoardStore((s) => s.revertToSnapshot);
 
-  // #22 (pass 1) — openTaskId/deleteTaskOpen live in ui-store.ts.
   const openTaskId = useUiStore((s) => s.openTaskId);
   const deleteTaskOpen = useUiStore((s) => s.deleteTaskOpen);
   const openTaskDetail = useUiStore((s) => s.openTaskDetail);
@@ -101,7 +101,6 @@ export function Board({
   const searchParams = useSearchParams();
   const openTaskParam = searchParams.get("openTask");
 
-  // Auto-open task from notification search param once on mount
   useEffect(() => {
     if (openTaskParam) {
       openTaskDetail(openTaskParam);
@@ -159,9 +158,6 @@ export function Board({
     requestBulkDelete,
   ]);
 
-  // Hydrate the store from server-provided data. Re-runs if projectId
-  // changes (e.g. client-side nav to a different project) so stale data
-  // from a previous board doesn't linger in this global store instance.
   useEffect(() => {
     setInitialLists(initialLists);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,13 +182,8 @@ export function Board({
     if (found) {
       setOpenTask(found);
     }
-    // If not found (e.g. archived while open), intentionally keep the
-    // last-known snapshot instead of clearing it — that's what lets the
-    // modal stay open after archiving, showing the task as it was right
-    // before archive, until the user explicitly closes it.
   }, [openTaskId, lists]);
 
-  // Type the function using dnd-kit's built-in CollisionDetection type
   const customCollisionDetection: CollisionDetection = (args) => {
     const isDraggingList = args.active.data.current?.type === "list";
 
@@ -205,7 +196,6 @@ export function Board({
       });
     }
 
-    // For tasks, restrict collision checking to task containers only to prevent layout thrashing
     return rectIntersection({
       ...args,
       droppableContainers: args.droppableContainers.filter(
@@ -239,6 +229,7 @@ export function Board({
       }
     });
   }
+
   function handleDragStart(event: DragStartEvent) {
     const type = event.active.data.current?.type;
     if (type === "list") {
@@ -321,12 +312,11 @@ export function Board({
       <DndContext
         id="kanban-board"
         sensors={sensors}
-        collisionDetection={customCollisionDetection} // <-- Replace rectIntersection with this
+        collisionDetection={customCollisionDetection}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        {/* Scrollable container pinned to the bottom */}
         <div className="flex-1 w-full overflow-x-auto overflow-y-hidden pb-6">
           <div className="flex items-start space-x-6 min-w-max h-full px-1">
             <SortableContext
@@ -377,13 +367,13 @@ export function Board({
               const draggedList = lists.find((l) => l.id === activeListId);
               if (!draggedList) return null;
               return (
-                <div className="w-80 rotate-1 rounded-xl bg-neutral-100 dark:bg-neutral-800 shadow-2xl p-3 opacity-95 flex flex-col max-h-[80vh]">
+                <div className="w-80 rotate-1 rounded-xl bg-card border border-border shadow-2xl p-3 opacity-95 flex flex-col max-h-[80vh]">
                   {/* List Header Preview */}
                   <div className="flex items-center justify-between pb-3 px-1 shrink-0">
-                    <span className="font-bold text-xs uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                    <span className="font-bold text-xs uppercase tracking-wider text-foreground">
                       {draggedList.name}
                     </span>
-                    <span className="text-xs text-neutral-500 font-semibold">
+                    <span className="text-xs text-muted-foreground font-semibold">
                       {draggedList.tasks.length}
                     </span>
                   </div>

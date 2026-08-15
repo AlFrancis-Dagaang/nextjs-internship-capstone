@@ -52,22 +52,22 @@ export function ProjectDetailModal({
 }: ProjectDetailModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[85vh] bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl p-0 flex flex-col overflow-hidden [&>button]:hidden">
+      <DialogContent className="max-w-5xl h-[85vh] bg-card border border-border rounded-xl shadow-2xl p-0 flex flex-col overflow-hidden [&>button]:hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 shrink-0 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-border shrink-0 flex items-center justify-between">
           <div>
             <DialogHeader className="p-0 space-y-1">
-              <DialogTitle className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+              <DialogTitle className="text-lg font-semibold text-foreground">
                 {project.name}
               </DialogTitle>
             </DialogHeader>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            <p className="text-xs text-muted-foreground">
               Project overview and team management
             </p>
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <X size={18} />
           </button>

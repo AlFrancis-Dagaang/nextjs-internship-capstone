@@ -132,37 +132,38 @@ export function ProjectMembers({
       });
     });
   }
+
   return (
     <>
-      <div className="w-full md:w-[480px] shrink-0 p-6 flex flex-col overflow-y-auto bg-neutral-50/50 dark:bg-neutral-900/30 space-y-5 border-t md:border-t-0 md:border-l border-neutral-200 dark:border-neutral-800">
-        {" "}
+      <div className="w-full md:w-[480px] shrink-0 p-6 flex flex-col overflow-y-auto bg-muted/30 space-y-5 border-t md:border-t-0 md:border-l border-border">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Team Members ({members.length + 1})
             </h4>
           </div>
           {isOwner && (
             <Button
               onClick={() => setInviteModalOpen(true)}
-              className="h-8 px-3 bg-cyan-400 hover:bg-cyan-500 text-neutral-900 text-xs font-medium rounded-lg shadow-none"
+              className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-lg shadow-none"
             >
               <UserPlus size={14} className="mr-1.5" />
               Add Member
             </Button>
           )}
         </div>
+
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search
               size={14}
-              className="absolute left-3 top-2.5 text-neutral-400"
+              className="absolute left-3 top-2.5 text-muted-foreground"
             />
             <Input
               placeholder="Search members..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-9 pl-8 text-xs bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-lg focus-visible:ring-1"
+              className="h-9 pl-8 text-xs bg-card border-border text-foreground rounded-lg focus-visible:ring-1"
             />
           </div>
           <Select
@@ -171,10 +172,10 @@ export function ProjectMembers({
               setRoleFilter(val)
             }
           >
-            <SelectTrigger className="w-[110px] h-9 text-xs bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 rounded-lg shadow-none focus:ring-0">
+            <SelectTrigger className="w-[110px] h-9 text-xs bg-card border-border text-foreground rounded-lg shadow-none focus:ring-0">
               <SelectValue placeholder="Role" />
             </SelectTrigger>
-            <SelectContent className="z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl">
+            <SelectContent className="z-50 bg-card border border-border rounded-xl shadow-xl">
               <SelectItem value="all" className="text-xs">
                 All Roles
               </SelectItem>
@@ -187,50 +188,51 @@ export function ProjectMembers({
             </SelectContent>
           </Select>
         </div>
-        <div className="divide-y divide-neutral-100 dark:divide-neutral-800 border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-white dark:bg-neutral-900 shadow-sm flex-1">
+
+        <div className="divide-y divide-border border border-border rounded-xl overflow-hidden bg-card shadow-sm flex-1">
           {(!searchQuery ||
             ownerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             ownerEmail?.toLowerCase().includes(searchQuery.toLowerCase())) &&
             roleFilter === "all" && (
-              <div className="flex items-center justify-between p-3.5 bg-neutral-50/50 dark:bg-neutral-800/30">
+              <div className="flex items-center justify-between p-3.5 bg-muted/40">
                 <div className="flex items-center space-x-3 overflow-hidden">
-                  <div className="w-8 h-8 rounded-full bg-cyan-500 text-neutral-900 flex items-center justify-center font-bold text-xs uppercase ring-2 ring-white dark:ring-neutral-900 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs uppercase ring-2 ring-card shrink-0">
                     {ownerName?.[0] ?? ownerEmail?.[0] ?? "U"}
                   </div>
                   <div className="truncate">
-                    <p className="text-xs font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                    <p className="text-xs font-medium text-foreground truncate">
                       {ownerName ?? "Project Owner"}
                     </p>
-                    <p className="text-[10px] text-neutral-400 truncate">
+                    <p className="text-[10px] text-muted-foreground truncate">
                       {ownerEmail ?? ""}
                     </p>
                   </div>
                 </div>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 shrink-0">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground shrink-0 border border-border">
                   <Shield size={10} className="mr-1" /> Owner
                 </span>
               </div>
             )}
 
           {filteredMembers.length === 0 ? (
-            <div className="p-8 text-center text-xs text-neutral-400">
+            <div className="p-8 text-center text-xs text-muted-foreground">
               No matching members found.
             </div>
           ) : (
             filteredMembers.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center justify-between p-3.5 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20 transition-colors"
+                className="flex items-center justify-between p-3.5 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center space-x-3 overflow-hidden">
-                  <div className="w-8 h-8 rounded-full bg-neutral-700 text-white flex items-center justify-center font-bold text-xs uppercase ring-2 ring-white dark:ring-neutral-900 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-secondary text-secondary-foreground border border-border flex items-center justify-center font-bold text-xs uppercase ring-2 ring-card shrink-0">
                     {member.name?.[0] ?? member.email?.[0] ?? "U"}
                   </div>
                   <div className="truncate">
-                    <p className="text-xs font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                    <p className="text-xs font-medium text-foreground truncate">
                       {member.name ?? "Team Member"}
                     </p>
-                    <p className="text-[10px] text-neutral-400 truncate">
+                    <p className="text-[10px] text-muted-foreground truncate">
                       {member.id.startsWith("temp-")
                         ? "Saving..."
                         : (member.email ?? "Active member")}
@@ -247,10 +249,10 @@ export function ProjectMembers({
                           handleRoleChange(member.id, val)
                         }
                       >
-                        <SelectTrigger className="w-[95px] h-7 text-[11px] bg-neutral-100 dark:bg-neutral-800 border-0 rounded-lg shadow-none focus:ring-0">
+                        <SelectTrigger className="w-[95px] h-7 text-[11px] bg-muted border-input text-foreground rounded-lg shadow-none focus:ring-0">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-xl">
+                        <SelectContent className="z-50 bg-card border border-border rounded-xl shadow-xl">
                           <SelectItem value="viewer" className="text-xs">
                             Viewer
                           </SelectItem>
@@ -263,14 +265,14 @@ export function ProjectMembers({
                         variant="ghost"
                         size="icon"
                         onClick={() => setMemberToRemove(member)}
-                        className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg"
+                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg"
                         title="Remove member"
                       >
                         <Trash2 size={13} />
                       </Button>
                     </>
                   ) : (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 capitalize">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-secondary text-secondary-foreground capitalize border border-border">
                       {member.role}
                     </span>
                   )}

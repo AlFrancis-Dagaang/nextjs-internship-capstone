@@ -1,3 +1,4 @@
+// components/projects/project-header.tsx
 "use client";
 
 import { useState, useEffect, useRef, useTransition, useCallback } from "react";
@@ -286,17 +287,17 @@ export function ProjectHeader({
         <div className="flex items-center space-x-3.5 min-w-0">
           <Link
             href="/projects"
-            className="p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800/80 rounded-lg transition-all text-neutral-500 dark:text-neutral-400 shrink-0 border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700"
+            className="p-1.5 hover:bg-muted rounded-lg transition-all text-muted-foreground shrink-0 border border-transparent hover:border-border"
             aria-label="Back to projects"
           >
             <ArrowLeft size={16} />
           </Link>
           <div className="flex items-center space-x-3 min-w-0">
-            <h1 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 truncate tracking-tight">
+            <h1 className="text-base font-semibold text-foreground truncate tracking-tight">
               {liveProject.name}
             </h1>
 
-            {/* Avatars with Canva-inspired Dropdown Card on click */}
+            {/* Avatars with Dropdown Card on click */}
             <div className="hidden sm:flex items-center">
               <div className="flex -space-x-1.5">
                 {visibleMembers.map((m) => {
@@ -312,7 +313,7 @@ export function ProjectHeader({
                       <DropdownMenuTrigger asChild>
                         <button
                           type="button"
-                          className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/40 border-2 border-white dark:border-neutral-900 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-bold uppercase transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                          className="w-7 h-7 rounded-full bg-secondary border-2 border-card text-secondary-foreground flex items-center justify-center text-[10px] font-bold uppercase transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer shadow-sm"
                           title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
                         >
                           {m.name?.[0] ?? m.email?.[0] ?? "U"}
@@ -321,19 +322,19 @@ export function ProjectHeader({
                       <DropdownMenuContent
                         align="start"
                         sideOffset={8}
-                        className="w-72 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xl p-4 flex items-center space-x-3 z-50"
+                        className="w-72 bg-card border border-border rounded-2xl shadow-xl p-4 flex items-center space-x-3 z-50"
                       >
-                        <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-base font-bold uppercase shrink-0">
+                        <div className="w-12 h-12 rounded-full bg-secondary text-secondary-foreground border border-border flex items-center justify-center text-base font-bold uppercase shrink-0 shadow-sm">
                           {m.name?.[0] ?? m.email?.[0] ?? "U"}
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
+                          <span className="text-sm font-semibold text-foreground truncate">
                             {m.name || m.email || "User"}
                           </span>
-                          <span className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                          <span className="text-xs text-muted-foreground truncate">
                             {m.email}
                           </span>
-                          <span className="text-xs font-medium text-cyan-600 dark:text-cyan-400 mt-0.5">
+                          <span className="text-xs font-medium text-foreground mt-0.5">
                             {roleLabel}
                           </span>
                         </div>
@@ -344,7 +345,7 @@ export function ProjectHeader({
               </div>
 
               {extraCount > 0 && (
-                <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-cyan-400 text-neutral-900 text-[10px] font-semibold">
+                <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold border border-border">
                   +{extraCount}
                 </span>
               )}
@@ -356,20 +357,20 @@ export function ProjectHeader({
         <div className="flex items-center space-x-3 ml-auto flex-wrap">
           <div className="relative w-64 sm:w-80 md:w-96 hidden sm:block">
             <Search
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
               size={13}
             />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-8 text-xs bg-neutral-50/50 dark:bg-neutral-900/50 border-neutral-200/80 dark:border-neutral-800 rounded-lg shadow-sm focus-visible:ring-1 focus-visible:ring-cyan-500 w-full"
+              className="pl-8 h-8 text-xs bg-muted/50 border-border rounded-lg shadow-sm focus-visible:ring-1 focus-visible:ring-ring w-full text-foreground"
               placeholder="Search tasks..."
             />
           </div>
 
           {selectionMode ? (
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400 px-1 whitespace-nowrap">
+              <span className="text-xs font-medium text-muted-foreground px-1 whitespace-nowrap">
                 {selectedTaskIds.length} selected
               </span>
 
@@ -383,29 +384,29 @@ export function ProjectHeader({
                     variant="outline"
                     size="sm"
                     disabled={selectedTaskIds.length === 0 || isBulkPending}
-                    className="h-8 text-xs bg-neutral-50/50 dark:bg-neutral-900/50 border-neutral-200/80 dark:border-neutral-800 rounded-lg shadow-sm flex items-center gap-1.5"
+                    className="h-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm flex items-center gap-1.5 hover:bg-muted"
                   >
                     <span>Actions</span>
-                    <ChevronDown size={13} className="text-neutral-500" />
+                    <ChevronDown size={13} className="text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-52 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-2xl p-1.5 space-y-1 text-left z-50"
+                  className="w-52 bg-card border border-border rounded-xl shadow-2xl p-1.5 space-y-1 text-left z-50"
                 >
-                  <div className="flex items-center justify-between px-2.5 py-1 text-xs font-semibold text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 mb-1">
+                  <div className="flex items-center justify-between px-2.5 py-1 text-xs font-semibold text-muted-foreground border-b border-border mb-1">
                     <span>Selected Options</span>
                     <button
                       onClick={() => setBulkActionsDropdownOpen(false)}
-                      className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       <X size={14} />
                     </button>
                   </div>
 
-                  {/* Move To Sub-dropdown/List selection */}
+                  {/* Move To List selection */}
                   <div className="px-2.5 py-1.5">
-                    <span className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                       Move to list
                     </span>
                     <div className="space-y-0.5 max-h-40 overflow-y-auto">
@@ -413,25 +414,28 @@ export function ProjectHeader({
                         <button
                           key={l.id}
                           onClick={() => handleBulkMove(l.id)}
-                          className="w-full text-left px-2 py-1.5 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg flex items-center space-x-2 transition-colors"
+                          className="w-full text-left px-2 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg flex items-center space-x-2 transition-colors"
                         >
-                          <FolderInput size={13} className="text-neutral-400" />
+                          <FolderInput
+                            size={13}
+                            className="text-muted-foreground"
+                          />
                           <span className="truncate">{l.name}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <DropdownMenuSeparator className="bg-neutral-100 dark:bg-neutral-800 my-1" />
+                  <DropdownMenuSeparator className="bg-border my-1" />
 
                   <DropdownMenuItem
                     onSelect={() => {
                       setBulkActionsDropdownOpen(false);
                       setBulkDeleteConfirmOpen(true);
                     }}
-                    className="cursor-pointer px-2.5 py-2 text-xs text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/30 rounded-lg flex items-center space-x-2.5"
+                    className="cursor-pointer px-2.5 py-2 text-xs text-destructive focus:bg-destructive/10 rounded-lg flex items-center space-x-2.5"
                   >
-                    <Trash2 size={14} className="text-red-500" />
+                    <Trash2 size={14} className="text-destructive" />
                     <span>Delete selected</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -444,7 +448,7 @@ export function ProjectHeader({
                   clearSelection();
                   exitSelectionMode();
                 }}
-                className="h-8 text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                className="h-8 text-xs text-muted-foreground hover:text-foreground"
               >
                 Cancel
               </Button>
@@ -459,43 +463,43 @@ export function ProjectHeader({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="relative h-8 text-xs bg-neutral-50/50 dark:bg-neutral-900/50 border-neutral-200/80 dark:border-neutral-800 rounded-lg shadow-sm px-2.5 flex items-center gap-1.5"
+                    className="relative h-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm px-2.5 flex items-center gap-1.5 hover:bg-muted"
                   >
-                    <Filter size={13} className="text-neutral-500" />
+                    <Filter size={13} className="text-muted-foreground" />
                     <span>Filter</span>
                     {isFilterActive && (
-                      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-cyan-500 ring-2 ring-white dark:ring-neutral-900" />
+                      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-card" />
                     )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-64 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-2xl p-3 space-y-3 text-left z-50"
+                  className="w-64 bg-card border border-border rounded-xl shadow-2xl p-3 space-y-3 text-left z-50"
                 >
-                  <div className="flex items-center justify-between pb-2 border-b border-neutral-100 dark:border-neutral-800">
-                    <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                  <div className="flex items-center justify-between pb-2 border-b border-border">
+                    <span className="text-xs font-semibold text-foreground">
                       Filters
                     </span>
                     <button
                       onClick={() => setFilterDropdownOpen(false)}
-                      className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       <X size={14} />
                     </button>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Status
                     </label>
                     <Select
                       value={filterCompleted}
                       onValueChange={(val: any) => setFilterCompleted(val)}
                     >
-                      <SelectTrigger className="w-full h-8 text-xs bg-neutral-50/50 dark:bg-neutral-800 border-neutral-200/80 dark:border-neutral-700 rounded-lg shadow-none">
+                      <SelectTrigger className="w-full h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none">
                         <SelectValue placeholder="All status" />
                       </SelectTrigger>
-                      <SelectContent className="z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                      <SelectContent className="z-50 bg-card border border-border rounded-lg">
                         <SelectItem value="all" className="text-xs">
                           All
                         </SelectItem>
@@ -510,17 +514,17 @@ export function ProjectHeader({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Priority
                     </label>
                     <Select
                       value={filterPriority}
                       onValueChange={(val: any) => setFilterPriority(val)}
                     >
-                      <SelectTrigger className="w-full h-8 text-xs bg-neutral-50/50 dark:bg-neutral-800 border-neutral-200/80 dark:border-neutral-700 rounded-lg shadow-none">
+                      <SelectTrigger className="w-full h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none">
                         <SelectValue placeholder="All priorities" />
                       </SelectTrigger>
-                      <SelectContent className="z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                      <SelectContent className="z-50 bg-card border border-border rounded-lg">
                         <SelectItem value="all" className="text-xs">
                           All
                         </SelectItem>
@@ -538,17 +542,17 @@ export function ProjectHeader({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Due date
                     </label>
                     <Select
                       value={filterDueDate}
                       onValueChange={(val: any) => setFilterDueDate(val)}
                     >
-                      <SelectTrigger className="w-full h-8 text-xs bg-neutral-50/50 dark:bg-neutral-800 border-neutral-200/80 dark:border-neutral-700 rounded-lg shadow-none">
+                      <SelectTrigger className="w-full h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none">
                         <SelectValue placeholder="All due dates" />
                       </SelectTrigger>
-                      <SelectContent className="z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                      <SelectContent className="z-50 bg-card border border-border rounded-lg">
                         <SelectItem value="all" className="text-xs">
                           All
                         </SelectItem>
@@ -569,7 +573,7 @@ export function ProjectHeader({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                    <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                       Assignee
                     </label>
                     <Select
@@ -578,10 +582,10 @@ export function ProjectHeader({
                         setFilterAssigneeId(val === "all" ? null : val)
                       }
                     >
-                      <SelectTrigger className="w-full h-8 text-xs bg-neutral-50/50 dark:bg-neutral-800 border-neutral-200/80 dark:border-neutral-700 rounded-lg shadow-none">
+                      <SelectTrigger className="w-full h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none">
                         <SelectValue placeholder="Any assignee" />
                       </SelectTrigger>
-                      <SelectContent className="z-50 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                      <SelectContent className="z-50 bg-card border border-border rounded-lg">
                         <SelectItem value="all" className="text-xs">
                           Any assignee
                         </SelectItem>
@@ -601,7 +605,7 @@ export function ProjectHeader({
                   <div className="flex items-center justify-between pt-1">
                     <label
                       htmlFor="assigned-to-me"
-                      className="text-xs text-neutral-700 dark:text-neutral-300 cursor-pointer"
+                      className="text-xs text-foreground cursor-pointer"
                     >
                       Assigned to me
                     </label>
@@ -610,16 +614,16 @@ export function ProjectHeader({
                       type="checkbox"
                       checked={filterAssignedToMe}
                       onChange={(e) => setFilterAssignedToMe(e.target.checked)}
-                      className="rounded border-neutral-300 text-cyan-500 focus:ring-cyan-500 h-4 w-4"
+                      className="rounded border-border text-primary focus:ring-ring h-4 w-4 bg-muted"
                     />
                   </div>
 
-                  <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                  <div className="pt-2 border-t border-border">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => clearAllFilters()}
-                      className="w-full h-8 text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                      className="w-full h-8 text-xs text-muted-foreground hover:text-foreground"
                     >
                       Clear all filters
                     </Button>
@@ -632,9 +636,9 @@ export function ProjectHeader({
                   variant="outline"
                   size="sm"
                   onClick={enterSelectionMode}
-                  className="h-8 text-xs bg-neutral-50/50 dark:bg-neutral-900/50 border-neutral-200/80 dark:border-neutral-800 rounded-lg shadow-sm flex items-center gap-1.5"
+                  className="h-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm flex items-center gap-1.5 hover:bg-muted"
                 >
-                  <ListChecks size={13} className="text-neutral-500" />
+                  <ListChecks size={13} className="text-muted-foreground" />
                   <span>Select</span>
                 </Button>
               )}
@@ -647,21 +651,21 @@ export function ProjectHeader({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 text-xs bg-neutral-50/50 dark:bg-neutral-900/50 border-neutral-200/80 dark:border-neutral-800 rounded-lg shadow-sm"
+                    className="h-8 w-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm hover:bg-muted"
                     aria-label="Project actions"
                   >
-                    <MoreVertical size={16} className="text-neutral-500" />
+                    <MoreVertical size={16} className="text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-52 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-2xl p-1.5 space-y-1 text-left z-50"
+                  className="w-52 bg-card border border-border rounded-xl shadow-2xl p-1.5 space-y-1 text-left z-50"
                 >
-                  <div className="flex items-center justify-between px-2.5 py-1 text-xs font-semibold text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 mb-1">
+                  <div className="flex items-center justify-between px-2.5 py-1 text-xs font-semibold text-muted-foreground border-b border-border mb-1">
                     <span>Actions</span>
                     <button
                       onClick={() => setActionsDropdownOpen(false)}
-                      className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       <X size={14} />
                     </button>
@@ -673,9 +677,9 @@ export function ProjectHeader({
                         setActionsDropdownOpen(false);
                         setInviteOpen(true);
                       }}
-                      className="cursor-pointer px-2.5 py-2 text-xs text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                      className="cursor-pointer px-2.5 py-2 text-xs text-foreground focus:bg-muted rounded-lg flex items-center space-x-2.5"
                     >
-                      <UserPlus size={14} className="text-neutral-400" />
+                      <UserPlus size={14} className="text-muted-foreground" />
                       <span>Add members</span>
                     </DropdownMenuItem>
                   )}
@@ -685,9 +689,9 @@ export function ProjectHeader({
                       setActionsDropdownOpen(false);
                       openArchiveModal();
                     }}
-                    className="cursor-pointer px-2.5 py-2 text-xs text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                    className="cursor-pointer px-2.5 py-2 text-xs text-foreground focus:bg-muted rounded-lg flex items-center space-x-2.5"
                   >
-                    <Archive size={14} className="text-neutral-400" />
+                    <Archive size={14} className="text-muted-foreground" />
                     <span>Archived tasks</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
