@@ -1,4 +1,3 @@
-// components/projects/project-card.tsx
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -12,6 +11,7 @@ import { ProjectDetailModal } from "./modals/project-detail-modal";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Calendar, ArrowUpRight } from "lucide-react";
+import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 
 type Member = {
   id: string;
@@ -20,24 +20,6 @@ type Member = {
   name?: string;
   role: "editor" | "viewer";
 };
-
-// Distinct vibrant theme-friendly color pairs for member avatars
-const avatarColors = [
-  "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
-  "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30",
-  "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
-  "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
-  "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
-];
-
-function getAvatarColorClass(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % avatarColors.length;
-  return avatarColors[index];
-}
 
 export function ProjectCard({
   project,
@@ -113,6 +95,8 @@ export function ProjectCard({
     });
   }
 
+  const ownerDisplayString = ownerName || ownerEmail || "Project Owner";
+
   return (
     <>
       <div className="group relative bg-card backdrop-blur-xl rounded-xl border border-border hover:border-ring hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 p-5 flex flex-col justify-between space-y-4 shadow-sm">
@@ -179,13 +163,17 @@ export function ProjectCard({
         <div className="relative z-10 pt-3 border-t border-border flex flex-col gap-3">
           {/* Owner Info Row */}
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[9px] font-semibold uppercase shadow-sm">
-              {ownerName?.[0] ?? ownerEmail?.[0] ?? "U"}
+            <div
+              className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold uppercase shadow-sm ${getAvatarColor(
+                project.ownerId || ownerDisplayString,
+              )}`}
+            >
+              {getInitials(ownerName || ownerEmail || "U")}
             </div>
             <span className="text-[11px] text-muted-foreground">
               Owner:{" "}
               <span className="font-medium text-foreground">
-                {isOwner ? "You" : ownerName || ownerEmail || "Project Owner"}
+                {isOwner ? "You" : ownerDisplayString}
               </span>
             </span>
           </div>
@@ -212,16 +200,21 @@ export function ProjectCard({
             {/* Unified Colored Avatar Stack */}
             <div className="flex items-center">
               <div className="flex -space-x-1.5">
-                {/* Member Avatars with unique dynamic color profiles */}
-                {members.slice(0, 3).map((m) => (
-                  <div
-                    key={m.id}
-                    className={`w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase shadow-sm ${getAvatarColorClass(m.id)}`}
-                    title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
-                  >
-                    {m.name?.[0] ?? m.email?.[0] ?? "U"}
-                  </div>
-                ))}
+                {/* Member Avatars with unique stable color profiles */}
+                {members.slice(0, 3).map((m) => {
+                  const stableKey = m.userId || m.email || m.id;
+                  return (
+                    <div
+                      key={m.id}
+                      className={`w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase shadow-sm ${getAvatarColor(
+                        stableKey,
+                      )}`}
+                      title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
+                    >
+                      {getInitials(m.name || m.email || "U")}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Extra Count Badge */}

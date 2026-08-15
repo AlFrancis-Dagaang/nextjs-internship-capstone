@@ -1,7 +1,7 @@
 // components/projects/list-column.tsx
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -81,27 +81,65 @@ export function ListColumn({
   const selectedTaskIds = useUiStore((s) => s.selectedTaskIds);
   const toggleTaskSelected = useUiStore((s) => s.toggleTaskSelected);
 
-  const filters = {
-    searchQuery,
-    filterCompleted,
-    filterPriority,
-    filterDueDate,
-    filterAssignedToMe,
-    filterAssigneeId,
-  };
+  // Memoized so this object only gets a new reference when one of the
+  // actual filter values changes — not on every render of ListColumn
+  // (e.g. when an unrelated task in another list updates).
+  const filters = useMemo(
+    () => ({
+      searchQuery,
+      filterCompleted,
+      filterPriority,
+      filterDueDate,
+      filterAssignedToMe,
+      filterAssigneeId,
+    }),
+    [
+      searchQuery,
+      filterCompleted,
+      filterPriority,
+      filterDueDate,
+      filterAssignedToMe,
+      filterAssigneeId,
+    ],
+  );
   const filtering = isFilteringActive(filters);
 
-  const visibleTasks = list.tasks.filter((task) =>
-    taskMatchesFilters(task, filters, currentUserId),
+  const visibleTasks = useMemo(
+    () =>
+      list.tasks.filter((task) =>
+        taskMatchesFilters(task, filters, currentUserId),
+      ),
+    [list.tasks, filters, currentUserId],
+  );
+
+  // Stable ids for SortableContext — matches what's actually rendered
+  // (visibleTasks), not the full unfiltered list.tasks. Keeping this in
+  // sync with the rendered children avoids SortableContext's internal
+  // index math getting out of sync when filters are active.
+  const sortableTaskIds = useMemo(
+    () => visibleTasks.map((t) => t.id),
+    [visibleTasks],
   );
 
   // 1. Droppable target ONLY for dropping tasks inside this list
+  // `data` is memoized so dnd-kit sees a stable reference across renders
+  // that don't actually change list.id — an inline object literal here
+  // was a new reference every render, which kept re-triggering dnd-kit's
+  // internal registration effects and cascading into React's render loop.
+  const droppableData = useMemo(
+    () => ({ type: "list-dropzone" as const, listId: list.id }),
+    [list.id],
+  );
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: list.id,
-    data: { type: "list-dropzone", listId: list.id },
+    data: droppableData,
   });
 
   // 2. Sortable target ONLY for moving the entire list column horizontally
+  const sortableData = useMemo(
+    () => ({ type: "list" as const, listId: list.id }),
+    [list.id],
+  );
   const {
     attributes: listDragAttributes,
     listeners: listDragListeners,
@@ -112,7 +150,7 @@ export function ListColumn({
   } = useSortable({
     id: `list-sort-${list.id}`,
     disabled: !canEdit,
-    data: { type: "list", listId: list.id },
+    data: sortableData,
   });
 
   const listDragStyle = {
@@ -237,7 +275,7 @@ export function ListColumn({
           {/* Scrollable Tasks List — Added py-1.5 to prevent first/last card underlapping/clipping */}
           <div className="overflow-y-auto overflow-x-visible space-y-3 px-1.5 py-1.5 max-h-[calc(100vh-14rem)]">
             <SortableContext
-              items={list.tasks.map((t) => t.id)}
+              items={sortableTaskIds}
               strategy={verticalListSortingStrategy}
             >
               {visibleTasks.map((task) => (

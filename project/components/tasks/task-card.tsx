@@ -17,6 +17,7 @@ import { DeleteTaskDialog } from "./modal/delete-task-dialog";
 import { Input } from "@/components/ui/input";
 import { ListWithTasks, TaskWithCommentCount } from "../lists/board";
 import { useBoardStore } from "@/stores/board-store";
+import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 
 const priorityBarStyles: Record<string, string> = {
   low: "bg-blue-500",
@@ -162,15 +163,22 @@ export function TaskCardView({
         {assignees.length > 0 && (
           <div className="flex items-center">
             <div className="flex -space-x-1.5">
-              {visibleAssignees.map((a) => (
-                <div
-                  key={a.userId}
-                  className="w-6 h-6 rounded-full bg-secondary border-2 border-card text-secondary-foreground flex items-center justify-center text-[10px] font-bold uppercase shadow-sm"
-                  title={a.name ?? a.email}
-                >
-                  {a.name?.[0] ?? a.email?.[0] ?? "U"}
-                </div>
-              ))}
+              {visibleAssignees.map((a) => {
+                const displayName = a.name || a.email || "User";
+                const stableColorKey = a.userId || a.email || displayName;
+
+                return (
+                  <div
+                    key={a.userId}
+                    className={`w-6 h-6 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase shadow-sm ${getAvatarColor(
+                      stableColorKey,
+                    )}`}
+                    title={displayName}
+                  >
+                    {getInitials(displayName)}
+                  </div>
+                );
+              })}
             </div>
             {extraCount > 0 && (
               <span className="ml-1 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold border border-border">

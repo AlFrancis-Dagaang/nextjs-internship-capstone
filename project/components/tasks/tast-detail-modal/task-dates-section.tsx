@@ -27,9 +27,11 @@ export function TaskDatesSection({
   const [isPending, startTransition] = useTransition();
   const [dueDate, setDueDate] = useState(toDateInputValue(task.dueDate));
   const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
+
   useEffect(() => {
     setDueDate(toDateInputValue(task.dueDate));
   }, [task.dueDate]);
+
   function handleDateChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newDate = e.target.value;
     setDueDate(newDate);
@@ -47,15 +49,13 @@ export function TaskDatesSection({
           variant: "destructive",
         });
         setDueDate(toDateInputValue(task.dueDate));
-        updateTaskLocal(task); // revert the board card too
+        updateTaskLocal(task);
         return;
       }
       onChanged?.(result.data);
     });
   }
 
-  // Completed always wins over overdue — a completed task past its due
-  // date is not "overdue," it's just done late. Mutually exclusive.
   const isOverdue =
     !task.isCompleted &&
     task.dueDate != null &&
@@ -65,29 +65,29 @@ export function TaskDatesSection({
     ? {
         text: "Completed",
         className:
-          "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400",
+          "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
       }
     : isOverdue
       ? {
           text: "Overdue",
           className:
-            "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400",
+            "bg-destructive/10 text-destructive border border-destructive/20",
         }
       : null;
 
   return (
     <div className="space-y-2">
-      <Label className="text-[10px] text-neutral-500 uppercase font-semibold tracking-wider">
+      <Label className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">
         Dates
       </Label>
       <div className="flex items-center gap-2">
-        <span className="text-xs text-neutral-500 w-16">Due</span>
+        <span className="text-xs text-muted-foreground w-16">Due</span>
         <Input
           type="date"
           value={dueDate}
           onChange={handleDateChange}
           disabled={isPending || !canEdit}
-          className="bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 h-9 text-sm focus-visible:ring-1 focus-visible:ring-cyan-400"
+          className="bg-card border-input h-9 text-sm focus-visible:ring-1 focus-visible:ring-ring text-card-foreground"
         />
         {statusLabel && (
           <span

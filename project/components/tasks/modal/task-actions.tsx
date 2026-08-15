@@ -230,7 +230,7 @@ export function TaskActions({
           variant="ghost"
           size="icon"
           onClick={(e) => e.stopPropagation()}
-          className="h-7 w-7 shrink-0 text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
         >
           <MoreHorizontal size={16} />
         </Button>
@@ -238,7 +238,7 @@ export function TaskActions({
 
       <DropdownMenuContent
         align="end"
-        className="w-56 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-2xl p-2 space-y-1 text-left z-9999"
+        className="w-56 bg-card text-card-foreground border-border rounded-xl shadow-2xl p-2 space-y-1 text-left z-50"
         onClick={(e) => e.stopPropagation()}
         onInteractOutside={(e) => {
           const target = e.target as Element;
@@ -249,11 +249,11 @@ export function TaskActions({
       >
         {view === "menu" ? (
           <>
-            <div className="flex items-center justify-between px-2.5 py-1 text-xs font-semibold text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 mb-1">
+            <div className="flex items-center justify-between px-2.5 py-1 text-xs font-semibold text-muted-foreground border-b border-border mb-1">
               <span>Task</span>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X size={14} />
               </button>
@@ -264,15 +264,15 @@ export function TaskActions({
                 setIsOpen(false);
                 onView();
               }}
-              className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+              className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-accent rounded-lg flex items-center space-x-2.5"
             >
-              <ExternalLink size={15} className="text-neutral-400" />
+              <ExternalLink size={15} className="text-muted-foreground" />
               <span>View task</span>
             </DropdownMenuItem>
 
             {canEdit && (
-              <div className="pt-1.5 pb-1 border-t border-neutral-100 dark:border-neutral-800 mt-1">
-                <div className="px-2.5 pb-1 text-[10px] font-semibold tracking-wider text-neutral-400 uppercase">
+              <div className="pt-1.5 pb-1 border-t border-border mt-1">
+                <div className="px-2.5 pb-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
                   Management
                 </div>
                 <DropdownMenuItem
@@ -280,9 +280,9 @@ export function TaskActions({
                     setIsOpen(false);
                     onRename();
                   }}
-                  className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                  className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-accent rounded-lg flex items-center space-x-2.5"
                 >
-                  <Edit2 size={15} className="text-neutral-400" />
+                  <Edit2 size={15} className="text-muted-foreground" />
                   <span>Rename task</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -305,9 +305,9 @@ export function TaskActions({
                       });
                     }
                   }}
-                  className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                  className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-accent rounded-lg flex items-center space-x-2.5"
                 >
-                  <Archive size={15} className="text-neutral-400" />
+                  <Archive size={15} className="text-muted-foreground" />
                   <span>Archive task</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -315,9 +315,9 @@ export function TaskActions({
                     e.preventDefault();
                     setView("assign");
                   }}
-                  className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                  className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-accent rounded-lg flex items-center space-x-2.5"
                 >
-                  <UserPlus size={15} className="text-neutral-400" />
+                  <UserPlus size={15} className="text-muted-foreground" />
                   <span>Assign member</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -325,23 +325,23 @@ export function TaskActions({
                     e.preventDefault();
                     setView("move");
                   }}
-                  className="cursor-pointer px-2.5 py-2 text-sm text-neutral-700 dark:text-neutral-200 focus:bg-neutral-100 dark:focus:bg-neutral-800 rounded-lg flex items-center space-x-2.5"
+                  className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-accent rounded-lg flex items-center space-x-2.5"
                 >
-                  <Move size={15} className="text-neutral-400" />
+                  <Move size={15} className="text-muted-foreground" />
                   <span>Move task</span>
                 </DropdownMenuItem>
               </div>
             )}
             {canEdit && (
-              <div className="border-t border-neutral-100 dark:border-neutral-800 pt-1 mt-1">
+              <div className="border-t border-border pt-1 mt-1">
                 <DropdownMenuItem
                   onSelect={() => {
                     setIsOpen(false);
                     onDeleteClick();
                   }}
-                  className="cursor-pointer px-2.5 py-2 text-sm text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/50 rounded-lg flex items-center space-x-2.5"
+                  className="cursor-pointer px-2.5 py-2 text-sm text-destructive focus:bg-destructive/10 rounded-lg flex items-center space-x-2.5"
                 >
-                  <Trash2 size={15} className="text-red-500" />
+                  <Trash2 size={15} className="text-destructive" />
                   <span>Remove task</span>
                 </DropdownMenuItem>
               </div>
@@ -349,19 +349,19 @@ export function TaskActions({
           </>
         ) : view === "move" ? (
           <div className="p-1 space-y-2">
-            <div className="flex items-center justify-between px-2 py-1.5 border-b border-neutral-100 dark:border-neutral-800">
+            <div className="flex items-center justify-between px-2 py-1.5 border-b border-border">
               <button
                 onClick={() => setView("menu")}
-                className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-0.5"
+                className="text-muted-foreground hover:text-foreground p-0.5"
               >
                 <ChevronLeft size={16} />
               </button>
-              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+              <span className="text-xs font-semibold text-foreground">
                 Move task
               </span>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-0.5"
+                className="text-muted-foreground hover:text-foreground p-0.5"
               >
                 <X size={14} />
               </button>
@@ -370,14 +370,14 @@ export function TaskActions({
             <div className="px-2 space-y-2.5 pt-1">
               <div className="flex gap-2">
                 <div className="space-y-1 flex-1">
-                  <label className="text-[10px] font-medium text-neutral-500 uppercase">
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase">
                     List
                   </label>
                   <Select value={targetListId} onValueChange={setTargetListId}>
-                    <SelectTrigger className="w-full h-8 text-xs border-0 bg-neutral-100 dark:bg-neutral-800 shadow-none focus:ring-0">
+                    <SelectTrigger className="w-full h-8 text-xs border-0 bg-secondary text-secondary-foreground shadow-none focus:ring-0">
                       <SelectValue placeholder="Select list" />
                     </SelectTrigger>
-                    <SelectContent className="z-99999">
+                    <SelectContent className="z-50 bg-popover text-popover-foreground border-border">
                       {allLists.map((list) => (
                         <SelectItem key={list.id} value={list.id}>
                           {list.name}
@@ -387,14 +387,14 @@ export function TaskActions({
                   </Select>
                 </div>
                 <div className="space-y-1 w-20">
-                  <label className="text-[10px] font-medium text-neutral-500 uppercase">
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase">
                     Position
                   </label>
                   <Select value={position} onValueChange={setPosition}>
-                    <SelectTrigger className="w-full h-8 text-xs border-0 bg-neutral-100 dark:bg-neutral-800 shadow-none focus:ring-0">
+                    <SelectTrigger className="w-full h-8 text-xs border-0 bg-secondary text-secondary-foreground shadow-none focus:ring-0">
                       <SelectValue placeholder="1" />
                     </SelectTrigger>
-                    <SelectContent className="z-99999">
+                    <SelectContent className="z-50 bg-popover text-popover-foreground border-border">
                       {positionOptions.map((p) => (
                         <SelectItem key={p} value={p}>
                           {p}
@@ -408,7 +408,7 @@ export function TaskActions({
 
             <div className="px-2 pt-2 pb-1">
               <Button
-                className="w-full bg-cyan-400 hover:bg-cyan-500 text-neutral-900 font-medium h-8 text-xs shadow-none"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium h-8 text-xs shadow-none"
                 disabled={isMoving}
                 onClick={handleMove}
               >
@@ -418,19 +418,19 @@ export function TaskActions({
           </div>
         ) : (
           <div className="p-1 space-y-2">
-            <div className="flex items-center justify-between px-2 py-1.5 border-b border-neutral-100 dark:border-neutral-800">
+            <div className="flex items-center justify-between px-2 py-1.5 border-b border-border">
               <button
                 onClick={() => setView("menu")}
-                className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-0.5"
+                className="text-muted-foreground hover:text-foreground p-0.5"
               >
                 <ChevronLeft size={16} />
               </button>
-              <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+              <span className="text-xs font-semibold text-foreground">
                 Assign member
               </span>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 p-0.5"
+                className="text-muted-foreground hover:text-foreground p-0.5"
               >
                 <X size={14} />
               </button>
@@ -439,25 +439,25 @@ export function TaskActions({
             <div className="px-2 space-y-2.5 pt-1">
               <div className="relative">
                 <Search
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                   size={13}
                 />
                 <Input
                   placeholder="Search members..."
                   value={assignSearchQuery}
                   onChange={(e) => setAssignSearchQuery(e.target.value)}
-                  className="pl-8 h-8 text-xs bg-neutral-100 dark:bg-neutral-800 border-0 rounded-lg shadow-none focus-visible:ring-1"
+                  className="pl-8 h-8 text-xs bg-muted border-0 rounded-lg shadow-none focus-visible:ring-1"
                 />
               </div>
 
-              <div className="max-h-44 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800 border border-neutral-100 dark:border-neutral-800 rounded-lg">
+              <div className="max-h-44 overflow-y-auto divide-y divide-border border border-border rounded-lg">
                 {isLoadingAssignees ? (
-                  <div className="flex items-center justify-center py-6 text-xs text-neutral-400 gap-2">
-                    <Loader2 size={14} className="animate-spin text-cyan-500" />
+                  <div className="flex items-center justify-center py-6 text-xs text-muted-foreground gap-2">
+                    <Loader2 size={14} className="animate-spin text-primary" />
                     <span>Loading members...</span>
                   </div>
                 ) : filteredAssignableUsers.length === 0 ? (
-                  <div className="py-6 text-center text-xs text-neutral-400">
+                  <div className="py-6 text-center text-xs text-muted-foreground">
                     No matching members found
                   </div>
                 ) : (
@@ -474,19 +474,19 @@ export function TaskActions({
                         className={`px-2.5 py-2 flex items-center justify-between transition-colors ${
                           isAlreadyAssigned
                             ? "opacity-50 cursor-default"
-                            : "hover:bg-neutral-100 dark:hover:bg-neutral-800/60 cursor-pointer"
+                            : "hover:bg-accent/60 cursor-pointer"
                         }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[9px] font-medium uppercase shrink-0">
+                          <div className="h-5 w-5 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-[9px] font-medium uppercase shrink-0">
                             {initials}
                           </div>
-                          <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100 truncate">
+                          <span className="text-xs font-medium text-foreground truncate">
                             {user.name ?? user.email}
                           </span>
                         </div>
                         {isAlreadyAssigned && (
-                          <Check size={13} className="text-cyan-500 shrink-0" />
+                          <Check size={13} className="text-primary shrink-0" />
                         )}
                       </div>
                     );

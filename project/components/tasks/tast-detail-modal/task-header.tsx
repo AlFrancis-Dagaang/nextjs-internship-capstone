@@ -5,6 +5,7 @@ import { updateTask, toggleTaskComplete } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
 import type { Task } from "@/lib/db/schema";
 import { useBoardStore } from "@/stores/board-store";
+import { Check } from "lucide-react";
 
 type TaskHeaderProps = {
   task: Task;
@@ -72,14 +73,16 @@ export function TaskHeader({ task, canEdit, onChanged }: TaskHeaderProps) {
           onClick={canEdit ? handleToggleComplete : undefined}
           disabled={isTogglingComplete || !canEdit}
           aria-label={task.isCompleted ? "Mark incomplete" : "Mark complete"}
-          className={`mt-1.5 w-5 h-5 rounded-full border-2 shrink-0 transition-colors ${
+          className={`mt-1.5 w-5 h-5 rounded-full border-2 shrink-0 transition-colors flex items-center justify-center ${
             task.isCompleted
-              ? "bg-green-500 border-green-500"
+              ? "bg-primary border-primary text-primary-foreground"
               : canEdit
-                ? "border-neutral-300 dark:border-neutral-600 hover:border-green-400 cursor-pointer"
-                : "border-neutral-300 dark:border-neutral-600"
+                ? "border-input hover:border-primary cursor-pointer"
+                : "border-input"
           }`}
-        />
+        >
+          {task.isCompleted && <Check size={12} strokeWidth={3} />}
+        </button>
 
         <div className="flex-1">
           {isEditing ? (
@@ -95,15 +98,15 @@ export function TaskHeader({ task, canEdit, onChanged }: TaskHeaderProps) {
                 }
               }}
               disabled={isPending}
-              className="w-full bg-transparent text-xl font-bold border border-neutral-200 dark:border-neutral-800 focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded px-2 py-1 text-neutral-900 dark:text-white"
+              className="w-full bg-transparent text-xl font-bold border border-input focus:outline-none focus:ring-2 focus:ring-ring rounded px-2 py-1 text-foreground"
             />
           ) : (
             <h2
               onClick={canEdit ? () => setIsEditing(true) : undefined}
-              className={`w-full bg-transparent text-xl font-bold cursor-text px-2 py-1 -ml-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors ${
+              className={`w-full bg-transparent text-xl font-bold cursor-text px-2 py-1 -ml-2 rounded hover:bg-accent transition-colors ${
                 task.isCompleted
-                  ? "line-through text-neutral-400 dark:text-neutral-500"
-                  : "text-neutral-900 dark:text-white"
+                  ? "line-through text-muted-foreground"
+                  : "text-foreground"
               }`}
               title={canEdit ? "Click to edit title" : undefined}
             >

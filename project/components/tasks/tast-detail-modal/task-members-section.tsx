@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getTaskAssignees } from "@/lib/actions/task-assignees";
 import { AssignTaskModal } from "../modal/assign-task-modal";
+import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import type { Task } from "@/lib/db/schema";
 import type { TaskWithCommentCount } from "@/components/lists/board";
 
@@ -98,7 +99,7 @@ export function TaskMembersSection({
 
   return (
     <div className="space-y-2">
-      <Label className="text-[10px] text-neutral-500 uppercase font-semibold tracking-wider">
+      <Label className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">
         Assignees
       </Label>
 
@@ -108,63 +109,64 @@ export function TaskMembersSection({
           onClick={canEdit ? () => setModalOpen(true) : undefined}
           disabled={!canEdit}
           className={`flex items-center gap-2 rounded-lg p-1 -m-1 transition-colors ${
-            canEdit
-              ? "hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer"
-              : "cursor-default"
+            canEdit ? "hover:bg-accent cursor-pointer" : "cursor-default"
           }`}
         >
           {isLoading ? (
             <div className="flex items-center space-x-1.5 animate-pulse">
               <div className="flex -space-x-1.5">
-                <div className="h-7 w-7 rounded-full bg-neutral-200 dark:bg-neutral-800 border-2 border-white dark:border-neutral-900" />
-                <div className="h-7 w-7 rounded-full bg-neutral-200 dark:bg-neutral-800 border-2 border-white dark:border-neutral-900" />
+                <div className="h-7 w-7 rounded-full bg-muted border-2 border-card" />
+                <div className="h-7 w-7 rounded-full bg-muted border-2 border-card" />
               </div>
-              <div className="h-3 w-16 bg-neutral-200 dark:bg-neutral-800 rounded ml-1" />
+              <div className="h-3 w-16 bg-muted rounded ml-1" />
             </div>
           ) : assignees.length > 0 ? (
             <div className="flex items-center space-x-1.5">
               <div className="flex items-center">
                 <div className="flex -space-x-1.5">
-                  {visibleAssignees.map((a) => (
-                    <div
-                      key={a.id}
-                      className="h-7 w-7 rounded-full bg-blue-100 dark:bg-blue-900/40 border-2 border-white dark:border-neutral-900 flex items-center justify-center text-[10px] font-medium text-blue-700 dark:text-blue-300 uppercase"
-                      title={`${a.userName || a.userEmail}`}
-                    >
-                      {a.userName?.[0] ?? a.userEmail?.[0] ?? "U"}
-                    </div>
-                  ))}
+                  {visibleAssignees.map((a) => {
+                    const displayName = a.userName || a.userEmail || "U";
+                    const stableColorKey = a.userId || a.userEmail || a.id;
+                    return (
+                      <div
+                        key={a.id}
+                        className={`h-7 w-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-medium uppercase shadow-sm ${getAvatarColor(
+                          stableColorKey,
+                        )}`}
+                        title={displayName}
+                      >
+                        {getInitials(displayName)}
+                      </div>
+                    );
+                  })}
                 </div>
                 {extraCount > 0 && (
-                  <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 text-[10px] font-semibold">
+                  <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-secondary text-secondary-foreground text-[10px] font-semibold border border-border">
                     +{extraCount}
                   </span>
                 )}
               </div>
               {canEdit && (
-                <div className="h-6 w-6 rounded-full border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors">
-                  <Plus size={12} className="text-neutral-400" />
+                <div className="h-6 w-6 rounded-full border-2 border-dashed border-input flex items-center justify-center hover:border-muted-foreground transition-colors">
+                  <Plus size={12} className="text-muted-foreground" />
                 </div>
               )}
             </div>
           ) : canEdit ? (
             <>
-              {/* Added hover transition styles here */}
-              <div className="h-7 w-7 rounded-full border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors">
-                <Plus size={14} className="text-neutral-400" />
+              <div className="h-7 w-7 rounded-full border-2 border-dashed border-input flex items-center justify-center hover:border-muted-foreground transition-colors">
+                <Plus size={14} className="text-muted-foreground" />
               </div>
-              <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                Assign
-              </span>
+              <span className="text-xs text-muted-foreground">Assign</span>
             </>
           ) : (
-            <span className="text-xs text-neutral-400 dark:text-neutral-500 italic">
+            <span className="text-xs text-muted-foreground italic">
               No assignees
             </span>
           )}
 
           {!isLoading && assignees.length > 0 && (
-            <span className="text-xs text-neutral-700 dark:text-neutral-300 ml-1">
+            <span className="text-xs text-foreground ml-1">
               {assignees.length} assigned
             </span>
           )}

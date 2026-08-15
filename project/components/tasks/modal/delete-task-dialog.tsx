@@ -31,23 +31,23 @@ export function DeleteTaskDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-card text-card-foreground border-border">
         <DialogHeader>
-          <DialogTitle className="text-center font-bold">
+          <DialogTitle className="text-center font-bold text-foreground">
             Delete Task
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="bg-red-100 dark:bg-red-950/50 border border-red-200 dark:border-red-900 rounded-md p-3 flex items-start space-x-3">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 flex items-start space-x-3">
             <Checkbox
               id="confirm-task-delete"
               checked={confirmed}
               onCheckedChange={(checked) => setConfirmed(checked === true)}
-              className="mt-0.5 border-red-400 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+              className="mt-0.5 border-destructive/50 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
             />
             <label
               htmlFor="confirm-task-delete"
-              className="text-xs font-medium text-red-900 dark:text-red-200 cursor-pointer leading-tight"
+              className="text-xs font-medium text-destructive cursor-pointer leading-tight"
             >
               The task will be permanently deleted from this list.
             </label>
@@ -59,6 +59,7 @@ export function DeleteTaskDialog({
               size="sm"
               onClick={onClose}
               disabled={isPending}
+              className="border-input"
             >
               Cancel
             </Button>

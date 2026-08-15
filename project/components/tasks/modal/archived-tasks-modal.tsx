@@ -123,7 +123,7 @@ export function ArchivedTasksModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+      <DialogContent className="max-w-2xl bg-card text-card-foreground border-border">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold">
             Archived Tasks
@@ -132,10 +132,10 @@ export function ArchivedTasksModal({
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="animate-spin text-neutral-400" size={24} />
+            <Loader2 className="animate-spin text-muted-foreground" size={24} />
           </div>
         ) : archivedTasks.length === 0 ? (
-          <p className="text-sm text-neutral-500 py-8 text-center">
+          <p className="text-sm text-muted-foreground py-8 text-center">
             No archived tasks found for this project.
           </p>
         ) : (
@@ -167,12 +167,12 @@ export function ArchivedTasksModal({
                   />
 
                   {role !== "viewer" && (
-                    <div className="flex items-center space-x-2 text-xs px-1 text-neutral-500">
+                    <div className="flex items-center space-x-2 text-xs px-1 text-muted-foreground">
                       <button
                         type="button"
                         onClick={() => handleRestore(task)}
                         disabled={isPending}
-                        className="hover:text-neutral-900 dark:hover:text-neutral-100 font-medium transition-colors cursor-pointer"
+                        className="hover:text-foreground font-medium transition-colors cursor-pointer"
                       >
                         Restore
                       </button>
@@ -181,7 +181,7 @@ export function ArchivedTasksModal({
                         type="button"
                         onClick={() => setDeleteConfirmTask(task)}
                         disabled={isPending}
-                        className="hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors cursor-pointer"
+                        className="hover:text-destructive font-medium transition-colors cursor-pointer"
                       >
                         Delete
                       </button>
@@ -199,11 +199,11 @@ export function ArchivedTasksModal({
             open={!!deleteConfirmTask}
             onOpenChange={() => setDeleteConfirmTask(null)}
           >
-            <DialogContent className="max-w-sm">
+            <DialogContent className="max-w-sm bg-card text-card-foreground border-border">
               <DialogHeader>
                 <DialogTitle>Delete permanently?</DialogTitle>
               </DialogHeader>
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-muted-foreground">
                 Are you sure you want to permanently delete &quot;
                 {deleteConfirmTask.title}&quot;? This action cannot be undone.
               </p>

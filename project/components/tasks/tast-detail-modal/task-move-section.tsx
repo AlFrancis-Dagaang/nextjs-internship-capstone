@@ -15,6 +15,7 @@ import { moveTaskToList } from "@/lib/actions/tasks";
 import type { Task } from "@/lib/db/schema";
 import type { ListWithTasks } from "@/components/lists/board";
 import { useBoardStore } from "@/stores/board-store";
+
 export function TaskMoveSection({
   task,
   allLists,
@@ -103,13 +104,13 @@ export function TaskMoveSection({
 
   return (
     <div className="space-y-3">
-      <Label className="text-[10px] text-neutral-500 uppercase font-semibold tracking-wider">
+      <Label className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">
         Move the task
       </Label>
 
       <div className="flex gap-2">
         <div className="space-y-1 flex-1">
-          <label className="text-[10px] font-medium text-neutral-500 uppercase">
+          <label className="text-[10px] font-medium text-muted-foreground uppercase">
             List
           </label>
           <Select
@@ -117,15 +118,15 @@ export function TaskMoveSection({
             onValueChange={setTargetListId}
             disabled={isMoving || !canEdit}
           >
-            <SelectTrigger className="w-full h-8 text-xs bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus:ring-1 focus:ring-cyan-400">
+            <SelectTrigger className="w-full h-8 text-xs bg-card border-input text-card-foreground focus:ring-1 focus:ring-ring">
               <SelectValue placeholder="Select list" />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-xl rounded-xl z-50">
+            <SelectContent className="bg-popover border border-border text-popover-foreground shadow-xl rounded-xl z-50">
               {allLists.map((list) => (
                 <SelectItem
                   key={list.id}
                   value={list.id}
-                  className="focus:bg-neutral-100 dark:focus:bg-neutral-800 cursor-pointer"
+                  className="focus:bg-accent focus:text-accent-foreground cursor-pointer"
                 >
                   {list.name}
                 </SelectItem>
@@ -135,7 +136,7 @@ export function TaskMoveSection({
         </div>
 
         <div className="space-y-1 w-20">
-          <label className="text-[10px] font-medium text-neutral-500 uppercase">
+          <label className="text-[10px] font-medium text-muted-foreground uppercase">
             Position
           </label>
           <Select
@@ -143,15 +144,15 @@ export function TaskMoveSection({
             onValueChange={setPosition}
             disabled={isMoving || !canEdit}
           >
-            <SelectTrigger className="w-full h-8 text-xs bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 focus:ring-1 focus:ring-cyan-400">
+            <SelectTrigger className="w-full h-8 text-xs bg-card border-input text-card-foreground focus:ring-1 focus:ring-ring">
               <SelectValue placeholder="1" />
             </SelectTrigger>
-            <SelectContent className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-xl rounded-xl z-50">
+            <SelectContent className="bg-popover border border-border text-popover-foreground shadow-xl rounded-xl z-50">
               {positionOptions.map((p) => (
                 <SelectItem
                   key={p}
                   value={p}
-                  className="focus:bg-neutral-100 dark:focus:bg-neutral-800 cursor-pointer"
+                  className="focus:bg-accent focus:text-accent-foreground cursor-pointer"
                 >
                   {p}
                 </SelectItem>
@@ -163,7 +164,7 @@ export function TaskMoveSection({
 
       {hasChanges && canEdit && (
         <Button
-          className="w-full bg-cyan-400 hover:bg-cyan-500 text-neutral-900 font-medium h-8 text-xs shadow-none mt-2"
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium h-8 text-xs shadow-none mt-2"
           disabled={isMoving}
           onClick={handleMove}
         >

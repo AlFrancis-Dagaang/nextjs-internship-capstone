@@ -8,6 +8,7 @@ import {
   getInitials,
   formatActivityLabel,
 } from "@/lib/services/task-activity-helpers";
+import { getAvatarColor } from "@/lib/utils/avatar";
 import { TaskActivityModal } from "./task-activity-modal";
 
 export type ActivityWithActor = TaskActivity & {
@@ -53,7 +54,9 @@ export function TaskActivityFeed({
 
   if (error) {
     return (
-      <p className="text-red-500 text-xs">Failed to load activity: {error}</p>
+      <p className="text-destructive text-xs">
+        Failed to load activity: {error}
+      </p>
     );
   }
 
@@ -62,10 +65,10 @@ export function TaskActivityFeed({
       <ul className="space-y-4">
         {Array.from({ length: previewCount }).map((_, i) => (
           <li key={i} className="flex items-start gap-3 animate-pulse">
-            <div className="h-6 w-6 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-800" />
+            <div className="h-6 w-6 shrink-0 rounded-full bg-muted" />
             <div className="flex-1 space-y-1.5 pt-0.5">
-              <div className="h-3 w-3/4 rounded bg-neutral-200 dark:bg-neutral-800" />
-              <div className="h-2.5 w-1/3 rounded bg-neutral-200 dark:bg-neutral-800" />
+              <div className="h-3 w-3/4 rounded bg-muted" />
+              <div className="h-2.5 w-1/3 rounded bg-muted" />
             </div>
           </li>
         ))}
@@ -76,7 +79,7 @@ export function TaskActivityFeed({
   if (activity.length === 0) {
     return (
       <div className="h-16 flex items-center">
-        <p className="text-neutral-400 text-xs">No activity yet.</p>
+        <p className="text-muted-foreground text-xs">No activity yet.</p>
       </div>
     );
   }
@@ -84,30 +87,38 @@ export function TaskActivityFeed({
   return (
     <>
       <ul className="space-y-4">
-        {activity.map((entry) => (
-          <li key={entry.id} className="flex items-start gap-3">
-            <div className="h-6 w-6 shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700">
-              {entry.actor ? getInitials(entry.actor.name) : "?"}
-            </div>
-            <div className="flex-1 flex items-center justify-between gap-2 pt-0.5">
-              <span className="text-xs text-neutral-600 dark:text-neutral-300">
-                <span className="font-medium">
-                  {entry.actor?.name ?? "Unknown user"}
-                </span>{" "}
-                {formatActivityLabel(entry)}
-              </span>
-              <span className="text-[10px] text-neutral-400 whitespace-nowrap">
-                {formatRelativeTime(entry.createdAt)}
-              </span>
-            </div>
-          </li>
-        ))}
+        {activity.map((entry) => {
+          const actorName = entry.actor?.name ?? "Unknown user";
+          const stableColorKey = entry.actor?.id || actorName;
+          return (
+            <li key={entry.id} className="flex items-start gap-3">
+              <div
+                className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-sm ${getAvatarColor(
+                  stableColorKey,
+                )}`}
+              >
+                {getInitials(actorName)}
+              </div>
+              <div className="flex-1 flex items-center justify-between gap-2 pt-0.5">
+                <span className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">
+                    {actorName}
+                  </span>{" "}
+                  {formatActivityLabel(entry)}
+                </span>
+                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                  {formatRelativeTime(entry.createdAt)}
+                </span>
+              </div>
+            </li>
+          );
+        })}
       </ul>
 
       {hasMore && (
         <button
           onClick={() => setShowAllOpen(true)}
-          className="mt-2 text-xs text-cyan-600 hover:text-cyan-700 hover:underline font-medium"
+          className="mt-2 text-xs text-primary hover:underline font-medium text-left"
         >
           See all activity
         </button>

@@ -13,6 +13,7 @@ import {
   type DragStartEvent,
   type DragOverEvent,
   type DragEndEvent,
+  type DropAnimation,
 } from "@dnd-kit/core";
 import { ListColumn } from "./list-column";
 import { TaskCardView } from "@/components/tasks/task-card";
@@ -40,6 +41,16 @@ export type TaskWithCommentCount = Task & {
   assignees?: { userId: string; name?: string; email?: string }[];
 };
 export type ListWithTasks = List & { tasks: TaskWithCommentCount[] };
+
+// Disable the default "fly back to origin" drop animation. Board already
+// applies optimistic state updates synchronously in onDragEnd, so the real
+// card re-renders at its new position the instant you drop. dnd-kit's
+// built-in drop animation then tries to animate the overlay clone toward a
+// now-stale target position, and for a few frames both the real card and
+// the animating clone are visible at once — this is what reads as a
+// "duplicate card" during fast or cross-column drags. Setting this to null
+// makes the overlay disappear immediately on drop instead.
+const dropAnimation: DropAnimation | null = null;
 
 export function Board({
   projectId,
@@ -159,8 +170,9 @@ export function Board({
   ]);
 
   useEffect(() => {
-    setInitialLists(initialLists);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (initialLists) {
+      setInitialLists(initialLists);
+    }
   }, [projectId]);
 
   const sensors = useSensors(
@@ -255,7 +267,13 @@ export function Board({
 
     if (active.data.current?.type === "list") {
       clearActiveList();
-      if (!over) return;
+      // Dropped outside any valid target — the optimistic dragListOver
+      // reorder from earlier in the drag never gets persisted, so revert
+      // it here or local state silently drifts from the server.
+      if (!over) {
+        revertListSnapshot();
+        return;
+      }
       const result = endListDrag(active.id as string, over.id as string);
       if (!result) return;
 
@@ -275,7 +293,13 @@ export function Board({
     }
 
     clearActiveTask();
-    if (!over) return;
+    // Same as above, for task drags: dropping outside any valid target
+    // means the optimistic dragOver move is never persisted to the
+    // server, so revert the local snapshot to keep state in sync.
+    if (!over) {
+      revertToSnapshot();
+      return;
+    }
 
     const activeId = active.id as string;
     const overId = over.id as string;
@@ -353,7 +377,7 @@ export function Board({
             </div>
           </div>
         </div>
-        <DragOverlay>
+        <DragOverlay dropAnimation={dropAnimation}>
           {activeTask ? (
             <div className="w-72 rotate-2">
               <TaskCardView

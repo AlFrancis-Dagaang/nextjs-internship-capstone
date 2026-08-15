@@ -57,7 +57,7 @@ export function AddListForm({
     return (
       <button
         onClick={() => setIsExpanded(true)}
-        className="w-80 flex items-center space-x-2 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-lg p-3.5 font-medium transition-colors text-sm border border-dashed border-neutral-300 dark:border-neutral-700"
+        className="w-80 flex items-center space-x-2 bg-secondary hover:bg-muted text-muted-foreground hover:text-foreground rounded-lg p-3.5 font-medium transition-colors text-sm border border-dashed border-border cursor-pointer"
       >
         <Plus size={16} />
         <span>Add another list</span>
@@ -68,14 +68,14 @@ export function AddListForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-80 bg-neutral-100 dark:bg-neutral-800 rounded-lg p-3 space-y-3 border border-neutral-200 dark:border-neutral-700 shadow-sm"
+      className="w-80 bg-card rounded-lg p-3 space-y-3 border border-border shadow-sm"
     >
       <Input
         autoFocus
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Enter list name..."
-        className="bg-white dark:bg-neutral-900 h-9"
+        className="bg-muted border-input h-9 text-foreground"
       />
       {fieldErrors?.name && (
         <p className="text-destructive text-xs">{fieldErrors.name[0]}</p>
@@ -85,7 +85,7 @@ export function AddListForm({
           type="submit"
           disabled={isPending || !name.trim()}
           size="sm"
-          className="bg-cyan-400 hover:bg-cyan-500 text-neutral-900 font-medium"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-none"
         >
           {isPending ? "Adding..." : "Add list"}
         </Button>
@@ -98,7 +98,7 @@ export function AddListForm({
             setName("");
             setFieldErrors(undefined);
           }}
-          className="bg-white dark:bg-neutral-900"
+          className="bg-card border-input text-card-foreground hover:bg-accent"
         >
           Cancel
         </Button>

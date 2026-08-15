@@ -71,12 +71,10 @@ export function TaskComments({
 
   useEffect(() => {
     getCurrentUserId().then(setCurrentUserId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   useEffect(() => {
     refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId, refreshKey]);
 
   function handlePost() {
@@ -112,11 +110,11 @@ export function TaskComments({
         });
         setComments((prev) => (prev ?? []).filter((c) => c.id !== tempId));
         onCommentCountChanged?.(taskId, -1);
-        setContent(submittedContent); // give the user their text back
+        setContent(submittedContent);
         setIsExpanded(true);
         return;
       }
-      refresh(); // real data replaces the temp entry wholesale
+      refresh();
       onActivityChanged?.();
     });
   }
@@ -163,31 +161,31 @@ export function TaskComments({
   return (
     <div className="flex flex-col h-full space-y-4">
       <div className="flex items-center justify-between shrink-0">
-        <h3 className="text-sm font-semibold flex items-center gap-2">
+        <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
           Comments ({comments?.length ?? 0})
         </h3>
       </div>
 
       {canEdit && (
-        <div className="shrink-0 border border-neutral-300 dark:border-neutral-700 rounded-lg overflow-hidden bg-white dark:bg-neutral-950 focus-within:border-cyan-400 dark:focus-within:border-cyan-400 transition-colors ">
+        <div className="shrink-0 border border-border rounded-lg overflow-hidden bg-card focus-within:border-ring transition-colors">
           {!isExpanded ? (
             <div
               onClick={() => setIsExpanded(true)}
-              className="px-3 py-2 cursor-text bg-neutral-50/50 dark:bg-neutral-900/50 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
+              className="px-3 py-2 cursor-text bg-muted/50 hover:bg-muted transition-colors"
             >
               <Input
                 readOnly
                 placeholder="Write a comment......"
-                className="border-0 outline-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 cursor-text text-sm bg-transparent px-0 h-8 text-neutral-500"
+                className="border-0 outline-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 cursor-text text-sm bg-transparent px-0 h-8 text-muted-foreground"
               />
             </div>
           ) : (
             <div className="space-y-0">
-              <div className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 px-2 py-1.5 flex items-center gap-1">
+              <div className="bg-muted border-b border-border px-2 py-1.5 flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
                   type="button"
                 >
                   <Bold size={14} />
@@ -195,7 +193,7 @@ export function TaskComments({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
                   type="button"
                 >
                   <Italic size={14} />
@@ -203,25 +201,25 @@ export function TaskComments({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
                   type="button"
                 >
                   <Strikethrough size={14} />
                 </Button>
-                <div className="w-px h-4 bg-neutral-300 dark:bg-neutral-700 mx-1" />
+                <div className="w-px h-4 bg-border mx-1" />
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
                   type="button"
                 >
                   <LinkIcon size={14} />
                 </Button>
-                <div className="w-px h-4 bg-neutral-300 dark:bg-neutral-700 mx-1" />
+                <div className="w-px h-4 bg-border mx-1" />
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
                   type="button"
                 >
                   <List size={14} />
@@ -229,7 +227,7 @@ export function TaskComments({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
                   type="button"
                 >
                   <ListOrdered size={14} />
@@ -238,7 +236,7 @@ export function TaskComments({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
                   type="button"
                 >
                   <AtSign size={14} />
@@ -246,7 +244,7 @@ export function TaskComments({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
                   type="button"
                 >
                   <Smile size={14} />
@@ -258,14 +256,14 @@ export function TaskComments({
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Write a comment......"
-                className="min-h-20 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none shadow-none text-sm bg-white dark:bg-neutral-950 px-3 py-2"
+                className="min-h-20 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none shadow-none text-sm bg-card px-3 py-2 text-card-foreground"
               />
 
-              <div className="p-2 flex justify-end gap-2 bg-white dark:bg-neutral-950 border-t border-neutral-100 dark:border-neutral-900">
+              <div className="p-2 flex justify-end gap-2 bg-card border-t border-border">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs"
+                  className="h-7 text-xs border-input"
                   onClick={handleCancel}
                   disabled={isPending}
                   type="button"
@@ -274,7 +272,7 @@ export function TaskComments({
                 </Button>
                 <Button
                   size="sm"
-                  className="h-7 text-xs bg-cyan-400 hover:bg-cyan-500 text-neutral-900 font-medium"
+                  className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
                   onClick={handlePost}
                   disabled={isPending || !content.trim()}
                   type="button"
@@ -287,7 +285,7 @@ export function TaskComments({
         </div>
       )}
 
-      {/* Preview List - capped height, scrolls only if content exceeds it */}
+      {/* Preview List */}
       <div className="flex-1 min-h-0 flex flex-col">
         <div className="flex-1 min-h-0 overflow-y-auto pr-1">
           {comments === null ? (
@@ -297,7 +295,7 @@ export function TaskComments({
               ))}
             </ul>
           ) : comments.length === 0 ? (
-            <p className="text-xs text-neutral-400 shrink-0">
+            <p className="text-xs text-muted-foreground shrink-0">
               No comments yet.
             </p>
           ) : (
@@ -319,7 +317,7 @@ export function TaskComments({
         {hasMore && (
           <button
             onClick={() => setShowAllOpen(true)}
-            className="shrink-0 text-xs text-cyan-600 hover:text-cyan-700 hover:underline font-medium pt-2"
+            className="shrink-0 text-xs text-primary hover:underline font-medium pt-2 text-left"
           >
             See all comments ({comments!.length})
           </button>

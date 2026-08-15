@@ -101,9 +101,9 @@ export function TaskDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden bg-white dark:bg-neutral-950 flex flex-col [&>button]:hidden">
+      <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden bg-card text-card-foreground border-border flex flex-col [&>button]:hidden">
         {/* Header - Fixed & Pinned */}
-        <div className="px-6 py-3 border-b border-neutral-200 dark:border-neutral-800 shrink-0 flex items-start justify-between gap-4">
+        <div className="px-6 py-3 border-b border-border shrink-0 flex items-start justify-between gap-4">
           <div className="flex-1">
             <TaskHeader
               task={task}
@@ -117,7 +117,7 @@ export function TaskDetailModal({
               e.stopPropagation();
               onOpenChange(false);
             }}
-            className="relative z-50 mt-1 p-1.5 rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-100 transition-colors cursor-pointer"
+            className="relative z-50 mt-1 p-1.5 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />
@@ -127,7 +127,7 @@ export function TaskDetailModal({
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* Left Content */}
           <div className="flex-1 p-6 flex flex-col overflow-hidden">
-            <div className="shrink-0 pb-6 border-b border-neutral-100 dark:border-neutral-900">
+            <div className="shrink-0 pb-6 border-b border-border">
               <TaskDescription
                 task={task}
                 canEdit={canEdit}
@@ -147,7 +147,7 @@ export function TaskDetailModal({
           </div>
 
           {/* Right Sidebar */}
-          <div className="w-full md:w-[320px] shrink-0 border-l border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 p-6 flex flex-col overflow-hidden">
+          <div className="w-full md:w-[320px] shrink-0 border-l border-border bg-muted/50 p-6 flex flex-col overflow-hidden">
             <TaskSidebar
               task={task}
               projectId={projectId}
