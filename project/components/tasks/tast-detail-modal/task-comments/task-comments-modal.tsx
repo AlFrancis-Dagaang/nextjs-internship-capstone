@@ -41,9 +41,11 @@ export function TaskCommentsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col bg-card text-card-foreground border border-border rounded-xl shadow-2xl">
         <DialogHeader>
-          <DialogTitle>Comments ({comments.length})</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-foreground">
+            Comments ({comments.length})
+          </DialogTitle>
         </DialogHeader>
 
         {comments.length > 0 && (
@@ -51,12 +53,12 @@ export function TaskCommentsModal({
             placeholder="Search by name..."
             value={nameQuery}
             onChange={(e) => setNameQuery(e.target.value)}
-            className="h-8 text-xs shrink-0"
+            className="h-9 text-xs shrink-0 bg-muted border-input text-foreground rounded-lg"
           />
         )}
 
         {filteredComments.length === 0 ? (
-          <p className="text-neutral-400 text-xs py-6 text-center">
+          <p className="text-muted-foreground text-xs py-6 text-center">
             {comments.length === 0
               ? "No comments yet."
               : "No matching comments."}

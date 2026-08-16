@@ -13,6 +13,7 @@ import {
   type DragStartEvent,
   type DragOverEvent,
   type DragEndEvent,
+  type DropAnimation,
 } from "@dnd-kit/core";
 import { ListColumn } from "./list-column";
 import { TaskCardView } from "@/components/tasks/task-card";
@@ -40,6 +41,8 @@ export type TaskWithCommentCount = Task & {
   assignees?: { userId: string; name?: string; email?: string }[];
 };
 export type ListWithTasks = List & { tasks: TaskWithCommentCount[] };
+
+const dropAnimation: DropAnimation | null = null;
 
 export function Board({
   projectId,
@@ -159,8 +162,9 @@ export function Board({
   ]);
 
   useEffect(() => {
-    setInitialLists(initialLists);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (initialLists) {
+      setInitialLists(initialLists);
+    }
   }, [projectId]);
 
   const sensors = useSensors(
@@ -196,10 +200,21 @@ export function Board({
       });
     }
 
+    const taskCardCollisions = rectIntersection({
+      ...args,
+      droppableContainers: args.droppableContainers.filter(
+        (container) => container.data.current?.type === undefined,
+      ),
+    });
+
+    if (taskCardCollisions.length > 0) {
+      return taskCardCollisions;
+    }
+
     return rectIntersection({
       ...args,
       droppableContainers: args.droppableContainers.filter(
-        (container) => container.data.current?.type !== "list",
+        (container) => container.data.current?.type === "list-dropzone",
       ),
     });
   };
@@ -255,7 +270,10 @@ export function Board({
 
     if (active.data.current?.type === "list") {
       clearActiveList();
-      if (!over) return;
+      if (!over) {
+        revertListSnapshot();
+        return;
+      }
       const result = endListDrag(active.id as string, over.id as string);
       if (!result) return;
 
@@ -275,7 +293,10 @@ export function Board({
     }
 
     clearActiveTask();
-    if (!over) return;
+    if (!over) {
+      revertToSnapshot();
+      return;
+    }
 
     const activeId = active.id as string;
     const overId = over.id as string;
@@ -308,7 +329,7 @@ export function Board({
   }
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden">
+    <div className="flex flex-col h-full w-full overflow-hidden bg-background text-foreground">
       <DndContext
         id="kanban-board"
         sensors={sensors}
@@ -353,13 +374,13 @@ export function Board({
             </div>
           </div>
         </div>
-        <DragOverlay>
+        <DragOverlay dropAnimation={dropAnimation}>
           {activeTask ? (
             <div className="w-72 rotate-2">
               <TaskCardView
                 task={activeTask}
                 interactive={false}
-                className="shadow-lg cursor-grabbing"
+                className="shadow-lg cursor-grabbing bg-card text-card-foreground border-border"
               />
             </div>
           ) : activeListId ? (
@@ -367,8 +388,7 @@ export function Board({
               const draggedList = lists.find((l) => l.id === activeListId);
               if (!draggedList) return null;
               return (
-                <div className="w-80 rotate-1 rounded-xl bg-card border border-border shadow-2xl p-3 opacity-95 flex flex-col max-h-[80vh]">
-                  {/* List Header Preview */}
+                <div className="w-80 rotate-1 rounded-xl bg-card border border-border shadow-2xl p-3 opacity-95 flex flex-col max-h-[80vh] text-card-foreground">
                   <div className="flex items-center justify-between pb-3 px-1 shrink-0">
                     <span className="font-bold text-xs uppercase tracking-wider text-foreground">
                       {draggedList.name}
@@ -377,14 +397,13 @@ export function Board({
                       {draggedList.tasks.length}
                     </span>
                   </div>
-                  {/* Tasks Preview Container */}
                   <div className="space-y-3 overflow-hidden pr-1">
                     {draggedList.tasks.map((task) => (
                       <TaskCardView
                         key={task.id}
                         task={task}
                         interactive={false}
-                        className="shadow-sm"
+                        className="shadow-sm bg-card text-card-foreground border-border"
                       />
                     ))}
                   </div>

@@ -25,6 +25,7 @@ import {
   groupActivityByDay,
   ACTION_LABELS,
 } from "@/lib/services/task-activity-helpers";
+import { getAvatarColor } from "@/lib/utils/avatar";
 import type { ActivityWithActor } from "./task-activity-feed";
 
 const PAGE_SIZE = 30;
@@ -95,7 +96,6 @@ export function TaskActivityModal({
   useEffect(() => {
     if (!open) return;
     loadPage(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, taskId, nameQuery, actionFilter]);
 
   // Reset filter UI when the modal closes, so reopening starts clean
@@ -111,9 +111,11 @@ export function TaskActivityModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-md max-h-[80vh] flex flex-col bg-card text-card-foreground border border-border rounded-xl shadow-2xl">
         <DialogHeader>
-          <DialogTitle>Activity log</DialogTitle>
+          <DialogTitle className="text-sm font-semibold text-foreground">
+            Activity log
+          </DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-2 shrink-0">
@@ -121,18 +123,25 @@ export function TaskActivityModal({
             placeholder="Search by name..."
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
-            className="h-8 text-xs flex-1"
+            className="h-9 text-xs flex-1 bg-muted border-input text-foreground rounded-lg"
           />
           <Select value={actionFilter} onValueChange={setActionFilter}>
-            <SelectTrigger className="h-8 text-xs w-40 shrink-0">
+            <SelectTrigger className="h-9 text-xs w-40 shrink-0 bg-card border-input text-card-foreground">
               <SelectValue placeholder="All actions" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">
+            <SelectContent className="bg-popover border border-border text-popover-foreground shadow-xl rounded-xl z-50">
+              <SelectItem
+                value="all"
+                className="text-xs cursor-pointer focus:bg-accent focus:text-accent-foreground"
+              >
                 All actions
               </SelectItem>
               {Object.entries(ACTION_LABELS).map(([action, label]) => (
-                <SelectItem key={action} value={action} className="text-xs">
+                <SelectItem
+                  key={action}
+                  value={action}
+                  className="text-xs cursor-pointer focus:bg-accent focus:text-accent-foreground"
+                >
                   {label}
                 </SelectItem>
               ))}
@@ -141,7 +150,7 @@ export function TaskActivityModal({
         </div>
 
         {error && (
-          <p className="text-red-500 text-xs">
+          <p className="text-destructive text-xs">
             Failed to load activity: {error}
           </p>
         )}
@@ -150,10 +159,10 @@ export function TaskActivityModal({
           <ul className="space-y-4 pr-2">
             {Array.from({ length: 5 }).map((_, i) => (
               <li key={i} className="flex items-start gap-3 animate-pulse">
-                <div className="h-6 w-6 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-800" />
+                <div className="h-6 w-6 shrink-0 rounded-full bg-muted" />
                 <div className="flex-1 space-y-1.5 pt-0.5">
-                  <div className="h-3 w-3/4 rounded bg-neutral-200 dark:bg-neutral-800" />
-                  <div className="h-2.5 w-1/3 rounded bg-neutral-200 dark:bg-neutral-800" />
+                  <div className="h-3 w-3/4 rounded bg-muted" />
+                  <div className="h-2.5 w-1/3 rounded bg-muted" />
                 </div>
               </li>
             ))}
@@ -161,7 +170,7 @@ export function TaskActivityModal({
         )}
 
         {hasLoadedOnce && items.length === 0 && !error && (
-          <p className="text-neutral-400 text-xs py-6 text-center">
+          <p className="text-muted-foreground text-xs py-6 text-center">
             {nameQuery || actionFilter !== "all"
               ? "No matching activity."
               : "No activity yet."}
@@ -172,28 +181,36 @@ export function TaskActivityModal({
           <div className="flex-1 overflow-y-auto pr-2 space-y-5">
             {groups.map((group) => (
               <div key={group.label} className="space-y-3">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400 sticky top-0 bg-white dark:bg-neutral-950 py-1">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-card py-1">
                   {group.label}
                 </div>
                 <ul className="space-y-4">
-                  {group.entries.map((entry) => (
-                    <li key={entry.id} className="flex items-start gap-3">
-                      <div className="h-6 w-6 shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-700">
-                        {entry.actor ? getInitials(entry.actor.name) : "?"}
-                      </div>
-                      <div className="flex-1 flex items-center justify-between gap-2 pt-0.5">
-                        <span className="text-xs text-neutral-600 dark:text-neutral-300">
-                          <span className="font-medium">
-                            {entry.actor?.name ?? "Unknown user"}
-                          </span>{" "}
-                          {formatActivityLabel(entry)}
-                        </span>
-                        <span className="text-[10px] text-neutral-400 whitespace-nowrap">
-                          {formatRelativeTime(entry.createdAt)}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
+                  {group.entries.map((entry) => {
+                    const actorName = entry.actor?.name ?? "Unknown user";
+                    const stableColorKey = entry.actor?.id || actorName;
+                    return (
+                      <li key={entry.id} className="flex items-start gap-3">
+                        <div
+                          className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-sm ${getAvatarColor(
+                            stableColorKey,
+                          )}`}
+                        >
+                          {getInitials(actorName)}
+                        </div>
+                        <div className="flex-1 flex items-center justify-between gap-2 pt-0.5">
+                          <span className="text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">
+                              {actorName}
+                            </span>{" "}
+                            {formatActivityLabel(entry)}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                            {formatRelativeTime(entry.createdAt)}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}
@@ -203,7 +220,7 @@ export function TaskActivityModal({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 text-xs"
+                  className="h-8 text-xs border-input shadow-none"
                   disabled={isLoadingMore}
                   onClick={() => loadPage(false)}
                 >

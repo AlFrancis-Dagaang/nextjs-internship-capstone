@@ -17,6 +17,7 @@ import {
   unassignUserFromTask,
 } from "@/lib/actions/task-assignees";
 import { getAssignableUsers } from "@/lib/actions/project-member";
+import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 
 type AssigneeUser = {
   id: string;
@@ -51,9 +52,6 @@ export function AssignTaskModal({
   const [assignableUsers, setAssignableUsers] = useState<AssigneeUser[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
-  // Fetch a fresh member list every time the modal opens, instead of
-  // trusting Board's one-time-fetched prop, which never re-syncs after
-  // a member is added/removed elsewhere in the project.
   useEffect(() => {
     if (!open) return;
 
@@ -79,7 +77,6 @@ export function AssignTaskModal({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, projectId]);
 
   const originalIds = new Set(currentAssignees.map((u) => u.id));
@@ -165,16 +162,16 @@ export function AssignTaskModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-2xl p-6 [&>button]:hidden">
-        <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-4">
+      <DialogContent className="max-w-md bg-card text-card-foreground border-border rounded-xl shadow-2xl p-6 [&>button]:hidden">
+        <div className="flex items-center justify-between border-b border-border pb-4">
           <DialogHeader className="p-0 space-y-1">
-            <DialogTitle className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
+            <DialogTitle className="text-base font-semibold text-foreground">
               Assign Task Members
             </DialogTitle>
           </DialogHeader>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           >
             <X size={18} />
           </button>
@@ -182,35 +179,41 @@ export function AssignTaskModal({
 
         <div className="space-y-4 pt-4 max-h-[70vh] overflow-y-auto pr-1 px-1">
           {isLoadingUsers ? (
-            <div className="flex items-center justify-center py-8 text-xs text-neutral-400 gap-2">
-              <Loader2 size={14} className="animate-spin text-cyan-500" />
+            <div className="flex items-center justify-center py-8 text-xs text-muted-foreground gap-2">
+              <Loader2 size={14} className="animate-spin text-primary" />
               <span>Loading members...</span>
             </div>
           ) : (
             <>
               {currentlyAssignedUsers.length > 0 && (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Currently Assigned ({currentlyAssignedUsers.length})
                   </label>
-                  <div className="divide-y divide-neutral-100 dark:divide-neutral-800 border border-neutral-100 dark:border-neutral-800 rounded-lg overflow-hidden bg-neutral-50/50 dark:bg-neutral-800/20">
+                  <div className="divide-y divide-border border border-border rounded-lg overflow-hidden bg-muted/50">
                     {currentlyAssignedUsers.map((user) => {
-                      const initials = user.name?.[0] ?? user.email?.[0] ?? "U";
+                      const displayName = user.name || user.email || "U";
+                      const stableColorKey =
+                        user.id || user.email || user.name || "";
                       return (
                         <div
                           key={user.id}
                           className="px-3 py-2 flex items-center justify-between transition-colors"
                         >
                           <div className="flex items-center gap-2.5">
-                            <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-medium uppercase">
-                              {initials}
+                            <div
+                              className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-sm ${getAvatarColor(
+                                stableColorKey,
+                              )}`}
+                            >
+                              {getInitials(displayName)}
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100">
+                              <span className="text-xs font-medium text-foreground">
                                 {user.name ?? user.email}
                               </span>
                               {user.name && user.email && (
-                                <span className="text-[10px] text-neutral-400">
+                                <span className="text-[10px] text-muted-foreground">
                                   {user.email}
                                 </span>
                               )}
@@ -221,7 +224,7 @@ export function AssignTaskModal({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleToggleUser(user.id)}
-                            className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md"
+                            className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 rounded-md"
                           >
                             <UserMinus size={13} className="mr-1.5" />
                             Remove
@@ -234,25 +237,25 @@ export function AssignTaskModal({
               )}
 
               <div className="space-y-2">
-                <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Add Members
                 </label>
                 <div className="relative">
                   <Search
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                     size={14}
                   />
                   <Input
                     placeholder="Search available members..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 h-9 text-xs bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 rounded-lg w-full focus-visible:ring-1"
+                    className="pl-9 h-9 text-xs bg-muted border-input rounded-lg w-full focus-visible:ring-1"
                   />
                 </div>
 
-                <div className="max-h-48 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800 border border-neutral-100 dark:border-neutral-800 rounded-lg">
+                <div className="max-h-48 overflow-y-auto divide-y divide-border border border-border rounded-lg">
                   {filteredAvailableUsers.length === 0 ? (
-                    <div className="py-6 text-center text-xs text-neutral-400">
+                    <div className="py-6 text-center text-xs text-muted-foreground">
                       {assignableUsers.length === currentlyAssignedUsers.length
                         ? "All project members are already assigned"
                         : "No matching members found"}
@@ -260,24 +263,30 @@ export function AssignTaskModal({
                   ) : (
                     filteredAvailableUsers.map((user) => {
                       const isChecked = selectedUserIds.has(user.id);
-                      const initials = user.name?.[0] ?? user.email?.[0] ?? "U";
+                      const displayName = user.name || user.email || "U";
+                      const stableColorKey =
+                        user.id || user.email || user.name || "";
 
                       return (
                         <div
                           key={user.id}
                           onClick={() => handleToggleUser(user.id)}
-                          className="px-3 py-2.5 flex items-center justify-between hover:bg-neutral-50 dark:hover:bg-neutral-800/60 cursor-pointer transition-colors"
+                          className="px-3 py-2.5 flex items-center justify-between hover:bg-accent/60 cursor-pointer transition-colors"
                         >
                           <div className="flex items-center gap-2.5">
-                            <div className="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-medium uppercase">
-                              {initials}
+                            <div
+                              className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-sm ${getAvatarColor(
+                                stableColorKey,
+                              )}`}
+                            >
+                              {getInitials(displayName)}
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100">
+                              <span className="text-xs font-medium text-foreground">
                                 {user.name ?? user.email}
                               </span>
                               {user.name && user.email && (
-                                <span className="text-[10px] text-neutral-400">
+                                <span className="text-[10px] text-muted-foreground">
                                   {user.email}
                                 </span>
                               )}
@@ -297,14 +306,14 @@ export function AssignTaskModal({
             </>
           )}
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="h-9 text-xs rounded-lg border-neutral-200 dark:border-neutral-700"
+              className="h-9 text-xs rounded-lg border-input"
             >
               Cancel
             </Button>
@@ -313,7 +322,7 @@ export function AssignTaskModal({
               size="sm"
               onClick={handleSave}
               disabled={isPending || isLoadingUsers}
-              className="h-9 px-4 bg-cyan-400 hover:bg-cyan-500 text-neutral-900 text-xs font-medium rounded-lg shadow-none"
+              className="h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-lg shadow-none"
             >
               {isPending && (
                 <Loader2 size={14} className="mr-1.5 animate-spin" />

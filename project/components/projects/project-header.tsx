@@ -1,7 +1,12 @@
-// components/projects/project-header.tsx
 "use client";
 
-import { useState, useEffect, useRef, useTransition, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useTransition,
+  useCallback,
+} from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -15,6 +20,7 @@ import {
   ChevronDown,
   FolderInput,
   Trash2,
+  Users,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -43,6 +49,7 @@ import { moveTaskToList, deleteTask } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeProject } from "@/hooks/use-realtime-project";
 import type { ProjectRealtimeEvent } from "@/lib/realtime/server";
+import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 
 type Member = {
   id: string;
@@ -308,15 +315,20 @@ export function ProjectHeader({
                         ? "Editor"
                         : "Viewer";
 
+                  const displayName = m.name || m.email || "User";
+                  const stableColorKey = m.id || m.email || displayName;
+
                   return (
                     <DropdownMenu key={m.id}>
                       <DropdownMenuTrigger asChild>
                         <button
                           type="button"
-                          className="w-7 h-7 rounded-full bg-secondary border-2 border-card text-secondary-foreground flex items-center justify-center text-[10px] font-bold uppercase transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer shadow-sm"
-                          title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
+                          className={`w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer shadow-sm ${getAvatarColor(
+                            stableColorKey,
+                          )}`}
+                          title={`${displayName} (${m.role})`}
                         >
-                          {m.name?.[0] ?? m.email?.[0] ?? "U"}
+                          {getInitials(displayName)}
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
@@ -324,12 +336,16 @@ export function ProjectHeader({
                         sideOffset={8}
                         className="w-72 bg-card border border-border rounded-2xl shadow-xl p-4 flex items-center space-x-3 z-50"
                       >
-                        <div className="w-12 h-12 rounded-full bg-secondary text-secondary-foreground border border-border flex items-center justify-center text-base font-bold uppercase shrink-0 shadow-sm">
-                          {m.name?.[0] ?? m.email?.[0] ?? "U"}
+                        <div
+                          className={`w-12 h-12 rounded-full border border-border flex items-center justify-center text-base font-bold uppercase shrink-0 shadow-sm ${getAvatarColor(
+                            stableColorKey,
+                          )}`}
+                        >
+                          {getInitials(displayName)}
                         </div>
                         <div className="flex flex-col min-w-0">
                           <span className="text-sm font-semibold text-foreground truncate">
-                            {m.name || m.email || "User"}
+                            {displayName}
                           </span>
                           <span className="text-xs text-muted-foreground truncate">
                             {m.email}
@@ -642,6 +658,18 @@ export function ProjectHeader({
                   <span>Select</span>
                 </Button>
               )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="h-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm flex items-center gap-1.5 hover:bg-muted"
+              >
+                <Link href={`/projects/${project.id}/team`}>
+                  <Users size={13} className="text-muted-foreground" />
+                  <span>Team</span>
+                </Link>
+              </Button>
 
               <DropdownMenu
                 open={actionsDropdownOpen}

@@ -112,14 +112,14 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   dragListOver: (activeSortId, overSortId) => {
     if (activeSortId === overSortId) return;
     set((s) => {
-      // Normalize IDs by stripping the prefix if present, allowing compatibility with both sortable and droppable IDs
       const cleanActiveId = activeSortId.toString().replace("list-sort-", "");
       const cleanOverId = overSortId.toString().replace("list-sort-", "");
 
       const oldIndex = s.lists.findIndex((l) => l.id === cleanActiveId);
       const newIndex = s.lists.findIndex((l) => l.id === cleanOverId);
 
-      if (oldIndex === -1 || newIndex === -1) return s;
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return s;
+
       const reordered = arrayMove(s.lists, oldIndex, newIndex);
       return { lists: reordered.map((l, i) => ({ ...l, position: i })) };
     });
@@ -300,7 +300,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       const destList =
         s.lists.find((l) => l.tasks.some((t) => t.id === overId)) ??
         s.lists.find((l) => l.id === overId);
-      if (!sourceList || !destList || sourceList.id === destList.id) return s;
+      if (!sourceList || !destList) return s;
 
       const task = sourceList.tasks.find((t) => t.id === activeId);
       if (!task) return s;
@@ -308,6 +308,38 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       const overTaskIndex = destList.tasks.findIndex((t) => t.id === overId);
       const insertIndex =
         overTaskIndex >= 0 ? overTaskIndex : destList.tasks.length;
+
+      // Same list: reorder in place, but bail out (return the SAME state
+      // reference) if the task is already at/adjacent to that index.
+      // Without this, every pointer-move event over the same spot produces
+      // a brand-new array -> re-render -> dnd-kit remeasures rects -> fires
+      // dragOver again -> infinite loop -> "Maximum update depth exceeded".
+      if (sourceList.id === destList.id) {
+        const currentIndex = sourceList.tasks.findIndex(
+          (t) => t.id === activeId,
+        );
+        if (currentIndex === -1) return s;
+        if (currentIndex === insertIndex || currentIndex === insertIndex - 1) {
+          return s;
+        }
+        const reordered = arrayMove(
+          sourceList.tasks,
+          currentIndex,
+          insertIndex,
+        );
+        return {
+          lists: s.lists.map((l) =>
+            l.id === sourceList.id ? { ...l, tasks: reordered } : l,
+          ),
+        };
+      }
+
+      // Cross-list: same no-op guard.
+      const alreadyAtTarget =
+        destList.tasks[insertIndex]?.id === activeId ||
+        destList.tasks[insertIndex - 1]?.id === activeId;
+      if (alreadyAtTarget) return s;
+
       const movedTask = { ...task, listId: destList.id };
 
       return {

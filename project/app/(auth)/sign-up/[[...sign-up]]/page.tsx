@@ -73,15 +73,14 @@ export default function SignUpPage() {
                   footer: "!hidden",
                   footerAction: "!hidden",
                   socialButtonsBlockButton:
-                    "border border-border text-foreground hover:bg-muted transition-colors font-medium h-10",
+                    "border border-border text-foreground hover:bg-muted transition-colors font-medium h-10 rounded-md",
                   socialButtonsBlockButtonText: "font-medium",
                   dividerLine: "bg-border",
                   dividerText: "text-muted-foreground text-xs uppercase",
                   formFieldLabel:
                     "text-foreground text-xs font-semibold mb-1.5",
-                  // Clearly visible input fields with distinct borders and background contrast
                   formFieldInput:
-                    "border-2 border-border bg-muted/60 text-foreground focus:border-foreground focus:bg-background h-10 px-3 rounded-md transition-all",
+                    "border border-input bg-muted/60 text-foreground focus:border-ring focus:bg-background h-10 px-3 rounded-md transition-all",
                   formButtonPrimary:
                     "bg-primary hover:bg-primary/90 text-primary-foreground font-medium h-10 rounded-md transition-colors",
                   identityAccountText: "text-foreground",

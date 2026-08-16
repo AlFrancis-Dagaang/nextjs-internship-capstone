@@ -34,9 +34,6 @@ export function TaskPrioritySection({
 
   function handlePriorityChange(newPriority: string) {
     setPriority(newPriority);
-    // #23 — reflect on the board card immediately. onChanged (and the
-    // activityRefreshKey coupling it triggers via TaskSidebar) is left
-    // untouched below, still firing only on server success.
     updateTaskLocal({ ...task, priority: newPriority as Task["priority"] });
 
     startTransition(async () => {
@@ -48,7 +45,7 @@ export function TaskPrioritySection({
           variant: "destructive",
         });
         setPriority(task.priority ?? "");
-        updateTaskLocal(task); // revert the board card too
+        updateTaskLocal(task);
         return;
       }
       onChanged?.(result.data);
@@ -57,7 +54,7 @@ export function TaskPrioritySection({
 
   return (
     <div className="space-y-2">
-      <Label className="text-[10px] text-neutral-500 uppercase font-semibold tracking-wider">
+      <Label className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">
         Priority
       </Label>
       <Select
@@ -65,25 +62,25 @@ export function TaskPrioritySection({
         onValueChange={handlePriorityChange}
         disabled={isPending || !canEdit}
       >
-        <SelectTrigger className="w-full bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 h-9 text-xs focus:ring-1 focus:ring-cyan-400">
+        <SelectTrigger className="w-full bg-card border-input h-9 text-xs focus:ring-1 focus:ring-ring text-card-foreground">
           <SelectValue placeholder="None" />
         </SelectTrigger>
-        <SelectContent className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-xl rounded-xl z-50">
+        <SelectContent className="bg-popover border border-border text-popover-foreground shadow-xl rounded-xl z-50">
           <SelectItem
             value="low"
-            className="focus:bg-neutral-100 dark:focus:bg-neutral-800 cursor-pointer"
+            className="focus:bg-accent focus:text-accent-foreground cursor-pointer"
           >
             Low
           </SelectItem>
           <SelectItem
             value="medium"
-            className="focus:bg-neutral-100 dark:focus:bg-neutral-800 cursor-pointer"
+            className="focus:bg-accent focus:text-accent-foreground cursor-pointer"
           >
             Medium
           </SelectItem>
           <SelectItem
             value="high"
-            className="focus:bg-neutral-100 dark:focus:bg-neutral-800 cursor-pointer"
+            className="focus:bg-accent focus:text-accent-foreground cursor-pointer"
           >
             High
           </SelectItem>

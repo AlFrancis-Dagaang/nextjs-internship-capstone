@@ -50,8 +50,8 @@ export function TaskDescription({
           description: result.error,
           variant: "destructive",
         });
-        updateTaskLocal(task); // revert the board card
-        setIsEditing(true); // reopen so the failed edit isn't silently lost
+        updateTaskLocal(task);
+        setIsEditing(true);
         return;
       }
 
@@ -67,30 +67,30 @@ export function TaskDescription({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold flex items-center gap-2 text-neutral-900 dark:text-neutral-100">
-          <span className="text-neutral-500">≡</span> Description
+        <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+          <span className="text-muted-foreground">≡</span> Description
         </h3>
         {!isEditing && canEdit && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsEditing(true)}
-            className="h-7 text-xs shadow-none"
+            className="h-7 text-xs shadow-none border-input"
           >
-            <Edit2 className="w-3.5 h-3.5 mr-1.5 text-neutral-400" />
+            <Edit2 className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
             Edit
           </Button>
         )}
       </div>
 
       {isEditing ? (
-        <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden bg-white dark:bg-neutral-950 focus-within:ring-1 focus-within:ring-cyan-400">
+        <div className="border border-border rounded-lg overflow-hidden bg-card focus-within:ring-1 focus-within:ring-ring">
           {/* Formatting Toolbar */}
-          <div className="bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 px-2 py-1.5 flex items-center gap-1">
+          <div className="bg-muted border-b border-border px-2 py-1.5 flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
               type="button"
             >
               <Bold size={14} />
@@ -98,7 +98,7 @@ export function TaskDescription({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
               type="button"
             >
               <Italic size={14} />
@@ -106,29 +106,29 @@ export function TaskDescription({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
               type="button"
             >
               <Strikethrough size={14} />
             </Button>
 
-            <div className="w-px h-4 bg-neutral-300 dark:bg-neutral-700 mx-1" />
+            <div className="w-px h-4 bg-border mx-1" />
 
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
               type="button"
             >
               <LinkIcon size={14} />
             </Button>
 
-            <div className="w-px h-4 bg-neutral-300 dark:bg-neutral-700 mx-1" />
+            <div className="w-px h-4 bg-border mx-1" />
 
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
               type="button"
             >
               <List size={14} />
@@ -136,7 +136,7 @@ export function TaskDescription({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
               type="button"
             >
               <ListOrdered size={14} />
@@ -147,7 +147,7 @@ export function TaskDescription({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
               type="button"
             >
               <AtSign size={14} />
@@ -155,27 +155,26 @@ export function TaskDescription({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
               type="button"
             >
               <Smile size={14} />
             </Button>
           </div>
 
-          {/* Fixed size textarea with vertical scroll support */}
           <Textarea
             autoFocus
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Add a more detailed description..."
-            className="h-32 max-h-48 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-y shadow-none text-sm bg-white dark:bg-neutral-950 px-3 py-2 overflow-y-auto"
+            className="h-32 max-h-48 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-y shadow-none text-sm bg-card px-3 py-2 overflow-y-auto"
           />
 
-          <div className="p-2 flex justify-end gap-2 bg-white dark:bg-neutral-950 border-t border-neutral-100 dark:border-neutral-900">
+          <div className="p-2 flex justify-end gap-2 bg-card border-t border-border">
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-xs"
+              className="h-7 text-xs border-input"
               onClick={handleCancel}
               disabled={isPending}
               type="button"
@@ -184,7 +183,7 @@ export function TaskDescription({
             </Button>
             <Button
               size="sm"
-              className="h-7 text-xs bg-cyan-400 hover:bg-cyan-500 text-neutral-900 font-medium"
+              className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
               onClick={handleSave}
               disabled={isPending}
               type="button"
@@ -194,19 +193,16 @@ export function TaskDescription({
           </div>
         </div>
       ) : (
-        /* Fixed view box with internal scrolling when text is long */
         <div
           onClick={canEdit ? () => setIsEditing(true) : undefined}
-          className={`min-h-25 max-h-40 overflow-y-auto p-3 rounded-md bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800 transition-colors whitespace-pre-wrap text-sm text-neutral-700 dark:text-neutral-300 pr-2 ${
-            canEdit
-              ? "hover:border-neutral-300 dark:hover:border-neutral-700 cursor-pointer"
-              : ""
+          className={`min-h-25 max-h-40 overflow-y-auto p-3 rounded-md bg-muted/50 border border-border transition-colors whitespace-pre-wrap text-sm text-card-foreground pr-2 ${
+            canEdit ? "hover:border-muted-foreground/50 cursor-pointer" : ""
           }`}
         >
           {task.description ? (
             task.description
           ) : (
-            <span className="text-neutral-400 italic">
+            <span className="text-muted-foreground italic">
               Add a more detailed description...
             </span>
           )}

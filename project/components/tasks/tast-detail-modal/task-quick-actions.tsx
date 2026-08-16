@@ -59,7 +59,7 @@ export function TaskQuickActions({
 
   return (
     <div className="space-y-2">
-      <Label className="text-[10px] text-neutral-500 uppercase font-semibold tracking-wider">
+      <Label className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">
         Quick Actions
       </Label>
       <div className="flex flex-col gap-2">
@@ -69,12 +69,12 @@ export function TaskQuickActions({
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start text-neutral-700 dark:text-neutral-300 bg-white dark:bg-neutral-950"
+              className="w-full justify-start text-foreground bg-card border-input hover:bg-accent"
               onClick={handleRestore}
               disabled={isPending}
               type="button"
             >
-              <RefreshCw className="w-4 h-4 mr-2 text-neutral-400" />
+              <RefreshCw className="w-4 h-4 mr-2 text-muted-foreground" />
               Restore
             </Button>
 
@@ -82,12 +82,12 @@ export function TaskQuickActions({
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start text-red-600 dark:text-red-400 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/50 bg-white dark:bg-neutral-950 border-red-200 dark:border-red-900/50 shadow-sm"
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 bg-card border-destructive/30 shadow-sm"
               onClick={onDeleteClick}
               disabled={isPending}
               type="button"
             >
-              <Trash2 className="w-4 h-4 mr-2 text-red-500" />
+              <Trash2 className="w-4 h-4 mr-2 text-destructive" />
               Delete permanently
             </Button>
           </>
@@ -97,12 +97,12 @@ export function TaskQuickActions({
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start text-neutral-700 dark:text-neutral-300 bg-white dark:bg-neutral-950"
+              className="w-full justify-start text-foreground bg-card border-input hover:bg-accent"
               onClick={handleArchiveClick}
               disabled={!canEdit}
               type="button"
             >
-              <Archive className="w-4 h-4 mr-2 text-neutral-400" />
+              <Archive className="w-4 h-4 mr-2 text-muted-foreground" />
               Archive task
             </Button>
 
@@ -110,12 +110,12 @@ export function TaskQuickActions({
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start text-red-600 dark:text-red-400 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/50 bg-white dark:bg-neutral-950 border-red-200 dark:border-red-900/50 shadow-sm"
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 bg-card border-destructive/30 shadow-sm"
               onClick={onDeleteClick}
               disabled={!canEdit}
               type="button"
             >
-              <Trash2 className="w-4 h-4 mr-2 text-red-500" />
+              <Trash2 className="w-4 h-4 mr-2 text-destructive" />
               Remove task
             </Button>
           </>

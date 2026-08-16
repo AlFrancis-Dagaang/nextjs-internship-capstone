@@ -65,7 +65,7 @@ export default function SignInPage() {
                 elements: {
                   rootBox: "w-full",
                   cardBox: "shadow-none p-0 bg-transparent w-full",
-                  card: "bg-card border border-border rounded-lg shadow-sm p-6 w-full text-foreground",
+                  card: "bg-transparent shadow-none p-0 w-full text-foreground border-0",
                   headerTitle:
                     "text-xl font-semibold tracking-tight text-foreground text-left mb-1",
                   headerSubtitle:
@@ -73,17 +73,17 @@ export default function SignInPage() {
                   footer: "!hidden",
                   footerAction: "!hidden",
                   socialButtonsBlockButton:
-                    "border border-border text-foreground hover:bg-muted transition-colors font-medium h-10",
-                  socialButtonsBlockButtonText: "font-medium",
+                    "border border-border bg-card text-foreground hover:bg-muted transition-colors font-medium h-10 rounded-md flex items-center justify-center gap-2",
+                  socialButtonsBlockButtonText: "font-medium text-foreground",
+                  socialButtonsBlockButtonArrow: "text-foreground",
                   dividerLine: "bg-border",
                   dividerText: "text-muted-foreground text-xs uppercase",
                   formFieldLabel:
                     "text-foreground text-xs font-semibold mb-1.5",
-                  // Clearly visible input fields with distinct borders and background contrast
                   formFieldInput:
-                    "border-2 border-border bg-muted/60 text-foreground focus:border-foreground focus:bg-background h-10 px-3 rounded-md transition-all",
+                    "border border-input bg-card text-foreground focus:border-ring focus:bg-background h-10 px-3 rounded-md transition-all",
                   formButtonPrimary:
-                    "bg-primary hover:bg-primary/90 text-primary-foreground font-medium h-10 rounded-md transition-colors",
+                    "bg-primary hover:bg-primary/90 text-primary-foreground font-medium h-10 rounded-md transition-colors w-full",
                   identityAccountText: "text-foreground",
                   formFieldErrorText: "text-destructive text-xs mt-1",
                   alertText: "text-destructive text-xs",

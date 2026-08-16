@@ -7,6 +7,41 @@ import { Textarea } from "@/components/ui/textarea";
 
 export type CommentWithAuthor = Comment & { author: User };
 
+// Deterministic color pairs matching your design tokens
+const avatarColors = [
+  "bg-blue-500 text-white",
+  "bg-emerald-500 text-white",
+  "bg-amber-500 text-white",
+  "bg-purple-500 text-white",
+  "bg-rose-500 text-white",
+  "bg-indigo-500 text-white",
+];
+
+/**
+ * Returns a stable, deterministic color class based strictly on the user's initials.
+ */
+export function getAvatarColor(nameOrInitials: string): string {
+  const initials = getInitials(nameOrInitials);
+  let hash = 0;
+  for (let i = 0; i < initials.length; i++) {
+    hash = initials.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return avatarColors[Math.abs(hash) % avatarColors.length];
+}
+
+/**
+ * Extracts up to 2 uppercase initials from a full name.
+ */
+export function getInitials(name: string): string {
+  if (!name) return "U";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 export function formatRelativeTime(d: Date | string) {
   const date = typeof d === "string" ? new Date(d) : d;
   const now = new Date();
@@ -14,19 +49,11 @@ export function formatRelativeTime(d: Date | string) {
 
   if (diffInSeconds < 60) return "just now";
   const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes} min ago`;
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
   const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours} hours ago`;
-  return date.toLocaleDateString();
-}
-
-export function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays}d ago`;
 }
 
 export function CommentRow({
@@ -62,36 +89,45 @@ export function CommentRow({
     setDraft(comment.content);
     setIsEditing(false);
   }
+
+  const authorName = comment.author?.name ?? "User";
+  const stableColorKey =
+    comment.author?.id || comment.author?.name || comment.id;
+
   return (
     <li className="flex gap-3">
-      <div className="h-8 w-8 shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">
-        {getInitials(comment.author.name)}
+      <div
+        className={`inline-flex items-center justify-center h-8 w-8 rounded-full text-xs font-medium ring-2 ring-card shrink-0 shadow-sm ${getAvatarColor(
+          stableColorKey,
+        )}`}
+      >
+        {getInitials(authorName)}
       </div>
 
       <div className="flex-1 space-y-1.5">
         <div className="flex items-baseline gap-2">
-          <span className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">
-            {comment.author.name}
+          <span className="font-semibold text-sm text-foreground">
+            {authorName}
           </span>
-          <span className="text-[10px] text-neutral-400">
+          <span className="text-[10px] text-muted-foreground">
             {formatRelativeTime(comment.createdAt)}
           </span>
         </div>
 
         {isEditing ? (
-          <div className="space-y-2 border border-neutral-300 dark:border-neutral-700 rounded-lg overflow-hidden bg-white dark:bg-neutral-950 focus-within:border-cyan-400 dark:focus-within:border-cyan-400 transition-colors shadow-sm p-2">
+          <div className="space-y-2 border border-border rounded-lg overflow-hidden bg-card focus-within:border-ring transition-colors shadow-sm p-2">
             <Textarea
               autoFocus
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               disabled={isSaving}
-              className="min-h-16 text-sm border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none bg-transparent shadow-none"
+              className="min-h-16 text-sm border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none bg-transparent shadow-none text-card-foreground"
             />
-            <div className="flex justify-end gap-2 pt-1 border-t border-neutral-100 dark:border-neutral-900">
+            <div className="flex justify-end gap-2 pt-1 border-t border-border">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs"
+                className="h-7 text-xs border-input shadow-none"
                 onClick={handleCancel}
                 disabled={isSaving}
                 type="button"
@@ -100,7 +136,7 @@ export function CommentRow({
               </Button>
               <Button
                 size="sm"
-                className="h-7 text-xs bg-cyan-400 hover:bg-cyan-500 text-neutral-900 font-medium"
+                className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-medium shadow-none"
                 onClick={handleSave}
                 disabled={isSaving || !draft.trim()}
                 type="button"
@@ -110,16 +146,16 @@ export function CommentRow({
             </div>
           </div>
         ) : (
-          <div className="text-sm p-3 border border-neutral-200 dark:border-neutral-800 rounded-md bg-white dark:bg-neutral-950 text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap">
+          <div className="text-sm p-3 border border-border rounded-md bg-card text-card-foreground whitespace-pre-wrap">
             {comment.content}
           </div>
         )}
 
         {!isEditing && comment.authorId === currentUserId && (
-          <div className="flex items-center gap-3 text-xs text-neutral-400 px-1">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground px-1">
             <button
               onClick={() => setIsEditing(true)}
-              className="hover:text-neutral-700 hover:underline"
+              className="hover:text-foreground hover:underline"
             >
               Edit
             </button>
@@ -127,7 +163,7 @@ export function CommentRow({
             <button
               disabled={isPending}
               onClick={() => onDelete(comment.id)}
-              className="hover:text-red-500 hover:underline disabled:opacity-50"
+              className="hover:text-destructive hover:underline disabled:opacity-50"
             >
               Delete
             </button>
@@ -141,13 +177,13 @@ export function CommentRow({
 export function CommentRowSkeleton() {
   return (
     <li className="flex gap-3 animate-pulse">
-      <div className="h-8 w-8 shrink-0 rounded-full bg-neutral-200 dark:bg-neutral-800" />
+      <div className="h-8 w-8 shrink-0 rounded-full bg-muted" />
       <div className="flex-1 space-y-1.5">
         <div className="flex items-baseline gap-2">
-          <div className="h-3.5 w-24 rounded bg-neutral-200 dark:bg-neutral-800" />
-          <div className="h-2.5 w-12 rounded bg-neutral-200 dark:bg-neutral-800" />
+          <div className="h-3.5 w-24 rounded bg-muted" />
+          <div className="h-2.5 w-12 rounded bg-muted" />
         </div>
-        <div className="h-14 rounded-md bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800" />
+        <div className="h-14 rounded-md bg-muted border border-border" />
       </div>
     </li>
   );
