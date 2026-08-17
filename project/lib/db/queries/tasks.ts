@@ -139,4 +139,21 @@ export const tasksQueries = {
         ),
       );
   },
+
+  getCompletionStatsByProject: async (projectIds: string[]) => {
+    if (projectIds.length === 0) return [];
+
+    return db
+      .select({
+        projectId: lists.projectId,
+        total: sql<number>`count(*)::int`,
+        completed: sql<number>`count(*) filter (where ${tasks.isCompleted})::int`,
+      })
+      .from(tasks)
+      .innerJoin(lists, eq(tasks.listId, lists.id))
+      .where(
+        and(inArray(lists.projectId, projectIds), eq(tasks.isArchived, false)),
+      )
+      .groupBy(lists.projectId);
+  },
 };

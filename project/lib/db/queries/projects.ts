@@ -1,4 +1,4 @@
-import { eq, or, exists, and } from "drizzle-orm";
+import { eq, or, exists, and, isNotNull } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 import { db } from "../client";
 import { projects, projectMembers } from "../schema";
@@ -97,6 +97,34 @@ export const projectsQueries = {
                   eq(projectMembers.role, "editor"),
                 ),
               ),
+          ),
+        ),
+      );
+  },
+  getWithDueDatesForUser: async (userId: string) => {
+    return db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        dueDate: projects.dueDate,
+      })
+      .from(projects)
+      .where(
+        and(
+          isNotNull(projects.dueDate),
+          or(
+            eq(projects.ownerId, userId),
+            exists(
+              db
+                .select({ id: projectMembers.id })
+                .from(projectMembers)
+                .where(
+                  and(
+                    eq(projectMembers.projectId, projects.id),
+                    eq(projectMembers.userId, userId),
+                  ),
+                ),
+            ),
           ),
         ),
       );

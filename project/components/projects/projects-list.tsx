@@ -21,11 +21,17 @@ type OwnerInfo = {
   email?: string;
 };
 
+type CompletionInfo = {
+  total: number;
+  completed: number;
+};
+
 type ProjectsListProps = {
   initialProjects: Project[];
   currentUserId: string;
   initialMembersMap: Record<string, Member[]>;
   initialOwnerMap: Record<string, OwnerInfo>;
+  initialCompletionMap: Record<string, CompletionInfo>;
 };
 
 export function ProjectsList({
@@ -33,6 +39,7 @@ export function ProjectsList({
   currentUserId,
   initialMembersMap,
   initialOwnerMap,
+  initialCompletionMap,
 }: ProjectsListProps) {
   const router = useRouter();
 
@@ -103,6 +110,12 @@ export function ProjectsList({
                     initialMembers={initialMembersMap[project.id] ?? []}
                     ownerName={initialOwnerMap[project.id]?.name}
                     ownerEmail={initialOwnerMap[project.id]?.email}
+                    completion={
+                      initialCompletionMap[project.id] ?? {
+                        total: 0,
+                        completed: 0,
+                      }
+                    }
                   />
                 ))}
               </div>
@@ -124,6 +137,12 @@ export function ProjectsList({
                     ownerName={initialOwnerMap[project.id]?.name}
                     ownerEmail={initialOwnerMap[project.id]?.email}
                     myRole={getMyRole(project.id)}
+                    completion={
+                      initialCompletionMap[project.id] ?? {
+                        total: 0,
+                        completed: 0,
+                      }
+                    }
                   />
                 ))}
               </div>

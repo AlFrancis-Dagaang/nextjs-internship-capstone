@@ -10,8 +10,9 @@ import { ProjectListAction } from "./project-list-action";
 import { ProjectDetailModal } from "./modals/project-detail-modal";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Calendar, ArrowUpRight } from "lucide-react";
+import { Users, Calendar, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { getCompletionLabel } from "@/lib/utils/utils";
 
 type Member = {
   id: string;
@@ -21,6 +22,11 @@ type Member = {
   role: "editor" | "viewer";
 };
 
+type CompletionInfo = {
+  total: number;
+  completed: number;
+};
+
 export function ProjectCard({
   project,
   currentUserId,
@@ -28,6 +34,7 @@ export function ProjectCard({
   ownerName,
   ownerEmail,
   myRole,
+  completion,
 }: {
   project: Project;
   currentUserId: string;
@@ -35,6 +42,7 @@ export function ProjectCard({
   ownerName?: string;
   ownerEmail?: string;
   myRole?: "editor" | "viewer";
+  completion: CompletionInfo;
 }) {
   const router = useRouter();
 
@@ -96,6 +104,14 @@ export function ProjectCard({
   }
 
   const ownerDisplayString = ownerName || ownerEmail || "Project Owner";
+  const completionLabel = getCompletionLabel(
+    completion.total,
+    completion.completed,
+  );
+  const completionPercent =
+    completion.total > 0
+      ? Math.round((completion.completed / completion.total) * 100)
+      : 0;
 
   return (
     <>
@@ -178,6 +194,29 @@ export function ProjectCard({
             </span>
           </div>
 
+          {/* Full-width completion section */}
+          <div className="flex flex-col space-y-1.5 w-full">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center space-x-1.5 text-muted-foreground">
+                <CheckCircle2 size={13} className="text-muted-foreground" />
+                <span className="font-medium text-[11px] text-muted-foreground">
+                  Task Completion
+                </span>
+              </div>
+              <span className="font-medium text-[11px] text-foreground">
+                {completionLabel}
+              </span>
+            </div>
+            {completion.total > 0 && (
+              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-300"
+                  style={{ width: `${completionPercent}%` }}
+                />
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             {/* Metadata stack */}
             <div className="flex items-center space-x-3">
@@ -197,10 +236,9 @@ export function ProjectCard({
               </div>
             </div>
 
-            {/* Unified Colored Avatar Stack */}
+            {/* Unified Colored Avatar Stack matching task card avatar +n style */}
             <div className="flex items-center">
-              <div className="flex -space-x-1.5">
-                {/* Member Avatars with unique stable color profiles */}
+              <div className="flex items-center -space-x-1.5">
                 {members.slice(0, 3).map((m) => {
                   const stableKey = m.userId || m.email || m.id;
                   return (
@@ -215,14 +253,15 @@ export function ProjectCard({
                     </div>
                   );
                 })}
+                {members.length > 3 && (
+                  <div
+                    className="w-7 h-7 rounded-full border-2 border-card bg-muted text-muted-foreground flex items-center justify-center text-[10px] font-bold shadow-sm"
+                    title={`+${members.length - 3} more members`}
+                  >
+                    +{members.length - 3}
+                  </div>
+                )}
               </div>
-
-              {/* Extra Count Badge */}
-              {members.length > 3 && (
-                <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold border border-border">
-                  +{members.length - 3}
-                </span>
-              )}
 
               {/* SaaS interactive navigation cue icon */}
               <div className="ml-3 w-6 h-6 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center transition-all duration-200 shadow-sm">
