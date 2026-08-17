@@ -10,6 +10,8 @@ import { ProjectHeader } from "@/components/projects/project-header";
 import type { Task } from "@/lib/db/schema";
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import { assertProjectAccess } from "@/lib/services/ownership";
+import { toLocalDateKey } from "@/lib/utils/utils";
+import { CalendarTaskDTO } from "@/types";
 
 export default async function ProjectPage({
   params,
@@ -103,6 +105,19 @@ export default async function ProjectPage({
       })),
   }));
 
+  const upcomingTasks: CalendarTaskDTO[] = allTasks
+    .filter((t): t is Task & { dueDate: Date } => t.dueDate !== null)
+    .map((t) => ({
+      id: t.id,
+      title: t.title,
+      dueDate: t.dueDate.toISOString(),
+      priority: t.priority,
+      projectId: project.id,
+      projectName: project.name,
+      isCompleted: t.isCompleted, // <-- Add this here
+    }))
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
   return (
     <div className="h-full flex flex-col overflow-hidden px-1 space-y-4">
       <div className="shrink-0">
@@ -113,6 +128,8 @@ export default async function ProjectPage({
           ownerName={owner?.name}
           ownerEmail={owner?.email}
           role={role}
+          currentUserId={authResult.user.id} // new
+          upcomingTasks={upcomingTasks} // new
         />
       </div>
       <div className="flex-1 min-h-0">

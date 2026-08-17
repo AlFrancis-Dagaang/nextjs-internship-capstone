@@ -70,4 +70,35 @@ export const projectsQueries = {
   delete: async (id: string) => {
     await db.delete(projects).where(eq(projects.id, id));
   },
+  // Added #79 — projects the user can attach an event to: owned, or
+  // member with an "editor" role. Deliberately excludes viewer-role
+  // memberships, since assertProjectEditAccess (the actual server-side
+  // gate on createEvent/updateEvent) rejects viewers — this list exists
+  // so the picker doesn't even show projects the user can't use, not as
+  // the real permission boundary.
+  getEditableByUser: async (userId: string) => {
+    return db
+      .select({
+        id: projects.id,
+        name: projects.name,
+      })
+      .from(projects)
+      .where(
+        or(
+          eq(projects.ownerId, userId),
+          exists(
+            db
+              .select({ id: projectMembers.id })
+              .from(projectMembers)
+              .where(
+                and(
+                  eq(projectMembers.projectId, projects.id),
+                  eq(projectMembers.userId, userId),
+                  eq(projectMembers.role, "editor"),
+                ),
+              ),
+          ),
+        ),
+      );
+  },
 };
