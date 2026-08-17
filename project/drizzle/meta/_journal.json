@@ -57,6 +57,13 @@
       "when": 1786439142418,
       "tag": "0007_pink_sebastian_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786929938944,
+      "tag": "0008_aspiring_wild_pack",
+      "breakpoints": true
     }
   ]
 }

@@ -2,11 +2,12 @@ import { usersQueries } from "./users";
 import { projectsQueries } from "./projects";
 import { listsQueries } from "./lists";
 import { tasksQueries } from "./tasks";
-import { taskActivityQueries } from "./taskActivity";
+import { taskActivityQueries } from "./task-activity";
 import { commentsQueries } from "./comments";
-import { projectMembersQueries } from "./projectMembers";
+import { projectMembersQueries } from "./project-members";
 import { taskAssigneesQueries } from "./task-assignees";
 import { notificationsQueries } from "./notifications";
+import { eventsQueries } from "./events";
 
 export const queries = {
   users: usersQueries,
@@ -18,4 +19,5 @@ export const queries = {
   projectMembers: projectMembersQueries,
   taskAssignees: taskAssigneesQueries,
   notifications: notificationsQueries,
+  events: eventsQueries,
 };

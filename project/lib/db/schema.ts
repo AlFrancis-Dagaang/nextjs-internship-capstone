@@ -169,6 +169,7 @@ export const notifications = pgTable(
         "task_archived",
         "task_due_soon_24h",
         "task_due_soon_today",
+        "project_event_added",
       ],
     }).notNull(),
     projectId: uuid("project_id").references(() => projects.id, {
@@ -189,6 +190,22 @@ export const notifications = pgTable(
     ),
   }),
 );
+
+export const events = pgTable("events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  startAt: timestamp("start_at").notNull(),
+  endAt: timestamp("end_at").notNull(),
+  creatorId: uuid("creator_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  projectId: uuid("project_id").references(() => projects.id, {
+    onDelete: "cascade",
+  }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
 // ---------- Relations ----------
 
@@ -286,6 +303,14 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+export const eventsRelations = relations(events, ({ one }) => ({
+  creator: one(users, { fields: [events.creatorId], references: [users.id] }),
+  project: one(projects, {
+    fields: [events.projectId],
+    references: [projects.id],
+  }),
+}));
+
 // ---------- Inferred types ----------
 
 export type User = typeof users.$inferSelect;
@@ -307,3 +332,5 @@ export type NewTaskAssignee = typeof taskAssignees.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 export type NotificationType = Notification["type"];
+export type Event = typeof events.$inferSelect;
+export type NewEvent = typeof events.$inferInsert;

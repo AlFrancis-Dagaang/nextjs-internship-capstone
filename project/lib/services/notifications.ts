@@ -64,3 +64,38 @@ export async function notifyTaskAssignees(params: {
       ),
   );
 }
+// Fan-out to every member of a project (via project_members) PLUS the
+// owner (who has no project_members row — #29 keeps ownership as the
+// single source of truth, so it's not covered by getByProject alone).
+// Unlike notifyTaskAssignees, there's no excludeUserId param needed —
+// createNotification already self-skips when actorId === userId, and
+// the actor is always a project member/owner by definition here (they
+// had to pass assertProjectEditAccess to create the event).
+export async function notifyProjectMembers(params: {
+  projectId: string;
+  type: NotificationType;
+  message: string;
+  actorId: string;
+}) {
+  const project = await queries.projects.getById(params.projectId);
+  if (!project) return;
+
+  const members = await queries.projectMembers.getByProject(params.projectId);
+
+  const recipientIds = new Set([
+    project.ownerId,
+    ...members.map((m) => m.userId),
+  ]);
+
+  await Promise.all(
+    Array.from(recipientIds).map((userId) =>
+      createNotification({
+        userId,
+        type: params.type,
+        message: params.message,
+        projectId: params.projectId,
+        actorId: params.actorId,
+      }),
+    ),
+  );
+}

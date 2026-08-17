@@ -1,7 +1,7 @@
-import { asc, eq, and, sql, inArray } from "drizzle-orm";
+import { asc, eq, and, sql, inArray, isNotNull, exists, or } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 import { db } from "../client";
-import { lists, tasks, comments } from "../schema";
+import { lists, tasks, comments, projectMembers, projects } from "../schema";
 
 export const tasksQueries = {
   getByProject: async (projectId: string) => {
@@ -97,5 +97,46 @@ export const tasksQueries = {
   },
   delete: async (id: string) => {
     await db.delete(tasks).where(eq(tasks.id, id));
+  },
+  // Added #73 — tasks with a dueDate across every project the user can
+  // access (owned or member-of), for the Calendar page. Reimplements
+  // getByOwnerOrMember's accessibility check at the task level (join
+  // through lists -> projects) rather than importing it, since this
+  // needs project name/id alongside each task.
+  getWithDueDatesForUser: async (userId: string) => {
+    return db
+      .select({
+        id: tasks.id,
+        title: tasks.title,
+        dueDate: tasks.dueDate,
+        priority: tasks.priority,
+        listId: tasks.listId,
+        projectId: lists.projectId,
+        projectName: projects.name,
+        isCompleted: tasks.isCompleted,
+      })
+      .from(tasks)
+      .innerJoin(lists, eq(tasks.listId, lists.id))
+      .innerJoin(projects, eq(lists.projectId, projects.id))
+      .where(
+        and(
+          isNotNull(tasks.dueDate),
+          eq(tasks.isArchived, false),
+          or(
+            eq(projects.ownerId, userId),
+            exists(
+              db
+                .select({ id: projectMembers.id })
+                .from(projectMembers)
+                .where(
+                  and(
+                    eq(projectMembers.projectId, projects.id),
+                    eq(projectMembers.userId, userId),
+                  ),
+                ),
+            ),
+          ),
+        ),
+      );
   },
 };

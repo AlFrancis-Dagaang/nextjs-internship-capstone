@@ -22,3 +22,13 @@ export function toMemberList(
     role: m.role,
   }));
 }
+
+// Local (not UTC) date key — must match CalendarView's own formatDateKey
+// exactly, or events/tasks silently fail to match their day cell for
+// any user not in UTC (or any event near a local midnight boundary).
+export function toLocalDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}

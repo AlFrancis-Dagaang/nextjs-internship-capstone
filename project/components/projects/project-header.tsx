@@ -20,7 +20,7 @@ import {
   ChevronDown,
   FolderInput,
   Trash2,
-  Users,
+  Calendar,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useRealtimeProject } from "@/hooks/use-realtime-project";
 import type { ProjectRealtimeEvent } from "@/lib/realtime/server";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { CalendarTaskDTO } from "@/types";
+import { ProjectCalendarModal } from "./modals/project-calendar-modal";
 
 type Member = {
   id: string;
@@ -66,6 +68,8 @@ export function ProjectHeader({
   ownerName,
   ownerEmail,
   role,
+  currentUserId,
+  upcomingTasks,
 }: {
   project: Project;
   initialMembers: Member[];
@@ -73,6 +77,8 @@ export function ProjectHeader({
   ownerName?: string;
   ownerEmail?: string;
   role: "owner" | "editor" | "viewer";
+  currentUserId: string;
+  upcomingTasks: CalendarTaskDTO[];
 }) {
   const { toast } = useToast();
   const canEdit = role !== "viewer";
@@ -96,6 +102,9 @@ export function ProjectHeader({
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [actionsDropdownOpen, setActionsDropdownOpen] = useState(false);
   const [bulkActionsDropdownOpen, setBulkActionsDropdownOpen] = useState(false);
+
+  // Calendar modal state
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
 
   // UI Store — search & filters
   const searchQuery = useUiStore((s) => s.searchQuery);
@@ -290,7 +299,7 @@ export function ProjectHeader({
   return (
     <div className="flex flex-col gap-2 bg-transparent px-0 py-0 m-0">
       <div className="flex flex-wrap items-center justify-between gap-4 py-1">
-        {/* Left side: Back button + Title & Avatars */}
+        {/* Left side: Back button + Title */}
         <div className="flex items-center space-x-3.5 min-w-0">
           <Link
             href="/projects"
@@ -303,75 +312,13 @@ export function ProjectHeader({
             <h1 className="text-base font-semibold text-foreground truncate tracking-tight">
               {liveProject.name}
             </h1>
-
-            {/* Avatars with Dropdown Card on click */}
-            <div className="hidden sm:flex items-center">
-              <div className="flex -space-x-1.5">
-                {visibleMembers.map((m) => {
-                  const roleLabel =
-                    m.role === "owner"
-                      ? "Owner"
-                      : m.role === "editor"
-                        ? "Editor"
-                        : "Viewer";
-
-                  const displayName = m.name || m.email || "User";
-                  const stableColorKey = m.id || m.email || displayName;
-
-                  return (
-                    <DropdownMenu key={m.id}>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          type="button"
-                          className={`w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer shadow-sm ${getAvatarColor(
-                            stableColorKey,
-                          )}`}
-                          title={`${displayName} (${m.role})`}
-                        >
-                          {getInitials(displayName)}
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="start"
-                        sideOffset={8}
-                        className="w-72 bg-card border border-border rounded-2xl shadow-xl p-4 flex items-center space-x-3 z-50"
-                      >
-                        <div
-                          className={`w-12 h-12 rounded-full border border-border flex items-center justify-center text-base font-bold uppercase shrink-0 shadow-sm ${getAvatarColor(
-                            stableColorKey,
-                          )}`}
-                        >
-                          {getInitials(displayName)}
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-semibold text-foreground truncate">
-                            {displayName}
-                          </span>
-                          <span className="text-xs text-muted-foreground truncate">
-                            {m.email}
-                          </span>
-                          <span className="text-xs font-medium text-foreground mt-0.5">
-                            {roleLabel}
-                          </span>
-                        </div>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  );
-                })}
-              </div>
-
-              {extraCount > 0 && (
-                <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold border border-border">
-                  +{extraCount}
-                </span>
-              )}
-            </div>
           </div>
         </div>
 
-        {/* Right side controls */}
+        {/* Right side controls & Team Avatars */}
         <div className="flex items-center space-x-3 ml-auto flex-wrap">
-          <div className="relative w-64 sm:w-80 md:w-96 hidden sm:block">
+          {/* Search input */}
+          <div className="relative w-52 sm:w-64 md:w-72 hidden sm:block">
             <Search
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
               size={13}
@@ -383,6 +330,17 @@ export function ProjectHeader({
               placeholder="Search tasks..."
             />
           </div>
+
+          {/* Calendar Button Trigger */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCalendarModalOpen(true)}
+            className="h-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm px-2.5 flex items-center gap-1.5 hover:bg-muted"
+          >
+            <Calendar size={13} className="text-muted-foreground" />
+            <span>Calendar</span>
+          </Button>
 
           {selectionMode ? (
             <div className="flex items-center space-x-2">
@@ -471,6 +429,7 @@ export function ProjectHeader({
             </div>
           ) : (
             <>
+              {/* Filter Button */}
               <DropdownMenu
                 open={filterDropdownOpen}
                 onOpenChange={setFilterDropdownOpen}
@@ -647,6 +606,7 @@ export function ProjectHeader({
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* Selection Mode Button */}
               {canEdit && (
                 <Button
                   variant="outline"
@@ -659,18 +619,7 @@ export function ProjectHeader({
                 </Button>
               )}
 
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-                className="h-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm flex items-center gap-1.5 hover:bg-muted"
-              >
-                <Link href={`/projects/${project.id}/team`}>
-                  <Users size={13} className="text-muted-foreground" />
-                  <span>Team</span>
-                </Link>
-              </Button>
-
+              {/* More Actions Menu */}
               <DropdownMenu
                 open={actionsDropdownOpen}
                 onOpenChange={setActionsDropdownOpen}
@@ -726,6 +675,69 @@ export function ProjectHeader({
               </DropdownMenu>
             </>
           )}
+
+          {/* Team Members Avatars (Positioned at the far right of the actions bar for signature SaaS feel) */}
+          <div className="hidden sm:flex items-center pl-2 border-l border-border ml-1">
+            <div className="flex -space-x-1.5">
+              {visibleMembers.map((m) => {
+                const roleLabel =
+                  m.role === "owner"
+                    ? "Owner"
+                    : m.role === "editor"
+                      ? "Editor"
+                      : "Viewer";
+
+                const displayName = m.name || m.email || "User";
+                const stableColorKey = m.id || m.email || displayName;
+
+                return (
+                  <DropdownMenu key={m.id}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className={`w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer shadow-sm ${getAvatarColor(
+                          stableColorKey,
+                        )}`}
+                        title={`${displayName} (${m.role})`}
+                      >
+                        {getInitials(displayName)}
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      sideOffset={8}
+                      className="w-72 bg-card border border-border rounded-2xl shadow-xl p-4 flex items-center space-x-3 z-50"
+                    >
+                      <div
+                        className={`w-12 h-12 rounded-full border border-border flex items-center justify-center text-base font-bold uppercase shrink-0 shadow-sm ${getAvatarColor(
+                          stableColorKey,
+                        )}`}
+                      >
+                        {getInitials(displayName)}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-semibold text-foreground truncate">
+                          {displayName}
+                        </span>
+                        <span className="text-xs text-muted-foreground truncate">
+                          {m.email}
+                        </span>
+                        <span className="text-xs font-medium text-foreground mt-0.5">
+                          {roleLabel}
+                        </span>
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              })}
+            </div>
+
+            {extraCount > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold border border-border">
+                +{extraCount}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -757,6 +769,15 @@ export function ProjectHeader({
           selectedTaskIds.length === 1 ? "" : "s"
         }`}
         isPending={isBulkPending}
+      />
+
+      <ProjectCalendarModal
+        projectId={project.id}
+        projectName={liveProject.name}
+        upcomingTasks={upcomingTasks}
+        currentUserId={currentUserId}
+        open={calendarModalOpen}
+        onOpenChange={setCalendarModalOpen}
       />
     </div>
   );
