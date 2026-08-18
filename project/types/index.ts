@@ -54,6 +54,33 @@ export interface Comment {
   updatedAt: Date;
 }
 
+export type ProjectMemberRole = "admin" | "editor" | "contributor" | "viewer";
+export type ProjectTeamRole = "editor" | "contributor" | "viewer";
+export type EffectiveRole = "owner" | ProjectMemberRole;
+
+export interface Team {
+  id: string;
+  name: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TeamMember {
+  id: string;
+  teamId: string;
+  userId: string;
+  createdAt: Date;
+}
+
+export interface ProjectTeam {
+  id: string;
+  projectId: string;
+  teamId: string;
+  role: ProjectTeamRole;
+  createdAt: Date;
+}
+
 export type CalendarTaskDTO = {
   id: string;
   title: string;
