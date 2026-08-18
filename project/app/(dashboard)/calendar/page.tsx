@@ -2,14 +2,19 @@ import { requireAuthedDbUser } from "@/lib/services/auth";
 import { queries } from "@/lib/db";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { toLocalDateKey } from "@/lib/utils/utils";
-import type { CalendarTaskDTO, CalendarEventDTO } from "@/types";
+import type {
+  CalendarTaskDTO,
+  CalendarEventDTO,
+  CalendarProjectDTO,
+} from "@/types";
 
 export default async function CalendarPage() {
   const user = await requireAuthedDbUser();
 
-  const [tasks, events] = await Promise.all([
+  const [tasks, events, projectsWithDueDates] = await Promise.all([
     queries.tasks.getWithDueDatesForUser(user.id),
     queries.events.getForUser(user.id),
+    queries.projects.getWithDueDatesForUser(user.id),
   ]);
 
   const tasksByDate: Record<string, CalendarTaskDTO[]> = {};
@@ -44,11 +49,22 @@ export default async function CalendarPage() {
       creatorId: event.creatorId,
     });
   }
+  const projectsByDate: Record<string, CalendarProjectDTO[]> = {};
+  for (const project of projectsWithDueDates) {
+    if (!project.dueDate) continue;
+    const key = toLocalDateKey(project.dueDate);
+    (projectsByDate[key] ??= []).push({
+      id: project.id,
+      name: project.name,
+      dueDate: project.dueDate.toISOString(),
+    });
+  }
 
   return (
     <CalendarView
       tasksByDate={tasksByDate}
       eventsByDate={eventsByDate}
+      projectsByDate={projectsByDate} // new
       currentUserId={user.id}
     />
   );

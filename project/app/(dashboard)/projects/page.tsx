@@ -55,6 +55,20 @@ export default async function ProjectsPage() {
     ]),
   );
 
+  const completionStats = await queries.tasks.getCompletionStatsByProject(
+    result.data.map((p) => p.id),
+  );
+
+  const initialCompletionMap = Object.fromEntries(
+    result.data.map((p) => {
+      const stat = completionStats.find((s) => s.projectId === p.id);
+      return [
+        p.id,
+        { total: stat?.total ?? 0, completed: stat?.completed ?? 0 },
+      ];
+    }),
+  );
+
   return (
     <div className="space-y-6 w-full min-w-0">
       <ProjectsList
@@ -62,6 +76,7 @@ export default async function ProjectsPage() {
         currentUserId={authResult.user.id}
         initialMembersMap={initialMembersMap}
         initialOwnerMap={initialOwnerMap}
+        initialCompletionMap={initialCompletionMap} // new
       />
     </div>
   );

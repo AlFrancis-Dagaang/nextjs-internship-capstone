@@ -73,5 +73,11 @@ export type CalendarEventDTO = {
   projectId: string | null;
   creatorId: string;
 };
+
+export type CalendarProjectDTO = {
+  id: string;
+  name: string;
+  dueDate: string; // ISO string
+};
 // Note for interns: These types should match your database schema
 // Update as needed when implementing the actual database schema

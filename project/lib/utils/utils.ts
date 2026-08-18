@@ -32,3 +32,11 @@ export function toLocalDateKey(date: Date): string {
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
+
+// Added #74 — completion % label, computed live (no stored column).
+// Zero active tasks is explicitly "No tasks yet", never "0%" — those
+// mean different things (nothing to do yet, vs. nothing done yet).
+export function getCompletionLabel(total: number, completed: number): string {
+  if (total === 0) return "No tasks yet";
+  return `${Math.round((completed / total) * 100)}%`;
+}
