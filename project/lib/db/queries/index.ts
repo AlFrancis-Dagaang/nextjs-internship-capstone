@@ -8,6 +8,7 @@ import { projectMembersQueries } from "./project-members";
 import { taskAssigneesQueries } from "./task-assignees";
 import { notificationsQueries } from "./notifications";
 import { eventsQueries } from "./events";
+import { analyticsQueries } from "./analytics";
 
 export const queries = {
   users: usersQueries,
@@ -20,4 +21,5 @@ export const queries = {
   taskAssignees: taskAssigneesQueries,
   notifications: notificationsQueries,
   events: eventsQueries,
+  analytics: analyticsQueries,
 };
