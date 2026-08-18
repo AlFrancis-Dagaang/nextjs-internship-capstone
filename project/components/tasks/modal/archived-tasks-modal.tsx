@@ -32,7 +32,7 @@ export function ArchivedTasksModal({
   projectId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 }) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -166,7 +166,7 @@ export function ArchivedTasksModal({
                     }
                   />
 
-                  {role !== "viewer" && (
+                  {role !== "viewer" && role !== "contributor" && (
                     <div className="flex items-center space-x-2 text-xs px-1 text-muted-foreground">
                       <button
                         type="button"

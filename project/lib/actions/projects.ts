@@ -5,6 +5,7 @@ import { projectCreateSchema, projectUpdateSchema } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import {
   assertProjectOwnership,
+  assertProjectManageAccess,
   assertProjectViewAccess,
 } from "@/lib/services/ownership";
 import { Project } from "../db/schema";
@@ -85,7 +86,7 @@ export async function getProject(id: string): Promise<ActionResult<Project>> {
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const access = await assertProjectViewAccess(id, authResult.user.id);
+  const access = await assertProjectManageAccess(id, authResult.user.id);
   if ("error" in access) {
     return { success: false, error: access.error ?? "Unknown error" };
   }
@@ -136,9 +137,9 @@ export async function deleteProject(id: string): Promise<ActionResult<null>> {
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const ownership = await assertProjectOwnership(id, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectManageAccess(id, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   await queries.projects.delete(id);

@@ -76,13 +76,12 @@ export function ProjectHeader({
   isOwner: boolean;
   ownerName?: string;
   ownerEmail?: string;
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   currentUserId: string;
   upcomingTasks: CalendarTaskDTO[];
 }) {
   const { toast } = useToast();
-  const canEdit = role !== "viewer";
-
+  const canEdit = role !== "viewer" && role !== "contributor";
   const membersState = useProjectStore(
     (s) => s.membersMap[project.id] ?? initialMembers,
   );

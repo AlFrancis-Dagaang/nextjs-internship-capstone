@@ -46,7 +46,7 @@ export function ListColumn({
   list: ListWithTasks;
   totalLists: number;
   allLists: ListWithTasks[];
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   currentUserId: string;
 
   onRenamed?: (updated: List) => void;
@@ -66,8 +66,7 @@ export function ListColumn({
   const [name, setName] = useState(list.name);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const canEdit = role !== "viewer";
-
+  const canEdit = role !== "viewer" && role !== "contributor";
   // #70 item 5 — search & filter state, read from ui-store. Filtering is
   // pure client-side derivation over already-loaded board data.
   const searchQuery = useUiStore((s) => s.searchQuery);

@@ -19,7 +19,7 @@ type TaskSidebarProps = {
   assignableUsers: { id: string; name?: string; email?: string }[];
   activityRefreshKey: number;
   canEdit: boolean;
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   onRestored?: () => void;
   onChanged?: (task: TaskWithCommentCount) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;

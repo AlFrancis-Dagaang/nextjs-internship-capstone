@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -52,7 +51,7 @@ type TeamMember = {
   userId: string;
   name: string;
   email: string;
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   activeTaskCount: number;
   recentActivity: {
     id: string;
@@ -92,7 +91,7 @@ type SearchUser = {
   email: string;
   name: string;
   status: "available" | "member" | "owner";
-  role?: "editor" | "viewer";
+  role?: "admin" | "editor" | "contributor" | "viewer";
 };
 
 const ACTION_VERBS: Record<string, string> = {
@@ -176,7 +175,10 @@ export function ProjectTeamView({
     return () => clearTimeout(timer);
   }, [searchQuery, project.id, toast]);
 
-  const handleRoleChange = (memberId: string, newRole: "editor" | "viewer") => {
+  const handleRoleChange = (
+    memberId: string,
+    newRole: "admin" | "editor" | "contributor" | "viewer",
+  ) => {
     startTransition(async () => {
       const res = await updateMemberRole(project.id, memberId, {
         role: newRole,

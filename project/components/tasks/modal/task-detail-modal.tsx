@@ -21,7 +21,7 @@ type TaskDetailModalProps = {
   projectId: string;
   allLists: ListWithTasks[];
   assignableUsers: { id: string; name?: string; email?: string }[];
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   onRestored?: () => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -62,8 +62,7 @@ export function TaskDetailModal({
 
   // Force strict boolean evaluation so falsy/null DB values don't break archive checks
   const isArchived = Boolean(task.isArchived);
-  const canEdit = role !== "viewer" && !isArchived;
-
+  const canEdit = role !== "viewer" && role !== "contributor" && !isArchived;
   const handleChanged = useCallback(
     (updated: TaskWithCommentCount) => {
       onChanged?.(updated);

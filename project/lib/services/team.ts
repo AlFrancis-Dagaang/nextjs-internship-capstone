@@ -47,7 +47,7 @@ export type TeamMember = {
   userId: string;
   name: string;
   email: string;
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   activeTaskCount: number;
   recentActivity: Awaited<
     ReturnType<typeof queries.taskActivity.getByProjectAndActor>
@@ -60,7 +60,7 @@ export type ProjectTeamResult =
       project: NonNullable<
         Awaited<ReturnType<typeof queries.projects.getById>>
       >;
-      role: "owner" | "editor" | "viewer";
+      role: "owner" | "admin" | "editor" | "contributor" | "viewer";
       canManage: boolean;
       team: TeamMember[];
     };

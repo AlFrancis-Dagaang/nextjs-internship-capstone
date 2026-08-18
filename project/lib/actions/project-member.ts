@@ -8,6 +8,7 @@ import {
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import {
   assertProjectOwnership,
+  assertProjectManageAccess,
   assertProjectViewAccess,
 } from "@/lib/services/ownership";
 import type { ProjectMember } from "../db/schema";
@@ -40,9 +41,9 @@ export async function addProjectMember(
     };
   }
 
-  const ownership = await assertProjectOwnership(projectId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectManageAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const targetUser = await queries.users.getByEmail(parsed.data.email);
@@ -50,7 +51,7 @@ export async function addProjectMember(
     return { success: false, error: "User not found" };
   }
 
-  if (targetUser.id === ownership.project.ownerId) {
+  if (targetUser.id === access.project.ownerId) {
     return { success: false, error: "This user already owns the project" };
   }
 
@@ -72,7 +73,7 @@ export async function addProjectMember(
   await createNotification({
     userId: targetUser.id,
     type: "project_added",
-    message: `${actor?.name ?? "Someone"} added you to "${ownership.project.name}"`,
+    message: `${actor?.name ?? "Someone"} added you to "${access.project.name}"`,
     projectId,
     actorId: authResult.user.id,
   });
@@ -139,9 +140,9 @@ export async function updateMemberRole(
     };
   }
 
-  const ownership = await assertProjectOwnership(projectId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectManageAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const existingMember = await queries.projectMembers.getById(memberId);
@@ -169,9 +170,9 @@ export async function removeProjectMember(
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const ownership = await assertProjectOwnership(projectId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectManageAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const existingMember = await queries.projectMembers.getById(memberId);
@@ -213,7 +214,7 @@ export async function removeProjectMember(
   await createNotification({
     userId: existingMember.userId,
     type: "project_removed",
-    message: `${actor?.name ?? "Someone"} removed you from "${ownership.project.name}"`,
+    message: `${actor?.name ?? "Someone"} removed you from "${access.project.name}"`,
     projectId,
     actorId: authResult.user.id,
   });
@@ -233,7 +234,7 @@ type UserSearchResult = {
   email: string;
   name: string;
   status: "available" | "member" | "owner";
-  role?: "editor" | "viewer"; // present when status === "member"
+  role?: "admin" | "editor" | "contributor" | "viewer";
 };
 
 export async function searchUsersForInvite(
@@ -250,9 +251,9 @@ export async function searchUsersForInvite(
     return { success: true, data: [] };
   }
 
-  const ownership = await assertProjectOwnership(projectId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectManageAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const [existingMembers, results] = await Promise.all([
@@ -265,7 +266,7 @@ export async function searchUsersForInvite(
   );
 
   const annotated: UserSearchResult[] = results.map((u) => {
-    if (u.id === ownership.project.ownerId) {
+    if (u.id === access.project.ownerId) {
       return { ...u, status: "owner" };
     }
     const role = memberRoleById.get(u.id);

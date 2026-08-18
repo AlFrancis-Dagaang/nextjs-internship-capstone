@@ -22,7 +22,7 @@ export function TaskQuickActions({
   onArchive?: () => void;
   onDeleteClick?: () => void;
   canEdit: boolean;
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   onRestored?: () => void;
   onOpenChange?: (open: boolean) => void;
 }) {
@@ -30,7 +30,7 @@ export function TaskQuickActions({
   const [isPending, startTransition] = useTransition();
   const insertTaskAt = useBoardStore((s) => s.insertTaskAt);
 
-  if (role === "viewer") return null;
+  if (role === "viewer" || role === "contributor") return null;
 
   const handleRestore = () => {
     startTransition(async () => {
