@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 import { db } from "../client";
 import { projectMembers, users } from "../schema";
+import type { ProjectMemberRole } from "@/types";
 
 export const projectMembersQueries = {
   getByProjectAndUser: async (projectId: string, userId: string) => {
@@ -36,7 +37,7 @@ export const projectMembersQueries = {
     const [member] = await db.insert(projectMembers).values(data).returning();
     return member;
   },
-  updateRole: async (id: string, role: "editor" | "viewer") => {
+  updateRole: async (id: string, role: ProjectMemberRole) => {
     const [member] = await db
       .update(projectMembers)
       .set({ role })

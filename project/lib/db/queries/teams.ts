@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 import { db } from "../client";
 import { teams, teamMembers, users } from "../schema";
@@ -24,6 +24,23 @@ export const teamsQueries = {
   },
   remove: async (id: string) => {
     await db.delete(teams).where(eq(teams.id, id));
+  },
+
+  getByCreator: async (userId: string) => {
+    return db.query.teams.findMany({ where: eq(teams.createdBy, userId) });
+  },
+  getForUser: async (userId: string) => {
+    return db
+      .select({
+        id: teams.id,
+        name: teams.name,
+        createdBy: teams.createdBy,
+        createdAt: teams.createdAt,
+      })
+      .from(teams)
+      .leftJoin(teamMembers, eq(teamMembers.teamId, teams.id))
+      .where(or(eq(teams.createdBy, userId), eq(teamMembers.userId, userId)))
+      .groupBy(teams.id); // Prevents duplicate rows if you are both creator and member
   },
 
   // team_members — folded in here rather than a separate query file,

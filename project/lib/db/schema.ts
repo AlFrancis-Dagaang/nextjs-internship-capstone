@@ -219,6 +219,8 @@ export const notifications = pgTable(
         "task_due_soon_24h",
         "task_due_soon_today",
         "project_event_added",
+        "team_member_added",
+        "team_attached_to_project",
       ],
     }).notNull(),
     projectId: uuid("project_id").references(() => projects.id, {
