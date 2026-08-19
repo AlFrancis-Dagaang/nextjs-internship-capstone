@@ -76,7 +76,7 @@ export default async function ProjectsPage() {
         currentUserId={authResult.user.id}
         initialMembersMap={initialMembersMap}
         initialOwnerMap={initialOwnerMap}
-        initialCompletionMap={initialCompletionMap} // new
+        initialCompletionMap={initialCompletionMap}
       />
     </div>
   );

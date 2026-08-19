@@ -67,8 +67,7 @@ export function ListColumn({
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const canEdit = role !== "viewer" && role !== "contributor";
-  // #70 item 5 — search & filter state, read from ui-store. Filtering is
-  // pure client-side derivation over already-loaded board data.
+  const canContribute = role !== "viewer";
   const searchQuery = useUiStore((s) => s.searchQuery);
   const filterCompleted = useUiStore((s) => s.filterCompleted);
   const filterPriority = useUiStore((s) => s.filterPriority);
@@ -284,6 +283,7 @@ export function ListColumn({
                   projectId={list.projectId}
                   allLists={allLists}
                   canEdit={canEdit}
+                  canContribute={canContribute}
                   dragDisabled={filtering || selectionMode}
                   selectionMode={selectionMode}
                   isSelected={selectedTaskIds.includes(task.id)}

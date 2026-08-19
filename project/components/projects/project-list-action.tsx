@@ -41,7 +41,7 @@ type Member = {
   userId: string;
   email?: string;
   name?: string;
-  role: "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 type SearchUser = {
@@ -49,12 +49,13 @@ type SearchUser = {
   email: string;
   name: string;
   status: "available" | "member" | "owner";
-  role?: "editor" | "viewer";
+  role?: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 export function ProjectListAction({
   project,
   isOwner,
+  canManage,
   onDeleted,
   onViewDetails,
   onRename,
@@ -64,6 +65,7 @@ export function ProjectListAction({
 }: {
   project: Project;
   isOwner: boolean;
+  canManage: boolean;
   onDeleted: (projectId: string) => void;
   onViewDetails: () => void;
   onRename: () => void;
@@ -83,7 +85,9 @@ export function ProjectListAction({
   // Live-search invite states inside dropdown view
   const [query, setQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
-  const [inviteRole, setInviteRole] = useState<"editor" | "viewer">("viewer");
+  const [inviteRole, setInviteRole] = useState<
+    "owner" | "admin" | "editor" | "contributor" | "viewer"
+  >("viewer");
   const [isPending, startTransition] = useTransition();
 
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
@@ -278,7 +282,7 @@ export function ProjectListAction({
                 <span>Manage project</span>
               </DropdownMenuItem>
 
-              {isOwner && (
+              {canManage && (
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
@@ -291,7 +295,7 @@ export function ProjectListAction({
                 </DropdownMenuItem>
               )}
 
-              {isOwner && (
+              {canManage && (
                 <>
                   <div className="pt-1.5 pb-1 border-t border-border mt-1">
                     <DropdownMenuItem
@@ -428,9 +432,9 @@ export function ProjectListAction({
 
                 <Select
                   value={inviteRole}
-                  onValueChange={(val: "editor" | "viewer") =>
-                    setInviteRole(val)
-                  }
+                  onValueChange={(
+                    val: "admin" | "editor" | "contributor" | "viewer",
+                  ) => setInviteRole(val)}
                 >
                   <SelectTrigger className="w-full h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none focus:ring-0">
                     <SelectValue />
@@ -439,8 +443,14 @@ export function ProjectListAction({
                     <SelectItem value="viewer" className="text-xs">
                       Viewer (View-only)
                     </SelectItem>
+                    <SelectItem value="contributor" className="text-xs">
+                      Contributor (Move & complete tasks)
+                    </SelectItem>
                     <SelectItem value="editor" className="text-xs">
                       Editor (Manage tasks)
+                    </SelectItem>
+                    <SelectItem value="admin" className="text-xs">
+                      Admin (Owner-equivalent)
                     </SelectItem>
                   </SelectContent>
                 </Select>

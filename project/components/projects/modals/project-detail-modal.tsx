@@ -16,13 +16,14 @@ type Member = {
   id: string;
   userId: string;
   email?: string;
-  role: "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 type ProjectDetailModalProps = {
   project: Project;
   members: Member[];
   isOwner: boolean;
+  canManage: boolean;
   ownerName?: string;
   ownerEmail?: string;
   open: boolean;
@@ -41,6 +42,7 @@ export function ProjectDetailModal({
   project,
   members,
   isOwner,
+  canManage,
   ownerName,
   ownerEmail,
   open,
@@ -77,13 +79,18 @@ export function ProjectDetailModal({
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           {/* ProjectInfo gets a larger flex share for a wider workspace */}
           <div className="flex-[1.6] flex flex-col overflow-hidden">
-            <ProjectInfo project={project} isOwner={isOwner} />
+            <ProjectInfo
+              project={project}
+              isOwner={isOwner}
+              canManage={canManage}
+            />
           </div>
 
           <ProjectMembers
             project={project}
             members={members}
             isOwner={isOwner}
+            canManage={canManage}
             ownerName={ownerName}
             ownerEmail={ownerEmail}
             onMemberAdded={onMemberAdded}

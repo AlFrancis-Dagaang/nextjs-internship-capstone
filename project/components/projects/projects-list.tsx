@@ -13,7 +13,7 @@ type Member = {
   userId: string;
   email?: string;
   name?: string;
-  role: "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 type OwnerInfo = {
@@ -57,7 +57,9 @@ export function ProjectsList({
   const ownedProjects = projects.filter((p) => p.ownerId === currentUserId);
   const sharedProjects = projects.filter((p) => p.ownerId !== currentUserId);
 
-  function getMyRole(projectId: string): "editor" | "viewer" | undefined {
+  function getMyRole(
+    projectId: string,
+  ): "owner" | "admin" | "editor" | "contributor" | "viewer" | undefined {
     const members = initialMembersMap[projectId] ?? [];
     return members.find((m) => m.userId === currentUserId)?.role;
   }

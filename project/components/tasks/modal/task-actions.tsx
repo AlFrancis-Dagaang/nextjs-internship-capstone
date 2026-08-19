@@ -53,6 +53,7 @@ export function TaskActions({
   currentListId,
   allLists,
   canEdit,
+  canContribute,
   onAssigned,
   onView,
   onRename,
@@ -65,6 +66,7 @@ export function TaskActions({
   currentListId: string;
   allLists: ListWithTasks[];
   canEdit: boolean;
+  canContribute: boolean;
   onView: () => void;
   onRename: () => void;
   onArchive: () => void;
@@ -320,6 +322,17 @@ export function TaskActions({
                   <UserPlus size={15} className="text-muted-foreground" />
                   <span>Assign member</span>
                 </DropdownMenuItem>
+              </div>
+            )}
+
+            {canContribute && (
+              <div
+                className={`pt-1.5 pb-1 ${!canEdit ? "border-t border-border mt-1" : ""}`}
+              >
+                <div className="px-2.5 pb-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                  Actions
+                </div>
+
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();

@@ -19,7 +19,7 @@ type Member = {
   userId: string;
   email?: string;
   name?: string;
-  role: "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 type CompletionInfo = {
@@ -41,7 +41,7 @@ export function ProjectCard({
   initialMembers?: Member[];
   ownerName?: string;
   ownerEmail?: string;
-  myRole?: "editor" | "viewer";
+  myRole?: "owner" | "admin" | "editor" | "contributor" | "viewer";
   completion: CompletionInfo;
 }) {
   const router = useRouter();
@@ -66,7 +66,8 @@ export function ProjectCard({
   }, [project.id]);
 
   const { toast } = useToast();
-  const isOwner = project.ownerId === currentUserId;
+  const isOwner = project.ownerId === currentUserId; // unchanged, still the only reliable owner signal
+  const canManage = isOwner || myRole === "admin";
 
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -279,6 +280,7 @@ export function ProjectCard({
           <ProjectListAction
             project={project}
             isOwner={isOwner}
+            canManage={canManage}
             onViewDetails={() => setDetailOpen(true)}
             onRename={() => {
               setName(project.name);
@@ -295,6 +297,7 @@ export function ProjectCard({
         project={project}
         members={members}
         isOwner={isOwner}
+        canManage={canManage}
         ownerName={ownerName}
         ownerEmail={ownerEmail}
         open={detailOpen}

@@ -35,6 +35,7 @@ type TaskCommentsProps = {
   refreshKey?: number;
   previewCount?: number;
   canEdit: boolean;
+  canContribute: boolean;
   onCommentCountChanged?: (taskId: string, delta: number) => void;
   onActivityChanged?: () => void;
 };
@@ -44,6 +45,7 @@ export function TaskComments({
   refreshKey,
   previewCount = 4,
   canEdit,
+  canContribute,
   onCommentCountChanged,
   onActivityChanged,
 }: TaskCommentsProps) {
@@ -166,7 +168,7 @@ export function TaskComments({
         </h3>
       </div>
 
-      {canEdit && (
+      {canContribute && (
         <div className="shrink-0 border border-border rounded-lg overflow-hidden bg-card focus-within:border-ring transition-colors">
           {!isExpanded ? (
             <div

@@ -86,7 +86,7 @@ export async function getProject(id: string): Promise<ActionResult<Project>> {
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const access = await assertProjectManageAccess(id, authResult.user.id);
+  const access = await assertProjectViewAccess(id, authResult.user.id);
   if ("error" in access) {
     return { success: false, error: access.error ?? "Unknown error" };
   }
@@ -113,9 +113,9 @@ export async function updateProject(
     };
   }
 
-  const ownership = await assertProjectOwnership(id, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectManageAccess(id, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const updated = await queries.projects.update(id, parsed.data);

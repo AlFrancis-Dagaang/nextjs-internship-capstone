@@ -19,7 +19,7 @@ type Member = {
   userId: string;
   email?: string;
   name?: string;
-  role: "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 type OwnerInfo = {

@@ -47,7 +47,7 @@ export function ProjectEventsModal({
 }: ProjectEventsModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[540px] bg-card text-card-foreground border border-border p-6 sm:p-7 shadow-2xl">
+      <DialogContent className="sm:max-w-135 bg-card text-card-foreground border border-border p-6 sm:p-7 shadow-2xl">
         <DialogHeader className="mb-4">
           <DialogTitle className="text-base sm:text-lg flex items-center gap-2.5">
             <div className="p-2 rounded-lg bg-primary/10 text-primary">

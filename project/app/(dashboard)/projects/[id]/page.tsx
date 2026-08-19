@@ -77,7 +77,7 @@ export default async function ProjectPage({
   const members = membersResult.success ? toMemberList(membersResult.data) : [];
   const owner = await queries.users.getById(project.ownerId);
   const role = "error" in accessResult ? "viewer" : accessResult.role;
-
+  const canManage = role === "owner" || role === "admin";
   const tasksByList = new Map<string, Task[]>();
   for (const task of allTasks) {
     const arr = tasksByList.get(task.listId) ?? [];
@@ -125,6 +125,7 @@ export default async function ProjectPage({
           project={project}
           initialMembers={members}
           isOwner={role === "owner"}
+          canManage={canManage}
           ownerName={owner?.name}
           ownerEmail={owner?.email}
           role={role}

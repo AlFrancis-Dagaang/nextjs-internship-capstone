@@ -201,6 +201,7 @@ export function TaskCard({
   selectionMode = false,
   isSelected = false,
   onToggleSelected,
+  canContribute,
   onArchived,
   onUpdated,
   onDeleted,
@@ -212,6 +213,7 @@ export function TaskCard({
   projectId: string;
   allLists: ListWithTasks[];
   canEdit: boolean;
+  canContribute: boolean;
   dragDisabled?: boolean;
   selectionMode?: boolean;
   isSelected?: boolean;
@@ -242,7 +244,7 @@ export function TaskCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id, disabled: !canEdit || dragDisabled });
+  } = useSortable({ id: task.id, disabled: !canContribute || dragDisabled });
 
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
@@ -325,6 +327,7 @@ export function TaskCard({
       currentListId={task.listId}
       allLists={allLists}
       canEdit={canEdit}
+      canContribute={canContribute}
       onView={onOpenDetail}
       onRename={() => {
         setTitle(task.title);
@@ -351,7 +354,7 @@ export function TaskCard({
         ref={setNodeRef}
         style={dragStyle}
         {...attributes}
-        {...(canEdit ? listeners : {})}
+        {...(canContribute ? listeners : {})}
       >
         {isRenaming ? (
           <div className="relative p-3.5 pt-4 bg-card rounded-xl border border-border space-y-3 overflow-hidden shadow-sm">
@@ -385,7 +388,7 @@ export function TaskCard({
               isSelected={isSelected}
               onToggleSelected={onToggleSelected}
               onToggleComplete={
-                canEdit && !isTemp && !selectionMode
+                canContribute && !isTemp && !selectionMode
                   ? handleToggleComplete
                   : undefined
               }

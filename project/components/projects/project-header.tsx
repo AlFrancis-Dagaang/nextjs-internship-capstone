@@ -21,6 +21,7 @@ import {
   FolderInput,
   Trash2,
   Calendar,
+  Shield,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -58,13 +59,14 @@ type Member = {
   userId: string;
   email?: string;
   name?: string;
-  role: "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 export function ProjectHeader({
   project,
   initialMembers,
   isOwner,
+  canManage,
   ownerName,
   ownerEmail,
   role,
@@ -74,6 +76,7 @@ export function ProjectHeader({
   project: Project;
   initialMembers: Member[];
   isOwner: boolean;
+  canManage: boolean;
   ownerName?: string;
   ownerEmail?: string;
   role: "owner" | "admin" | "editor" | "contributor" | "viewer";
@@ -295,10 +298,13 @@ export function ProjectHeader({
   );
   useRealtimeProject(project.id, handleProjectEvent);
 
+  // Format role label nicely for display
+  const formattedRoleLabel = role.charAt(0).toUpperCase() + role.slice(1);
+
   return (
     <div className="flex flex-col gap-2 bg-transparent px-0 py-0 m-0">
       <div className="flex flex-wrap items-center justify-between gap-4 py-1">
-        {/* Left side: Back button + Title */}
+        {/* Left side: Back button + Title + Role Badge */}
         <div className="flex items-center space-x-3.5 min-w-0">
           <Link
             href="/projects"
@@ -307,10 +313,14 @@ export function ProjectHeader({
           >
             <ArrowLeft size={16} />
           </Link>
-          <div className="flex items-center space-x-3 min-w-0">
+          <div className="flex items-center space-x-2.5 min-w-0">
             <h1 className="text-base font-semibold text-foreground truncate tracking-tight">
               {liveProject.name}
             </h1>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-secondary text-secondary-foreground border border-border shrink-0">
+              <Shield size={10} className="text-muted-foreground" />
+              {formattedRoleLabel}
+            </span>
           </div>
         </div>
 
@@ -647,7 +657,7 @@ export function ProjectHeader({
                     </button>
                   </div>
 
-                  {isOwner && (
+                  {canManage && (
                     <DropdownMenuItem
                       onSelect={() => {
                         setActionsDropdownOpen(false);
@@ -675,7 +685,7 @@ export function ProjectHeader({
             </>
           )}
 
-          {/* Team Members Avatars (Positioned at the far right of the actions bar for signature SaaS feel) */}
+          {/* Team Members Avatars */}
           <div className="hidden sm:flex items-center pl-2 border-l border-border ml-1">
             <div className="flex -space-x-1.5">
               {visibleMembers.map((m) => {
@@ -740,7 +750,7 @@ export function ProjectHeader({
         </div>
       </div>
 
-      {isOwner && (
+      {canManage && (
         <InviteMemberModal
           project={project}
           open={inviteOpen}

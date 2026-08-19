@@ -52,7 +52,7 @@ export function Board({
 }: {
   projectId: string;
   initialLists: ListWithTasks[];
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   currentUserId: string;
 }) {
   const { toast } = useToast();

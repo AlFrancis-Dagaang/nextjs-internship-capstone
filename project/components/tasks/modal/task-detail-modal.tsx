@@ -63,6 +63,7 @@ export function TaskDetailModal({
   // Force strict boolean evaluation so falsy/null DB values don't break archive checks
   const isArchived = Boolean(task.isArchived);
   const canEdit = role !== "viewer" && role !== "contributor" && !isArchived;
+  const canContribute = role !== "viewer";
   const handleChanged = useCallback(
     (updated: TaskWithCommentCount) => {
       onChanged?.(updated);
@@ -107,6 +108,7 @@ export function TaskDetailModal({
             <TaskHeader
               task={task}
               canEdit={canEdit}
+              canContribute={canContribute}
               onChanged={handleChanged}
             />
           </div>
@@ -133,7 +135,6 @@ export function TaskDetailModal({
                 onChanged={handleChanged}
               />
             </div>
-
             <div className="flex-1 pt-6 overflow-hidden flex flex-col">
               <TaskComments
                 taskId={task.id}
@@ -141,6 +142,7 @@ export function TaskDetailModal({
                 onCommentCountChanged={onCommentCountChanged}
                 onActivityChanged={bumpActivity}
                 canEdit={canEdit}
+                canContribute={canContribute}
               />
             </div>
           </div>
