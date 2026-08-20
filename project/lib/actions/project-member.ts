@@ -17,6 +17,7 @@ import { logTaskActivity } from "@/lib/services/activity";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/lib/services/notifications";
 import { publishProjectEvent } from "@/lib/realtime/server";
+import { getEffectiveProjectMembers as getEffectiveProjectMembersService } from "@/lib/services/team";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -118,6 +119,25 @@ export async function getProjectMembers(
   }
 
   const members = await queries.projectMembers.getByProject(projectId);
+  return { success: true, data: members };
+}
+
+export async function getEffectiveProjectMembers(
+  projectId: string,
+): Promise<
+  ActionResult<Awaited<ReturnType<typeof getEffectiveProjectMembersService>>>
+> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const access = await assertProjectViewAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
+  }
+
+  const members = await getEffectiveProjectMembersService(projectId);
   return { success: true, data: members };
 }
 
@@ -292,19 +312,46 @@ export async function getAssignableUsers(
     return { success: false, error: access.error ?? "Unknown error" };
   }
 
-  const [owner, members] = await Promise.all([
+  const [owner, members, projectTeams] = await Promise.all([
     queries.users.getById(access.project.ownerId),
     queries.projectMembers.getByProject(projectId),
+    queries.projectTeams.getByProject(projectId),
   ]);
 
-  const assignable = [
-    ...(owner ? [{ id: owner.id, name: owner.name, email: owner.email }] : []),
-    ...members.map((m) => ({
+  const teamMemberLists = await Promise.all(
+    projectTeams.map((pt) => queries.teams.getMembers(pt.teamId)),
+  );
+
+  const assignableMap = new Map<
+    string,
+    { id: string; name?: string; email?: string }
+  >();
+
+  if (owner) {
+    assignableMap.set(owner.id, {
+      id: owner.id,
+      name: owner.name,
+      email: owner.email,
+    });
+  }
+  for (const m of members) {
+    assignableMap.set(m.userId, {
       id: m.userId,
       name: m.userName,
       email: m.userEmail,
-    })),
-  ];
+    });
+  }
+  for (const teamMembers of teamMemberLists) {
+    for (const m of teamMembers) {
+      if (!assignableMap.has(m.userId)) {
+        assignableMap.set(m.userId, {
+          id: m.userId,
+          name: m.userName,
+          email: m.userEmail,
+        });
+      }
+    }
+  }
 
-  return { success: true, data: assignable };
+  return { success: true, data: Array.from(assignableMap.values()) };
 }

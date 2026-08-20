@@ -118,23 +118,12 @@ export const assertProjectAccess = cache(
     );
     const teamRole = highestTeamRole(teamRoleRows.map((r) => r.role));
 
-    if (!membership && !teamRole) {
+    const role = resolveEffectiveMemberRole(membership?.role, teamRole);
+    if (!role) {
       return { error: "Forbidden" };
     }
 
-    if (membership && teamRole) {
-      const role =
-        ROLE_RANK[teamRole] > ROLE_RANK[membership.role]
-          ? teamRole
-          : membership.role;
-      return { project, role, isOwner: false, membership };
-    }
-
-    if (membership) {
-      return { project, role: membership.role, isOwner: false, membership };
-    }
-
-    return { project, role: teamRole!, isOwner: false, membership: null };
+    return { project, role, isOwner: false, membership: membership ?? null };
   },
 );
 

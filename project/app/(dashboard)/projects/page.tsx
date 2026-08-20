@@ -9,7 +9,8 @@ import {
   highestTeamRole,
   resolveEffectiveMemberRole,
 } from "@/lib/services/ownership";
-import type { ProjectTeamRole } from "@/types";
+import type { ProjectMemberRole, ProjectTeamRole } from "@/types";
+import { getEffectiveProjectMembers } from "@/lib/actions/project-member";
 
 export default async function ProjectsPage() {
   const [result, authResult] = await Promise.all([
@@ -36,7 +37,7 @@ export default async function ProjectsPage() {
   const membersByProject = await Promise.all(
     result.data.map(async (project) => {
       const [membersResult, owner] = await Promise.all([
-        getProjectMembers(project.id),
+        getEffectiveProjectMembers(project.id),
         queries.users.getById(project.ownerId),
       ]);
       const members = membersResult.success
@@ -93,6 +94,22 @@ export default async function ProjectsPage() {
     ),
   );
 
+  const initialMyRoleMap = Object.fromEntries(
+    result.data
+      .filter((p) => p.ownerId !== authResult.user.id)
+      .map((p) => {
+        const direct = initialMembersMap[p.id]?.find(
+          (m) => m.userId === authResult.user.id,
+        )?.role;
+        const teamRole = initialTeamRoleMap[p.id];
+        const role = resolveEffectiveMemberRole(direct, teamRole);
+        return [p.id, role] as const;
+      })
+      .filter(
+        (entry): entry is [string, ProjectMemberRole] => entry[1] !== undefined,
+      ),
+  );
+
   return (
     <div className="space-y-6 w-full min-w-0">
       <ProjectsList
@@ -101,7 +118,7 @@ export default async function ProjectsPage() {
         initialMembersMap={initialMembersMap}
         initialOwnerMap={initialOwnerMap}
         initialCompletionMap={initialCompletionMap}
-        initialTeamRoleMap={initialTeamRoleMap}
+        initialMyRoleMap={initialMyRoleMap}
       />
     </div>
   );

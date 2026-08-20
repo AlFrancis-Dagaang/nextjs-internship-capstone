@@ -5,6 +5,7 @@ import { getAuthedUserOrError } from "@/lib/services/auth";
 import {
   assertTaskViewAccess,
   assertTaskEditAccess,
+  assertProjectAccess,
 } from "@/lib/services/ownership";
 import { logTaskActivity } from "@/lib/services/activity";
 import { revalidatePath } from "next/cache";
@@ -49,18 +50,8 @@ export async function assignUserToTask(
     return { success: false, error: access.error ?? "Unknown error" };
   }
 
-  // Validate the target user is actually eligible: project owner or a
-  // project_members row for this task's project — closes the gap flagged
-  // earlier where any valid user id could be assigned regardless of
-  // whether they have any access to the project at all.
-  const isOwner = access.project.ownerId === userId;
-  const membership = isOwner
-    ? null
-    : await queries.projectMembers.getByProjectAndUser(
-        access.project.id,
-        userId,
-      );
-  if (!isOwner && !membership) {
+  const targetAccess = await assertProjectAccess(access.project.id, userId);
+  if ("error" in targetAccess) {
     return {
       success: false,
       error: "User is not a member of this project",

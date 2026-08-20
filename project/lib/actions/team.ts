@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { queries } from "@/lib/db";
 import { getAuthedUserOrError } from "@/lib/services/auth";
-import { assertTeamOwnership } from "@/lib/services/ownership";
+import {
+  assertProjectAccess,
+  assertTeamOwnership,
+} from "@/lib/services/ownership";
 import {
   teamCreateSchema,
   teamUpdateSchema,
@@ -12,6 +15,7 @@ import {
 } from "@/lib/validations";
 import type { Team, TeamMember } from "@/lib/db/schema";
 import { createNotification } from "@/lib/services/notifications";
+import { logTaskActivity } from "../services/activity";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -83,7 +87,57 @@ export async function deleteTeam(teamId: string): Promise<ActionResult<null>> {
     return { success: false, error: access.error ?? "Unknown error" };
   }
 
+  // Snapshot members and attached projects BEFORE deleting — needed
+  // regardless of whether the FK cascade wipes project_teams/team_members
+  // rows automatically, since we need the pre-delete state to know who
+  // to re-check afterward (#83, same shape as removeTeamMember).
+  const [teamMembers, attachedProjects] = await Promise.all([
+    queries.teams.getMembers(teamId),
+    queries.projectTeams.getByTeam(teamId),
+  ]);
+
   await queries.teams.remove(teamId);
+
+  // Cross product: for every (member, project) pair that existed via
+  // this team, re-check whether the member still has access to that
+  // project through some other path (direct row, or a different team).
+  // Only unassign where access is fully gone.
+  await Promise.all(
+    teamMembers.flatMap((member) =>
+      attachedProjects.map(async ({ projectId }) => {
+        const stillHasAccess = await assertProjectAccess(
+          projectId,
+          member.userId,
+        );
+        if ("error" in stillHasAccess) {
+          const affectedAssignments =
+            await queries.taskAssignees.getByProjectAndUser(
+              projectId,
+              member.userId,
+            );
+          await Promise.all(
+            affectedAssignments.map(async (assignment) => {
+              await queries.taskAssignees.remove(
+                assignment.taskId,
+                member.userId,
+              );
+              await logTaskActivity(
+                assignment.taskId,
+                authResult.user.id,
+                "assignee_changed",
+                {
+                  type: "unassigned",
+                  assigneeId: member.userId,
+                  assigneeName: assignment.userName ?? "Unknown user",
+                  reason: "team_deleted",
+                },
+              );
+            }),
+          );
+        }
+      }),
+    ),
+  );
 
   revalidatePath("/team");
 

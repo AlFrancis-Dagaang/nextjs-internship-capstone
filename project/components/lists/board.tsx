@@ -380,7 +380,7 @@ export function Board({
               <TaskCardView
                 task={activeTask}
                 interactive={false}
-                className="shadow-lg cursor-grabbing bg-card text-card-foreground border-border"
+                className="shadow-xl cursor-grabbing bg-card text-card-foreground border-border rounded-2xl"
               />
             </div>
           ) : activeListId ? (
@@ -388,7 +388,7 @@ export function Board({
               const draggedList = lists.find((l) => l.id === activeListId);
               if (!draggedList) return null;
               return (
-                <div className="w-80 rotate-1 rounded-xl bg-card border border-border shadow-2xl p-3 opacity-95 flex flex-col max-h-[80vh] text-card-foreground">
+                <div className="w-80 rotate-1 rounded-3xl bg-card border border-border shadow-2xl p-4 opacity-95 flex flex-col max-h-[80vh] text-card-foreground">
                   <div className="flex items-center justify-between pb-3 px-1 shrink-0">
                     <span className="font-bold text-xs uppercase tracking-wider text-foreground">
                       {draggedList.name}
@@ -403,7 +403,7 @@ export function Board({
                         key={task.id}
                         task={task}
                         interactive={false}
-                        className="shadow-sm bg-card text-card-foreground border-border"
+                        className="shadow-xs bg-card text-card-foreground border-border rounded-2xl"
                       />
                     ))}
                   </div>

@@ -28,6 +28,22 @@ export const projectTeamsQueries = {
   },
 
   /**
+   * Every project this team is currently attached to — the reverse of
+   * getByProject. Used for cleanup fan-outs (removeTeamMember, deleteTeam,
+   * #83) that need to re-check a former team member's access across every
+   * project the team touched, not just one.
+   */
+  getByTeam: async (teamId: string) => {
+    return db
+      .select({
+        id: projectTeams.id,
+        projectId: projectTeams.projectId,
+      })
+      .from(projectTeams)
+      .where(eq(projectTeams.teamId, teamId));
+  },
+
+  /**
    * The team-derived roles a user is entitled to on a project, one row
    * per matching team. Callers (ownership.ts) reduce this to a single
    * highest-ranked role — this query intentionally does not pick a

@@ -12,7 +12,7 @@ import { getAuthedUserOrError } from "@/lib/services/auth";
 import { assertProjectAccess } from "@/lib/services/ownership";
 import { toLocalDateKey } from "@/lib/utils/utils";
 import { CalendarTaskDTO } from "@/types";
-
+import { getEffectiveProjectMembers } from "@/lib/actions/project-member";
 export default async function ProjectPage({
   params,
 }: {
@@ -48,7 +48,7 @@ export default async function ProjectPage({
     getProject(id),
     getListsByProject(id),
     getTasksByProject(id),
-    getProjectMembers(id),
+    getEffectiveProjectMembers(id),
     assertProjectAccess(id, authResult.user.id),
     queries.taskAssignees.getByProject(id),
   ]);

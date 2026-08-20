@@ -3,13 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { queries } from "@/lib/db";
 import { getAuthedUserOrError } from "@/lib/services/auth";
-import { assertProjectManageAccess } from "@/lib/services/ownership";
+import {
+  assertProjectAccess,
+  assertProjectManageAccess,
+} from "@/lib/services/ownership";
 import {
   attachTeamToProjectSchema,
   updateProjectTeamRoleSchema,
 } from "@/lib/validations";
 import type { ProjectTeam } from "@/lib/db/schema";
 import { createNotification } from "@/lib/services/notifications";
+import { logTaskActivity } from "../services/activity";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -140,7 +144,52 @@ export async function detachTeamFromProject(
     return { success: false, error: "Not found" };
   }
 
+  // Snapshot the team's members BEFORE detaching, so we know who to
+  // re-check afterward.
+  const teamMembers = await queries.teams.getMembers(target.teamId);
+
   await queries.projectTeams.remove(projectTeamId);
+
+  // For each former team member, re-resolve their access now that this
+  // team's grant is gone. If they still have access (a direct
+  // project_members row, or another attached team), leave their task
+  // assignments alone. Only unassign users who lost access entirely —
+  // same cleanup removeProjectMember does, but conditional here since
+  // detaching a team doesn't necessarily mean losing access (#83).
+  await Promise.all(
+    teamMembers.map(async (member) => {
+      const stillHasAccess = await assertProjectAccess(
+        projectId,
+        member.userId,
+      );
+      if ("error" in stillHasAccess) {
+        const affectedAssignments =
+          await queries.taskAssignees.getByProjectAndUser(
+            projectId,
+            member.userId,
+          );
+        await Promise.all(
+          affectedAssignments.map(async (assignment) => {
+            await queries.taskAssignees.remove(
+              assignment.taskId,
+              member.userId,
+            );
+            await logTaskActivity(
+              assignment.taskId,
+              authResult.user.id,
+              "assignee_changed",
+              {
+                type: "unassigned",
+                assigneeId: member.userId,
+                assigneeName: assignment.userName ?? "Unknown user",
+                reason: "team_detached_from_project",
+              },
+            );
+          }),
+        );
+      }
+    }),
+  );
 
   revalidatePath(`/projects/${projectId}`);
   revalidatePath(`/projects/${projectId}/team`);

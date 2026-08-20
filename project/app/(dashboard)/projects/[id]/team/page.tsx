@@ -39,9 +39,9 @@ export default async function ProjectTeamPage({ params }: PageProps) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="w-full space-y-6">
       {/* Header breadcrumb & title */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-4 border-b border-border">
         <div className="flex items-center space-x-3">
           <Link
             href={`/projects/${result.project.id}`}

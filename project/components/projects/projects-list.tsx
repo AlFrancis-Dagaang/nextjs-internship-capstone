@@ -7,7 +7,7 @@ import { CreateProjectModal } from "./modals/create-project-modal";
 import { RecentlyViewedStrip } from "./recently-viewed-strip";
 import type { Project } from "@/lib/db/schema";
 import { useProjectStore } from "@/stores/project-store";
-
+import type { ProjectMemberRole } from "@/types";
 type Member = {
   id: string;
   userId: string;
@@ -32,7 +32,7 @@ type ProjectsListProps = {
   initialMembersMap: Record<string, Member[]>;
   initialOwnerMap: Record<string, OwnerInfo>;
   initialCompletionMap: Record<string, CompletionInfo>;
-  initialTeamRoleMap: Record<string, "editor" | "contributor" | "viewer">;
+  initialMyRoleMap: Record<string, ProjectMemberRole>;
 };
 
 export function ProjectsList({
@@ -41,7 +41,7 @@ export function ProjectsList({
   initialMembersMap,
   initialOwnerMap,
   initialCompletionMap,
-  initialTeamRoleMap,
+  initialMyRoleMap,
 }: ProjectsListProps) {
   const router = useRouter();
 
@@ -58,15 +58,6 @@ export function ProjectsList({
 
   const ownedProjects = projects.filter((p) => p.ownerId === currentUserId);
   const sharedProjects = projects.filter((p) => p.ownerId !== currentUserId);
-
-  function getMyRole(
-    projectId: string,
-  ): "owner" | "admin" | "editor" | "contributor" | "viewer" | undefined {
-    const members = initialMembersMap[projectId] ?? [];
-    const direct = members.find((m) => m.userId === currentUserId)?.role;
-    if (direct) return direct;
-    return initialTeamRoleMap[projectId];
-  }
 
   return (
     <div className="space-y-10">
@@ -142,7 +133,7 @@ export function ProjectsList({
                     initialMembers={initialMembersMap[project.id] ?? []}
                     ownerName={initialOwnerMap[project.id]?.name}
                     ownerEmail={initialOwnerMap[project.id]?.email}
-                    myRole={getMyRole(project.id)}
+                    myRole={initialMyRoleMap[project.id]}
                     completion={
                       initialCompletionMap[project.id] ?? {
                         total: 0,

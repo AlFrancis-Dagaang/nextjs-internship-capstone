@@ -2,15 +2,23 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { UserPlus, Users as UsersIcon, Trash2, Shield } from "lucide-react";
+import {
+  UserPlus,
+  Users as UsersIcon,
+  Trash2,
+  Shield,
+  MoreHorizontal,
+  Mail,
+  Check,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +65,19 @@ type ProjectTeamViewProps = {
   initialTeams: ProjectTeamEntry[];
   canManage: boolean;
 };
+
+const ROLES = [
+  { value: "viewer", label: "Viewer" },
+  { value: "contributor", label: "Contributor" },
+  { value: "editor", label: "Editor" },
+  { value: "admin", label: "Admin" },
+] as const;
+
+const TEAM_ROLES = [
+  { value: "viewer", label: "Viewer" },
+  { value: "contributor", label: "Contributor" },
+  { value: "editor", label: "Editor" },
+] as const;
 
 export function ProjectTeamView({
   projectId,
@@ -194,31 +215,32 @@ export function ProjectTeamView({
   }
 
   return (
-    <div className="space-y-8">
-      {/* SECTION 1: Individuals */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <UsersIcon size={16} className="text-muted-foreground" />
-              Direct Individuals ({individuals.length})
+    <div className="w-full space-y-6 pb-12">
+      {/* SECTION 1: Direct Individuals */}
+      <div className="p-5 sm:p-6 bg-card border border-border/80 rounded-3xl shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-border/60">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              Direct Individuals
             </h3>
-            <p className="text-xs text-muted-foreground">
-              Users granted specific access roles directly on this project.
-            </p>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground">
+              {individuals.length}
+            </span>
           </div>
           {canManage && (
             <Button
               onClick={() => setAddIndividualOpen(true)}
-              className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-lg shadow-none"
+              className="h-8 px-3.5 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5"
             >
-              <UserPlus size={14} className="mr-1.5" />
+              <UserPlus size={13} />
               Add Member
             </Button>
           )}
         </div>
 
-        <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm divide-y divide-border">
+        {/* Card Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {individuals.map((ind) => {
             const isOwnerRow = ind.id === "owner" || ind.role === "owner";
             const avatarKey = ind.userId || ind.email || ind.name;
@@ -226,69 +248,87 @@ export function ProjectTeamView({
             return (
               <div
                 key={ind.id}
-                className="flex items-center justify-between p-4 hover:bg-muted/40 transition-colors"
+                className="relative flex flex-col justify-between p-4 sm:p-5 border border-border/80 rounded-2xl bg-background/40 hover:bg-card shadow-2xs hover:shadow-md transition-all group"
               >
-                <div className="flex items-center space-x-3 overflow-hidden">
-                  <div
-                    className={`w-8 h-8 rounded-full border border-border flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-sm ${getAvatarColor(avatarKey)}`}
-                  >
-                    {getInitials(ind.name || ind.email || "U")}
+                {/* Top Info */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center space-x-3 overflow-hidden">
+                    <div
+                      className={`w-10 h-10 rounded-xl border border-border flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-2xs ${getAvatarColor(avatarKey)}`}
+                    >
+                      {getInitials(ind.name || ind.email || "U")}
+                    </div>
+                    <div className="truncate space-y-0.5">
+                      <p className="text-xs font-semibold text-foreground tracking-tight truncate">
+                        {ind.name}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
+                        <Mail size={11} className="shrink-0 opacity-70" />
+                        {ind.email}
+                      </p>
+                    </div>
                   </div>
-                  <div className="truncate">
-                    <p className="text-xs font-medium text-foreground truncate">
-                      {ind.name}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground truncate">
-                      {ind.email}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-center space-x-3 shrink-0">
+                  {/* Dropdown Menu */}
                   {canManage && !isOwnerRow ? (
-                    <>
-                      <Select
-                        value={ind.role}
-                        onValueChange={(
-                          val: "admin" | "editor" | "contributor" | "viewer",
-                        ) => handleMemberRoleChange(ind.id, val)}
-                        disabled={isPending}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={isPending}
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg shrink-0 -mr-1"
+                        >
+                          <MoreHorizontal size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-48 bg-card border border-border rounded-2xl shadow-xl p-1.5 space-y-1 z-50"
                       >
-                        <SelectTrigger className="w-28 h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none focus:ring-0">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="z-50 bg-card border border-border rounded-xl shadow-xl">
-                          <SelectItem value="viewer" className="text-xs">
-                            Viewer
-                          </SelectItem>
-                          <SelectItem value="contributor" className="text-xs">
-                            Contributor
-                          </SelectItem>
-                          <SelectItem value="editor" className="text-xs">
-                            Editor
-                          </SelectItem>
-                          <SelectItem value="admin" className="text-xs">
-                            Admin
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setMemberToRemove(ind)}
-                        disabled={isPending}
-                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg"
-                        title="Remove member"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </>
+                        <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                          Change Role
+                        </div>
+                        {ROLES.map((r) => (
+                          <DropdownMenuItem
+                            key={r.value}
+                            onSelect={() =>
+                              handleMemberRoleChange(ind.id, r.value)
+                            }
+                            className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground focus:bg-secondary rounded-xl flex items-center justify-between"
+                          >
+                            <span className="capitalize">{r.label}</span>
+                            {ind.role === r.value && (
+                              <Check size={13} className="text-teal-600" />
+                            )}
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onSelect={() => setMemberToRemove(ind)}
+                          className="cursor-pointer px-2.5 py-2 text-xs text-destructive focus:bg-destructive/10 rounded-xl flex items-center space-x-2"
+                        >
+                          <Trash2 size={13} className="text-destructive" />
+                          <span>Remove member</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border capitalize">
-                      {isOwnerRow && <Shield size={10} />}
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border/60 capitalize shrink-0">
+                      {isOwnerRow && (
+                        <Shield size={10} className="text-muted-foreground" />
+                      )}
                       {ind.role}
                     </span>
                   )}
+                </div>
+
+                {/* Bottom Footer */}
+                <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="text-[11px] font-medium">Access Level</span>
+                  <span className="font-semibold text-foreground capitalize bg-secondary/80 px-2.5 py-0.5 rounded-lg text-[11px]">
+                    {ind.role}
+                  </span>
                 </div>
               </div>
             );
@@ -296,103 +336,120 @@ export function ProjectTeamView({
         </div>
       </div>
 
-      {/* SECTION 2: Teams */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <UsersIcon size={16} className="text-muted-foreground" />
-              Attached Teams ({teams.length})
+      {/* SECTION 2: Attached Teams */}
+      <div className="p-5 sm:p-6 bg-card border border-border/80 rounded-3xl shadow-xs space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-border/60">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              Attached Teams
             </h3>
-            <p className="text-xs text-muted-foreground">
-              Teams granted access rights collectively to this project.
-            </p>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground">
+              {teams.length}
+            </span>
           </div>
           {canManage && (
             <Button
               onClick={() => setAttachTeamOpen(true)}
-              className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-lg shadow-none"
+              className="h-8 px-3.5 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5"
             >
-              <UserPlus size={14} className="mr-1.5" />
+              <UserPlus size={13} />
               Attach Team
             </Button>
           )}
         </div>
 
-        <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm divide-y divide-border">
-          {teams.length === 0 ? (
-            <div className="p-8 text-center text-xs text-muted-foreground">
-              No teams attached to this project yet.
-            </div>
-          ) : (
-            teams.map((t) => (
+        {teams.length === 0 ? (
+          <div className="border border-dashed border-border rounded-2xl bg-background/30 p-8 text-center text-xs text-muted-foreground">
+            No teams attached to this project workspace yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {teams.map((t) => (
               <div
                 key={t.projectTeamId}
-                className="flex items-center justify-between p-4 hover:bg-muted/40 transition-colors"
+                className="relative flex flex-col justify-between p-4 sm:p-5 border border-border/80 rounded-2xl bg-background/40 hover:bg-card shadow-2xs hover:shadow-md transition-all group"
               >
-                <div className="flex items-center space-x-3 overflow-hidden">
-                  <div className="w-8 h-8 rounded-full bg-secondary text-secondary-foreground border border-border flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                    {getInitials(t.teamName)}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center space-x-3 overflow-hidden">
+                    <div className="w-10 h-10 rounded-xl bg-secondary text-secondary-foreground border border-border flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-2xs">
+                      {getInitials(t.teamName)}
+                    </div>
+                    <div className="truncate space-y-0.5">
+                      <p className="text-xs font-semibold text-foreground tracking-tight truncate">
+                        {t.teamName}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Team Scope
+                      </p>
+                    </div>
                   </div>
-                  <div className="truncate">
-                    <p className="text-xs font-medium text-foreground truncate">
-                      {t.teamName}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Team Scope
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-center space-x-3 shrink-0">
                   {canManage ? (
-                    <>
-                      <Select
-                        value={t.role}
-                        onValueChange={(
-                          val: "editor" | "contributor" | "viewer",
-                        ) => handleTeamRoleChange(t.projectTeamId, val)}
-                        disabled={isPending}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={isPending}
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg shrink-0 -mr-1"
+                        >
+                          <MoreHorizontal size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-48 bg-card border border-border rounded-2xl shadow-xl p-1.5 space-y-1 z-50"
                       >
-                        <SelectTrigger className="w-28 h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none focus:ring-0">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="z-50 bg-card border border-border rounded-xl shadow-xl">
-                          <SelectItem value="viewer" className="text-xs">
-                            Viewer
-                          </SelectItem>
-                          <SelectItem value="contributor" className="text-xs">
-                            Contributor
-                          </SelectItem>
-                          <SelectItem value="editor" className="text-xs">
-                            Editor
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setTeamToDetach(t)}
-                        disabled={isPending}
-                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg"
-                        title="Detach team"
-                      >
-                        <Trash2 size={14} />
-                      </Button>
-                    </>
+                        <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                          Team Role
+                        </div>
+                        {TEAM_ROLES.map((r) => (
+                          <DropdownMenuItem
+                            key={r.value}
+                            onSelect={() =>
+                              handleTeamRoleChange(t.projectTeamId, r.value)
+                            }
+                            className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground focus:bg-secondary rounded-xl flex items-center justify-between"
+                          >
+                            <span className="capitalize">{r.label}</span>
+                            {t.role === r.value && (
+                              <Check size={13} className="text-teal-600" />
+                            )}
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onSelect={() => setTeamToDetach(t)}
+                          className="cursor-pointer px-2.5 py-2 text-xs text-destructive focus:bg-destructive/10 rounded-xl flex items-center space-x-2"
+                        >
+                          <Trash2 size={13} className="text-destructive" />
+                          <span>Detach team</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border capitalize">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border capitalize shrink-0">
                       {t.role}
                     </span>
                   )}
                 </div>
+
+                <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="text-[11px] font-medium">
+                    Assigned Scope
+                  </span>
+                  <span className="font-semibold text-foreground capitalize bg-secondary/80 px-2.5 py-0.5 rounded-lg text-[11px]">
+                    {t.role}
+                  </span>
+                </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Modals */}
+      {/* Modals & Dialogs */}
       <AddIndividualModal
         projectId={projectId}
         open={addIndividualOpen}
@@ -405,66 +462,65 @@ export function ProjectTeamView({
         onOpenChange={setAttachTeamOpen}
       />
 
-      {/* Remove Member Confirmation Alert Dialog */}
       <AlertDialog
         open={memberToRemove !== null}
         onOpenChange={(open) => !open && setMemberToRemove(null)}
       >
-        <AlertDialogContent className="bg-card border border-border rounded-xl shadow-2xl">
+        <AlertDialogContent className="bg-card border border-border rounded-3xl shadow-2xl max-w-md p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-sm font-semibold">
+            <AlertDialogTitle className="text-base font-semibold tracking-tight">
               Remove team member?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-muted-foreground">
+            <AlertDialogDescription className="text-xs text-muted-foreground pt-1">
               Are you sure you want to remove{" "}
-              <span className="font-medium text-foreground">
+              <span className="font-semibold text-foreground">
                 {memberToRemove?.name}
               </span>{" "}
-              from this project? They will lose all project-level access.
+              from this project workspace? They will lose all project-level
+              access immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="h-8 text-xs rounded-lg">
+          <AlertDialogFooter className="pt-4">
+            <AlertDialogCancel className="h-9 text-xs rounded-xl">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmRemoveMember}
-              className="h-8 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg"
+              className="h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/95 rounded-xl shadow-xs"
             >
-              Remove
+              Remove Member
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Detach Team Confirmation Alert Dialog */}
       <AlertDialog
         open={teamToDetach !== null}
         onOpenChange={(open) => !open && setTeamToDetach(null)}
       >
-        <AlertDialogContent className="bg-card border border-border rounded-xl shadow-2xl">
+        <AlertDialogContent className="bg-card border border-border rounded-3xl shadow-2xl max-w-md p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-sm font-semibold">
+            <AlertDialogTitle className="text-base font-semibold tracking-tight">
               Detach team?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-muted-foreground">
+            <AlertDialogDescription className="text-xs text-muted-foreground pt-1">
               Are you sure you want to detach{" "}
-              <span className="font-medium text-foreground">
+              <span className="font-semibold text-foreground">
                 {teamToDetach?.teamName}
               </span>{" "}
-              from this project? Members of this team will lose access unless
-              granted direct roles.
+              from this project workspace? Members of this team will lose access
+              unless explicitly granted direct individual roles.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="h-8 text-xs rounded-lg">
+          <AlertDialogFooter className="pt-4">
+            <AlertDialogCancel className="h-9 text-xs rounded-xl">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDetachTeam}
-              className="h-8 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg"
+              className="h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/95 rounded-xl shadow-xs"
             >
-              Detach
+              Detach Team
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

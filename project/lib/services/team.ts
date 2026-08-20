@@ -1,5 +1,6 @@
 import { queries } from "@/lib/db";
 import { assertProjectViewAccess } from "@/lib/services/ownership";
+import { ProjectMemberRole } from "@/types";
 
 // ---------- /team workspace hub ----------
 
@@ -206,4 +207,55 @@ export async function getProjectTeam(
     teams,
     individuals,
   };
+}
+
+export type EffectiveProjectMember = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  role: ProjectMemberRole;
+};
+export async function getEffectiveProjectMembers(
+  projectId: string,
+): Promise<EffectiveProjectMember[]> {
+  const [project, directMembers, projectTeams] = await Promise.all([
+    queries.projects.getById(projectId),
+    queries.projectMembers.getByProject(projectId),
+    queries.projectTeams.getByProject(projectId),
+  ]);
+
+  const ownerId = project?.ownerId;
+  const merged = new Map<string, EffectiveProjectMember>();
+
+  for (const m of directMembers) {
+    merged.set(m.userId, {
+      id: m.id,
+      userId: m.userId,
+      userName: m.userName,
+      userEmail: m.userEmail,
+      role: m.role,
+    });
+  }
+
+  const teamMemberLists = await Promise.all(
+    projectTeams.map((pt) => queries.teams.getMembers(pt.teamId)),
+  );
+
+  projectTeams.forEach((pt, i) => {
+    for (const member of teamMemberLists[i]) {
+      if (member.userId === ownerId) continue; // owner never appears as a member row
+      if (!merged.has(member.userId)) {
+        merged.set(member.userId, {
+          id: `team-${pt.teamId}-${member.userId}`,
+          userId: member.userId,
+          userName: member.userName,
+          userEmail: member.userEmail,
+          role: pt.role,
+        });
+      }
+    }
+  });
+
+  return Array.from(merged.values());
 }
