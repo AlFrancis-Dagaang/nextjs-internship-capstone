@@ -1,4 +1,4 @@
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, or, ilike } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 import { db } from "../client";
 import { teams, teamMembers, users } from "../schema";
@@ -87,5 +87,16 @@ export const teamsQueries = {
       .where(
         and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)),
       );
+  },
+  searchByName: async (query: string) => {
+    return db
+      .select({
+        id: teams.id,
+        name: teams.name,
+        createdBy: teams.createdBy,
+      })
+      .from(teams)
+      .where(ilike(teams.name, `%${query}%`))
+      .limit(10);
   },
 };

@@ -147,3 +147,37 @@ export async function detachTeamFromProject(
 
   return { success: true, data: null };
 }
+
+export async function searchTeamsForProjectAttach(
+  projectId: string,
+  query: string,
+): Promise<
+  ActionResult<{ id: string; name: string; status: "available" | "attached" }[]>
+> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const access = await assertProjectManageAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
+  }
+
+  const [matches, attached] = await Promise.all([
+    queries.teams.searchByName(query),
+    queries.projectTeams.getByProject(projectId),
+  ]);
+
+  const attachedTeamIds = new Set(attached.map((pt) => pt.teamId));
+
+  const results = matches.map((t) => ({
+    id: t.id,
+    name: t.name,
+    status: (attachedTeamIds.has(t.id) ? "attached" : "available") as
+      | "available"
+      | "attached",
+  }));
+
+  return { success: true, data: results };
+}

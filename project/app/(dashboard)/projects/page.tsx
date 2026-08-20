@@ -5,6 +5,11 @@ import { ProjectsList } from "@/components/projects/projects-list";
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import { queries } from "@/lib/db";
 import { toMemberList } from "@/lib/utils/utils";
+import {
+  highestTeamRole,
+  resolveEffectiveMemberRole,
+} from "@/lib/services/ownership";
+import type { ProjectTeamRole } from "@/types";
 
 export default async function ProjectsPage() {
   const [result, authResult] = await Promise.all([
@@ -69,6 +74,25 @@ export default async function ProjectsPage() {
     }),
   );
 
+  const teamIds = await queries.teams.getTeamIdsForUser(authResult.user.id);
+
+  const teamRoleByProject = await Promise.all(
+    result.data.map(async (project) => {
+      const roleRows = await queries.projectTeams.getRolesForProjectAndTeams(
+        project.id,
+        teamIds,
+      );
+      const highest = highestTeamRole(roleRows.map((r) => r.role));
+      return [project.id, highest] as const;
+    }),
+  );
+
+  const initialTeamRoleMap = Object.fromEntries(
+    teamRoleByProject.filter(
+      (entry): entry is [string, ProjectTeamRole] => entry[1] !== null,
+    ),
+  );
+
   return (
     <div className="space-y-6 w-full min-w-0">
       <ProjectsList
@@ -77,6 +101,7 @@ export default async function ProjectsPage() {
         initialMembersMap={initialMembersMap}
         initialOwnerMap={initialOwnerMap}
         initialCompletionMap={initialCompletionMap}
+        initialTeamRoleMap={initialTeamRoleMap}
       />
     </div>
   );

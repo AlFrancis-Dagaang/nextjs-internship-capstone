@@ -22,6 +22,7 @@ import {
   Trash2,
   Calendar,
   Shield,
+  Users2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -350,6 +351,18 @@ export function ProjectHeader({
             <Calendar size={13} className="text-muted-foreground" />
             <span>Calendar</span>
           </Button>
+
+          {/* Team Access Lens Navigation Button */}
+          <Link href={`/projects/${project.id}/team`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm px-2.5 flex items-center gap-1.5 hover:bg-muted"
+            >
+              <Users2 size={13} className="text-muted-foreground" />
+              <span>Team Access</span>
+            </Button>
+          </Link>
 
           {selectionMode ? (
             <div className="flex items-center space-x-2">

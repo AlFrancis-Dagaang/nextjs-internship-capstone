@@ -32,6 +32,7 @@ type ProjectsListProps = {
   initialMembersMap: Record<string, Member[]>;
   initialOwnerMap: Record<string, OwnerInfo>;
   initialCompletionMap: Record<string, CompletionInfo>;
+  initialTeamRoleMap: Record<string, "editor" | "contributor" | "viewer">;
 };
 
 export function ProjectsList({
@@ -40,6 +41,7 @@ export function ProjectsList({
   initialMembersMap,
   initialOwnerMap,
   initialCompletionMap,
+  initialTeamRoleMap,
 }: ProjectsListProps) {
   const router = useRouter();
 
@@ -61,7 +63,9 @@ export function ProjectsList({
     projectId: string,
   ): "owner" | "admin" | "editor" | "contributor" | "viewer" | undefined {
     const members = initialMembersMap[projectId] ?? [];
-    return members.find((m) => m.userId === currentUserId)?.role;
+    const direct = members.find((m) => m.userId === currentUserId)?.role;
+    if (direct) return direct;
+    return initialTeamRoleMap[projectId];
   }
 
   return (

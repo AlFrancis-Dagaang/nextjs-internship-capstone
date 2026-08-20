@@ -1,7 +1,7 @@
 import { eq, or, exists, and, isNotNull } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 import { db } from "../client";
-import { projects, projectMembers } from "../schema";
+import { projects, projectMembers, projectTeams, teamMembers } from "../schema";
 
 export const projectsQueries = {
   getAll: async () => {
@@ -46,6 +46,21 @@ export const projectsQueries = {
                 and(
                   eq(projectMembers.projectId, projects.id),
                   eq(projectMembers.userId, userId),
+                ),
+              ),
+          ),
+          exists(
+            db
+              .select({ id: projectTeams.id })
+              .from(projectTeams)
+              .innerJoin(
+                teamMembers,
+                eq(projectTeams.teamId, teamMembers.teamId),
+              )
+              .where(
+                and(
+                  eq(projectTeams.projectId, projects.id),
+                  eq(teamMembers.userId, userId),
                 ),
               ),
           ),

@@ -1,5 +1,9 @@
 import { queries } from "@/lib/db";
-import type { ProjectMember, ProjectTeamRole } from "../db/schema";
+import type {
+  ProjectMember,
+  ProjectTeamRole,
+  ProjectMemberRole,
+} from "../db/schema";
 import { cache } from "react";
 
 type ProjectWithLists = NonNullable<
@@ -30,7 +34,16 @@ const TEAM_ROLE_RANK: Record<ProjectTeamRole, number> = {
   viewer: 1,
 };
 
-function highestTeamRole(roles: ProjectTeamRole[]): ProjectTeamRole | null {
+const ROLE_RANK: Record<ProjectMemberRole, number> = {
+  admin: 4,
+  editor: 3,
+  contributor: 2,
+  viewer: 1,
+};
+
+export function highestTeamRole(
+  roles: ProjectTeamRole[],
+): ProjectTeamRole | null {
   if (roles.length === 0) return null;
   return roles.reduce((highest, role) =>
     TEAM_ROLE_RANK[role] > TEAM_ROLE_RANK[highest] ? role : highest,
@@ -75,6 +88,16 @@ export async function assertTaskAccess(taskId: string, userId: string) {
   return { task, list: ownership.list, project: ownership.project } as const;
 }
 
+export function resolveEffectiveMemberRole(
+  directRole?: ProjectMemberRole,
+  teamRole?: ProjectTeamRole | null,
+): ProjectMemberRole | undefined {
+  if (directRole && teamRole) {
+    return ROLE_RANK[teamRole] > ROLE_RANK[directRole] ? teamRole : directRole;
+  }
+  return directRole ?? teamRole ?? undefined;
+}
+
 export const assertProjectAccess = cache(
   async (projectId: string, userId: string): Promise<ProjectAccessResult> => {
     const project = await queries.projects.getById(projectId);
@@ -84,23 +107,34 @@ export const assertProjectAccess = cache(
       return { project, role: "owner", isOwner: true, membership: null };
     }
 
-    const membership = await queries.projectMembers.getByProjectAndUser(
-      projectId,
-      userId,
-    );
-    if (membership) {
-      return { project, role: membership.role, isOwner: false, membership };
-    }
+    const [membership, teamIds] = await Promise.all([
+      queries.projectMembers.getByProjectAndUser(projectId, userId),
+      queries.teams.getTeamIdsForUser(userId),
+    ]);
 
-    const teamIds = await queries.teams.getTeamIdsForUser(userId);
     const teamRoleRows = await queries.projectTeams.getRolesForProjectAndTeams(
       projectId,
       teamIds,
     );
-    const role = highestTeamRole(teamRoleRows.map((r) => r.role));
-    if (!role) return { error: "Forbidden" };
+    const teamRole = highestTeamRole(teamRoleRows.map((r) => r.role));
 
-    return { project, role, isOwner: false, membership: null };
+    if (!membership && !teamRole) {
+      return { error: "Forbidden" };
+    }
+
+    if (membership && teamRole) {
+      const role =
+        ROLE_RANK[teamRole] > ROLE_RANK[membership.role]
+          ? teamRole
+          : membership.role;
+      return { project, role, isOwner: false, membership };
+    }
+
+    if (membership) {
+      return { project, role: membership.role, isOwner: false, membership };
+    }
+
+    return { project, role: teamRole!, isOwner: false, membership: null };
   },
 );
 
