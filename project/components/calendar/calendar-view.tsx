@@ -307,8 +307,8 @@ export function CalendarView({
     : [];
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-screen-2xl mx-auto pt-0 p-4 sm:p-8 sm:pt-0 transition-colors">
-      {/* Header Bar */}
+    <div className="w-full space-y-6 pb-12">
+      {/* Header Bar matching Dashboard style */}
       <div className="p-5 sm:p-6 bg-card border border-border/80 rounded-3xl shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3.5 min-w-0">
           <div className="p-2.5 bg-secondary text-foreground rounded-2xl border border-border/60 shrink-0">
@@ -331,7 +331,7 @@ export function CalendarView({
               setEditingEvent(undefined);
               setIsEventModalOpen(true);
             }}
-            className="h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5"
+            className="h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Plus size={14} /> New Event
           </button>
@@ -355,7 +355,7 @@ export function CalendarView({
                     : setCurrentMonth((p) => p - 1)
                 }
                 aria-label="Previous Month"
-                className="p-1.5 rounded-lg hover:bg-background text-foreground transition-colors"
+                className="p-1.5 rounded-lg hover:bg-background text-foreground transition-colors cursor-pointer"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -366,7 +366,7 @@ export function CalendarView({
                     : setCurrentMonth((p) => p + 1)
                 }
                 aria-label="Next Month"
-                className="p-1.5 rounded-lg hover:bg-background text-foreground transition-colors"
+                className="p-1.5 rounded-lg hover:bg-background text-foreground transition-colors cursor-pointer"
               >
                 <ChevronRight size={16} />
               </button>
@@ -399,7 +399,7 @@ export function CalendarView({
                     <button
                       key={`${dateKey}-${index}`}
                       onClick={() => setSelectedDate(dateKey)}
-                      className={`p-2.5 flex flex-col justify-between border-b border-r border-border/60 text-left transition-all relative group focus-visible:outline-none focus-visible:z-25 overflow-hidden ${
+                      className={`p-2.5 flex flex-col justify-between border-b border-r border-border/60 text-left transition-all relative group focus-visible:outline-none focus-visible:z-25 overflow-hidden cursor-pointer ${
                         !isCurrentMonth ? "opacity-30 bg-muted/10" : ""
                       } ${isSelected ? "bg-secondary text-secondary-foreground ring-1 ring-inset ring-ring z-20 font-semibold" : "hover:bg-secondary/40"}`}
                     >

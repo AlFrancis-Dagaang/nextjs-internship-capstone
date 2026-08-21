@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../client";
-import { lists, taskAssignees, tasks, users } from "../schema";
+import { lists, projects, taskAssignees, tasks, users } from "../schema";
 
 export const taskAssigneesQueries = {
   getByTask: async (taskId: string) => {
@@ -83,5 +83,35 @@ export const taskAssigneesQueries = {
         ),
       );
     return rows.length;
+  },
+  // ...existing taskAssigneesQueries object, add this method:
+
+  // Added #77 — tasks assigned to a user across every project (not
+  // project-scoped like getByProject/getByProjectAndUser above), for
+  // the Dashboard's "Assigned to me" widget. Same join chain
+  // (taskAssignees -> tasks -> lists) extended one hop to projects for
+  // the project name. No accessibility exists()-check needed here,
+  // unlike getWithDueDatesForUser/getByOwnerOrMember — a task_assignees
+  // row is itself proof of access (you can't be assigned without
+  // project access in the first place).
+  getAssignedToUserAcrossProjects: async (userId: string) => {
+    return db
+      .select({
+        taskId: taskAssignees.taskId,
+        title: tasks.title,
+        dueDate: tasks.dueDate,
+        priority: tasks.priority,
+        isCompleted: tasks.isCompleted,
+        listId: tasks.listId,
+        projectId: lists.projectId,
+        projectName: projects.name,
+      })
+      .from(taskAssignees)
+      .innerJoin(tasks, eq(taskAssignees.taskId, tasks.id))
+      .innerJoin(lists, eq(tasks.listId, lists.id))
+      .innerJoin(projects, eq(lists.projectId, projects.id))
+      .where(
+        and(eq(taskAssignees.userId, userId), eq(tasks.isArchived, false)),
+      );
   },
 };
