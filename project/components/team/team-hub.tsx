@@ -83,43 +83,43 @@ export function TeamHub({
   );
 
   return (
-    <div className="w-full space-y-10">
+    <div className="w-full space-y-12">
       {/* SECTION 1: Your Teams (Carousel) */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-border/80">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+      <section className="space-y-5">
+        <div className="flex items-center justify-between pb-3.5 border-b border-border/80">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
                 Your Teams
               </h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary text-secondary-foreground">
                 {initialHub.yourTeams.length}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Teams that you own, manage, and configure.
             </p>
           </div>
           <Button
             onClick={handleCreateClick}
             size="sm"
-            className="h-8 px-3.5 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs gap-1.5"
+            className="h-10 px-4 bg-teal-700 text-white hover:bg-teal-800 text-sm font-medium rounded-xl shadow-2xs gap-2"
           >
-            <Plus size={14} />
+            <Plus size={16} />
             Create Team
           </Button>
         </div>
 
         {initialHub.yourTeams.length === 0 ? (
           <Card className="border-dashed border-border bg-card/40 rounded-2xl shadow-none">
-            <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-              <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground mb-3 shadow-2xs">
-                <Users size={18} />
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-muted-foreground mb-3.5 shadow-2xs">
+                <Users size={20} />
               </div>
-              <p className="text-xs font-semibold text-foreground">
+              <p className="text-sm font-semibold text-foreground">
                 No teams created yet
               </p>
-              <p className="text-[11px] text-muted-foreground mt-1 mb-4 max-w-sm">
+              <p className="text-xs text-muted-foreground mt-1.5 mb-5 max-w-sm">
                 Create your first team to bundle members and streamline access
                 management across projects.
               </p>
@@ -127,16 +127,16 @@ export function TeamHub({
                 onClick={handleCreateClick}
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs rounded-xl"
+                className="h-9 text-xs rounded-xl"
               >
                 Create Team
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="flex overflow-x-auto space-x-4 pb-2 pt-1 scrollbar-thin">
+          <div className="flex overflow-x-auto space-x-5 pb-3 pt-1 scrollbar-thin">
             {initialHub.yourTeams.map((team) => (
-              <div key={team.id} className="w-80 sm:w-88 shrink-0">
+              <div key={team.id} className="w-84 sm:w-92 shrink-0">
                 <TeamCard
                   team={team}
                   isOwner={team.createdBy === currentUserId}
@@ -151,26 +151,26 @@ export function TeamHub({
       </section>
 
       {/* SECTION 2: Teams You Belong To (Carousel) */}
-      <section className="space-y-4">
-        <div className="pb-3 border-b border-border/80 space-y-0.5">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+      <section className="space-y-5">
+        <div className="pb-3.5 border-b border-border/80 space-y-1">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
               Teams You Belong To
             </h2>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary text-secondary-foreground">
               {initialHub.teamsYouBelongTo.length}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Collaborative workspaces where you hold membership access.
           </p>
         </div>
 
         {initialHub.teamsYouBelongTo.length === 0 ? (
           <Card className="border-dashed border-border bg-card/40 rounded-2xl shadow-none">
-            <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground mb-3 shadow-2xs">
-                <Shield size={18} />
+            <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-muted-foreground mb-3.5 shadow-2xs">
+                <Shield size={20} />
               </div>
               <p className="text-xs text-muted-foreground">
                 You are not currently a member of any other teams.
@@ -178,9 +178,9 @@ export function TeamHub({
             </CardContent>
           </Card>
         ) : (
-          <div className="flex overflow-x-auto space-x-4 pb-2 pt-1 scrollbar-thin">
+          <div className="flex overflow-x-auto space-x-5 pb-3 pt-1 scrollbar-thin">
             {initialHub.teamsYouBelongTo.map((team) => (
-              <div key={team.id} className="w-80 sm:w-88 shrink-0">
+              <div key={team.id} className="w-84 sm:w-92 shrink-0">
                 <TeamCard
                   team={team}
                   isOwner={false}
@@ -195,40 +195,40 @@ export function TeamHub({
       </section>
 
       {/* SECTION 3: Workspace Members (Grid with functional search) */}
-      <section className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/80">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+      <section className="space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-3.5 border-b border-border/80">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
                 Workspace Members
               </h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary text-secondary-foreground">
                 {filteredWorkspaceMembers.length}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               All active participants registered across your projects.
             </p>
           </div>
 
-          <div className="relative w-full sm:w-64">
+          <div className="relative w-full sm:w-72">
             <Search
-              size={13}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              size={15}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
             />
             <Input
               placeholder="Search members..."
               value={memberSearchQuery}
               onChange={(e) => setMemberSearchQuery(e.target.value)}
-              className="h-8 text-xs pl-9 bg-card border-border rounded-xl w-full"
+              className="h-10 text-sm pl-10 bg-card border-border rounded-xl w-full"
             />
           </div>
         </div>
 
         {filteredWorkspaceMembers.length === 0 ? (
           <Card className="border-dashed border-border bg-card/40 rounded-2xl shadow-none">
-            <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-              <p className="text-xs text-muted-foreground">
+            <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+              <p className="text-sm text-muted-foreground">
                 {memberSearchQuery
                   ? "No workspace members found matching your search."
                   : "No workspace members found."}
@@ -236,7 +236,7 @@ export function TeamHub({
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {filteredWorkspaceMembers.map((member) => {
               const stableKey = member.id || member.email;
               const displayName = member.name || "User";
@@ -244,33 +244,33 @@ export function TeamHub({
               return (
                 <div
                   key={member.id}
-                  className="relative flex flex-col justify-between p-4 sm:p-5 border border-border/80 rounded-2xl bg-card shadow-2xs transition-all"
+                  className="relative flex flex-col justify-between p-5 sm:p-6 border border-border/80 rounded-2xl bg-card shadow-2xs transition-all"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center space-x-3 overflow-hidden">
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-center space-x-3.5 overflow-hidden">
                       <div
-                        className={`w-9 h-9 rounded-xl border border-border flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-2xs ${getAvatarColor(
+                        className={`w-11 h-11 rounded-2xl border border-border flex items-center justify-center font-bold text-sm uppercase shrink-0 shadow-2xs ${getAvatarColor(
                           stableKey,
                         )}`}
                       >
                         {getInitials(displayName)}
                       </div>
-                      <div className="truncate space-y-0.5">
-                        <p className="text-xs font-semibold text-foreground tracking-tight truncate">
+                      <div className="truncate space-y-1">
+                        <p className="text-sm font-semibold text-foreground tracking-tight truncate">
                           {displayName}
                         </p>
-                        <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
-                          <Mail size={10} className="shrink-0 opacity-70" />
+                        <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
+                          <Mail size={12} className="shrink-0 opacity-70" />
                           {member.email}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-2.5 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="text-[11px] font-medium">Status</span>
-                    <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <div className="mt-5 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="text-xs font-medium">Status</span>
+                    <span className="inline-flex items-center gap-2 font-medium text-foreground">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                       Active
                     </span>
                   </div>
@@ -306,14 +306,14 @@ export function TeamHub({
             <AlertDialogTitle className="text-base font-semibold tracking-tight">
               Delete Team?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-muted-foreground pt-1">
+            <AlertDialogDescription className="text-sm text-muted-foreground pt-1.5">
               This action cannot be undone. This will permanently delete the
               team and remove all member associations.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-4">
             <AlertDialogCancel
-              className="h-9 text-xs rounded-xl"
+              className="h-10 text-sm rounded-xl"
               disabled={isPending}
             >
               Cancel
@@ -321,7 +321,7 @@ export function TeamHub({
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={isPending}
-              className="h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/95 rounded-xl shadow-xs"
+              className="h-10 text-sm bg-destructive text-destructive-foreground hover:bg-destructive/95 rounded-xl shadow-xs"
             >
               Delete
             </AlertDialogAction>
