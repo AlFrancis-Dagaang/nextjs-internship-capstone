@@ -37,7 +37,13 @@ export async function getAuthedUserOrError() {
       [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
       "Unknown";
 
-    user = await syncUserFromClerkData(userId, primaryEmail, name);
+    user = await syncUserFromClerkData(
+      userId,
+      primaryEmail,
+      name,
+      clerkUser.imageUrl,
+      clerkUser.hasImage,
+    );
   }
 
   return { user } as const;

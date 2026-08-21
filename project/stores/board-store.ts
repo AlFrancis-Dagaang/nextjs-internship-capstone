@@ -193,16 +193,31 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         l.id === task.listId
           ? {
               ...l,
-              tasks: l.tasks.map((t) =>
-                t.id === task.id
-                  ? {
-                      ...task,
-                      commentCount: t.commentCount,
-                      assignees:
-                        (task as TaskWithCommentCount).assignees ?? t.assignees,
-                    }
-                  : t,
-              ),
+              tasks: l.tasks.map((t) => {
+                if (t.id !== task.id) return t;
+                const incomingAssignees = (task as TaskWithCommentCount)
+                  .assignees;
+                // Merge incoming assignees with existing ones to preserve imageUrl/hasImage if omitted
+                const mergedAssignees = incomingAssignees
+                  ? incomingAssignees.map((ia) => {
+                      const existing = t.assignees?.find(
+                        (ea) =>
+                          ea.userId === ia.userId || ea.email === ia.email,
+                      );
+                      return {
+                        ...ia,
+                        imageUrl: ia.imageUrl ?? existing?.imageUrl,
+                        hasImage: ia.hasImage ?? existing?.hasImage,
+                      };
+                    })
+                  : t.assignees;
+
+                return {
+                  ...task,
+                  commentCount: t.commentCount,
+                  assignees: mergedAssignees,
+                };
+              }),
             }
           : l,
       ),
@@ -235,9 +250,21 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         l.id === listId
           ? {
               ...l,
-              tasks: l.tasks.map((t) =>
-                t.id === taskId ? { ...t, assignees } : t,
-              ),
+              tasks: l.tasks.map((t) => {
+                if (t.id !== taskId) return t;
+                const mergedAssignees = (assignees ?? []).map((ia: any) => {
+                  const existing = t.assignees?.find(
+                    (ea: any) =>
+                      ea.userId === ia.userId || ea.email === ia.email,
+                  );
+                  return {
+                    ...ia,
+                    imageUrl: ia.imageUrl ?? existing?.imageUrl,
+                    hasImage: ia.hasImage ?? existing?.hasImage,
+                  };
+                });
+                return { ...t, assignees: mergedAssignees };
+              }),
             }
           : l,
       ),

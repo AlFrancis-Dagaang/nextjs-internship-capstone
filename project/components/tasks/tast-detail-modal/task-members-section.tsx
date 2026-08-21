@@ -1,3 +1,4 @@
+// components/tasks/tast-detail-modal/task-members-section.tsx
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -6,7 +7,7 @@ import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getTaskAssignees } from "@/lib/actions/task-assignees";
 import { AssignTaskModal } from "../modal/assign-task-modal";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type { Task } from "@/lib/db/schema";
 import type { TaskWithCommentCount } from "@/components/lists/board";
 
@@ -14,6 +15,8 @@ type AssigneeUser = {
   id: string;
   name?: string;
   email?: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
 };
 
 type TaskAssignee = {
@@ -23,6 +26,8 @@ type TaskAssignee = {
   createdAt: Date;
   userName: string;
   userEmail: string;
+  userImageUrl?: string | null;
+  userHasImage?: boolean | null;
 };
 
 type TaskMembersSectionProps = {
@@ -67,10 +72,12 @@ export function TaskMembersSection({
         lastAssigneeIdsRef.current = newIds;
         onUpdatedRef.current?.({
           ...taskRef.current,
-          assignees: result.data.map((a) => ({
+          assignees: result.data.map((a: any) => ({
             userId: a.userId,
             name: a.userName,
             email: a.userEmail,
+            imageUrl: a.userImageUrl,
+            hasImage: a.userHasImage,
           })),
         });
       }
@@ -91,10 +98,12 @@ export function TaskMembersSection({
   const visibleAssignees = assignees.slice(0, 3);
   const extraCount = assignees.length > 3 ? assignees.length - 3 : 0;
 
-  const currentAssigneeUsers: AssigneeUser[] = assignees.map((a) => ({
+  const currentAssigneeUsers: AssigneeUser[] = assignees.map((a: any) => ({
     id: a.userId,
     name: a.userName,
     email: a.userEmail,
+    imageUrl: a.userImageUrl,
+    hasImage: a.userHasImage,
   }));
 
   return (
@@ -124,19 +133,19 @@ export function TaskMembersSection({
             <div className="flex items-center space-x-1.5">
               <div className="flex items-center">
                 <div className="flex -space-x-1.5">
-                  {visibleAssignees.map((a) => {
+                  {visibleAssignees.map((a: any) => {
                     const displayName = a.userName || a.userEmail || "U";
-                    const stableColorKey = a.userId || a.userEmail || a.id;
+                    const stableKey = a.userId || a.userEmail || a.id;
                     return (
-                      <div
+                      <UserAvatar
                         key={a.id}
-                        className={`h-7 w-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-medium uppercase shadow-2xs ${getAvatarColor(
-                          stableColorKey,
-                        )}`}
+                        userId={stableKey}
+                        name={displayName}
+                        imageUrl={a.userImageUrl}
+                        hasImage={a.userHasImage ?? false}
+                        className="w-7 h-7"
                         title={displayName}
-                      >
-                        {getInitials(displayName)}
-                      </div>
+                      />
                     );
                   })}
                 </div>

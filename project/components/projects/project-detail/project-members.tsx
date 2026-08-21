@@ -21,14 +21,8 @@ import { useToast } from "@/hooks/use-toast";
 import { InviteMemberModal } from "../modals/invite-member-modal";
 import { DeleteMemberModal } from "../modals/delete-member-modal";
 import { getRealtimeClientId } from "@/lib/realtime/client";
-
-type Member = {
-  id: string;
-  userId: string;
-  email?: string;
-  name?: string;
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-};
+import { UserAvatar } from "@/components/ui/user-avatar";
+import type { Member } from "@/stores/project-store"; // <--- Import from store
 
 type ProjectMembersProps = {
   project: Project;
@@ -37,6 +31,8 @@ type ProjectMembersProps = {
   canManage: boolean;
   ownerName?: string;
   ownerEmail?: string;
+  ownerImageUrl?: string | null;
+  ownerHasImage?: boolean | null;
   onMemberAdded: (projectId: string, member: Member) => void;
   onMemberAddConfirmed: (
     projectId: string,
@@ -54,6 +50,8 @@ export function ProjectMembers({
   canManage,
   ownerName,
   ownerEmail,
+  ownerImageUrl,
+  ownerHasImage,
   onMemberAdded,
   onMemberAddConfirmed,
   onMemberRoleChanged,
@@ -135,6 +133,8 @@ export function ProjectMembers({
     });
   }
 
+  const ownerDisplayName = ownerName || ownerEmail || "Project Owner";
+
   return (
     <>
       <div className="w-full md:w-120 shrink-0 p-6 flex flex-col overflow-y-auto bg-muted/30 space-y-5 border-t md:border-t-0 md:border-l border-border">
@@ -204,9 +204,13 @@ export function ProjectMembers({
             roleFilter === "all" && (
               <div className="flex items-center justify-between p-3.5 bg-muted/40">
                 <div className="flex items-center space-x-3 overflow-hidden">
-                  <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs uppercase ring-2 ring-card shrink-0">
-                    {ownerName?.[0] ?? ownerEmail?.[0] ?? "U"}
-                  </div>
+                  <UserAvatar
+                    userId={project.ownerId || ownerEmail || "owner"}
+                    name={ownerDisplayName}
+                    imageUrl={ownerImageUrl}
+                    hasImage={ownerHasImage ?? false}
+                    className="w-8 h-8 text-xs"
+                  />
                   <div className="truncate">
                     <p className="text-xs font-medium text-foreground truncate">
                       {ownerName ?? "Project Owner"}
@@ -233,9 +237,13 @@ export function ProjectMembers({
                 className="flex items-center justify-between p-3.5 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center space-x-3 overflow-hidden">
-                  <div className="w-8 h-8 rounded-full bg-secondary text-secondary-foreground border border-border flex items-center justify-center font-bold text-xs uppercase ring-2 ring-card shrink-0">
-                    {member.name?.[0] ?? member.email?.[0] ?? "U"}
-                  </div>
+                  <UserAvatar
+                    userId={member.userId || member.email || member.id}
+                    name={member.name || member.email || "Member"}
+                    imageUrl={member.imageUrl}
+                    hasImage={member.hasImage ?? false}
+                    className="w-8 h-8 text-xs"
+                  />
                   <div className="truncate">
                     <p className="text-xs font-medium text-foreground truncate">
                       {member.name ?? "Team Member"}

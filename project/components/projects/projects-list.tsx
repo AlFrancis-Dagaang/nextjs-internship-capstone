@@ -20,6 +20,8 @@ type Member = {
 type OwnerInfo = {
   name?: string;
   email?: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
 };
 
 type CompletionInfo = {
@@ -111,6 +113,8 @@ export function ProjectsList({
                     initialMembers={initialMembersMap[project.id] ?? []}
                     ownerName={initialOwnerMap[project.id]?.name}
                     ownerEmail={initialOwnerMap[project.id]?.email}
+                    ownerImageUrl={initialOwnerMap[project.id]?.imageUrl}
+                    ownerHasImage={initialOwnerMap[project.id]?.hasImage}
                     completion={
                       initialCompletionMap[project.id] ?? {
                         total: 0,
@@ -137,6 +141,8 @@ export function ProjectsList({
                     initialMembers={initialMembersMap[project.id] ?? []}
                     ownerName={initialOwnerMap[project.id]?.name}
                     ownerEmail={initialOwnerMap[project.id]?.email}
+                    ownerImageUrl={initialOwnerMap[project.id]?.imageUrl}
+                    ownerHasImage={initialOwnerMap[project.id]?.hasImage}
                     myRole={initialMyRoleMap[project.id]}
                     completion={
                       initialCompletionMap[project.id] ?? {

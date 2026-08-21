@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 import {
   Bell,
   Menu,
@@ -14,12 +14,15 @@ import {
   Loader2,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
+  LogOut,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -32,6 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { checkProjectAccess } from "@/lib/actions/notifications";
 import { globalSearch, type SearchResult } from "@/lib/actions/search";
 import { useRealtimeNotifications } from "@/hooks/use-realtime-notifications";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface HeaderProps {
   setSidebarOpen: (open: boolean) => void;
@@ -72,6 +76,9 @@ export function Header({
 }: HeaderProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -201,6 +208,9 @@ export function Header({
 
   const hasResults =
     searchResults.projects.length > 0 || searchResults.tasks.length > 0;
+
+  const displayName =
+    user?.fullName || user?.primaryEmailAddress?.emailAddress || "User";
 
   return (
     <header className="flex h-16 items-center gap-x-4 border-b border-border bg-card/80 backdrop-blur-md px-4 sm:gap-x-6 sm:px-6 lg:px-8 w-full">
@@ -394,8 +404,55 @@ export function Header({
 
         <ThemeToggle />
 
+        {/* Custom User Avatar Dropdown */}
         <div className="flex items-center pl-2 border-l border-border">
-          <UserButton />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="relative rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                aria-label="User menu"
+              >
+                <UserAvatar
+                  userId={currentUserId}
+                  name={displayName}
+                  imageUrl={user?.imageUrl}
+                  hasImage={!!user?.hasImage}
+                  className="w-8 h-8 text-xs rounded-full border border-border shadow-xs"
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-56 bg-card border border-border rounded-2xl shadow-xl p-1.5 space-y-1 z-50"
+            >
+              <div className="px-3 py-2 border-b border-border/60 mb-1">
+                <p className="text-xs font-semibold text-foreground truncate">
+                  {displayName}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {user?.primaryEmailAddress?.emailAddress}
+                </p>
+              </div>
+
+              <DropdownMenuItem
+                onSelect={() => router.push("/settings")}
+                className="cursor-pointer px-2.5 py-2 text-xs text-foreground focus:bg-secondary rounded-xl flex items-center gap-2"
+              >
+                <Settings size={14} className="text-muted-foreground" />
+                <span>Manage account</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onSelect={() => signOut({ redirectUrl: "/sign-in" })}
+                className="cursor-pointer px-2.5 py-2 text-xs text-destructive focus:bg-destructive/10 rounded-xl flex items-center gap-2"
+              >
+                <LogOut size={14} className="text-destructive" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

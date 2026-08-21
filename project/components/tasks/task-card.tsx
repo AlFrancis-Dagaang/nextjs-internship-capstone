@@ -17,7 +17,7 @@ import { DeleteTaskDialog } from "./modal/delete-task-dialog";
 import { Input } from "@/components/ui/input";
 import { ListWithTasks, TaskWithCommentCount } from "../lists/board";
 import { useBoardStore } from "@/stores/board-store";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 const priorityBarStyles: Record<string, string> = {
   low: "bg-blue-500",
@@ -163,20 +163,20 @@ export function TaskCardView({
         {assignees.length > 0 && (
           <div className="flex items-center">
             <div className="flex -space-x-1.5">
-              {visibleAssignees.map((a) => {
+              {visibleAssignees.map((a: any) => {
                 const displayName = a.name || a.email || "User";
-                const stableColorKey = a.userId || a.email || displayName;
+                const stableKey = a.userId || a.email || a.id;
 
                 return (
-                  <div
-                    key={a.userId}
-                    className={`w-6 h-6 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase shadow-sm ${getAvatarColor(
-                      stableColorKey,
-                    )}`}
+                  <UserAvatar
+                    key={stableKey}
+                    userId={stableKey}
+                    name={displayName}
+                    imageUrl={a.imageUrl}
+                    hasImage={a.hasImage ?? false}
+                    className="w-6 h-6 text-[9px]"
                     title={displayName}
-                  >
-                    {getInitials(displayName)}
-                  </div>
+                  />
                 );
               })}
             </div>
@@ -266,7 +266,10 @@ export function TaskCard({
         });
         return;
       }
-      onUpdated?.(result.data as TaskWithCommentCount);
+      onUpdated?.({
+        ...(result.data as TaskWithCommentCount),
+        assignees: task.assignees,
+      });
     });
   }
 
@@ -294,7 +297,7 @@ export function TaskCard({
         return;
       }
       toast({ title: "Task updated", description: result.data?.title });
-      onUpdated?.(result.data);
+      onUpdated?.({ ...result.data, assignees: task.assignees });
     });
   }
 

@@ -1,3 +1,4 @@
+// components/tasks/tast-detail-modal/task-sidebar.tsx
 "use client";
 
 import type { Task } from "@/lib/db/schema";
@@ -16,7 +17,13 @@ type TaskSidebarProps = {
   task: Task;
   projectId: string;
   allLists: ListWithTasks[];
-  assignableUsers: { id: string; name?: string; email?: string }[];
+  assignableUsers: {
+    id: string;
+    name?: string;
+    email?: string;
+    imageUrl?: string | null;
+    hasImage?: boolean | null;
+  }[];
   activityRefreshKey: number;
   canEdit: boolean;
   role: "owner" | "admin" | "editor" | "contributor" | "viewer";

@@ -12,6 +12,8 @@ export function toMemberList(
     userId: string;
     userEmail: string;
     userName: string;
+    userImageUrl: string | null;
+    userHasImage: boolean;
     role: ProjectMemberRole;
   }[],
 ) {
@@ -20,6 +22,8 @@ export function toMemberList(
     userId: m.userId,
     email: m.userEmail,
     name: m.userName,
+    imageUrl: m.userImageUrl,
+    hasImage: m.userHasImage,
     role: m.role,
   }));
 }

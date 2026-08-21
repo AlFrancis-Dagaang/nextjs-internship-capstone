@@ -1,3 +1,4 @@
+// app/projects/[id]/page.tsx
 import Link from "next/link";
 import { getProject } from "@/lib/actions/projects";
 import { getListsByProject } from "@/lib/actions/lists";
@@ -13,6 +14,7 @@ import { assertProjectAccess } from "@/lib/services/ownership";
 import { toLocalDateKey } from "@/lib/utils/utils";
 import { CalendarTaskDTO } from "@/types";
 import { getEffectiveProjectMembers } from "@/lib/actions/project-member";
+
 export default async function ProjectPage({
   params,
 }: {
@@ -87,11 +89,23 @@ export default async function ProjectPage({
 
   const assigneesByTask = new Map<
     string,
-    { userId: string; name?: string; email?: string }[]
+    {
+      userId: string;
+      name?: string;
+      email?: string;
+      imageUrl?: string | null;
+      hasImage?: boolean | null;
+    }[]
   >();
   for (const row of assigneeRows) {
     const arr = assigneesByTask.get(row.taskId) ?? [];
-    arr.push({ userId: row.userId, name: row.userName, email: row.userEmail });
+    arr.push({
+      userId: row.userId,
+      name: row.userName,
+      email: row.userEmail,
+      imageUrl: row.userImageUrl,
+      hasImage: row.userHasImage,
+    });
     assigneesByTask.set(row.taskId, arr);
   }
 
@@ -114,7 +128,7 @@ export default async function ProjectPage({
       priority: t.priority,
       projectId: project.id,
       projectName: project.name,
-      isCompleted: t.isCompleted, // <-- Add this here
+      isCompleted: t.isCompleted,
     }))
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 
@@ -128,9 +142,11 @@ export default async function ProjectPage({
           canManage={canManage}
           ownerName={owner?.name}
           ownerEmail={owner?.email}
+          ownerImageUrl={owner?.imageUrl}
+          ownerHasImage={owner?.hasImage}
           role={role}
-          currentUserId={authResult.user.id} // new
-          upcomingTasks={upcomingTasks} // new
+          currentUserId={authResult.user.id}
+          upcomingTasks={upcomingTasks}
         />
       </div>
       <div className="flex-1 min-h-0">

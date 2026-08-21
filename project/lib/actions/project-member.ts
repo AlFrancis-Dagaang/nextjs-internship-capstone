@@ -298,10 +298,17 @@ export async function searchUsersForInvite(
 
   return { success: true, data: annotated };
 }
-
-export async function getAssignableUsers(
-  projectId: string,
-): Promise<ActionResult<{ id: string; name?: string; email?: string }[]>> {
+export async function getAssignableUsers(projectId: string): Promise<
+  ActionResult<
+    {
+      id: string;
+      name?: string;
+      email?: string;
+      imageUrl?: string | null;
+      hasImage?: boolean | null;
+    }[]
+  >
+> {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
@@ -324,7 +331,13 @@ export async function getAssignableUsers(
 
   const assignableMap = new Map<
     string,
-    { id: string; name?: string; email?: string }
+    {
+      id: string;
+      name?: string;
+      email?: string;
+      imageUrl?: string | null;
+      hasImage?: boolean | null;
+    }
   >();
 
   if (owner) {
@@ -332,6 +345,8 @@ export async function getAssignableUsers(
       id: owner.id,
       name: owner.name,
       email: owner.email,
+      imageUrl: owner.imageUrl,
+      hasImage: owner.hasImage,
     });
   }
   for (const m of members) {
@@ -339,6 +354,8 @@ export async function getAssignableUsers(
       id: m.userId,
       name: m.userName,
       email: m.userEmail,
+      imageUrl: m.userImageUrl, // Ensure your projectMembers query selects userImageUrl & userHasImage
+      hasImage: m.userHasImage,
     });
   }
   for (const teamMembers of teamMemberLists) {
@@ -348,6 +365,8 @@ export async function getAssignableUsers(
           id: m.userId,
           name: m.userName,
           email: m.userEmail,
+          imageUrl: m.userImageUrl, // Ensure your team members query selects these as well
+          hasImage: m.userHasImage,
         });
       }
     }

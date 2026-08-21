@@ -1,3 +1,4 @@
+// components/tasks/tast-detail-modal/task-activity-feed.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,14 +6,13 @@ import { getTaskActivity } from "@/lib/actions/taskActivity";
 import type { TaskActivity, User } from "@/lib/db/schema";
 import {
   formatRelativeTime,
-  getInitials,
   formatActivityLabel,
 } from "@/lib/services/task-activity-helpers";
-import { getAvatarColor } from "@/lib/utils/avatar";
 import { TaskActivityModal } from "./task-activity-modal";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 export type ActivityWithActor = TaskActivity & {
-  actor?: Pick<User, "id" | "name">;
+  actor?: Pick<User, "id" | "name" | "imageUrl" | "hasImage">;
 };
 
 type TaskActivityFeedProps = {
@@ -89,16 +89,16 @@ export function TaskActivityFeed({
       <ul className="space-y-4">
         {activity.map((entry) => {
           const actorName = entry.actor?.name ?? "Unknown user";
-          const stableColorKey = entry.actor?.id || actorName;
+          const actorId = entry.actor?.id ?? actorName;
           return (
             <li key={entry.id} className="flex items-start gap-3">
-              <div
-                className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-2xs ${getAvatarColor(
-                  stableColorKey,
-                )}`}
-              >
-                {getInitials(actorName)}
-              </div>
+              <UserAvatar
+                userId={actorId}
+                name={actorName}
+                imageUrl={entry.actor?.imageUrl}
+                hasImage={entry.actor?.hasImage ?? false}
+                className="w-6 h-6 text-[9px] shrink-0"
+              />
               <div className="flex-1 flex items-center justify-between gap-2 pt-0.5">
                 <span className="text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">

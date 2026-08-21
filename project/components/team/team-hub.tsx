@@ -23,7 +23,7 @@ import { Plus, Users, Shield, Mail, Search } from "lucide-react";
 import { TeamModal } from "./modals/team-modal";
 import { ManageMembersModal } from "./modals/manage-members-modal";
 import { TeamCard } from "./team-card";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type WorkspaceHub = {
   yourTeams: WorkspaceTeam[];
@@ -248,13 +248,13 @@ export function TeamHub({
                 >
                   <div className="flex items-start justify-between gap-2.5">
                     <div className="flex items-center space-x-3.5 overflow-hidden">
-                      <div
-                        className={`w-11 h-11 rounded-2xl border border-border flex items-center justify-center font-bold text-sm uppercase shrink-0 shadow-2xs ${getAvatarColor(
-                          stableKey,
-                        )}`}
-                      >
-                        {getInitials(displayName)}
-                      </div>
+                      <UserAvatar
+                        userId={stableKey}
+                        name={displayName}
+                        imageUrl={member.imageUrl}
+                        hasImage={member.hasImage ?? false}
+                        className="w-11 h-11 text-sm rounded-2xl border border-border shrink-0 shadow-2xs"
+                      />
                       <div className="truncate space-y-1">
                         <p className="text-sm font-semibold text-foreground tracking-tight truncate">
                           {displayName}

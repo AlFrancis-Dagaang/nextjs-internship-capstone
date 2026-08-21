@@ -18,6 +18,8 @@ export const users = pgTable("users", {
   clerkId: text("clerk_id").notNull().unique(),
   email: text("email").notNull(),
   name: text("name").notNull(),
+  imageUrl: text("image_url"),
+  hasImage: boolean("has_image").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

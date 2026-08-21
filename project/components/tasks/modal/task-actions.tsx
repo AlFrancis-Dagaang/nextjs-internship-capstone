@@ -1,3 +1,4 @@
+// components/tasks/modal/task-actions.tsx
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -40,11 +41,14 @@ import {
 import { getAssignableUsers } from "@/lib/actions/project-member";
 import { ListWithTasks } from "@/components/lists/board";
 import { useBoardStore } from "@/stores/board-store";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type AssigneeUser = {
   id: string;
   name?: string;
   email?: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
 };
 
 export function TaskActions({
@@ -76,6 +80,8 @@ export function TaskActions({
     userId: string;
     name?: string;
     email?: string;
+    imageUrl?: string | null;
+    hasImage?: boolean | null;
   }) => void;
 }) {
   const { toast } = useToast();
@@ -194,7 +200,13 @@ export function TaskActions({
       }
 
       setAssignedUserIds((prev) => new Set(prev).add(user.id));
-      onAssigned?.({ userId: user.id, name: user.name, email: user.email });
+      onAssigned?.({
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        imageUrl: user.imageUrl,
+        hasImage: user.hasImage,
+      });
       toast({
         title: "Member assigned",
         description: "Successfully added member to task.",
@@ -481,7 +493,7 @@ export function TaskActions({
                 ) : (
                   filteredAssignableUsers.map((user) => {
                     const isAlreadyAssigned = assignedUserIds.has(user.id);
-                    const initials = user.name?.[0] ?? user.email?.[0] ?? "U";
+                    const displayName = user.name || user.email || "User";
 
                     return (
                       <div
@@ -496,11 +508,15 @@ export function TaskActions({
                         }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="h-5 w-5 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-[9px] font-medium uppercase shrink-0">
-                            {initials}
-                          </div>
+                          <UserAvatar
+                            userId={user.id}
+                            name={displayName}
+                            imageUrl={user.imageUrl}
+                            hasImage={user.hasImage ?? false}
+                            className="w-5 h-5 text-[9px]"
+                          />
                           <span className="text-xs font-medium text-foreground truncate">
-                            {user.name ?? user.email}
+                            {displayName}
                           </span>
                         </div>
                         {isAlreadyAssigned && (

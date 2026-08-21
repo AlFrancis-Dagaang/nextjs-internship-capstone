@@ -9,14 +9,26 @@ export const usersQueries = {
   getByEmail: async (email: string) => {
     return db.query.users.findFirst({ where: eq(users.email, email) });
   },
-  upsert: async (data: { clerkId: string; email: string; name: string }) => {
+  upsert: async (data: {
+    clerkId: string;
+    email: string;
+    name: string;
+    imageUrl?: string | null;
+    hasImage?: boolean;
+  }) => {
     const existing = await db.query.users.findFirst({
       where: eq(users.clerkId, data.clerkId),
     });
     if (existing) {
       const [updated] = await db
         .update(users)
-        .set({ email: data.email, name: data.name, updatedAt: new Date() })
+        .set({
+          email: data.email,
+          name: data.name,
+          imageUrl: data.imageUrl,
+          hasImage: data.hasImage ?? false,
+          updatedAt: new Date(),
+        })
         .where(eq(users.clerkId, data.clerkId))
         .returning();
       return updated;

@@ -15,6 +15,8 @@ export type WorkspaceMember = {
   id: string;
   name: string;
   email: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
 };
 
 export type WorkspaceHub = {
@@ -71,12 +73,22 @@ export async function getWorkspaceHub(userId: string): Promise<WorkspaceHub> {
       ]);
       return [
         ...(owner
-          ? [{ id: owner.id, name: owner.name, email: owner.email }]
+          ? [
+              {
+                id: owner.id,
+                name: owner.name,
+                email: owner.email,
+                imageUrl: owner.imageUrl,
+                hasImage: owner.hasImage,
+              },
+            ]
           : []),
-        ...members.map((m) => ({
+        ...members.map((m: any) => ({
           id: m.userId,
           name: m.userName,
           email: m.userEmail,
+          imageUrl: m.userImageUrl ?? m.imageUrl,
+          hasImage: m.userHasImage ?? m.hasImage,
         })),
       ];
     }),
@@ -90,12 +102,14 @@ export async function getWorkspaceHub(userId: string): Promise<WorkspaceHub> {
   for (const person of projectCollaboratorLists.flat()) {
     if (person.id !== userId) collaboratorMap.set(person.id, person);
   }
-  for (const member of teamCollaboratorLists.flat()) {
+  for (const member of teamCollaboratorLists.flat() as any[]) {
     if (member.userId !== userId) {
       collaboratorMap.set(member.userId, {
         id: member.userId,
         name: member.userName,
         email: member.userEmail,
+        imageUrl: member.userImageUrl ?? member.imageUrl,
+        hasImage: member.userHasImage ?? member.hasImage,
       });
     }
   }
@@ -106,7 +120,6 @@ export async function getWorkspaceHub(userId: string): Promise<WorkspaceHub> {
     workspaceMembers: Array.from(collaboratorMap.values()),
   };
 }
-
 // ---------- /projects/[projectId]/team ----------
 
 export type ProjectTeamIndividual = {
@@ -168,15 +181,19 @@ export async function getProjectTeam(
             name: owner.name,
             email: owner.email,
             role: "owner" as const,
+            imageUrl: owner.imageUrl, // <--- Add this
+            hasImage: owner.hasImage, // <--- Add this
           },
         ]
       : []),
-    ...members.map((m) => ({
+    ...members.map((m: any) => ({
       id: m.id,
       userId: m.userId,
       name: m.userName,
       email: m.userEmail,
       role: m.role,
+      imageUrl: m.userImageUrl ?? m.imageUrl, // <--- Add this
+      hasImage: m.userHasImage ?? m.hasImage, // <--- Add this
     })),
   ];
 
@@ -192,6 +209,8 @@ export async function getProjectTeam(
       return { ...row, activeTaskCount, recentActivity };
     }),
   );
+
+  // ... rest of your return statement
 
   const teams: ProjectTeamEntry[] = projectTeams.map((pt) => ({
     projectTeamId: pt.id,
@@ -214,8 +233,11 @@ export type EffectiveProjectMember = {
   userId: string;
   userName: string;
   userEmail: string;
+  userImageUrl: string | null;
+  userHasImage: boolean;
   role: ProjectMemberRole;
 };
+
 export async function getEffectiveProjectMembers(
   projectId: string,
 ): Promise<EffectiveProjectMember[]> {
@@ -234,6 +256,8 @@ export async function getEffectiveProjectMembers(
       userId: m.userId,
       userName: m.userName,
       userEmail: m.userEmail,
+      userImageUrl: m.userImageUrl,
+      userHasImage: m.userHasImage,
       role: m.role,
     });
   }
@@ -244,13 +268,15 @@ export async function getEffectiveProjectMembers(
 
   projectTeams.forEach((pt, i) => {
     for (const member of teamMemberLists[i]) {
-      if (member.userId === ownerId) continue; // owner never appears as a member row
+      if (member.userId === ownerId) continue;
       if (!merged.has(member.userId)) {
         merged.set(member.userId, {
           id: `team-${pt.teamId}-${member.userId}`,
           userId: member.userId,
           userName: member.userName,
           userEmail: member.userEmail,
+          userImageUrl: member.userImageUrl,
+          userHasImage: member.userHasImage,
           role: pt.role,
         });
       }

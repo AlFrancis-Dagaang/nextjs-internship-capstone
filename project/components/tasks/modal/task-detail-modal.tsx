@@ -1,3 +1,4 @@
+// components/tasks/modal/task-detail-modal.tsx
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
@@ -20,7 +21,13 @@ type TaskDetailModalProps = {
   task: Task;
   projectId: string;
   allLists: ListWithTasks[];
-  assignableUsers: { id: string; name?: string; email?: string }[];
+  assignableUsers: {
+    id: string;
+    name?: string;
+    email?: string;
+    imageUrl?: string | null;
+    hasImage?: boolean | null;
+  }[];
   role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   onRestored?: () => void;
   open: boolean;

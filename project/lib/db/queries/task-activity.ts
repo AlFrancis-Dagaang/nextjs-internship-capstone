@@ -16,6 +16,8 @@ export const taskActivityQueries = {
         actor: {
           id: users.id,
           name: users.name,
+          imageUrl: users.imageUrl, // <--- Add this
+          hasImage: users.hasImage, // <--- Add this
         },
       })
       .from(taskActivity)
@@ -94,12 +96,17 @@ export const taskActivityQueries = {
         action: taskActivity.action,
         metadata: taskActivity.metadata,
         createdAt: taskActivity.createdAt,
-        actor: { id: users.id, name: users.name },
+        actor: {
+          id: users.id,
+          name: users.name,
+          imageUrl: users.imageUrl,
+          hasImage: users.hasImage,
+        },
       })
       .from(taskActivity)
       .innerJoin(users, eq(taskActivity.actorId, users.id))
       .where(and(...conditions))
       .orderBy(desc(taskActivity.createdAt), desc(taskActivity.id))
-      .limit(options.limit + 1); // fetch one extra to detect "has more"
+      .limit(options.limit + 1);
   },
 };

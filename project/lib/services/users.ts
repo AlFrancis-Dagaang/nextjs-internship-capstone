@@ -11,6 +11,14 @@ export async function syncUserFromClerkData(
   clerkId: string,
   primaryEmail: string,
   name: string,
+  imageUrl: string,
+  hasImage: boolean,
 ) {
-  return queries.users.upsert({ clerkId, email: primaryEmail, name });
+  return queries.users.upsert({
+    clerkId,
+    email: primaryEmail,
+    name,
+    imageUrl,
+    hasImage,
+  });
 }

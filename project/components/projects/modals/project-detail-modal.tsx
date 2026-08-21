@@ -11,13 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { ProjectInfo } from "../project-detail/project-info";
 import { ProjectMembers } from "../project-detail/project-members";
-
-type Member = {
-  id: string;
-  userId: string;
-  email?: string;
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-};
+import type { Member } from "@/stores/project-store"; // <--- Import from store
 
 type ProjectDetailModalProps = {
   project: Project;
@@ -26,6 +20,8 @@ type ProjectDetailModalProps = {
   canManage: boolean;
   ownerName?: string;
   ownerEmail?: string;
+  ownerImageUrl?: string | null;
+  ownerHasImage?: boolean | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onMemberAdded: (projectId: string, member: Member) => void;
@@ -45,6 +41,8 @@ export function ProjectDetailModal({
   canManage,
   ownerName,
   ownerEmail,
+  ownerImageUrl,
+  ownerHasImage,
   open,
   onOpenChange,
   onMemberAdded,
@@ -93,6 +91,8 @@ export function ProjectDetailModal({
             canManage={canManage}
             ownerName={ownerName}
             ownerEmail={ownerEmail}
+            ownerImageUrl={ownerImageUrl}
+            ownerHasImage={ownerHasImage}
             onMemberAdded={onMemberAdded}
             onMemberAddConfirmed={onMemberAddConfirmed}
             onMemberRoleChanged={onMemberRoleChanged}
