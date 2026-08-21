@@ -77,7 +77,7 @@ export function TaskDatesSection({
 
   return (
     <div className="space-y-2">
-      <Label className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">
+      <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
         Dates
       </Label>
       <div className="flex items-center gap-2">
@@ -87,7 +87,7 @@ export function TaskDatesSection({
           value={dueDate}
           onChange={handleDateChange}
           disabled={isPending || !canEdit}
-          className="bg-card border-input h-9 text-sm focus-visible:ring-1 focus-visible:ring-ring text-card-foreground"
+          className="bg-card border border-border h-8 text-xs focus-visible:ring-1 focus-visible:ring-ring text-card-foreground rounded-xl shadow-2xs"
         />
         {statusLabel && (
           <span

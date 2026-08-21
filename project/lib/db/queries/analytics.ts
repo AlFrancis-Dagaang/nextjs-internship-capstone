@@ -118,27 +118,43 @@ export const analyticsQueries = {
   getCompletionStatsByProjectAsOf: async (projectIds: string[], asOf: Date) => {
     if (projectIds.length === 0) return [];
 
-    const firstCompletions = db
+    const latestStatusEvent = db
       .select({
         taskId: taskActivity.taskId,
-        completedAt: sql<Date>`min(${taskActivity.createdAt})`.as(
-          "completed_at",
-        ),
+        action: taskActivity.action,
+        createdAt: taskActivity.createdAt,
+        rowNum: sql<number>`row_number() over (
+        partition by ${taskActivity.taskId}
+        order by ${taskActivity.createdAt} desc
+      )`.as("row_num"),
       })
       .from(taskActivity)
-      .where(eq(taskActivity.action, "completed"))
-      .groupBy(taskActivity.taskId)
-      .as("first_completions");
+      .where(
+        and(
+          inArray(taskActivity.action, ["completed", "reopened"]),
+          lte(taskActivity.createdAt, asOf),
+        ),
+      )
+      .as("latest_status_event");
+
+    const latestStatus = db
+      .select({
+        taskId: latestStatusEvent.taskId,
+        action: latestStatusEvent.action,
+      })
+      .from(latestStatusEvent)
+      .where(eq(latestStatusEvent.rowNum, 1))
+      .as("latest_status");
 
     return db
       .select({
         projectId: lists.projectId,
         total: sql<number>`count(*)::int`,
-        completed: sql<number>`count(*) filter (where ${firstCompletions.completedAt} is not null and ${firstCompletions.completedAt} <= ${asOf})::int`,
+        completed: sql<number>`count(*) filter (where ${latestStatus.action} = 'completed')::int`,
       })
       .from(tasks)
       .innerJoin(lists, eq(tasks.listId, lists.id))
-      .leftJoin(firstCompletions, eq(firstCompletions.taskId, tasks.id))
+      .leftJoin(latestStatus, eq(latestStatus.taskId, tasks.id))
       .where(
         and(
           inArray(lists.projectId, projectIds),

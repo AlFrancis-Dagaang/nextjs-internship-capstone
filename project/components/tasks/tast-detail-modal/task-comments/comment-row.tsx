@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 export type CommentWithAuthor = Comment & { author: User };
 
-// Deterministic color pairs matching your design tokens
 const avatarColors = [
   "bg-blue-500 text-white",
   "bg-emerald-500 text-white",
@@ -17,9 +16,6 @@ const avatarColors = [
   "bg-indigo-500 text-white",
 ];
 
-/**
- * Returns a stable, deterministic color class based strictly on the user's initials.
- */
 export function getAvatarColor(nameOrInitials: string): string {
   const initials = getInitials(nameOrInitials);
   let hash = 0;
@@ -29,9 +25,6 @@ export function getAvatarColor(nameOrInitials: string): string {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 }
 
-/**
- * Extracts up to 2 uppercase initials from a full name.
- */
 export function getInitials(name: string): string {
   if (!name) return "U";
   return name
@@ -97,7 +90,7 @@ export function CommentRow({
   return (
     <li className="flex gap-3">
       <div
-        className={`inline-flex items-center justify-center h-8 w-8 rounded-full text-xs font-medium ring-2 ring-card shrink-0 shadow-sm ${getAvatarColor(
+        className={`inline-flex items-center justify-center h-7 w-7 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-2xs ${getAvatarColor(
           stableColorKey,
         )}`}
       >
@@ -106,7 +99,7 @@ export function CommentRow({
 
       <div className="flex-1 space-y-1.5">
         <div className="flex items-baseline gap-2">
-          <span className="font-semibold text-sm text-foreground">
+          <span className="font-semibold text-xs text-foreground">
             {authorName}
           </span>
           <span className="text-[10px] text-muted-foreground">
@@ -115,19 +108,19 @@ export function CommentRow({
         </div>
 
         {isEditing ? (
-          <div className="space-y-2 border border-border rounded-lg overflow-hidden bg-card focus-within:border-ring transition-colors shadow-sm p-2">
+          <div className="space-y-2 border border-border/80 rounded-2xl overflow-hidden bg-card focus-within:border-ring transition-colors shadow-sm p-2">
             <Textarea
               autoFocus
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               disabled={isSaving}
-              className="min-h-16 text-sm border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none bg-transparent shadow-none text-card-foreground"
+              className="min-h-16 text-xs border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none bg-transparent shadow-none text-card-foreground"
             />
-            <div className="flex justify-end gap-2 pt-1 border-t border-border">
+            <div className="flex justify-end gap-2 pt-1 border-t border-border/60">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs border-input shadow-none"
+                className="h-7 text-xs font-medium border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl shadow-2xs cursor-pointer"
                 onClick={handleCancel}
                 disabled={isSaving}
                 type="button"
@@ -136,7 +129,7 @@ export function CommentRow({
               </Button>
               <Button
                 size="sm"
-                className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-medium shadow-none"
+                className="h-7 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-2xs cursor-pointer"
                 onClick={handleSave}
                 disabled={isSaving || !draft.trim()}
                 type="button"
@@ -146,16 +139,16 @@ export function CommentRow({
             </div>
           </div>
         ) : (
-          <div className="text-sm p-3 border border-border rounded-md bg-card text-card-foreground whitespace-pre-wrap">
+          <div className="text-xs p-3 border border-border/80 rounded-2xl bg-card text-card-foreground whitespace-pre-wrap shadow-2xs">
             {comment.content}
           </div>
         )}
 
         {!isEditing && comment.authorId === currentUserId && (
-          <div className="flex items-center gap-3 text-xs text-muted-foreground px-1">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
             <button
               onClick={() => setIsEditing(true)}
-              className="hover:text-foreground hover:underline"
+              className="hover:text-foreground hover:underline cursor-pointer font-medium"
             >
               Edit
             </button>
@@ -163,7 +156,7 @@ export function CommentRow({
             <button
               disabled={isPending}
               onClick={() => onDelete(comment.id)}
-              className="hover:text-destructive hover:underline disabled:opacity-50"
+              className="hover:text-destructive hover:underline disabled:opacity-50 cursor-pointer font-medium"
             >
               Delete
             </button>
@@ -177,13 +170,13 @@ export function CommentRow({
 export function CommentRowSkeleton() {
   return (
     <li className="flex gap-3 animate-pulse">
-      <div className="h-8 w-8 shrink-0 rounded-full bg-muted" />
+      <div className="h-7 w-7 shrink-0 rounded-full bg-muted" />
       <div className="flex-1 space-y-1.5">
         <div className="flex items-baseline gap-2">
-          <div className="h-3.5 w-24 rounded bg-muted" />
-          <div className="h-2.5 w-12 rounded bg-muted" />
+          <div className="h-3 w-24 rounded bg-muted" />
+          <div className="h-2 w-10 rounded bg-muted" />
         </div>
-        <div className="h-14 rounded-md bg-muted border border-border" />
+        <div className="h-12 rounded-2xl bg-muted border border-border/80" />
       </div>
     </li>
   );

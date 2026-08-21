@@ -85,7 +85,6 @@ export function TaskActions({
   const [position, setPosition] = useState("1");
   const [isMoving, startMoveTransition] = useTransition();
 
-  // Assign panel state
   const [assignableUsers, setAssignableUsers] = useState<AssigneeUser[]>([]);
   const [assignedUserIds, setAssignedUserIds] = useState<Set<string>>(
     new Set(),
@@ -99,7 +98,6 @@ export function TaskActions({
   const archiveTaskLocally = useBoardStore((s) => s.archiveTaskLocally);
   const revertArchiveSnapshot = useBoardStore((s) => s.revertArchiveSnapshot);
 
-  // Reset target/position defaults whenever the move panel opens
   useEffect(() => {
     if (view === "move") {
       setTargetListId(currentListId);
@@ -114,7 +112,6 @@ export function TaskActions({
     }
   }, [view, currentListId, allLists, taskId]);
 
-  // Fetch assignees and assignable users when the assign panel opens
   useEffect(() => {
     if (view === "assign") {
       setAssignSearchQuery("");
@@ -144,7 +141,6 @@ export function TaskActions({
     }
   }, [view, taskId, projectId]);
 
-  // Derive destination task count from props — no fetch needed
   const destTaskCount = (() => {
     const destList = allLists.find((l) => l.id === targetListId);
     if (!destList) return 0;
@@ -232,7 +228,7 @@ export function TaskActions({
           variant="ghost"
           size="icon"
           onClick={(e) => e.stopPropagation()}
-          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl"
         >
           <MoreHorizontal size={16} />
         </Button>
@@ -240,7 +236,7 @@ export function TaskActions({
 
       <DropdownMenuContent
         align="end"
-        className="w-56 bg-card text-card-foreground border-border rounded-xl shadow-2xl p-2 space-y-1 text-left z-50"
+        className="w-56 bg-card text-card-foreground border-border/80 rounded-2xl shadow-xl p-2 space-y-1 text-left z-50"
         onClick={(e) => e.stopPropagation()}
         onInteractOutside={(e) => {
           const target = e.target as Element;
@@ -251,11 +247,11 @@ export function TaskActions({
       >
         {view === "menu" ? (
           <>
-            <div className="flex items-center justify-between px-2.5 py-1 text-xs font-semibold text-muted-foreground border-b border-border mb-1">
+            <div className="flex items-center justify-between px-2.5 py-1 text-xs font-semibold text-muted-foreground border-b border-border/60 mb-1">
               <span>Task</span>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary transition-colors"
               >
                 <X size={14} />
               </button>
@@ -266,15 +262,15 @@ export function TaskActions({
                 setIsOpen(false);
                 onView();
               }}
-              className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-accent rounded-lg flex items-center space-x-2.5"
+              className="cursor-pointer px-2.5 py-2 text-xs font-medium text-foreground focus:bg-accent focus:text-accent-foreground rounded-xl flex items-center space-x-2.5"
             >
-              <ExternalLink size={15} className="text-muted-foreground" />
+              <ExternalLink size={14} className="text-muted-foreground" />
               <span>View task</span>
             </DropdownMenuItem>
 
             {canEdit && (
-              <div className="pt-1.5 pb-1 border-t border-border mt-1">
-                <div className="px-2.5 pb-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+              <div className="pt-1.5 pb-1 border-t border-border/60 mt-1">
+                <div className="px-2.5 pb-1 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                   Management
                 </div>
                 <DropdownMenuItem
@@ -282,9 +278,9 @@ export function TaskActions({
                     setIsOpen(false);
                     onRename();
                   }}
-                  className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-accent rounded-lg flex items-center space-x-2.5"
+                  className="cursor-pointer px-2.5 py-2 text-xs font-medium text-foreground focus:bg-accent focus:text-accent-foreground rounded-xl flex items-center space-x-2.5"
                 >
-                  <Edit2 size={15} className="text-muted-foreground" />
+                  <Edit2 size={14} className="text-muted-foreground" />
                   <span>Rename task</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -307,9 +303,9 @@ export function TaskActions({
                       });
                     }
                   }}
-                  className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-accent rounded-lg flex items-center space-x-2.5"
+                  className="cursor-pointer px-2.5 py-2 text-xs font-medium text-foreground focus:bg-accent focus:text-accent-foreground rounded-xl flex items-center space-x-2.5"
                 >
-                  <Archive size={15} className="text-muted-foreground" />
+                  <Archive size={14} className="text-muted-foreground" />
                   <span>Archive task</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -317,9 +313,9 @@ export function TaskActions({
                     e.preventDefault();
                     setView("assign");
                   }}
-                  className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-accent rounded-lg flex items-center space-x-2.5"
+                  className="cursor-pointer px-2.5 py-2 text-xs font-medium text-foreground focus:bg-accent focus:text-accent-foreground rounded-xl flex items-center space-x-2.5"
                 >
-                  <UserPlus size={15} className="text-muted-foreground" />
+                  <UserPlus size={14} className="text-muted-foreground" />
                   <span>Assign member</span>
                 </DropdownMenuItem>
               </div>
@@ -327,9 +323,9 @@ export function TaskActions({
 
             {canContribute && (
               <div
-                className={`pt-1.5 pb-1 ${!canEdit ? "border-t border-border mt-1" : ""}`}
+                className={`pt-1.5 pb-1 ${!canEdit ? "border-t border-border/60 mt-1" : ""}`}
               >
-                <div className="px-2.5 pb-1 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                <div className="px-2.5 pb-1 text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                   Actions
                 </div>
 
@@ -338,23 +334,24 @@ export function TaskActions({
                     e.preventDefault();
                     setView("move");
                   }}
-                  className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-accent rounded-lg flex items-center space-x-2.5"
+                  className="cursor-pointer px-2.5 py-2 text-xs font-medium text-foreground focus:bg-accent focus:text-accent-foreground rounded-xl flex items-center space-x-2.5"
                 >
-                  <Move size={15} className="text-muted-foreground" />
+                  <Move size={14} className="text-muted-foreground" />
                   <span>Move task</span>
                 </DropdownMenuItem>
               </div>
             )}
+
             {canEdit && (
-              <div className="border-t border-border pt-1 mt-1">
+              <div className="border-t border-border/60 pt-1 mt-1">
                 <DropdownMenuItem
                   onSelect={() => {
                     setIsOpen(false);
                     onDeleteClick();
                   }}
-                  className="cursor-pointer px-2.5 py-2 text-sm text-destructive focus:bg-destructive/10 rounded-lg flex items-center space-x-2.5"
+                  className="cursor-pointer px-2.5 py-2 text-xs font-medium text-destructive focus:bg-destructive/10 rounded-xl flex items-center space-x-2.5"
                 >
-                  <Trash2 size={15} className="text-destructive" />
+                  <Trash2 size={14} className="text-destructive" />
                   <span>Remove task</span>
                 </DropdownMenuItem>
               </div>
@@ -362,19 +359,19 @@ export function TaskActions({
           </>
         ) : view === "move" ? (
           <div className="p-1 space-y-2">
-            <div className="flex items-center justify-between px-2 py-1.5 border-b border-border">
+            <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/60">
               <button
                 onClick={() => setView("menu")}
-                className="text-muted-foreground hover:text-foreground p-0.5"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary transition-colors"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={15} />
               </button>
               <span className="text-xs font-semibold text-foreground">
                 Move task
               </span>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-muted-foreground hover:text-foreground p-0.5"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary transition-colors"
               >
                 <X size={14} />
               </button>
@@ -383,16 +380,20 @@ export function TaskActions({
             <div className="px-2 space-y-2.5 pt-1">
               <div className="flex gap-2">
                 <div className="space-y-1 flex-1">
-                  <label className="text-[10px] font-medium text-muted-foreground uppercase">
+                  <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                     List
                   </label>
                   <Select value={targetListId} onValueChange={setTargetListId}>
-                    <SelectTrigger className="w-full h-8 text-xs border-0 bg-secondary text-secondary-foreground shadow-none focus:ring-0">
+                    <SelectTrigger className="w-full h-8 text-xs border border-border bg-secondary text-secondary-foreground rounded-xl shadow-2xs focus:ring-1 focus:ring-ring">
                       <SelectValue placeholder="Select list" />
                     </SelectTrigger>
-                    <SelectContent className="z-50 bg-popover text-popover-foreground border-border">
+                    <SelectContent className="z-50 bg-popover text-popover-foreground border-border rounded-xl shadow-xl">
                       {allLists.map((list) => (
-                        <SelectItem key={list.id} value={list.id}>
+                        <SelectItem
+                          key={list.id}
+                          value={list.id}
+                          className="rounded-lg text-xs"
+                        >
                           {list.name}
                         </SelectItem>
                       ))}
@@ -400,16 +401,20 @@ export function TaskActions({
                   </Select>
                 </div>
                 <div className="space-y-1 w-20">
-                  <label className="text-[10px] font-medium text-muted-foreground uppercase">
+                  <label className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
                     Position
                   </label>
                   <Select value={position} onValueChange={setPosition}>
-                    <SelectTrigger className="w-full h-8 text-xs border-0 bg-secondary text-secondary-foreground shadow-none focus:ring-0">
+                    <SelectTrigger className="w-full h-8 text-xs border border-border bg-secondary text-secondary-foreground rounded-xl shadow-2xs focus:ring-1 focus:ring-ring">
                       <SelectValue placeholder="1" />
                     </SelectTrigger>
-                    <SelectContent className="z-50 bg-popover text-popover-foreground border-border">
+                    <SelectContent className="z-50 bg-popover text-popover-foreground border-border rounded-xl shadow-xl">
                       {positionOptions.map((p) => (
-                        <SelectItem key={p} value={p}>
+                        <SelectItem
+                          key={p}
+                          value={p}
+                          className="rounded-lg text-xs"
+                        >
                           {p}
                         </SelectItem>
                       ))}
@@ -421,7 +426,7 @@ export function TaskActions({
 
             <div className="px-2 pt-2 pb-1">
               <Button
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium h-8 text-xs shadow-none"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium h-8 text-xs rounded-xl shadow-2xs cursor-pointer"
                 disabled={isMoving}
                 onClick={handleMove}
               >
@@ -431,19 +436,19 @@ export function TaskActions({
           </div>
         ) : (
           <div className="p-1 space-y-2">
-            <div className="flex items-center justify-between px-2 py-1.5 border-b border-border">
+            <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/60">
               <button
                 onClick={() => setView("menu")}
-                className="text-muted-foreground hover:text-foreground p-0.5"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary transition-colors"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={15} />
               </button>
               <span className="text-xs font-semibold text-foreground">
                 Assign member
               </span>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-muted-foreground hover:text-foreground p-0.5"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary transition-colors"
               >
                 <X size={14} />
               </button>
@@ -459,11 +464,11 @@ export function TaskActions({
                   placeholder="Search members..."
                   value={assignSearchQuery}
                   onChange={(e) => setAssignSearchQuery(e.target.value)}
-                  className="pl-8 h-8 text-xs bg-muted border-0 rounded-lg shadow-none focus-visible:ring-1"
+                  className="pl-8 h-8 text-xs bg-muted border border-border rounded-xl shadow-2xs focus-visible:ring-1 focus-visible:ring-ring"
                 />
               </div>
 
-              <div className="max-h-44 overflow-y-auto divide-y divide-border border border-border rounded-lg">
+              <div className="max-h-44 overflow-y-auto divide-y divide-border/60 border border-border/80 rounded-xl bg-card">
                 {isLoadingAssignees ? (
                   <div className="flex items-center justify-center py-6 text-xs text-muted-foreground gap-2">
                     <Loader2 size={14} className="animate-spin text-primary" />

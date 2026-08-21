@@ -20,7 +20,7 @@ export default async function ProjectsPage() {
 
   if ("error" in authResult) {
     return (
-      <div className="p-6 rounded-lg bg-card border border-border text-destructive">
+      <div className="p-6 rounded-2xl bg-card border border-border/80 text-destructive shadow-2xs text-xs">
         Error loading user: {authResult.error}
       </div>
     );
@@ -28,7 +28,7 @@ export default async function ProjectsPage() {
 
   if (!result.success) {
     return (
-      <div className="p-6 rounded-lg bg-card border border-border text-destructive">
+      <div className="p-6 rounded-2xl bg-card border border-border/80 text-destructive shadow-2xs text-xs">
         Error loading projects: {result.error}
       </div>
     );

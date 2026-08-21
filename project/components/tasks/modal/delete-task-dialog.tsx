@@ -31,23 +31,33 @@ export function DeleteTaskDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-card text-card-foreground border-border">
+      <DialogContent className="sm:max-w-md bg-card text-card-foreground border-border/80 rounded-2xl shadow-2xl p-6">
         <DialogHeader>
-          <DialogTitle className="text-center font-bold text-foreground">
+          <DialogTitle className="text-base font-semibold tracking-tight text-foreground text-center">
             Delete Task
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 flex items-start space-x-3">
+          {taskTitle && (
+            <p className="text-xs text-muted-foreground text-center truncate px-2">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-foreground">
+                &quot;{taskTitle}&quot;
+              </span>
+              ?
+            </p>
+          )}
+
+          <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3 flex items-start space-x-3">
             <Checkbox
               id="confirm-task-delete"
               checked={confirmed}
               onCheckedChange={(checked) => setConfirmed(checked === true)}
-              className="mt-0.5 border-destructive/50 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
+              className="mt-0.5 border-destructive/50 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive rounded-md"
             />
             <label
               htmlFor="confirm-task-delete"
-              className="text-xs font-medium text-destructive cursor-pointer leading-tight"
+              className="text-xs font-medium text-destructive cursor-pointer leading-tight select-none"
             >
               The task will be permanently deleted from this list.
             </label>
@@ -59,7 +69,7 @@ export function DeleteTaskDialog({
               size="sm"
               onClick={onClose}
               disabled={isPending}
-              className="border-input"
+              className="h-8 text-xs font-medium border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl shadow-2xs cursor-pointer"
             >
               Cancel
             </Button>
@@ -68,6 +78,7 @@ export function DeleteTaskDialog({
               size="sm"
               onClick={onConfirm}
               disabled={!confirmed || isPending}
+              className="h-8 text-xs font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl shadow-2xs cursor-pointer"
             >
               {isPending ? "Deleting..." : "Delete task"}
             </Button>

@@ -92,6 +92,11 @@ export function ProjectTeamView({
   const [individuals, setIndividuals] = useState(initialIndividuals);
   const [teams, setTeams] = useState(initialTeams);
 
+  // Tab state: "individuals" | "teams"
+  const [activeTab, setActiveTab] = useState<"individuals" | "teams">(
+    "individuals",
+  );
+
   // Modals state
   const [addIndividualOpen, setAddIndividualOpen] = useState(false);
   const [attachTeamOpen, setAttachTeamOpen] = useState(false);
@@ -216,30 +221,66 @@ export function ProjectTeamView({
 
   return (
     <div className="w-full space-y-6 pb-12">
-      {/* SECTION 1: Direct Individuals */}
-      <div className="p-5 sm:p-6 bg-card border border-border/80 rounded-3xl shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-border/60">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
-              Direct Individuals
-            </h3>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground">
+      {/* SaaS Tab Header Navigation */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-border/80">
+        <div className="flex items-center space-x-2 bg-secondary/70 p-1 rounded-2xl border border-border/60">
+          <button
+            onClick={() => setActiveTab("individuals")}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+              activeTab === "individuals"
+                ? "bg-card text-foreground shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <UsersIcon size={14} />
+            <span>Direct Individuals</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-secondary text-secondary-foreground">
               {individuals.length}
             </span>
-          </div>
-          {canManage && (
-            <Button
-              onClick={() => setAddIndividualOpen(true)}
-              className="h-8 px-3.5 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5"
-            >
-              <UserPlus size={13} />
-              Add Member
-            </Button>
-          )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("teams")}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+              activeTab === "teams"
+                ? "bg-card text-foreground shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Shield size={14} />
+            <span>Attached Teams</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-secondary text-secondary-foreground">
+              {teams.length}
+            </span>
+          </button>
         </div>
 
-        {/* Card Grid */}
+        {/* Action Button for Active Tab */}
+        {canManage && (
+          <div>
+            {activeTab === "individuals" ? (
+              <Button
+                onClick={() => setAddIndividualOpen(true)}
+                className="h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5"
+              >
+                <UserPlus size={13} />
+                Add Member
+              </Button>
+            ) : (
+              <Button
+                onClick={() => setAttachTeamOpen(true)}
+                className="h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5"
+              >
+                <UserPlus size={13} />
+                Attach Team
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* TAB CONTENT 1: Individuals */}
+      {activeTab === "individuals" && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {individuals.map((ind) => {
             const isOwnerRow = ind.id === "owner" || ind.role === "owner";
@@ -248,9 +289,8 @@ export function ProjectTeamView({
             return (
               <div
                 key={ind.id}
-                className="relative flex flex-col justify-between p-4 sm:p-5 border border-border/80 rounded-2xl bg-background/40 hover:bg-card shadow-2xs hover:shadow-md transition-all group"
+                className="relative flex flex-col justify-between p-5 border border-border/80 rounded-2xl bg-card shadow-2xs hover:shadow-md transition-all group"
               >
-                {/* Top Info */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center space-x-3 overflow-hidden">
                     <div
@@ -269,7 +309,6 @@ export function ProjectTeamView({
                     </div>
                   </div>
 
-                  {/* Dropdown Menu */}
                   {canManage && !isOwnerRow ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -323,8 +362,7 @@ export function ProjectTeamView({
                   )}
                 </div>
 
-                {/* Bottom Footer */}
-                <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                <div className="mt-5 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
                   <span className="text-[11px] font-medium">Access Level</span>
                   <span className="font-semibold text-foreground capitalize bg-secondary/80 px-2.5 py-0.5 rounded-lg text-[11px]">
                     {ind.role}
@@ -334,120 +372,101 @@ export function ProjectTeamView({
             );
           })}
         </div>
-      </div>
+      )}
 
-      {/* SECTION 2: Attached Teams */}
-      <div className="p-5 sm:p-6 bg-card border border-border/80 rounded-3xl shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-border/60">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
-              Attached Teams
-            </h3>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground">
-              {teams.length}
-            </span>
-          </div>
-          {canManage && (
-            <Button
-              onClick={() => setAttachTeamOpen(true)}
-              className="h-8 px-3.5 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5"
-            >
-              <UserPlus size={13} />
-              Attach Team
-            </Button>
-          )}
-        </div>
+      {/* TAB CONTENT 2: Teams */}
+      {activeTab === "teams" && (
+        <div>
+          {teams.length === 0 ? (
+            <div className="border border-dashed border-border rounded-3xl bg-card p-12 text-center text-xs text-muted-foreground">
+              No teams attached to this project workspace yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {teams.map((t) => (
+                <div
+                  key={t.projectTeamId}
+                  className="relative flex flex-col justify-between p-5 border border-border/80 rounded-2xl bg-card shadow-2xs hover:shadow-md transition-all group"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center space-x-3 overflow-hidden">
+                      <div className="w-10 h-10 rounded-xl bg-secondary text-secondary-foreground border border-border flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-2xs">
+                        {getInitials(t.teamName)}
+                      </div>
+                      <div className="truncate space-y-0.5">
+                        <p className="text-xs font-semibold text-foreground tracking-tight truncate">
+                          {t.teamName}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Team Scope
+                        </p>
+                      </div>
+                    </div>
 
-        {teams.length === 0 ? (
-          <div className="border border-dashed border-border rounded-2xl bg-background/30 p-8 text-center text-xs text-muted-foreground">
-            No teams attached to this project workspace yet.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {teams.map((t) => (
-              <div
-                key={t.projectTeamId}
-                className="relative flex flex-col justify-between p-4 sm:p-5 border border-border/80 rounded-2xl bg-background/40 hover:bg-card shadow-2xs hover:shadow-md transition-all group"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center space-x-3 overflow-hidden">
-                    <div className="w-10 h-10 rounded-xl bg-secondary text-secondary-foreground border border-border flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-2xs">
-                      {getInitials(t.teamName)}
-                    </div>
-                    <div className="truncate space-y-0.5">
-                      <p className="text-xs font-semibold text-foreground tracking-tight truncate">
-                        {t.teamName}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Team Scope
-                      </p>
-                    </div>
+                    {canManage ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={isPending}
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg shrink-0 -mr-1"
+                          >
+                            <MoreHorizontal size={16} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-48 bg-card border border-border rounded-2xl shadow-xl p-1.5 space-y-1 z-50"
+                        >
+                          <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            Team Role
+                          </div>
+                          {TEAM_ROLES.map((r) => (
+                            <DropdownMenuItem
+                              key={r.value}
+                              onSelect={() =>
+                                handleTeamRoleChange(t.projectTeamId, r.value)
+                              }
+                              className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground focus:bg-secondary rounded-xl flex items-center justify-between"
+                            >
+                              <span className="capitalize">{r.label}</span>
+                              {t.role === r.value && (
+                                <Check size={13} className="text-teal-600" />
+                              )}
+                            </DropdownMenuItem>
+                          ))}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onSelect={() => setTeamToDetach(t)}
+                            className="cursor-pointer px-2.5 py-2 text-xs text-destructive focus:bg-destructive/10 rounded-xl flex items-center space-x-2"
+                          >
+                            <Trash2 size={13} className="text-destructive" />
+                            <span>Detach team</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border capitalize shrink-0">
+                        {t.role}
+                      </span>
+                    )}
                   </div>
 
-                  {canManage ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={isPending}
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg shrink-0 -mr-1"
-                        >
-                          <MoreHorizontal size={16} />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        className="w-48 bg-card border border-border rounded-2xl shadow-xl p-1.5 space-y-1 z-50"
-                      >
-                        <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                          Team Role
-                        </div>
-                        {TEAM_ROLES.map((r) => (
-                          <DropdownMenuItem
-                            key={r.value}
-                            onSelect={() =>
-                              handleTeamRoleChange(t.projectTeamId, r.value)
-                            }
-                            className="cursor-pointer px-2.5 py-1.5 text-xs text-foreground focus:bg-secondary rounded-xl flex items-center justify-between"
-                          >
-                            <span className="capitalize">{r.label}</span>
-                            {t.role === r.value && (
-                              <Check size={13} className="text-teal-600" />
-                            )}
-                          </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onSelect={() => setTeamToDetach(t)}
-                          className="cursor-pointer px-2.5 py-2 text-xs text-destructive focus:bg-destructive/10 rounded-xl flex items-center space-x-2"
-                        >
-                          <Trash2 size={13} className="text-destructive" />
-                          <span>Detach team</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border capitalize shrink-0">
+                  <div className="mt-5 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="text-[11px] font-medium">
+                      Assigned Scope
+                    </span>
+                    <span className="font-semibold text-foreground capitalize bg-secondary/80 px-2.5 py-0.5 rounded-lg text-[11px]">
                       {t.role}
                     </span>
-                  )}
+                  </div>
                 </div>
-
-                <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="text-[11px] font-medium">
-                    Assigned Scope
-                  </span>
-                  <span className="font-semibold text-foreground capitalize bg-secondary/80 px-2.5 py-0.5 rounded-lg text-[11px]">
-                    {t.role}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Modals & Dialogs */}
       <AddIndividualModal

@@ -1,3 +1,4 @@
+// components/team/team-hub.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -6,8 +7,7 @@ import { WorkspaceTeam, WorkspaceMember } from "@/lib/services/team";
 import { deleteTeam } from "@/lib/actions/team";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,10 +19,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users, Shield } from "lucide-react";
+import { Plus, Users, Shield, Mail, Search } from "lucide-react";
 import { TeamModal } from "./modals/team-modal";
 import { ManageMembersModal } from "./modals/manage-members-modal";
 import { TeamCard } from "./team-card";
+import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 
 type WorkspaceHub = {
   yourTeams: WorkspaceTeam[];
@@ -47,6 +48,9 @@ export function TeamHub({
   const [managingTeam, setManagingTeam] = useState<WorkspaceTeam | null>(null);
   const [deletingTeamId, setDeletingTeamId] = useState<string | null>(null);
 
+  // Workspace members search filter state
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
+
   function handleCreateClick() {
     setEditingTeam(null);
     setTeamModalOpen(true);
@@ -54,11 +58,13 @@ export function TeamHub({
 
   function handleDeleteConfirm() {
     if (!deletingTeamId) return;
+    const targetId = deletingTeamId;
+    setDeletingTeamId(null);
+
     startTransition(async () => {
-      const res = await deleteTeam(deletingTeamId);
+      const res = await deleteTeam(targetId);
       if (res.success) {
         toast({ title: "Team deleted successfully" });
-        setDeletingTeamId(null);
         router.refresh();
       } else {
         toast({
@@ -70,80 +76,100 @@ export function TeamHub({
     });
   }
 
+  const filteredWorkspaceMembers = initialHub.workspaceMembers.filter(
+    (member) =>
+      member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+      member.email.toLowerCase().includes(memberSearchQuery.toLowerCase()),
+  );
+
   return (
-    <div className="space-y-10">
-      {/* SECTION 1: Your Teams */}
+    <div className="w-full space-y-10">
+      {/* SECTION 1: Your Teams (Carousel) */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">
-              Your Teams
-            </h2>
+        <div className="flex items-center justify-between pb-3 border-b border-border/80">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                Your Teams
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground">
+                {initialHub.yourTeams.length}
+              </span>
+            </div>
             <p className="text-xs text-muted-foreground">
-              Teams you created and manage.
+              Teams that you own, manage, and configure.
             </p>
           </div>
           <Button
             onClick={handleCreateClick}
             size="sm"
-            className="gap-1.5 shadow-sm"
+            className="h-8 px-3.5 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs gap-1.5"
           >
-            <Plus size={15} />
+            <Plus size={14} />
             Create Team
           </Button>
         </div>
 
         {initialHub.yourTeams.length === 0 ? (
-          <Card className="border-dashed bg-card/50">
+          <Card className="border-dashed border-border bg-card/40 rounded-2xl shadow-none">
             <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground mb-3 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground mb-3 shadow-2xs">
                 <Users size={18} />
               </div>
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-xs font-semibold text-foreground">
                 No teams created yet
               </p>
-              <p className="text-xs text-muted-foreground mt-1 mb-4 max-w-sm">
+              <p className="text-[11px] text-muted-foreground mt-1 mb-4 max-w-sm">
                 Create your first team to bundle members and streamline access
                 management across projects.
               </p>
-              <Button onClick={handleCreateClick} variant="outline" size="sm">
+              <Button
+                onClick={handleCreateClick}
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs rounded-xl"
+              >
                 Create Team
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex overflow-x-auto space-x-4 pb-2 pt-1 scrollbar-thin">
             {initialHub.yourTeams.map((team) => (
-              <TeamCard
-                key={team.id}
-                team={team}
-                isOwner={team.createdBy === currentUserId}
-                currentUserId={currentUserId}
-                onManageMembers={(t) => setManagingTeam(t)}
-                onDeleted={(id) => setDeletingTeamId(id)}
-              />
+              <div key={team.id} className="w-80 sm:w-88 shrink-0">
+                <TeamCard
+                  team={team}
+                  isOwner={team.createdBy === currentUserId}
+                  currentUserId={currentUserId}
+                  onManageMembers={(t) => setManagingTeam(t)}
+                  onDeleted={(id) => setDeletingTeamId(id)}
+                />
+              </div>
             ))}
           </div>
         )}
       </section>
 
-      <Separator />
-
-      {/* SECTION 2: Teams You Belong To */}
+      {/* SECTION 2: Teams You Belong To (Carousel) */}
       <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
-            Teams You Belong To
-          </h2>
+        <div className="pb-3 border-b border-border/80 space-y-0.5">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              Teams You Belong To
+            </h2>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground">
+              {initialHub.teamsYouBelongTo.length}
+            </span>
+          </div>
           <p className="text-xs text-muted-foreground">
-            Teams where you are an active member.
+            Collaborative workspaces where you hold membership access.
           </p>
         </div>
 
         {initialHub.teamsYouBelongTo.length === 0 ? (
-          <Card className="border-dashed bg-card/50">
+          <Card className="border-dashed border-border bg-card/40 rounded-2xl shadow-none">
             <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground mb-3 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground mb-3 shadow-2xs">
                 <Shield size={18} />
               </div>
               <p className="text-xs text-muted-foreground">
@@ -152,69 +178,106 @@ export function TeamHub({
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex overflow-x-auto space-x-4 pb-2 pt-1 scrollbar-thin">
             {initialHub.teamsYouBelongTo.map((team) => (
-              <TeamCard
-                key={team.id}
-                team={team}
-                isOwner={false}
-                currentUserId={currentUserId}
-                onManageMembers={(t) => setManagingTeam(t)}
-                onDeleted={() => {}}
-              />
+              <div key={team.id} className="w-80 sm:w-88 shrink-0">
+                <TeamCard
+                  team={team}
+                  isOwner={false}
+                  currentUserId={currentUserId}
+                  onManageMembers={(t) => setManagingTeam(t)}
+                  onDeleted={() => {}}
+                />
+              </div>
             ))}
           </div>
         )}
       </section>
 
-      <Separator />
-
-      {/* SECTION 3: Workspace Members */}
+      {/* SECTION 3: Workspace Members (Grid with functional search) */}
       <section className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
-            Workspace Members
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            All members active across your projects.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/80">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                Workspace Members
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary text-secondary-foreground">
+                {filteredWorkspaceMembers.length}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              All active participants registered across your projects.
+            </p>
+          </div>
+
+          <div className="relative w-full sm:w-64">
+            <Search
+              size={13}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              placeholder="Search members..."
+              value={memberSearchQuery}
+              onChange={(e) => setMemberSearchQuery(e.target.value)}
+              className="h-8 text-xs pl-9 bg-card border-border rounded-xl w-full"
+            />
+          </div>
         </div>
 
-        {initialHub.workspaceMembers.length === 0 ? (
-          <Card className="border-dashed bg-card/50">
+        {filteredWorkspaceMembers.length === 0 ? (
+          <Card className="border-dashed border-border bg-card/40 rounded-2xl shadow-none">
             <CardContent className="flex flex-col items-center justify-center py-8 text-center">
               <p className="text-xs text-muted-foreground">
-                No workspace members found.
+                {memberSearchQuery
+                  ? "No workspace members found matching your search."
+                  : "No workspace members found."}
               </p>
             </CardContent>
           </Card>
         ) : (
-          <Card className="bg-card border-border overflow-hidden shadow-sm">
-            <div className="divide-y divide-border">
-              {initialHub.workspaceMembers.map((member) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredWorkspaceMembers.map((member) => {
+              const stableKey = member.id || member.email;
+              const displayName = member.name || "User";
+
+              return (
                 <div
                   key={member.id}
-                  className="flex items-center justify-between p-3.5 hover:bg-muted/30 transition-colors"
+                  className="relative flex flex-col justify-between p-4 sm:p-5 border border-border/80 rounded-2xl bg-card shadow-2xs transition-all"
                 >
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs font-medium bg-secondary text-secondary-foreground">
-                        {member.name.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-xs font-medium text-foreground">
-                        {member.name}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {member.email}
-                      </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center space-x-3 overflow-hidden">
+                      <div
+                        className={`w-9 h-9 rounded-xl border border-border flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-2xs ${getAvatarColor(
+                          stableKey,
+                        )}`}
+                      >
+                        {getInitials(displayName)}
+                      </div>
+                      <div className="truncate space-y-0.5">
+                        <p className="text-xs font-semibold text-foreground tracking-tight truncate">
+                          {displayName}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
+                          <Mail size={10} className="shrink-0 opacity-70" />
+                          {member.email}
+                        </p>
+                      </div>
                     </div>
                   </div>
+
+                  <div className="mt-4 pt-2.5 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="text-[11px] font-medium">Status</span>
+                    <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      Active
+                    </span>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </Card>
+              );
+            })}
+          </div>
         )}
       </section>
 
@@ -238,20 +301,27 @@ export function TeamHub({
         open={!!deletingTeamId}
         onOpenChange={(open) => !open && setDeletingTeamId(null)}
       >
-        <AlertDialogContent className="bg-card border-border text-card-foreground">
+        <AlertDialogContent className="bg-card border border-border rounded-3xl shadow-2xl max-w-md p-6">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Team?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base font-semibold tracking-tight">
+              Delete Team?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground pt-1">
               This action cannot be undone. This will permanently delete the
               team and remove all member associations.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="pt-4">
+            <AlertDialogCancel
+              className="h-9 text-xs rounded-xl"
+              disabled={isPending}
+            >
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/95 rounded-xl shadow-xs"
             >
               Delete
             </AlertDialogAction>

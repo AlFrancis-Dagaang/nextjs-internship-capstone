@@ -81,7 +81,7 @@ export function TaskHeader({
           aria-label={task.isCompleted ? "Mark incomplete" : "Mark complete"}
           className={`mt-1.5 w-5 h-5 rounded-full border-2 shrink-0 transition-colors flex items-center justify-center ${
             task.isCompleted
-              ? "bg-primary border-primary text-primary-foreground"
+              ? "bg-primary border-primary text-primary-foreground shadow-2xs"
               : canContribute
                 ? "border-input hover:border-primary cursor-pointer"
                 : "border-input"
@@ -102,12 +102,12 @@ export function TaskHeader({
                 if (e.key === "Enter") e.currentTarget.blur();
               }}
               disabled={isPending}
-              className="w-full bg-transparent text-xl font-bold border border-input focus:outline-none focus:ring-2 focus:ring-ring rounded px-2 py-1 text-foreground"
+              className="w-full bg-card text-base font-semibold tracking-tight border border-border focus:outline-none focus:ring-1 focus:ring-ring rounded-xl px-2.5 py-1 text-foreground shadow-2xs"
             />
           ) : (
             <h2
               onClick={canEdit ? () => setIsEditing(true) : undefined}
-              className={`w-full bg-transparent text-xl font-bold cursor-text px-2 py-1 -ml-2 rounded hover:bg-accent transition-colors ${
+              className={`w-full bg-transparent text-base font-semibold tracking-tight cursor-text px-2 py-1 -ml-2 rounded-xl hover:bg-accent transition-colors ${
                 task.isCompleted
                   ? "line-through text-muted-foreground"
                   : "text-foreground"

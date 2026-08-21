@@ -8,6 +8,7 @@ import { RecentlyViewedStrip } from "./recently-viewed-strip";
 import type { Project } from "@/lib/db/schema";
 import { useProjectStore } from "@/stores/project-store";
 import type { ProjectMemberRole } from "@/types";
+
 type Member = {
   id: string;
   userId: string;
@@ -61,12 +62,13 @@ export function ProjectsList({
 
   return (
     <div className="space-y-10">
-      <div className="flex justify-between items-center">
+      {/* Header Container */}
+      <div className="p-5 sm:p-6 bg-card border border-border/80 rounded-3xl shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          <h1 className="text-base font-semibold tracking-tight text-foreground">
             Projects
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Manage and organize your team projects
           </p>
         </div>
@@ -81,8 +83,10 @@ export function ProjectsList({
       />
 
       {projects.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground">
-          <p className="font-medium text-foreground">No projects yet.</p>
+        <div className="text-center py-16 text-muted-foreground bg-card border border-border/80 rounded-3xl shadow-xs">
+          <p className="font-semibold text-foreground text-sm">
+            No projects yet.
+          </p>
           <p className="text-xs mt-1">
             Create your first project to get started.
           </p>
@@ -90,11 +94,11 @@ export function ProjectsList({
       ) : (
         <>
           <section className="space-y-4">
-            <h2 className="text-base font-semibold text-foreground tracking-tight">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Your Projects
             </h2>
             {ownedProjects.length === 0 ? (
-              <div className="text-center py-10 text-xs text-muted-foreground border border-dashed border-border rounded-xl bg-card/50">
+              <div className="text-center py-10 text-xs text-muted-foreground border border-dashed border-border/80 rounded-2xl bg-card/50">
                 You haven&apos;t created a project yet.
               </div>
             ) : (
@@ -121,7 +125,7 @@ export function ProjectsList({
 
           {sharedProjects.length > 0 && (
             <section className="space-y-4">
-              <h2 className="text-base font-semibold text-foreground tracking-tight">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Shared With You
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

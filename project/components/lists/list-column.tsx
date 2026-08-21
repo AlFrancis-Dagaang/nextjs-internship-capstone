@@ -190,13 +190,13 @@ export function ListColumn({
 
   return (
     <>
-      {/* Outer wrapper handles column horizontal sorting with a clean soft SaaS card look */}
+      {/* Outer wrapper with clean card background matching dark/light mode properly */}
       <div
         ref={setListSortableRef}
         style={listDragStyle}
         {...(canEdit ? listDragAttributes : {})}
         {...(canEdit ? listDragListeners : {})}
-        className={`shrink-0 w-80 bg-card/90 backdrop-blur-md border border-border/80 rounded-3xl p-4 flex flex-col h-fit max-h-full transition-all cursor-grab active:cursor-grabbing shadow-xs ${
+        className={`shrink-0 w-80 bg-card/90 backdrop-blur-md border border-border/85 rounded-3xl p-4 flex flex-col h-fit max-h-full transition-all cursor-grab active:cursor-grabbing shadow-xs ${
           isListDragging ? "opacity-40" : ""
         }`}
       >
@@ -253,12 +253,12 @@ export function ListColumn({
         <div
           ref={setDroppableRef}
           onPointerDown={(e) => e.stopPropagation()}
-          className={`flex flex-col rounded-2xl transition-colors min-h-14 ${
+          className={`flex flex-col rounded-2xl transition-colors min-h-14 bg-transparent ${
             isOver ? "ring-2 ring-primary/40 bg-primary/10 p-1" : ""
           }`}
         >
-          {/* Scrollable Tasks List */}
-          <div className="overflow-y-auto overflow-x-visible space-y-3 px-1 py-1 max-h-[calc(100vh-16rem)]">
+          {/* Scrollable Tasks List with correct dark/light mode background behavior */}
+          <div className="overflow-y-auto overflow-x-visible space-y-3 px-1 py-1 max-h-[calc(100vh-16rem)] bg-transparent">
             <SortableContext
               items={sortableTaskIds}
               strategy={verticalListSortingStrategy}

@@ -22,8 +22,8 @@ import {
   FolderInput,
   Trash2,
   Calendar,
-  Shield,
   Users2,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -317,14 +317,13 @@ export function ProjectHeader({
             <h1 className="text-base font-semibold text-foreground truncate tracking-tight">
               {liveProject.name}
             </h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border/60 shrink-0">
-              <Shield size={10} className="text-muted-foreground" />
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-secondary text-secondary-foreground border border-border/60 tracking-wide shrink-0">
               {formattedRoleLabel}
             </span>
           </div>
         </div>
 
-        {/* Right side controls & Team Avatars */}
+        {/* Right side controls & Streamlined Actions */}
         <div className="flex items-center space-x-2.5 ml-auto flex-wrap">
           {/* Search input */}
           <div className="relative w-52 sm:w-60 md:w-64 hidden sm:block">
@@ -339,29 +338,6 @@ export function ProjectHeader({
               placeholder="Search tasks..."
             />
           </div>
-
-          {/* Calendar Button Trigger */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCalendarModalOpen(true)}
-            className="h-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs px-3 flex items-center gap-1.5 hover:bg-secondary"
-          >
-            <Calendar size={13} className="text-muted-foreground" />
-            <span>Calendar</span>
-          </Button>
-
-          {/* Team Access Lens Navigation Button */}
-          <Link href={`/projects/${project.id}/team`}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs px-3 flex items-center gap-1.5 hover:bg-secondary"
-            >
-              <Users2 size={13} className="text-muted-foreground" />
-              <span>Team Access</span>
-            </Button>
-          </Link>
 
           {selectionMode ? (
             <div className="flex items-center space-x-2">
@@ -640,7 +616,7 @@ export function ProjectHeader({
                 </Button>
               )}
 
-              {/* More Actions Menu */}
+              {/* Consolidated More Actions Menu (Calendar, Team Access, Archived Tasks, Add Members) */}
               <DropdownMenu
                 open={actionsDropdownOpen}
                 onOpenChange={setActionsDropdownOpen}
@@ -657,10 +633,10 @@ export function ProjectHeader({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-52 bg-card border border-border rounded-2xl shadow-xl p-1.5 space-y-1 text-left z-50"
+                  className="w-56 bg-card border border-border rounded-2xl shadow-xl p-1.5 space-y-1 text-left z-50"
                 >
                   <div className="flex items-center justify-between px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border mb-1">
-                    <span>Actions</span>
+                    <span>Project Options</span>
                     <button
                       onClick={() => setActionsDropdownOpen(false)}
                       className="text-muted-foreground hover:text-foreground"
@@ -668,6 +644,26 @@ export function ProjectHeader({
                       <X size={14} />
                     </button>
                   </div>
+
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setActionsDropdownOpen(false);
+                      setCalendarModalOpen(true);
+                    }}
+                    className="cursor-pointer px-2.5 py-2 text-xs text-foreground focus:bg-secondary rounded-xl flex items-center space-x-2.5"
+                  >
+                    <Calendar size={14} className="text-muted-foreground" />
+                    <span>Project Calendar</span>
+                  </DropdownMenuItem>
+
+                  <Link href={`/projects/${project.id}/team`} className="block">
+                    <DropdownMenuItem className="cursor-pointer px-2.5 py-2 text-xs text-foreground focus:bg-secondary rounded-xl flex items-center space-x-2.5">
+                      <Users2 size={14} className="text-muted-foreground" />
+                      <span>Team Access</span>
+                    </DropdownMenuItem>
+                  </Link>
+
+                  <DropdownMenuSeparator className="bg-border my-1" />
 
                   {canManage && (
                     <DropdownMenuItem
