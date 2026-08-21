@@ -99,7 +99,7 @@ export function TaskMembersSection({
 
   return (
     <div className="space-y-2">
-      <Label className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">
+      <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
         Assignees
       </Label>
 
@@ -108,7 +108,7 @@ export function TaskMembersSection({
           type="button"
           onClick={canEdit ? () => setModalOpen(true) : undefined}
           disabled={!canEdit}
-          className={`flex items-center gap-2 rounded-lg p-1 -m-1 transition-colors ${
+          className={`flex items-center gap-2 rounded-xl p-1 -m-1 transition-colors ${
             canEdit ? "hover:bg-accent cursor-pointer" : "cursor-default"
           }`}
         >
@@ -130,7 +130,7 @@ export function TaskMembersSection({
                     return (
                       <div
                         key={a.id}
-                        className={`h-7 w-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-medium uppercase shadow-sm ${getAvatarColor(
+                        className={`h-7 w-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-medium uppercase shadow-2xs ${getAvatarColor(
                           stableColorKey,
                         )}`}
                         title={displayName}
@@ -141,20 +141,20 @@ export function TaskMembersSection({
                   })}
                 </div>
                 {extraCount > 0 && (
-                  <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-secondary text-secondary-foreground text-[10px] font-semibold border border-border">
+                  <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-secondary text-secondary-foreground text-[10px] font-semibold border border-border/80">
                     +{extraCount}
                   </span>
                 )}
               </div>
               {canEdit && (
-                <div className="h-6 w-6 rounded-full border-2 border-dashed border-input flex items-center justify-center hover:border-muted-foreground transition-colors">
+                <div className="h-6 w-6 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-muted-foreground transition-colors">
                   <Plus size={12} className="text-muted-foreground" />
                 </div>
               )}
             </div>
           ) : canEdit ? (
             <>
-              <div className="h-7 w-7 rounded-full border-2 border-dashed border-input flex items-center justify-center hover:border-muted-foreground transition-colors">
+              <div className="h-7 w-7 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-muted-foreground transition-colors">
                 <Plus size={14} className="text-muted-foreground" />
               </div>
               <span className="text-xs text-muted-foreground">Assign</span>

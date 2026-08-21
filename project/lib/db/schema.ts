@@ -141,13 +141,62 @@ export const projectMembers = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    role: text("role", { enum: ["editor", "viewer"] })
+    role: text("role", { enum: ["admin", "editor", "contributor", "viewer"] })
       .notNull()
       .default("viewer"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => ({
     uniqueMembership: unique().on(table.projectId, table.userId),
+  }),
+);
+
+export const teams = pgTable("teams", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const teamMembers = pgTable(
+  "team_members",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueMembership: unique().on(table.teamId, table.userId),
+  }),
+);
+
+export const projectTeams = pgTable(
+  "project_teams",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    // Capped below project_members' tiers — a team can never grant admin or
+    // owner-level access. See ownership.ts effective-role resolution (#76).
+    role: text("role", { enum: ["editor", "contributor", "viewer"] })
+      .notNull()
+      .default("viewer"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueProjectTeam: unique().on(table.projectId, table.teamId),
   }),
 );
 
@@ -170,6 +219,8 @@ export const notifications = pgTable(
         "task_due_soon_24h",
         "task_due_soon_today",
         "project_event_added",
+        "team_member_added",
+        "team_attached_to_project",
       ],
     }).notNull(),
     projectId: uuid("project_id").references(() => projects.id, {
@@ -233,6 +284,28 @@ export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
   user: one(users, {
     fields: [projectMembers.userId],
     references: [users.id],
+  }),
+}));
+
+export const teamsRelations = relations(teams, ({ one, many }) => ({
+  creator: one(users, { fields: [teams.createdBy], references: [users.id] }),
+  members: many(teamMembers),
+  projectTeams: many(projectTeams),
+}));
+
+export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+  team: one(teams, { fields: [teamMembers.teamId], references: [teams.id] }),
+  user: one(users, { fields: [teamMembers.userId], references: [users.id] }),
+}));
+
+export const projectTeamsRelations = relations(projectTeams, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectTeams.projectId],
+    references: [projects.id],
+  }),
+  team: one(teams, {
+    fields: [projectTeams.teamId],
+    references: [teams.id],
   }),
 }));
 
@@ -334,3 +407,11 @@ export type NewNotification = typeof notifications.$inferInsert;
 export type NotificationType = Notification["type"];
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
+export type Team = typeof teams.$inferSelect;
+export type NewTeam = typeof teams.$inferInsert;
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type NewTeamMember = typeof teamMembers.$inferInsert;
+export type ProjectTeam = typeof projectTeams.$inferSelect;
+export type NewProjectTeam = typeof projectTeams.$inferInsert;
+export type ProjectMemberRole = ProjectMember["role"];
+export type ProjectTeamRole = ProjectTeam["role"];

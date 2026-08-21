@@ -53,7 +53,6 @@ export function TaskActivityModal({
   const [actionFilter, setActionFilter] = useState("all");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounce free-text name input into the actual query value
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => setNameQuery(nameInput.trim()), 300);
@@ -92,13 +91,11 @@ export function TaskActivityModal({
     setCursor(result.data.nextCursor);
   }
 
-  // Fresh load whenever the modal opens, or filters change while open
   useEffect(() => {
     if (!open) return;
     loadPage(true);
   }, [open, taskId, nameQuery, actionFilter]);
 
-  // Reset filter UI when the modal closes, so reopening starts clean
   useEffect(() => {
     if (!open) {
       setNameInput("");
@@ -111,9 +108,9 @@ export function TaskActivityModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[80vh] flex flex-col bg-card text-card-foreground border border-border rounded-xl shadow-2xl">
+      <DialogContent className="max-w-md max-h-[80vh] flex flex-col bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl p-6">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-foreground">
+          <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
             Activity log
           </DialogTitle>
         </DialogHeader>
@@ -123,16 +120,16 @@ export function TaskActivityModal({
             placeholder="Search by name..."
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
-            className="h-9 text-xs flex-1 bg-muted border-input text-foreground rounded-lg"
+            className="h-8 text-xs flex-1 bg-muted border border-border text-foreground rounded-xl shadow-2xs"
           />
           <Select value={actionFilter} onValueChange={setActionFilter}>
-            <SelectTrigger className="h-9 text-xs w-40 shrink-0 bg-card border-input text-card-foreground">
+            <SelectTrigger className="h-8 text-xs w-40 shrink-0 bg-card border border-border text-card-foreground rounded-xl shadow-2xs">
               <SelectValue placeholder="All actions" />
             </SelectTrigger>
-            <SelectContent className="bg-popover border border-border text-popover-foreground shadow-xl rounded-xl z-50">
+            <SelectContent className="bg-popover border border-border/80 text-popover-foreground shadow-xl rounded-xl z-50">
               <SelectItem
                 value="all"
-                className="text-xs cursor-pointer focus:bg-accent focus:text-accent-foreground"
+                className="text-xs cursor-pointer focus:bg-accent focus:text-accent-foreground rounded-lg"
               >
                 All actions
               </SelectItem>
@@ -140,7 +137,7 @@ export function TaskActivityModal({
                 <SelectItem
                   key={action}
                   value={action}
-                  className="text-xs cursor-pointer focus:bg-accent focus:text-accent-foreground"
+                  className="text-xs cursor-pointer focus:bg-accent focus:text-accent-foreground rounded-lg"
                 >
                   {label}
                 </SelectItem>
@@ -181,7 +178,7 @@ export function TaskActivityModal({
           <div className="flex-1 overflow-y-auto pr-2 space-y-5">
             {groups.map((group) => (
               <div key={group.label} className="space-y-3">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-card py-1">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground sticky top-0 bg-card py-1">
                   {group.label}
                 </div>
                 <ul className="space-y-4">
@@ -191,7 +188,7 @@ export function TaskActivityModal({
                     return (
                       <li key={entry.id} className="flex items-start gap-3">
                         <div
-                          className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-sm ${getAvatarColor(
+                          className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-2xs ${getAvatarColor(
                             stableColorKey,
                           )}`}
                         >
@@ -220,7 +217,7 @@ export function TaskActivityModal({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 text-xs border-input shadow-none"
+                  className="h-8 text-xs font-medium border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl shadow-2xs cursor-pointer"
                   disabled={isLoadingMore}
                   onClick={() => loadPage(false)}
                 >

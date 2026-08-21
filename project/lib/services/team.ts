@@ -1,57 +1,131 @@
 import { queries } from "@/lib/db";
 import { assertProjectViewAccess } from "@/lib/services/ownership";
+import { ProjectMemberRole } from "@/types";
 
-const AVATAR_PREVIEW_LIMIT = 5;
+// ---------- /team workspace hub ----------
 
-export type TeamOverviewProject = {
+export type WorkspaceTeam = {
   id: string;
   name: string;
   memberCount: number;
-  avatars: { id: string; name: string }[];
+  createdBy: string;
+};
+
+export type WorkspaceMember = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type WorkspaceHub = {
+  yourTeams: WorkspaceTeam[];
+  teamsYouBelongTo: WorkspaceTeam[];
+  workspaceMembers: WorkspaceMember[];
 };
 
 /**
- * Cross-project overview for /team. Owner + project_members per project
- * (owner is never a project_members row — #29's design), deduped by
- * construction since they're different sources.
+ * Team-centric hub for /team (#83, replaces #72's project-centric
+ * getTeamOverview). Deliberately carries no project context in any
+ * section — that connection is only ever shown from the project side
+ * (/projects/[projectId]/team).
  */
-export async function getTeamOverview(
-  userId: string,
-): Promise<TeamOverviewProject[]> {
-  const projects = await queries.projects.getByOwnerOrMember(userId);
+export async function getWorkspaceHub(userId: string): Promise<WorkspaceHub> {
+  const allTeams = await queries.teams.getForUser(userId);
+  const yourTeamRows = allTeams.filter((t) => t.createdBy === userId);
+  const belongToRows = allTeams.filter((t) => t.createdBy !== userId);
 
-  return Promise.all(
+  const [yourTeams, teamsYouBelongTo] = await Promise.all([
+    Promise.all(
+      yourTeamRows.map(async (t) => {
+        const members = await queries.teams.getMembers(t.id);
+        return {
+          id: t.id,
+          name: t.name,
+          memberCount: members.length,
+          createdBy: t.createdBy,
+        };
+      }),
+    ),
+    Promise.all(
+      belongToRows.map(async (t) => {
+        const members = await queries.teams.getMembers(t.id);
+        return {
+          id: t.id,
+          name: t.name,
+          memberCount: members.length,
+          createdBy: t.createdBy,
+        };
+      }),
+    ),
+  ]);
+
+  // Workspace Members: union of (a) users sharing a project with this
+  // user, and (b) users sharing a team with this user. Not a global
+  // directory — no invite/accept flow exists per #29.
+  const projects = await queries.projects.getByOwnerOrMember(userId);
+  const projectCollaboratorLists = await Promise.all(
     projects.map(async (project) => {
       const [owner, members] = await Promise.all([
         queries.users.getById(project.ownerId),
         queries.projectMembers.getByProject(project.id),
       ]);
-
-      const people = [
-        ...(owner ? [{ id: owner.id, name: owner.name }] : []),
-        ...members.map((m) => ({ id: m.userId, name: m.userName })),
+      return [
+        ...(owner
+          ? [{ id: owner.id, name: owner.name, email: owner.email }]
+          : []),
+        ...members.map((m) => ({
+          id: m.userId,
+          name: m.userName,
+          email: m.userEmail,
+        })),
       ];
-
-      return {
-        id: project.id,
-        name: project.name,
-        memberCount: people.length,
-        avatars: people.slice(0, AVATAR_PREVIEW_LIMIT),
-      };
     }),
   );
+
+  const teamCollaboratorLists = await Promise.all(
+    allTeams.map((t) => queries.teams.getMembers(t.id)),
+  );
+
+  const collaboratorMap = new Map<string, WorkspaceMember>();
+  for (const person of projectCollaboratorLists.flat()) {
+    if (person.id !== userId) collaboratorMap.set(person.id, person);
+  }
+  for (const member of teamCollaboratorLists.flat()) {
+    if (member.userId !== userId) {
+      collaboratorMap.set(member.userId, {
+        id: member.userId,
+        name: member.userName,
+        email: member.userEmail,
+      });
+    }
+  }
+
+  return {
+    yourTeams,
+    teamsYouBelongTo,
+    workspaceMembers: Array.from(collaboratorMap.values()),
+  };
 }
 
-export type TeamMember = {
+// ---------- /projects/[projectId]/team ----------
+
+export type ProjectTeamIndividual = {
   id: string; // "owner" sentinel for the owner row, else projectMembers.id
   userId: string;
   name: string;
   email: string;
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   activeTaskCount: number;
   recentActivity: Awaited<
     ReturnType<typeof queries.taskActivity.getByProjectAndActor>
   >;
+};
+
+export type ProjectTeamEntry = {
+  projectTeamId: string;
+  teamId: string;
+  teamName: string;
+  role: "editor" | "contributor" | "viewer";
 };
 
 export type ProjectTeamResult =
@@ -60,17 +134,17 @@ export type ProjectTeamResult =
       project: NonNullable<
         Awaited<ReturnType<typeof queries.projects.getById>>
       >;
-      role: "owner" | "editor" | "viewer";
+      role: "owner" | "admin" | "editor" | "contributor" | "viewer";
       canManage: boolean;
-      team: TeamMember[];
+      teams: ProjectTeamEntry[];
+      individuals: ProjectTeamIndividual[];
     };
 
 /**
- * Per-project detail for /team/[projectId]. View-gated per #29/#65's
- * matrix (owner/editor/viewer all pass); canManage flags owner-only —
- * matches assertProjectOwnership's gate on the actual mutation actions
- * in lib/actions/members.ts, which this page calls into directly rather
- * than duplicating.
+ * Per-project access lens for /projects/[projectId]/team (#83, replaces
+ * #72's /team/[projectId] flat list with a two-section view: teams
+ * attached to this project, and individuals with a direct role). No
+ * team creation here — that only happens from the /team hub.
  */
 export async function getProjectTeam(
   projectId: string,
@@ -79,12 +153,13 @@ export async function getProjectTeam(
   const access = await assertProjectViewAccess(projectId, userId);
   if ("error" in access) return access;
 
-  const [owner, members] = await Promise.all([
+  const [owner, members, projectTeams] = await Promise.all([
     queries.users.getById(access.project.ownerId),
     queries.projectMembers.getByProject(projectId),
+    queries.projectTeams.getByProject(projectId),
   ]);
 
-  const rows = [
+  const individualRows = [
     ...(owner
       ? [
           {
@@ -105,8 +180,8 @@ export async function getProjectTeam(
     })),
   ];
 
-  const team: TeamMember[] = await Promise.all(
-    rows.map(async (row) => {
+  const individuals: ProjectTeamIndividual[] = await Promise.all(
+    individualRows.map(async (row) => {
       const [activeTaskCount, recentActivity] = await Promise.all([
         queries.taskAssignees.getActiveCountByProjectAndUser(
           projectId,
@@ -118,10 +193,69 @@ export async function getProjectTeam(
     }),
   );
 
+  const teams: ProjectTeamEntry[] = projectTeams.map((pt) => ({
+    projectTeamId: pt.id,
+    teamId: pt.teamId,
+    teamName: pt.teamName,
+    role: pt.role,
+  }));
+
   return {
     project: access.project,
     role: access.role,
-    canManage: access.role === "owner",
-    team,
+    canManage: access.role === "owner" || access.role === "admin",
+    teams,
+    individuals,
   };
+}
+
+export type EffectiveProjectMember = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  role: ProjectMemberRole;
+};
+export async function getEffectiveProjectMembers(
+  projectId: string,
+): Promise<EffectiveProjectMember[]> {
+  const [project, directMembers, projectTeams] = await Promise.all([
+    queries.projects.getById(projectId),
+    queries.projectMembers.getByProject(projectId),
+    queries.projectTeams.getByProject(projectId),
+  ]);
+
+  const ownerId = project?.ownerId;
+  const merged = new Map<string, EffectiveProjectMember>();
+
+  for (const m of directMembers) {
+    merged.set(m.userId, {
+      id: m.id,
+      userId: m.userId,
+      userName: m.userName,
+      userEmail: m.userEmail,
+      role: m.role,
+    });
+  }
+
+  const teamMemberLists = await Promise.all(
+    projectTeams.map((pt) => queries.teams.getMembers(pt.teamId)),
+  );
+
+  projectTeams.forEach((pt, i) => {
+    for (const member of teamMemberLists[i]) {
+      if (member.userId === ownerId) continue; // owner never appears as a member row
+      if (!merged.has(member.userId)) {
+        merged.set(member.userId, {
+          id: `team-${pt.teamId}-${member.userId}`,
+          userId: member.userId,
+          userName: member.userName,
+          userEmail: member.userEmail,
+          role: pt.role,
+        });
+      }
+    }
+  });
+
+  return Array.from(merged.values());
 }

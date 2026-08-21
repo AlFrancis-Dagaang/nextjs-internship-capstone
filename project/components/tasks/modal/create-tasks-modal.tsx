@@ -125,9 +125,9 @@ export function CreateTaskModal({
     return (
       <button
         onClick={() => setIsExpanded(true)}
-        className="w-full flex items-center space-x-2 bg-card hover:bg-muted text-foreground rounded-lg p-3 font-medium transition-colors text-sm shadow-sm border border-border"
+        className="w-full flex items-center space-x-2 bg-card hover:bg-muted text-foreground rounded-xl p-3 font-medium transition-colors text-xs shadow-2xs border border-border/80 cursor-pointer"
       >
-        <Plus size={16} />
+        <Plus size={15} className="text-muted-foreground" />
         <span>Add a task</span>
       </button>
     );
@@ -136,7 +136,7 @@ export function CreateTaskModal({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-card rounded-lg p-3 space-y-3 border border-border shadow-sm"
+      className="bg-card rounded-2xl p-3 space-y-3 border border-border/80 shadow-sm"
     >
       {genericError && (
         <p className="text-destructive text-xs">{genericError}</p>
@@ -147,7 +147,7 @@ export function CreateTaskModal({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter a title"
-          className="bg-card h-9 text-sm border border-input text-foreground shadow-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="bg-card h-8 text-xs border border-border text-foreground rounded-xl shadow-2xs focus-visible:ring-1 focus-visible:ring-ring"
         />
         {fieldErrors?.title && (
           <p className="text-destructive text-xs">{fieldErrors.title[0]}</p>
@@ -159,7 +159,7 @@ export function CreateTaskModal({
           type="submit"
           size="sm"
           disabled={isPending || !title.trim()}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+          className="h-8 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-2xs cursor-pointer"
         >
           {isPending
             ? isEdit
@@ -179,7 +179,7 @@ export function CreateTaskModal({
             setFieldErrors(undefined);
             setGenericError(undefined);
           }}
-          className="bg-card text-foreground border-border hover:bg-muted"
+          className="h-8 text-xs font-medium border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl shadow-2xs cursor-pointer"
         >
           Cancel
         </Button>

@@ -19,7 +19,7 @@ type Member = {
   userId: string;
   email?: string;
   name?: string;
-  role: "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 type CompletionInfo = {
@@ -41,7 +41,7 @@ export function ProjectCard({
   initialMembers?: Member[];
   ownerName?: string;
   ownerEmail?: string;
-  myRole?: "editor" | "viewer";
+  myRole?: "owner" | "admin" | "editor" | "contributor" | "viewer";
   completion: CompletionInfo;
 }) {
   const router = useRouter();
@@ -67,6 +67,7 @@ export function ProjectCard({
 
   const { toast } = useToast();
   const isOwner = project.ownerId === currentUserId;
+  const canManage = isOwner || myRole === "admin";
 
   const [detailOpen, setDetailOpen] = useState(false);
 
@@ -115,11 +116,11 @@ export function ProjectCard({
 
   return (
     <>
-      <div className="group relative bg-card backdrop-blur-xl rounded-xl border border-border hover:border-ring hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 p-5 flex flex-col justify-between space-y-4 shadow-sm">
+      <div className="group relative bg-card backdrop-blur-xl rounded-2xl border border-border/80 hover:border-ring hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 p-5 flex flex-col justify-between space-y-4 shadow-xs">
         {/* Main Card Link Wrapper */}
         <Link
           href={`/projects/${project.id}`}
-          className="absolute inset-0 rounded-xl z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="absolute inset-0 rounded-2xl z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={`Open project ${project.name}`}
         />
 
@@ -138,12 +139,12 @@ export function ProjectCard({
                     onChange={(e) => setName(e.target.value)}
                     onBlur={handleRenameSubmit}
                     disabled={isRenamePending}
-                    className="h-8 px-2.5 text-sm font-medium bg-card border border-input rounded-lg shadow-sm focus-visible:ring-1 focus-visible:ring-ring"
+                    className="h-8 px-2.5 text-xs font-medium bg-card border border-border rounded-xl shadow-2xs focus-visible:ring-1 focus-visible:ring-ring text-foreground"
                   />
                 </form>
               </div>
             ) : (
-              <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors tracking-tight line-clamp-1">
+              <h3 className="text-xs font-bold tracking-tight text-foreground group-hover:text-primary transition-colors line-clamp-1">
                 {project.name}
               </h3>
             )}
@@ -152,11 +153,11 @@ export function ProjectCard({
             {!isRenaming && (
               <div className="shrink-0 pointer-events-none">
                 {isOwner ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-secondary text-secondary-foreground border border-border">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border/60">
                     Owner
                   </span>
                 ) : myRole ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-secondary text-secondary-foreground capitalize border border-border">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground capitalize border border-border/60">
                     {myRole}
                   </span>
                 ) : null}
@@ -176,11 +177,11 @@ export function ProjectCard({
         </div>
 
         {/* Footer Metadata & SaaS Actions */}
-        <div className="relative z-10 pt-3 border-t border-border flex flex-col gap-3">
+        <div className="relative z-10 pt-3 border-t border-border/80 flex flex-col gap-3">
           {/* Owner Info Row */}
           <div className="flex items-center gap-2">
             <div
-              className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold uppercase shadow-sm ${getAvatarColor(
+              className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold uppercase shadow-2xs ${getAvatarColor(
                 project.ownerId || ownerDisplayString,
               )}`}
             >
@@ -236,7 +237,7 @@ export function ProjectCard({
               </div>
             </div>
 
-            {/* Unified Colored Avatar Stack matching task card avatar +n style */}
+            {/* Unified Colored Avatar Stack */}
             <div className="flex items-center">
               <div className="flex items-center -space-x-1.5">
                 {members.slice(0, 3).map((m) => {
@@ -244,7 +245,7 @@ export function ProjectCard({
                   return (
                     <div
                       key={m.id}
-                      className={`w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase shadow-sm ${getAvatarColor(
+                      className={`w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase shadow-2xs ${getAvatarColor(
                         stableKey,
                       )}`}
                       title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
@@ -255,7 +256,7 @@ export function ProjectCard({
                 })}
                 {members.length > 3 && (
                   <div
-                    className="w-7 h-7 rounded-full border-2 border-card bg-muted text-muted-foreground flex items-center justify-center text-[10px] font-bold shadow-sm"
+                    className="w-7 h-7 rounded-full border-2 border-card bg-muted text-muted-foreground flex items-center justify-center text-[10px] font-bold shadow-2xs"
                     title={`+${members.length - 3} more members`}
                   >
                     +{members.length - 3}
@@ -264,7 +265,7 @@ export function ProjectCard({
               </div>
 
               {/* SaaS interactive navigation cue icon */}
-              <div className="ml-3 w-6 h-6 rounded-lg bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center transition-all duration-200 shadow-sm">
+              <div className="ml-3 w-6 h-6 rounded-xl bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center transition-all duration-200 shadow-2xs">
                 <ArrowUpRight size={13} />
               </div>
             </div>
@@ -279,6 +280,7 @@ export function ProjectCard({
           <ProjectListAction
             project={project}
             isOwner={isOwner}
+            canManage={canManage}
             onViewDetails={() => setDetailOpen(true)}
             onRename={() => {
               setName(project.name);
@@ -295,6 +297,7 @@ export function ProjectCard({
         project={project}
         members={members}
         isOwner={isOwner}
+        canManage={canManage}
         ownerName={ownerName}
         ownerEmail={ownerEmail}
         open={detailOpen}

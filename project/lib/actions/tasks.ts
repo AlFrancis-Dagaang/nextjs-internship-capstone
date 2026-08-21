@@ -6,6 +6,7 @@ import { getAuthedUserOrError } from "@/lib/services/auth";
 import {
   assertListEditAccess,
   assertListViewAccess,
+  assertListContributeAccess,
   assertProjectViewAccess,
 } from "@/lib/services/ownership";
 import { resolveAssigneeId } from "@/lib/services/assignee";
@@ -267,7 +268,7 @@ export async function moveTaskToList(
     return { success: false, error: "Not found" };
   }
 
-  const sourceAccess = await assertListEditAccess(
+  const sourceAccess = await assertListContributeAccess(
     existingTask.listId,
     authResult.user.id,
   );
@@ -275,7 +276,10 @@ export async function moveTaskToList(
     return { success: false, error: sourceAccess.error ?? "Unknown error" };
   }
 
-  const destAccess = await assertListEditAccess(newListId, authResult.user.id);
+  const destAccess = await assertListContributeAccess(
+    newListId,
+    authResult.user.id,
+  );
   if ("error" in destAccess) {
     return { success: false, error: destAccess.error ?? "Unknown error" };
   }
@@ -561,7 +565,7 @@ export async function toggleTaskComplete(
     return { success: false, error: "Not found" };
   }
 
-  const access = await assertListEditAccess(
+  const access = await assertListContributeAccess(
     existingTask.listId,
     authResult.user.id,
   );

@@ -22,7 +22,7 @@ export function TaskQuickActions({
   onArchive?: () => void;
   onDeleteClick?: () => void;
   canEdit: boolean;
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   onRestored?: () => void;
   onOpenChange?: (open: boolean) => void;
 }) {
@@ -30,7 +30,7 @@ export function TaskQuickActions({
   const [isPending, startTransition] = useTransition();
   const insertTaskAt = useBoardStore((s) => s.insertTaskAt);
 
-  if (role === "viewer") return null;
+  if (role === "viewer" || role === "contributor") return null;
 
   const handleRestore = () => {
     startTransition(async () => {
@@ -59,7 +59,7 @@ export function TaskQuickActions({
 
   return (
     <div className="space-y-2">
-      <Label className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">
+      <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
         Quick Actions
       </Label>
       <div className="flex flex-col gap-2">
@@ -69,12 +69,12 @@ export function TaskQuickActions({
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start text-foreground bg-card border-input hover:bg-accent"
+              className="w-full justify-start text-foreground bg-card border-border/80 hover:bg-secondary h-8 text-xs font-medium rounded-xl shadow-2xs cursor-pointer"
               onClick={handleRestore}
               disabled={isPending}
               type="button"
             >
-              <RefreshCw className="w-4 h-4 mr-2 text-muted-foreground" />
+              <RefreshCw className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
               Restore
             </Button>
 
@@ -82,12 +82,12 @@ export function TaskQuickActions({
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 bg-card border-destructive/30 shadow-sm"
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 bg-card border-destructive/30 h-8 text-xs font-medium rounded-xl shadow-2xs cursor-pointer"
               onClick={onDeleteClick}
               disabled={isPending}
               type="button"
             >
-              <Trash2 className="w-4 h-4 mr-2 text-destructive" />
+              <Trash2 className="w-3.5 h-3.5 mr-2 text-destructive" />
               Delete permanently
             </Button>
           </>
@@ -97,12 +97,12 @@ export function TaskQuickActions({
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start text-foreground bg-card border-input hover:bg-accent"
+              className="w-full justify-start text-foreground bg-card border-border/80 hover:bg-secondary h-8 text-xs font-medium rounded-xl shadow-2xs cursor-pointer"
               onClick={handleArchiveClick}
               disabled={!canEdit}
               type="button"
             >
-              <Archive className="w-4 h-4 mr-2 text-muted-foreground" />
+              <Archive className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
               Archive task
             </Button>
 
@@ -110,12 +110,12 @@ export function TaskQuickActions({
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 bg-card border-destructive/30 shadow-sm"
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 bg-card border-destructive/30 h-8 text-xs font-medium rounded-xl shadow-2xs cursor-pointer"
               onClick={onDeleteClick}
               disabled={!canEdit}
               type="button"
             >
-              <Trash2 className="w-4 h-4 mr-2 text-destructive" />
+              <Trash2 className="w-3.5 h-3.5 mr-2 text-destructive" />
               Remove task
             </Button>
           </>

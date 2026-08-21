@@ -25,21 +25,14 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { getRealtimeClientId } from "@/lib/realtime/client";
-
-type Member = {
-  id: string;
-  userId: string;
-  email?: string;
-  name?: string;
-  role: "editor" | "viewer";
-};
+import type { Member } from "@/stores/project-store";
 
 type SearchUser = {
   id: string;
   email: string;
   name: string;
   status: "available" | "member" | "owner";
-  role?: "editor" | "viewer";
+  role?: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 type InviteMemberModalProps = {
@@ -66,7 +59,9 @@ export function InviteMemberModal({
   const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
-  const [role, setRole] = useState<"editor" | "viewer">("viewer");
+  const [role, setRole] = useState<
+    "owner" | "admin" | "editor" | "contributor" | "viewer"
+  >("viewer");
   const [isPending, startTransition] = useTransition();
 
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
@@ -291,17 +286,25 @@ export function InviteMemberModal({
             </label>
             <Select
               value={role}
-              onValueChange={(val: "editor" | "viewer") => setRole(val)}
+              onValueChange={(
+                val: "admin" | "editor" | "contributor" | "viewer",
+              ) => setRole(val)}
             >
               <SelectTrigger className="w-full h-9 text-xs bg-muted border-input text-foreground rounded-lg shadow-none focus:ring-0">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent className="z-50 bg-card border border-border rounded-xl shadow-xl">
                 <SelectItem value="viewer" className="text-xs">
-                  Viewer (View-only permissions)
+                  Viewer (Read-only)
+                </SelectItem>
+                <SelectItem value="contributor" className="text-xs">
+                  Contributor (Move & complete tasks, comment)
                 </SelectItem>
                 <SelectItem value="editor" className="text-xs">
-                  Editor (Can manage tasks & lists)
+                  Editor (Full task/list management)
+                </SelectItem>
+                <SelectItem value="admin" className="text-xs">
+                  Admin (Owner-equivalent, no ownership transfer)
                 </SelectItem>
               </SelectContent>
             </Select>

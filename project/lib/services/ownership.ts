@@ -1,5 +1,9 @@
 import { queries } from "@/lib/db";
-import type { ProjectMember } from "../db/schema";
+import type {
+  ProjectMember,
+  ProjectTeamRole,
+  ProjectMemberRole,
+} from "../db/schema";
 import { cache } from "react";
 
 type ProjectWithLists = NonNullable<
@@ -8,17 +12,44 @@ type ProjectWithLists = NonNullable<
 
 type ProjectAccessResult =
   | { error: string }
-  | { project: ProjectWithLists; role: "owner"; isOwner: true }
   | {
       project: ProjectWithLists;
-      role: "editor" | "viewer";
+      role: "owner";
+      isOwner: true;
+      membership: null;
+    }
+  | {
+      project: ProjectWithLists;
+      role: "admin" | "editor" | "contributor" | "viewer";
       isOwner: false;
-      membership: ProjectMember;
+      // A direct project_members row (Some(row)) when the role came from
+      // an explicit membership; null when it was resolved from a team
+      // instead (#76) — there's no project_members row to point to.
+      membership: ProjectMember | null;
     };
 
-/**
- * Projects are directly owned — one check against ownerId.
- */
+const TEAM_ROLE_RANK: Record<ProjectTeamRole, number> = {
+  editor: 3,
+  contributor: 2,
+  viewer: 1,
+};
+
+const ROLE_RANK: Record<ProjectMemberRole, number> = {
+  admin: 4,
+  editor: 3,
+  contributor: 2,
+  viewer: 1,
+};
+
+export function highestTeamRole(
+  roles: ProjectTeamRole[],
+): ProjectTeamRole | null {
+  if (roles.length === 0) return null;
+  return roles.reduce((highest, role) =>
+    TEAM_ROLE_RANK[role] > TEAM_ROLE_RANK[highest] ? role : highest,
+  );
+}
+
 export async function assertProjectOwnership(
   projectId: string,
   userId: string,
@@ -29,11 +60,6 @@ export async function assertProjectOwnership(
   return { project } as const;
 }
 
-/**
- * Lists have no ownerId of their own — ownership is indirect, via the
- * parent project. Every list-scoped action must resolve up to
- * project.ownerId.
- */
 export async function assertListOwnership(listId: string, userId: string) {
   const list = await queries.lists.getById(listId);
   if (!list) return { error: "Not found" } as const;
@@ -45,12 +71,13 @@ export async function assertListOwnership(listId: string, userId: string) {
   return { list, project } as const;
 }
 
-/**
- * Comments have no ownerId of their own. Access to a task's comments
- * requires the same project-ownership check as the task itself — this
- * is an access check (can this user see/post here), not the
- * author-only check used for deleting a specific comment.
- */
+export async function assertTeamOwnership(teamId: string, userId: string) {
+  const team = await queries.teams.getById(teamId);
+  if (!team) return { error: "Not found" } as const;
+  if (team.createdBy !== userId) return { error: "Forbidden" } as const;
+  return { team } as const;
+}
+
 export async function assertTaskAccess(taskId: string, userId: string) {
   const task = await queries.tasks.getById(taskId);
   if (!task) return { error: "Not found" } as const;
@@ -61,39 +88,45 @@ export async function assertTaskAccess(taskId: string, userId: string) {
   return { task, list: ownership.list, project: ownership.project } as const;
 }
 
-/**
- * Role-aware project access check. Owner is resolved via projects.ownerId
- * (not a project_members row — #29 deliberately keeps ownership as the
- * single source of truth). Falls through to project_members for
- * everyone else.
- */
+export function resolveEffectiveMemberRole(
+  directRole?: ProjectMemberRole,
+  teamRole?: ProjectTeamRole | null,
+): ProjectMemberRole | undefined {
+  if (directRole && teamRole) {
+    return ROLE_RANK[teamRole] > ROLE_RANK[directRole] ? teamRole : directRole;
+  }
+  return directRole ?? teamRole ?? undefined;
+}
+
 export const assertProjectAccess = cache(
   async (projectId: string, userId: string): Promise<ProjectAccessResult> => {
     const project = await queries.projects.getById(projectId);
     if (!project) return { error: "Not found" };
 
     if (project.ownerId === userId) {
-      return { project, role: "owner", isOwner: true };
+      return { project, role: "owner", isOwner: true, membership: null };
     }
 
-    const membership = await queries.projectMembers.getByProjectAndUser(
-      projectId,
-      userId,
-    );
-    if (!membership) return { error: "Forbidden" };
+    const [membership, teamIds] = await Promise.all([
+      queries.projectMembers.getByProjectAndUser(projectId, userId),
+      queries.teams.getTeamIdsForUser(userId),
+    ]);
 
-    return {
-      project,
-      role: membership.role,
-      isOwner: false,
-      membership,
-    };
+    const teamRoleRows = await queries.projectTeams.getRolesForProjectAndTeams(
+      projectId,
+      teamIds,
+    );
+    const teamRole = highestTeamRole(teamRoleRows.map((r) => r.role));
+
+    const role = resolveEffectiveMemberRole(membership?.role, teamRole);
+    if (!role) {
+      return { error: "Forbidden" };
+    }
+
+    return { project, role, isOwner: false, membership: membership ?? null };
   },
 );
 
-/**
- * View access: owner, editor, or viewer — anyone with a role at all.
- */
 export async function assertProjectViewAccess(
   projectId: string,
   userId: string,
@@ -101,25 +134,42 @@ export async function assertProjectViewAccess(
   return assertProjectAccess(projectId, userId);
 }
 
-/**
- * Edit access: owner or editor only, per the permission matrix.
- * Viewer is explicitly rejected here even though they have project
- * access.
- */
 export async function assertProjectEditAccess(
   projectId: string,
   userId: string,
 ): Promise<ProjectAccessResult> {
   const access = await assertProjectAccess(projectId, userId);
   if ("error" in access) return access;
-  if (access.role === "viewer") return { error: "Forbidden" };
+  if (access.role === "viewer" || access.role === "contributor") {
+    return { error: "Forbidden" };
+  }
   return access;
 }
 
-/**
- * List-scoped view access: resolves list -> project, then defers to
- * assertProjectViewAccess (owner/editor/viewer all pass).
- */
+export async function assertProjectManageAccess(
+  projectId: string,
+  userId: string,
+): Promise<ProjectAccessResult> {
+  const access = await assertProjectAccess(projectId, userId);
+  if ("error" in access) return access;
+  if (access.role !== "owner" && access.role !== "admin") {
+    return { error: "Forbidden" };
+  }
+  return access;
+}
+
+export async function assertProjectContributeAccess(
+  projectId: string,
+  userId: string,
+): Promise<ProjectAccessResult> {
+  const access = await assertProjectAccess(projectId, userId);
+  if ("error" in access) return access;
+  if (access.role === "viewer") {
+    return { error: "Forbidden" };
+  }
+  return access;
+}
+
 export async function assertListViewAccess(listId: string, userId: string) {
   const list = await queries.lists.getById(listId);
   if (!list) return { error: "Not found" } as const;
@@ -130,10 +180,6 @@ export async function assertListViewAccess(listId: string, userId: string) {
   return { list, ...access } as const;
 }
 
-/**
- * List-scoped edit access: resolves list -> project, then defers to
- * assertProjectEditAccess (owner/editor pass, viewer rejected).
- */
 export async function assertListEditAccess(listId: string, userId: string) {
   const list = await queries.lists.getById(listId);
   if (!list) return { error: "Not found" } as const;
@@ -144,10 +190,32 @@ export async function assertListEditAccess(listId: string, userId: string) {
   return { list, ...access } as const;
 }
 
-/**
- * Task-scoped view access: resolves task -> list -> project, then
- * defers to assertProjectViewAccess (owner/editor/viewer all pass).
- */
+export async function assertListContributeAccess(
+  listId: string,
+  userId: string,
+) {
+  const list = await queries.lists.getById(listId);
+  if (!list) return { error: "Not found" } as const;
+
+  const access = await assertProjectContributeAccess(list.projectId, userId);
+  if ("error" in access) return access;
+
+  return { list, ...access } as const;
+}
+
+export async function assertTaskContributeAccess(
+  taskId: string,
+  userId: string,
+) {
+  const task = await queries.tasks.getById(taskId);
+  if (!task) return { error: "Not found" } as const;
+
+  const access = await assertListContributeAccess(task.listId, userId);
+  if ("error" in access) return access;
+
+  return { task, ...access } as const;
+}
+
 export async function assertTaskViewAccess(taskId: string, userId: string) {
   const task = await queries.tasks.getById(taskId);
   if (!task) return { error: "Not found" } as const;
@@ -158,10 +226,6 @@ export async function assertTaskViewAccess(taskId: string, userId: string) {
   return { task, ...access } as const;
 }
 
-/**
- * Task-scoped edit access: resolves task -> list -> project, then
- * defers to assertProjectEditAccess (owner/editor pass, viewer rejected).
- */
 export async function assertTaskEditAccess(taskId: string, userId: string) {
   const task = await queries.tasks.getById(taskId);
   if (!task) return { error: "Not found" } as const;

@@ -27,13 +27,14 @@ type Member = {
   userId: string;
   email?: string;
   name?: string;
-  role: "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 type ProjectMembersProps = {
   project: Project;
   members: Member[];
   isOwner: boolean;
+  canManage: boolean;
   ownerName?: string;
   ownerEmail?: string;
   onMemberAdded: (projectId: string, member: Member) => void;
@@ -50,6 +51,7 @@ export function ProjectMembers({
   project,
   members,
   isOwner,
+  canManage,
   ownerName,
   ownerEmail,
   onMemberAdded,
@@ -61,9 +63,9 @@ export function ProjectMembers({
   const [isPending, startTransition] = useTransition();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | "editor" | "viewer">(
-    "all",
-  );
+  const [roleFilter, setRoleFilter] = useState<
+    "all" | "owner" | "admin" | "editor" | "contributor" | "viewer"
+  >("all");
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
 
@@ -81,7 +83,7 @@ export function ProjectMembers({
 
   async function handleRoleChange(
     memberId: string,
-    newRole: "editor" | "viewer",
+    newRole: "admin" | "editor" | "contributor" | "viewer",
   ) {
     const target = members.find((m) => m.id === memberId);
     if (!target) return;
@@ -135,14 +137,14 @@ export function ProjectMembers({
 
   return (
     <>
-      <div className="w-full md:w-[480px] shrink-0 p-6 flex flex-col overflow-y-auto bg-muted/30 space-y-5 border-t md:border-t-0 md:border-l border-border">
+      <div className="w-full md:w-120 shrink-0 p-6 flex flex-col overflow-y-auto bg-muted/30 space-y-5 border-t md:border-t-0 md:border-l border-border">
         <div className="flex items-center justify-between">
           <div>
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Team Members ({members.length + 1})
             </h4>
           </div>
-          {isOwner && (
+          {canManage && (
             <Button
               onClick={() => setInviteModalOpen(true)}
               className="h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-lg shadow-none"
@@ -168,19 +170,25 @@ export function ProjectMembers({
           </div>
           <Select
             value={roleFilter}
-            onValueChange={(val: "all" | "editor" | "viewer") =>
-              setRoleFilter(val)
-            }
+            onValueChange={(
+              val: "all" | "admin" | "editor" | "contributor" | "viewer",
+            ) => setRoleFilter(val)}
           >
-            <SelectTrigger className="w-[110px] h-9 text-xs bg-card border-border text-foreground rounded-lg shadow-none focus:ring-0">
+            <SelectTrigger className="w-27.5 h-9 text-xs bg-card border-border text-foreground rounded-lg shadow-none focus:ring-0">
               <SelectValue placeholder="Role" />
             </SelectTrigger>
             <SelectContent className="z-50 bg-card border border-border rounded-xl shadow-xl">
               <SelectItem value="all" className="text-xs">
                 All Roles
               </SelectItem>
+              <SelectItem value="admin" className="text-xs">
+                Admins
+              </SelectItem>
               <SelectItem value="editor" className="text-xs">
                 Editors
+              </SelectItem>
+              <SelectItem value="contributor" className="text-xs">
+                Contributors
               </SelectItem>
               <SelectItem value="viewer" className="text-xs">
                 Viewers
@@ -241,23 +249,29 @@ export function ProjectMembers({
                 </div>
 
                 <div className="flex items-center space-x-2 shrink-0">
-                  {isOwner ? (
+                  {canManage ? (
                     <>
                       <Select
                         value={member.role}
-                        onValueChange={(val: "editor" | "viewer") =>
-                          handleRoleChange(member.id, val)
-                        }
+                        onValueChange={(
+                          val: "admin" | "editor" | "contributor" | "viewer",
+                        ) => handleRoleChange(member.id, val)}
                       >
-                        <SelectTrigger className="w-[95px] h-7 text-[11px] bg-muted border-input text-foreground rounded-lg shadow-none focus:ring-0">
+                        <SelectTrigger className="w-23.75 h-7 text-[11px] bg-muted border-input text-foreground rounded-lg shadow-none focus:ring-0">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="z-50 bg-card border border-border rounded-xl shadow-xl">
                           <SelectItem value="viewer" className="text-xs">
                             Viewer
                           </SelectItem>
+                          <SelectItem value="contributor" className="text-xs">
+                            Contributor
+                          </SelectItem>
                           <SelectItem value="editor" className="text-xs">
                             Editor
+                          </SelectItem>
+                          <SelectItem value="admin" className="text-xs">
+                            Admin
                           </SelectItem>
                         </SelectContent>
                       </Select>

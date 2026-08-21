@@ -21,7 +21,7 @@ type TaskDetailModalProps = {
   projectId: string;
   allLists: ListWithTasks[];
   assignableUsers: { id: string; name?: string; email?: string }[];
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   onRestored?: () => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -49,7 +49,6 @@ export function TaskDetailModal({
   const archiveTaskLocally = useBoardStore((s) => s.archiveTaskLocally);
   const revertArchiveSnapshot = useBoardStore((s) => s.revertArchiveSnapshot);
 
-  // Make activityRefreshKey stateful so it triggers feed refetches
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
 
   const bumpActivity = useCallback(() => {
@@ -60,14 +59,14 @@ export function TaskDetailModal({
     bumpActivity();
   }, [task, bumpActivity]);
 
-  // Force strict boolean evaluation so falsy/null DB values don't break archive checks
   const isArchived = Boolean(task.isArchived);
-  const canEdit = role !== "viewer" && !isArchived;
+  const canEdit = role !== "viewer" && role !== "contributor" && !isArchived;
+  const canContribute = role !== "viewer";
 
   const handleChanged = useCallback(
     (updated: TaskWithCommentCount) => {
       onChanged?.(updated);
-      bumpActivity(); // Refresh activity log when task properties change
+      bumpActivity();
     },
     [onChanged, bumpActivity],
   );
@@ -75,7 +74,7 @@ export function TaskDetailModal({
   const handleMoved = useCallback(
     (movedTask: Task, affectedTasks: Task[]) => {
       onMoved?.(movedTask, affectedTasks);
-      bumpActivity(); // Refresh activity log when task moves lists/positions
+      bumpActivity();
     },
     [onMoved, bumpActivity],
   );
@@ -101,13 +100,14 @@ export function TaskDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden bg-card text-card-foreground border-border flex flex-col [&>button]:hidden">
+      <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden bg-card text-card-foreground border-border rounded-2xl shadow-2xl flex flex-col [&>button]:hidden">
         {/* Header - Fixed & Pinned */}
-        <div className="px-6 py-3 border-b border-border shrink-0 flex items-start justify-between gap-4">
+        <div className="px-6 py-4 border-b border-border/80 shrink-0 flex items-start justify-between gap-4 bg-card">
           <div className="flex-1">
             <TaskHeader
               task={task}
               canEdit={canEdit}
+              canContribute={canContribute}
               onChanged={handleChanged}
             />
           </div>
@@ -117,24 +117,24 @@ export function TaskDetailModal({
               e.stopPropagation();
               onOpenChange(false);
             }}
-            className="relative z-50 mt-1 p-1.5 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
+            className="relative z-50 mt-1 p-1.5 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
             aria-label="Close modal"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
+
         {/* 2-Column Layout Container */}
-        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden bg-background/40">
           {/* Left Content */}
-          <div className="flex-1 p-6 flex flex-col overflow-hidden">
-            <div className="shrink-0 pb-6 border-b border-border">
+          <div className="flex-1 p-6 flex flex-col overflow-hidden bg-card">
+            <div className="shrink-0 pb-6 border-b border-border/60">
               <TaskDescription
                 task={task}
                 canEdit={canEdit}
                 onChanged={handleChanged}
               />
             </div>
-
             <div className="flex-1 pt-6 overflow-hidden flex flex-col">
               <TaskComments
                 taskId={task.id}
@@ -142,12 +142,13 @@ export function TaskDetailModal({
                 onCommentCountChanged={onCommentCountChanged}
                 onActivityChanged={bumpActivity}
                 canEdit={canEdit}
+                canContribute={canContribute}
               />
             </div>
           </div>
 
           {/* Right Sidebar */}
-          <div className="w-full md:w-[320px] shrink-0 border-l border-border bg-muted/50 p-6 flex flex-col overflow-hidden">
+          <div className="w-full md:w-[320px] shrink-0 border-l border-border/80 bg-muted/30 p-6 flex flex-col overflow-hidden">
             <TaskSidebar
               task={task}
               projectId={projectId}

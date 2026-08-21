@@ -54,7 +54,7 @@ export function TaskPrioritySection({
 
   return (
     <div className="space-y-2">
-      <Label className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">
+      <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
         Priority
       </Label>
       <Select
@@ -62,25 +62,25 @@ export function TaskPrioritySection({
         onValueChange={handlePriorityChange}
         disabled={isPending || !canEdit}
       >
-        <SelectTrigger className="w-full bg-card border-input h-9 text-xs focus:ring-1 focus:ring-ring text-card-foreground">
+        <SelectTrigger className="w-full bg-card border border-border h-8 text-xs focus:ring-1 focus:ring-ring text-card-foreground rounded-xl shadow-2xs">
           <SelectValue placeholder="None" />
         </SelectTrigger>
-        <SelectContent className="bg-popover border border-border text-popover-foreground shadow-xl rounded-xl z-50">
+        <SelectContent className="bg-popover border border-border/80 text-popover-foreground shadow-xl rounded-xl z-50">
           <SelectItem
             value="low"
-            className="focus:bg-accent focus:text-accent-foreground cursor-pointer"
+            className="text-xs focus:bg-accent focus:text-accent-foreground cursor-pointer rounded-lg"
           >
             Low
           </SelectItem>
           <SelectItem
             value="medium"
-            className="focus:bg-accent focus:text-accent-foreground cursor-pointer"
+            className="text-xs focus:bg-accent focus:text-accent-foreground cursor-pointer rounded-lg"
           >
             Medium
           </SelectItem>
           <SelectItem
             value="high"
-            className="focus:bg-accent focus:text-accent-foreground cursor-pointer"
+            className="text-xs focus:bg-accent focus:text-accent-foreground cursor-pointer rounded-lg"
           >
             High
           </SelectItem>

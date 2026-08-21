@@ -12,7 +12,7 @@ import { getAuthedUserOrError } from "@/lib/services/auth";
 import { assertProjectAccess } from "@/lib/services/ownership";
 import { toLocalDateKey } from "@/lib/utils/utils";
 import { CalendarTaskDTO } from "@/types";
-
+import { getEffectiveProjectMembers } from "@/lib/actions/project-member";
 export default async function ProjectPage({
   params,
 }: {
@@ -48,7 +48,7 @@ export default async function ProjectPage({
     getProject(id),
     getListsByProject(id),
     getTasksByProject(id),
-    getProjectMembers(id),
+    getEffectiveProjectMembers(id),
     assertProjectAccess(id, authResult.user.id),
     queries.taskAssignees.getByProject(id),
   ]);
@@ -77,7 +77,7 @@ export default async function ProjectPage({
   const members = membersResult.success ? toMemberList(membersResult.data) : [];
   const owner = await queries.users.getById(project.ownerId);
   const role = "error" in accessResult ? "viewer" : accessResult.role;
-
+  const canManage = role === "owner" || role === "admin";
   const tasksByList = new Map<string, Task[]>();
   for (const task of allTasks) {
     const arr = tasksByList.get(task.listId) ?? [];
@@ -125,6 +125,7 @@ export default async function ProjectPage({
           project={project}
           initialMembers={members}
           isOwner={role === "owner"}
+          canManage={canManage}
           ownerName={owner?.name}
           ownerEmail={owner?.email}
           role={role}

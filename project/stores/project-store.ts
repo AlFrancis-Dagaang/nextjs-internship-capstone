@@ -2,12 +2,12 @@
 import { create } from "zustand";
 import type { Project } from "@/lib/db/schema";
 
-type Member = {
+export type Member = {
   id: string;
   userId: string;
   email?: string;
   name?: string;
-  role: "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 interface ProjectState {

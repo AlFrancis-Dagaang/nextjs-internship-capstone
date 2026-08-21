@@ -1,3 +1,4 @@
+// components/projects/project-header.tsx
 "use client";
 
 import React, {
@@ -21,6 +22,8 @@ import {
   FolderInput,
   Trash2,
   Calendar,
+  Users2,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -58,13 +61,14 @@ type Member = {
   userId: string;
   email?: string;
   name?: string;
-  role: "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
 export function ProjectHeader({
   project,
   initialMembers,
   isOwner,
+  canManage,
   ownerName,
   ownerEmail,
   role,
@@ -74,15 +78,15 @@ export function ProjectHeader({
   project: Project;
   initialMembers: Member[];
   isOwner: boolean;
+  canManage: boolean;
   ownerName?: string;
   ownerEmail?: string;
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   currentUserId: string;
   upcomingTasks: CalendarTaskDTO[];
 }) {
   const { toast } = useToast();
-  const canEdit = role !== "viewer";
-
+  const canEdit = role !== "viewer" && role !== "contributor";
   const membersState = useProjectStore(
     (s) => s.membersMap[project.id] ?? initialMembers,
   );
@@ -95,8 +99,7 @@ export function ProjectHeader({
 
   useEffect(() => {
     setProjectMembers(project.id, initialMembers);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project.id]);
+  }, [project.id, initialMembers, setProjectMembers]);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
@@ -296,14 +299,16 @@ export function ProjectHeader({
   );
   useRealtimeProject(project.id, handleProjectEvent);
 
+  const formattedRoleLabel = role.charAt(0).toUpperCase() + role.slice(1);
+
   return (
-    <div className="flex flex-col gap-2 bg-transparent px-0 py-0 m-0">
-      <div className="flex flex-wrap items-center justify-between gap-4 py-1">
-        {/* Left side: Back button + Title */}
+    <div className="flex flex-col gap-3 bg-card/70 backdrop-blur-md p-4 sm:p-5 border border-border/80 rounded-3xl shadow-xs m-0">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* Left side: Back button + Title + Role Badge */}
         <div className="flex items-center space-x-3.5 min-w-0">
           <Link
             href="/projects"
-            className="p-1.5 hover:bg-muted rounded-lg transition-all text-muted-foreground shrink-0 border border-transparent hover:border-border"
+            className="p-2 hover:bg-secondary rounded-2xl transition-all text-muted-foreground shrink-0 border border-border/60"
             aria-label="Back to projects"
           >
             <ArrowLeft size={16} />
@@ -312,35 +317,27 @@ export function ProjectHeader({
             <h1 className="text-base font-semibold text-foreground truncate tracking-tight">
               {liveProject.name}
             </h1>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-secondary text-secondary-foreground border border-border/60 tracking-wide shrink-0">
+              {formattedRoleLabel}
+            </span>
           </div>
         </div>
 
-        {/* Right side controls & Team Avatars */}
-        <div className="flex items-center space-x-3 ml-auto flex-wrap">
+        {/* Right side controls & Streamlined Actions */}
+        <div className="flex items-center space-x-2.5 ml-auto flex-wrap">
           {/* Search input */}
-          <div className="relative w-52 sm:w-64 md:w-72 hidden sm:block">
+          <div className="relative w-52 sm:w-60 md:w-64 hidden sm:block">
             <Search
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               size={13}
             />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-8 text-xs bg-muted/50 border-border rounded-lg shadow-sm focus-visible:ring-1 focus-visible:ring-ring w-full text-foreground"
+              className="pl-9 h-9 text-xs bg-background border-border rounded-xl shadow-2xs focus-visible:ring-1 w-full text-foreground"
               placeholder="Search tasks..."
             />
           </div>
-
-          {/* Calendar Button Trigger */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCalendarModalOpen(true)}
-            className="h-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm px-2.5 flex items-center gap-1.5 hover:bg-muted"
-          >
-            <Calendar size={13} className="text-muted-foreground" />
-            <span>Calendar</span>
-          </Button>
 
           {selectionMode ? (
             <div className="flex items-center space-x-2">
@@ -358,7 +355,7 @@ export function ProjectHeader({
                     variant="outline"
                     size="sm"
                     disabled={selectedTaskIds.length === 0 || isBulkPending}
-                    className="h-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm flex items-center gap-1.5 hover:bg-muted"
+                    className="h-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs flex items-center gap-1.5 hover:bg-secondary"
                   >
                     <span>Actions</span>
                     <ChevronDown size={13} className="text-muted-foreground" />
@@ -366,9 +363,9 @@ export function ProjectHeader({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-52 bg-card border border-border rounded-xl shadow-2xl p-1.5 space-y-1 text-left z-50"
+                  className="w-52 bg-card border border-border rounded-2xl shadow-xl p-1.5 space-y-1 text-left z-50"
                 >
-                  <div className="flex items-center justify-between px-2.5 py-1 text-xs font-semibold text-muted-foreground border-b border-border mb-1">
+                  <div className="flex items-center justify-between px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border mb-1">
                     <span>Selected Options</span>
                     <button
                       onClick={() => setBulkActionsDropdownOpen(false)}
@@ -388,7 +385,7 @@ export function ProjectHeader({
                         <button
                           key={l.id}
                           onClick={() => handleBulkMove(l.id)}
-                          className="w-full text-left px-2 py-1.5 text-xs text-foreground hover:bg-muted rounded-lg flex items-center space-x-2 transition-colors"
+                          className="w-full text-left px-2.5 py-1.5 text-xs text-foreground hover:bg-secondary rounded-xl flex items-center space-x-2 transition-colors"
                         >
                           <FolderInput
                             size={13}
@@ -407,9 +404,9 @@ export function ProjectHeader({
                       setBulkActionsDropdownOpen(false);
                       setBulkDeleteConfirmOpen(true);
                     }}
-                    className="cursor-pointer px-2.5 py-2 text-xs text-destructive focus:bg-destructive/10 rounded-lg flex items-center space-x-2.5"
+                    className="cursor-pointer px-2.5 py-2 text-xs text-destructive focus:bg-destructive/10 rounded-xl flex items-center space-x-2"
                   >
-                    <Trash2 size={14} className="text-destructive" />
+                    <Trash2 size={13} className="text-destructive" />
                     <span>Delete selected</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -422,7 +419,7 @@ export function ProjectHeader({
                   clearSelection();
                   exitSelectionMode();
                 }}
-                className="h-8 text-xs text-muted-foreground hover:text-foreground"
+                className="h-9 text-xs text-muted-foreground hover:text-foreground rounded-xl"
               >
                 Cancel
               </Button>
@@ -438,18 +435,18 @@ export function ProjectHeader({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="relative h-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm px-2.5 flex items-center gap-1.5 hover:bg-muted"
+                    className="relative h-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs px-3 flex items-center gap-1.5 hover:bg-secondary"
                   >
                     <Filter size={13} className="text-muted-foreground" />
                     <span>Filter</span>
                     {isFilterActive && (
-                      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-card" />
+                      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-teal-500 ring-2 ring-card" />
                     )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-64 bg-card border border-border rounded-xl shadow-2xl p-3 space-y-3 text-left z-50"
+                  className="w-64 bg-card border border-border rounded-2xl shadow-xl p-3.5 space-y-3.5 text-left z-50"
                 >
                   <div className="flex items-center justify-between pb-2 border-b border-border">
                     <span className="text-xs font-semibold text-foreground">
@@ -471,10 +468,10 @@ export function ProjectHeader({
                       value={filterCompleted}
                       onValueChange={(val: any) => setFilterCompleted(val)}
                     >
-                      <SelectTrigger className="w-full h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none">
+                      <SelectTrigger className="w-full h-8 text-xs bg-background border-input text-foreground rounded-xl shadow-none">
                         <SelectValue placeholder="All status" />
                       </SelectTrigger>
-                      <SelectContent className="z-50 bg-card border border-border rounded-lg">
+                      <SelectContent className="z-50 bg-card border border-border rounded-xl">
                         <SelectItem value="all" className="text-xs">
                           All
                         </SelectItem>
@@ -496,10 +493,10 @@ export function ProjectHeader({
                       value={filterPriority}
                       onValueChange={(val: any) => setFilterPriority(val)}
                     >
-                      <SelectTrigger className="w-full h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none">
+                      <SelectTrigger className="w-full h-8 text-xs bg-background border-input text-foreground rounded-xl shadow-none">
                         <SelectValue placeholder="All priorities" />
                       </SelectTrigger>
-                      <SelectContent className="z-50 bg-card border border-border rounded-lg">
+                      <SelectContent className="z-50 bg-card border border-border rounded-xl">
                         <SelectItem value="all" className="text-xs">
                           All
                         </SelectItem>
@@ -524,10 +521,10 @@ export function ProjectHeader({
                       value={filterDueDate}
                       onValueChange={(val: any) => setFilterDueDate(val)}
                     >
-                      <SelectTrigger className="w-full h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none">
+                      <SelectTrigger className="w-full h-8 text-xs bg-background border-input text-foreground rounded-xl shadow-none">
                         <SelectValue placeholder="All due dates" />
                       </SelectTrigger>
-                      <SelectContent className="z-50 bg-card border border-border rounded-lg">
+                      <SelectContent className="z-50 bg-card border border-border rounded-xl">
                         <SelectItem value="all" className="text-xs">
                           All
                         </SelectItem>
@@ -557,10 +554,10 @@ export function ProjectHeader({
                         setFilterAssigneeId(val === "all" ? null : val)
                       }
                     >
-                      <SelectTrigger className="w-full h-8 text-xs bg-muted border-input text-foreground rounded-lg shadow-none">
+                      <SelectTrigger className="w-full h-8 text-xs bg-background border-input text-foreground rounded-xl shadow-none">
                         <SelectValue placeholder="Any assignee" />
                       </SelectTrigger>
-                      <SelectContent className="z-50 bg-card border border-border rounded-lg">
+                      <SelectContent className="z-50 bg-card border border-border rounded-xl">
                         <SelectItem value="all" className="text-xs">
                           Any assignee
                         </SelectItem>
@@ -580,7 +577,7 @@ export function ProjectHeader({
                   <div className="flex items-center justify-between pt-1">
                     <label
                       htmlFor="assigned-to-me"
-                      className="text-xs text-foreground cursor-pointer"
+                      className="text-xs text-foreground cursor-pointer font-medium"
                     >
                       Assigned to me
                     </label>
@@ -589,7 +586,7 @@ export function ProjectHeader({
                       type="checkbox"
                       checked={filterAssignedToMe}
                       onChange={(e) => setFilterAssignedToMe(e.target.checked)}
-                      className="rounded border-border text-primary focus:ring-ring h-4 w-4 bg-muted"
+                      className="rounded border-border text-teal-600 focus:ring-ring h-4 w-4 bg-background"
                     />
                   </div>
 
@@ -598,7 +595,7 @@ export function ProjectHeader({
                       variant="ghost"
                       size="sm"
                       onClick={() => clearAllFilters()}
-                      className="w-full h-8 text-xs text-muted-foreground hover:text-foreground"
+                      className="w-full h-8 text-xs text-muted-foreground hover:text-foreground rounded-xl"
                     >
                       Clear all filters
                     </Button>
@@ -612,14 +609,14 @@ export function ProjectHeader({
                   variant="outline"
                   size="sm"
                   onClick={enterSelectionMode}
-                  className="h-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm flex items-center gap-1.5 hover:bg-muted"
+                  className="h-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs flex items-center gap-1.5 hover:bg-secondary"
                 >
                   <ListChecks size={13} className="text-muted-foreground" />
                   <span>Select</span>
                 </Button>
               )}
 
-              {/* More Actions Menu */}
+              {/* Consolidated More Actions Menu (Calendar, Team Access, Archived Tasks, Add Members) */}
               <DropdownMenu
                 open={actionsDropdownOpen}
                 onOpenChange={setActionsDropdownOpen}
@@ -628,7 +625,7 @@ export function ProjectHeader({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8 text-xs bg-card border-border text-foreground rounded-lg shadow-sm hover:bg-muted"
+                    className="h-9 w-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs hover:bg-secondary"
                     aria-label="Project actions"
                   >
                     <MoreVertical size={16} className="text-muted-foreground" />
@@ -636,10 +633,10 @@ export function ProjectHeader({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-52 bg-card border border-border rounded-xl shadow-2xl p-1.5 space-y-1 text-left z-50"
+                  className="w-56 bg-card border border-border rounded-2xl shadow-xl p-1.5 space-y-1 text-left z-50"
                 >
-                  <div className="flex items-center justify-between px-2.5 py-1 text-xs font-semibold text-muted-foreground border-b border-border mb-1">
-                    <span>Actions</span>
+                  <div className="flex items-center justify-between px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border mb-1">
+                    <span>Project Options</span>
                     <button
                       onClick={() => setActionsDropdownOpen(false)}
                       className="text-muted-foreground hover:text-foreground"
@@ -648,13 +645,33 @@ export function ProjectHeader({
                     </button>
                   </div>
 
-                  {isOwner && (
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      setActionsDropdownOpen(false);
+                      setCalendarModalOpen(true);
+                    }}
+                    className="cursor-pointer px-2.5 py-2 text-xs text-foreground focus:bg-secondary rounded-xl flex items-center space-x-2.5"
+                  >
+                    <Calendar size={14} className="text-muted-foreground" />
+                    <span>Project Calendar</span>
+                  </DropdownMenuItem>
+
+                  <Link href={`/projects/${project.id}/team`} className="block">
+                    <DropdownMenuItem className="cursor-pointer px-2.5 py-2 text-xs text-foreground focus:bg-secondary rounded-xl flex items-center space-x-2.5">
+                      <Users2 size={14} className="text-muted-foreground" />
+                      <span>Team Access</span>
+                    </DropdownMenuItem>
+                  </Link>
+
+                  <DropdownMenuSeparator className="bg-border my-1" />
+
+                  {canManage && (
                     <DropdownMenuItem
                       onSelect={() => {
                         setActionsDropdownOpen(false);
                         setInviteOpen(true);
                       }}
-                      className="cursor-pointer px-2.5 py-2 text-xs text-foreground focus:bg-muted rounded-lg flex items-center space-x-2.5"
+                      className="cursor-pointer px-2.5 py-2 text-xs text-foreground focus:bg-secondary rounded-xl flex items-center space-x-2.5"
                     >
                       <UserPlus size={14} className="text-muted-foreground" />
                       <span>Add members</span>
@@ -666,7 +683,7 @@ export function ProjectHeader({
                       setActionsDropdownOpen(false);
                       openArchiveModal();
                     }}
-                    className="cursor-pointer px-2.5 py-2 text-xs text-foreground focus:bg-muted rounded-lg flex items-center space-x-2.5"
+                    className="cursor-pointer px-2.5 py-2 text-xs text-foreground focus:bg-secondary rounded-xl flex items-center space-x-2.5"
                   >
                     <Archive size={14} className="text-muted-foreground" />
                     <span>Archived tasks</span>
@@ -676,8 +693,8 @@ export function ProjectHeader({
             </>
           )}
 
-          {/* Team Members Avatars (Positioned at the far right of the actions bar for signature SaaS feel) */}
-          <div className="hidden sm:flex items-center pl-2 border-l border-border ml-1">
+          {/* Team Members Avatars */}
+          <div className="hidden sm:flex items-center pl-2.5 border-l border-border ml-1">
             <div className="flex -space-x-1.5">
               {visibleMembers.map((m) => {
                 const roleLabel =
@@ -695,7 +712,7 @@ export function ProjectHeader({
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className={`w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer shadow-sm ${getAvatarColor(
+                        className={`w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer shadow-2xs ${getAvatarColor(
                           stableColorKey,
                         )}`}
                         title={`${displayName} (${m.role})`}
@@ -709,7 +726,7 @@ export function ProjectHeader({
                       className="w-72 bg-card border border-border rounded-2xl shadow-xl p-4 flex items-center space-x-3 z-50"
                     >
                       <div
-                        className={`w-12 h-12 rounded-full border border-border flex items-center justify-center text-base font-bold uppercase shrink-0 shadow-sm ${getAvatarColor(
+                        className={`w-12 h-12 rounded-2xl border border-border flex items-center justify-center text-base font-bold uppercase shrink-0 shadow-2xs ${getAvatarColor(
                           stableColorKey,
                         )}`}
                       >
@@ -733,7 +750,7 @@ export function ProjectHeader({
             </div>
 
             {extraCount > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center h-6 px-1.5 rounded-full bg-muted text-muted-foreground text-[10px] font-semibold border border-border">
+              <span className="ml-1.5 inline-flex items-center justify-center h-6 px-2 rounded-full bg-secondary text-secondary-foreground text-[10px] font-semibold border border-border">
                 +{extraCount}
               </span>
             )}
@@ -741,7 +758,7 @@ export function ProjectHeader({
         </div>
       </div>
 
-      {isOwner && (
+      {canManage && (
         <InviteMemberModal
           project={project}
           open={inviteOpen}

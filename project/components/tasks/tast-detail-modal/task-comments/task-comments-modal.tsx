@@ -41,9 +41,9 @@ export function TaskCommentsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col bg-card text-card-foreground border border-border rounded-xl shadow-2xl">
+      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col bg-card text-card-foreground border border-border/80 rounded-2xl shadow-2xl p-6">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold text-foreground">
+          <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
             Comments ({comments.length})
           </DialogTitle>
         </DialogHeader>
@@ -53,7 +53,7 @@ export function TaskCommentsModal({
             placeholder="Search by name..."
             value={nameQuery}
             onChange={(e) => setNameQuery(e.target.value)}
-            className="h-9 text-xs shrink-0 bg-muted border-input text-foreground rounded-lg"
+            className="h-8 text-xs shrink-0 bg-muted border border-border text-foreground rounded-xl shadow-2xs"
           />
         )}
 
@@ -64,7 +64,7 @@ export function TaskCommentsModal({
               : "No matching comments."}
           </p>
         ) : (
-          <ul className="flex-1 overflow-y-auto space-y-5 pr-2 pb-2">
+          <ul className="flex-1 overflow-y-auto space-y-4 pr-2 pb-2">
             {filteredComments.map((c) => (
               <CommentRow
                 key={c.id}

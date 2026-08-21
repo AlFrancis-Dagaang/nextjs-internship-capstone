@@ -8,6 +8,7 @@ import {
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import {
   assertProjectOwnership,
+  assertProjectManageAccess,
   assertProjectViewAccess,
 } from "@/lib/services/ownership";
 import type { ProjectMember } from "../db/schema";
@@ -16,6 +17,7 @@ import { logTaskActivity } from "@/lib/services/activity";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/lib/services/notifications";
 import { publishProjectEvent } from "@/lib/realtime/server";
+import { getEffectiveProjectMembers as getEffectiveProjectMembersService } from "@/lib/services/team";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -40,9 +42,9 @@ export async function addProjectMember(
     };
   }
 
-  const ownership = await assertProjectOwnership(projectId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectManageAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const targetUser = await queries.users.getByEmail(parsed.data.email);
@@ -50,7 +52,7 @@ export async function addProjectMember(
     return { success: false, error: "User not found" };
   }
 
-  if (targetUser.id === ownership.project.ownerId) {
+  if (targetUser.id === access.project.ownerId) {
     return { success: false, error: "This user already owns the project" };
   }
 
@@ -72,7 +74,7 @@ export async function addProjectMember(
   await createNotification({
     userId: targetUser.id,
     type: "project_added",
-    message: `${actor?.name ?? "Someone"} added you to "${ownership.project.name}"`,
+    message: `${actor?.name ?? "Someone"} added you to "${access.project.name}"`,
     projectId,
     actorId: authResult.user.id,
   });
@@ -120,6 +122,25 @@ export async function getProjectMembers(
   return { success: true, data: members };
 }
 
+export async function getEffectiveProjectMembers(
+  projectId: string,
+): Promise<
+  ActionResult<Awaited<ReturnType<typeof getEffectiveProjectMembersService>>>
+> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const access = await assertProjectViewAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
+  }
+
+  const members = await getEffectiveProjectMembersService(projectId);
+  return { success: true, data: members };
+}
+
 export async function updateMemberRole(
   projectId: string,
   memberId: string,
@@ -139,9 +160,9 @@ export async function updateMemberRole(
     };
   }
 
-  const ownership = await assertProjectOwnership(projectId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectManageAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const existingMember = await queries.projectMembers.getById(memberId);
@@ -169,9 +190,9 @@ export async function removeProjectMember(
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
-  const ownership = await assertProjectOwnership(projectId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectManageAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const existingMember = await queries.projectMembers.getById(memberId);
@@ -213,7 +234,7 @@ export async function removeProjectMember(
   await createNotification({
     userId: existingMember.userId,
     type: "project_removed",
-    message: `${actor?.name ?? "Someone"} removed you from "${ownership.project.name}"`,
+    message: `${actor?.name ?? "Someone"} removed you from "${access.project.name}"`,
     projectId,
     actorId: authResult.user.id,
   });
@@ -233,7 +254,7 @@ type UserSearchResult = {
   email: string;
   name: string;
   status: "available" | "member" | "owner";
-  role?: "editor" | "viewer"; // present when status === "member"
+  role?: "admin" | "editor" | "contributor" | "viewer";
 };
 
 export async function searchUsersForInvite(
@@ -250,9 +271,9 @@ export async function searchUsersForInvite(
     return { success: true, data: [] };
   }
 
-  const ownership = await assertProjectOwnership(projectId, authResult.user.id);
-  if ("error" in ownership) {
-    return { success: false, error: ownership.error ?? "Unknown error" };
+  const access = await assertProjectManageAccess(projectId, authResult.user.id);
+  if ("error" in access) {
+    return { success: false, error: access.error ?? "Unknown error" };
   }
 
   const [existingMembers, results] = await Promise.all([
@@ -265,7 +286,7 @@ export async function searchUsersForInvite(
   );
 
   const annotated: UserSearchResult[] = results.map((u) => {
-    if (u.id === ownership.project.ownerId) {
+    if (u.id === access.project.ownerId) {
       return { ...u, status: "owner" };
     }
     const role = memberRoleById.get(u.id);
@@ -291,19 +312,46 @@ export async function getAssignableUsers(
     return { success: false, error: access.error ?? "Unknown error" };
   }
 
-  const [owner, members] = await Promise.all([
+  const [owner, members, projectTeams] = await Promise.all([
     queries.users.getById(access.project.ownerId),
     queries.projectMembers.getByProject(projectId),
+    queries.projectTeams.getByProject(projectId),
   ]);
 
-  const assignable = [
-    ...(owner ? [{ id: owner.id, name: owner.name, email: owner.email }] : []),
-    ...members.map((m) => ({
+  const teamMemberLists = await Promise.all(
+    projectTeams.map((pt) => queries.teams.getMembers(pt.teamId)),
+  );
+
+  const assignableMap = new Map<
+    string,
+    { id: string; name?: string; email?: string }
+  >();
+
+  if (owner) {
+    assignableMap.set(owner.id, {
+      id: owner.id,
+      name: owner.name,
+      email: owner.email,
+    });
+  }
+  for (const m of members) {
+    assignableMap.set(m.userId, {
       id: m.userId,
       name: m.userName,
       email: m.userEmail,
-    })),
-  ];
+    });
+  }
+  for (const teamMembers of teamMemberLists) {
+    for (const m of teamMembers) {
+      if (!assignableMap.has(m.userId)) {
+        assignableMap.set(m.userId, {
+          id: m.userId,
+          name: m.userName,
+          email: m.userEmail,
+        });
+      }
+    }
+  }
 
-  return { success: true, data: assignable };
+  return { success: true, data: Array.from(assignableMap.values()) };
 }

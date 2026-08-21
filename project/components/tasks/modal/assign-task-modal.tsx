@@ -162,18 +162,18 @@ export function AssignTaskModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-card text-card-foreground border-border rounded-xl shadow-2xl p-6 [&>button]:hidden">
-        <div className="flex items-center justify-between border-b border-border pb-4">
+      <DialogContent className="max-w-md bg-card text-card-foreground border-border/80 rounded-2xl shadow-2xl p-6 [&>button]:hidden">
+        <div className="flex items-center justify-between border-b border-border/80 pb-4">
           <DialogHeader className="p-0 space-y-1">
-            <DialogTitle className="text-base font-semibold text-foreground">
+            <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
               Assign Task Members
             </DialogTitle>
           </DialogHeader>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            className="p-1.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
@@ -187,10 +187,10 @@ export function AssignTaskModal({
             <>
               {currentlyAssignedUsers.length > 0 && (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     Currently Assigned ({currentlyAssignedUsers.length})
                   </label>
-                  <div className="divide-y divide-border border border-border rounded-lg overflow-hidden bg-muted/50">
+                  <div className="divide-y divide-border/60 border border-border/80 rounded-xl overflow-hidden bg-muted/30">
                     {currentlyAssignedUsers.map((user) => {
                       const displayName = user.name || user.email || "U";
                       const stableColorKey =
@@ -202,7 +202,7 @@ export function AssignTaskModal({
                         >
                           <div className="flex items-center gap-2.5">
                             <div
-                              className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-sm ${getAvatarColor(
+                              className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-2xs ${getAvatarColor(
                                 stableColorKey,
                               )}`}
                             >
@@ -224,7 +224,7 @@ export function AssignTaskModal({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleToggleUser(user.id)}
-                            className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 rounded-md"
+                            className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl cursor-pointer"
                           >
                             <UserMinus size={13} className="mr-1.5" />
                             Remove
@@ -237,7 +237,7 @@ export function AssignTaskModal({
               )}
 
               <div className="space-y-2">
-                <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                   Add Members
                 </label>
                 <div className="relative">
@@ -249,11 +249,11 @@ export function AssignTaskModal({
                     placeholder="Search available members..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 h-9 text-xs bg-muted border-input rounded-lg w-full focus-visible:ring-1"
+                    className="pl-9 h-8 text-xs bg-muted border border-border rounded-xl w-full shadow-2xs focus-visible:ring-1 focus-visible:ring-ring"
                   />
                 </div>
 
-                <div className="max-h-48 overflow-y-auto divide-y divide-border border border-border rounded-lg">
+                <div className="max-h-48 overflow-y-auto divide-y divide-border/60 border border-border/80 rounded-xl bg-card">
                   {filteredAvailableUsers.length === 0 ? (
                     <div className="py-6 text-center text-xs text-muted-foreground">
                       {assignableUsers.length === currentlyAssignedUsers.length
@@ -275,7 +275,7 @@ export function AssignTaskModal({
                         >
                           <div className="flex items-center gap-2.5">
                             <div
-                              className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-sm ${getAvatarColor(
+                              className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-2xs ${getAvatarColor(
                                 stableColorKey,
                               )}`}
                             >
@@ -296,6 +296,7 @@ export function AssignTaskModal({
                             checked={isChecked}
                             onCheckedChange={() => handleToggleUser(user.id)}
                             onClick={(e) => e.stopPropagation()}
+                            className="rounded-md"
                           />
                         </div>
                       );
@@ -306,14 +307,14 @@ export function AssignTaskModal({
             </>
           )}
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+          <div className="flex justify-end gap-2 pt-2 border-t border-border/80">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="h-9 text-xs rounded-lg border-input"
+              className="h-8 text-xs font-medium border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl shadow-2xs cursor-pointer"
             >
               Cancel
             </Button>
@@ -322,7 +323,7 @@ export function AssignTaskModal({
               size="sm"
               onClick={handleSave}
               disabled={isPending || isLoadingUsers}
-              className="h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-lg shadow-none"
+              className="h-8 px-4 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-xl shadow-2xs cursor-pointer"
             >
               {isPending && (
                 <Loader2 size={14} className="mr-1.5 animate-spin" />

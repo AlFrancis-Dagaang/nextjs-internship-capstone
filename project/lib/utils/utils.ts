@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { ProjectMemberRole } from "../../types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,7 +12,7 @@ export function toMemberList(
     userId: string;
     userEmail: string;
     userName: string;
-    role: "editor" | "viewer";
+    role: ProjectMemberRole;
   }[],
 ) {
   return rows.map((m) => ({

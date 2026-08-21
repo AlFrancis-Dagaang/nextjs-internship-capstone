@@ -21,12 +21,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteProjectModal } from "../modals/delete-project-modal";
-import { ProjectEventsModal } from "../modals/project-events-moda";
+import { ProjectEventsModal } from "../modals/project-events-modal";
 import { EventFormModal } from "@/components/calendar/modals/event-form-modal";
 
 type ProjectInfoProps = {
   project: Project;
   isOwner: boolean;
+  canManage: boolean;
   currentUserId?: string;
   onProjectChanged?: (project: Project) => void;
   onProjectDeleted?: () => void;
@@ -63,6 +64,7 @@ function formatEventDateTime(startAt: string, endAt: string) {
 export function ProjectInfo({
   project,
   isOwner,
+  canManage,
   currentUserId,
   onProjectChanged,
   onProjectDeleted,
@@ -210,7 +212,7 @@ export function ProjectInfo({
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                 <FileText size={14} /> Description
               </h4>
-              {isOwner && !isEditingDesc && (
+              {canManage && !isEditingDesc && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -223,7 +225,7 @@ export function ProjectInfo({
               )}
             </div>
 
-            {isEditingDesc && isOwner ? (
+            {isEditingDesc && canManage ? (
               <div className="border border-border rounded-xl overflow-hidden bg-card shadow-xs focus-within:ring-1 focus-within:ring-ring">
                 <Textarea
                   autoFocus
@@ -259,9 +261,9 @@ export function ProjectInfo({
               </div>
             ) : (
               <div
-                onClick={() => isOwner && setIsEditingDesc(true)}
+                onClick={() => canManage && setIsEditingDesc(true)}
                 className={`p-4 rounded-xl bg-card border border-border/80 text-sm text-foreground leading-relaxed min-h-[100px] whitespace-pre-wrap shadow-2xs transition-all ${
-                  isOwner
+                  canManage
                     ? "hover:border-primary/50 hover:bg-muted/40 cursor-pointer"
                     : ""
                 }`}
@@ -341,7 +343,7 @@ export function ProjectInfo({
                     type="date"
                     value={dueDate}
                     onChange={handleDateChange}
-                    disabled={!isOwner || isPending}
+                    disabled={!canManage || isPending}
                     className="bg-background border-border text-foreground h-9 text-sm focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-80"
                   />
                 </div>
@@ -368,7 +370,7 @@ export function ProjectInfo({
         </div>
 
         {/* Quick Actions / Danger Zone Footer */}
-        {isOwner && (
+        {canManage && (
           <div className="pt-4 border-t border-border flex items-center justify-between">
             <span className="text-xs text-muted-foreground font-medium">
               Danger Zone

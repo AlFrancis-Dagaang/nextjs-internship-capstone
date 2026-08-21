@@ -4,6 +4,7 @@ import { queries } from "@/lib/db";
 import { commentCreateSchema } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import {
+  assertTaskContributeAccess,
   assertTaskEditAccess,
   assertTaskViewAccess,
 } from "@/lib/services/ownership";
@@ -35,7 +36,7 @@ export async function createComment(
     };
   }
 
-  const access = await assertTaskEditAccess(
+  const access = await assertTaskContributeAccess(
     parsed.data.taskId,
     authResult.user.id,
   );

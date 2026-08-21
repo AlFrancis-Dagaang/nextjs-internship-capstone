@@ -18,7 +18,7 @@ export type ActivityWithActor = TaskActivity & {
 type TaskActivityFeedProps = {
   taskId: string;
   refreshKey?: number;
-  previewCount?: number; // how many entries to show inline, default 3
+  previewCount?: number;
 };
 
 export function TaskActivityFeed({
@@ -93,7 +93,7 @@ export function TaskActivityFeed({
           return (
             <li key={entry.id} className="flex items-start gap-3">
               <div
-                className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-sm ${getAvatarColor(
+                className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-2xs ${getAvatarColor(
                   stableColorKey,
                 )}`}
               >
@@ -118,7 +118,7 @@ export function TaskActivityFeed({
       {hasMore && (
         <button
           onClick={() => setShowAllOpen(true)}
-          className="mt-2 text-xs text-primary hover:underline font-medium text-left"
+          className="mt-2 text-xs text-primary hover:underline font-medium text-left cursor-pointer"
         >
           See all activity
         </button>

@@ -32,7 +32,7 @@ export function ArchivedTasksModal({
   projectId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 }) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -123,9 +123,9 @@ export function ArchivedTasksModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-card text-card-foreground border-border">
+      <DialogContent className="max-w-2xl bg-card text-card-foreground border-border/80 rounded-2xl shadow-2xl p-6">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold">
+          <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
             Archived Tasks
           </DialogTitle>
         </DialogHeader>
@@ -135,13 +135,12 @@ export function ArchivedTasksModal({
             <Loader2 className="animate-spin text-muted-foreground" size={24} />
           </div>
         ) : archivedTasks.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">
+          <p className="text-xs text-muted-foreground py-8 text-center">
             No archived tasks found for this project.
           </p>
         ) : (
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
             {archivedTasks.map((task) => {
-              // Map all possible assignee response formats from backend/server actions
               const rawAssignees =
                 (task as any).assignees ?? (task as any).taskAssignees ?? [];
               const formattedTask = {
@@ -166,7 +165,7 @@ export function ArchivedTasksModal({
                     }
                   />
 
-                  {role !== "viewer" && (
+                  {role !== "viewer" && role !== "contributor" && (
                     <div className="flex items-center space-x-2 text-xs px-1 text-muted-foreground">
                       <button
                         type="button"
@@ -199,9 +198,11 @@ export function ArchivedTasksModal({
             open={!!deleteConfirmTask}
             onOpenChange={() => setDeleteConfirmTask(null)}
           >
-            <DialogContent className="max-w-sm bg-card text-card-foreground border-border">
+            <DialogContent className="max-w-sm bg-card text-card-foreground border-border/80 rounded-2xl shadow-2xl p-6">
               <DialogHeader>
-                <DialogTitle>Delete permanently?</DialogTitle>
+                <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
+                  Delete permanently?
+                </DialogTitle>
               </DialogHeader>
               <p className="text-xs text-muted-foreground">
                 Are you sure you want to permanently delete &quot;
@@ -212,6 +213,7 @@ export function ArchivedTasksModal({
                   variant="outline"
                   size="sm"
                   onClick={() => setDeleteConfirmTask(null)}
+                  className="h-8 text-xs font-medium border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl shadow-2xs cursor-pointer"
                 >
                   Cancel
                 </Button>
@@ -219,6 +221,7 @@ export function ArchivedTasksModal({
                   variant="destructive"
                   size="sm"
                   onClick={() => handlePermanentDelete(deleteConfirmTask)}
+                  className="h-8 text-xs font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl shadow-2xs cursor-pointer"
                 >
                   Delete permanently
                 </Button>

@@ -67,15 +67,15 @@ export function TaskDescription({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-          <span className="text-muted-foreground">≡</span> Description
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <span>≡</span> Description
         </h3>
         {!isEditing && canEdit && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsEditing(true)}
-            className="h-7 text-xs shadow-none border-input"
+            className="h-7 text-xs font-medium border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl shadow-2xs cursor-pointer"
           >
             <Edit2 className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
             Edit
@@ -84,62 +84,62 @@ export function TaskDescription({
       </div>
 
       {isEditing ? (
-        <div className="border border-border rounded-lg overflow-hidden bg-card focus-within:ring-1 focus-within:ring-ring">
+        <div className="border border-border/80 rounded-2xl overflow-hidden bg-card focus-within:ring-1 focus-within:ring-ring shadow-sm">
           {/* Formatting Toolbar */}
-          <div className="bg-muted border-b border-border px-2 py-1.5 flex items-center gap-1">
+          <div className="bg-muted border-b border-border/60 px-2 py-1.5 flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
               type="button"
             >
-              <Bold size={14} />
+              <Bold size={13} />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
               type="button"
             >
-              <Italic size={14} />
+              <Italic size={13} />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
               type="button"
             >
-              <Strikethrough size={14} />
-            </Button>
-
-            <div className="w-px h-4 bg-border mx-1" />
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
-              type="button"
-            >
-              <LinkIcon size={14} />
+              <Strikethrough size={13} />
             </Button>
 
-            <div className="w-px h-4 bg-border mx-1" />
+            <div className="w-px h-4 bg-border/80 mx-1" />
 
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
               type="button"
             >
-              <List size={14} />
+              <LinkIcon size={13} />
+            </Button>
+
+            <div className="w-px h-4 bg-border/80 mx-1" />
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
+              type="button"
+            >
+              <List size={13} />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
               type="button"
             >
-              <ListOrdered size={14} />
+              <ListOrdered size={13} />
             </Button>
 
             <div className="flex-1" />
@@ -147,18 +147,18 @@ export function TaskDescription({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
               type="button"
             >
-              <AtSign size={14} />
+              <AtSign size={13} />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
               type="button"
             >
-              <Smile size={14} />
+              <Smile size={13} />
             </Button>
           </div>
 
@@ -167,14 +167,14 @@ export function TaskDescription({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Add a more detailed description..."
-            className="h-32 max-h-48 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-y shadow-none text-sm bg-card px-3 py-2 overflow-y-auto"
+            className="h-32 max-h-48 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-y shadow-none text-xs bg-card px-3 py-2 overflow-y-auto text-card-foreground"
           />
 
-          <div className="p-2 flex justify-end gap-2 bg-card border-t border-border">
+          <div className="p-2 flex justify-end gap-2 bg-card border-t border-border/60">
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-xs border-input"
+              className="h-7 text-xs font-medium border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl shadow-2xs cursor-pointer"
               onClick={handleCancel}
               disabled={isPending}
               type="button"
@@ -183,7 +183,7 @@ export function TaskDescription({
             </Button>
             <Button
               size="sm"
-              className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+              className="h-7 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-2xs cursor-pointer"
               onClick={handleSave}
               disabled={isPending}
               type="button"
@@ -195,7 +195,7 @@ export function TaskDescription({
       ) : (
         <div
           onClick={canEdit ? () => setIsEditing(true) : undefined}
-          className={`min-h-25 max-h-40 overflow-y-auto p-3 rounded-md bg-muted/50 border border-border transition-colors whitespace-pre-wrap text-sm text-card-foreground pr-2 ${
+          className={`min-h-20 max-h-40 overflow-y-auto p-3 rounded-2xl bg-muted/30 border border-border/85 transition-colors whitespace-pre-wrap text-xs text-card-foreground pr-2 ${
             canEdit ? "hover:border-muted-foreground/50 cursor-pointer" : ""
           }`}
         >

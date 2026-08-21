@@ -46,7 +46,7 @@ export function ListColumn({
   list: ListWithTasks;
   totalLists: number;
   allLists: ListWithTasks[];
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   currentUserId: string;
 
   onRenamed?: (updated: List) => void;
@@ -66,10 +66,8 @@ export function ListColumn({
   const [name, setName] = useState(list.name);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const canEdit = role !== "viewer";
-
-  // #70 item 5 — search & filter state, read from ui-store. Filtering is
-  // pure client-side derivation over already-loaded board data.
+  const canEdit = role !== "viewer" && role !== "contributor";
+  const canContribute = role !== "viewer";
   const searchQuery = useUiStore((s) => s.searchQuery);
   const filterCompleted = useUiStore((s) => s.filterCompleted);
   const filterPriority = useUiStore((s) => s.filterPriority);
@@ -81,9 +79,6 @@ export function ListColumn({
   const selectedTaskIds = useUiStore((s) => s.selectedTaskIds);
   const toggleTaskSelected = useUiStore((s) => s.toggleTaskSelected);
 
-  // Memoized so this object only gets a new reference when one of the
-  // actual filter values changes — not on every render of ListColumn
-  // (e.g. when an unrelated task in another list updates).
   const filters = useMemo(
     () => ({
       searchQuery,
@@ -112,20 +107,11 @@ export function ListColumn({
     [list.tasks, filters, currentUserId],
   );
 
-  // Stable ids for SortableContext — matches what's actually rendered
-  // (visibleTasks), not the full unfiltered list.tasks. Keeping this in
-  // sync with the rendered children avoids SortableContext's internal
-  // index math getting out of sync when filters are active.
   const sortableTaskIds = useMemo(
     () => visibleTasks.map((t) => t.id),
     [visibleTasks],
   );
 
-  // 1. Droppable target ONLY for dropping tasks inside this list
-  // `data` is memoized so dnd-kit sees a stable reference across renders
-  // that don't actually change list.id — an inline object literal here
-  // was a new reference every render, which kept re-triggering dnd-kit's
-  // internal registration effects and cascading into React's render loop.
   const droppableData = useMemo(
     () => ({ type: "list-dropzone" as const, listId: list.id }),
     [list.id],
@@ -135,7 +121,6 @@ export function ListColumn({
     data: droppableData,
   });
 
-  // 2. Sortable target ONLY for moving the entire list column horizontally
   const sortableData = useMemo(
     () => ({ type: "list" as const, listId: list.id }),
     [list.id],
@@ -205,19 +190,19 @@ export function ListColumn({
 
   return (
     <>
-      {/* Outer wrapper handles ONLY column horizontal sorting */}
+      {/* Outer wrapper with clean card background matching dark/light mode properly */}
       <div
         ref={setListSortableRef}
         style={listDragStyle}
         {...(canEdit ? listDragAttributes : {})}
         {...(canEdit ? listDragListeners : {})}
-        className={`shrink-0 w-80 bg-muted/60 border border-border rounded-xl p-3 flex flex-col h-fit max-h-full transition-colors cursor-grab active:cursor-grabbing shadow-sm ${
+        className={`shrink-0 w-80 bg-card/90 backdrop-blur-md border border-border/85 rounded-3xl p-4 flex flex-col h-fit max-h-full transition-all cursor-grab active:cursor-grabbing shadow-xs ${
           isListDragging ? "opacity-40" : ""
         }`}
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between pb-3 px-1 shrink-0"
+          className="flex items-center justify-between pb-3 px-1.5 shrink-0"
           onPointerDown={(e) => {
             if ((e.target as HTMLElement).closest("button, input, form")) {
               e.stopPropagation();
@@ -232,7 +217,7 @@ export function ListColumn({
                 onChange={(e) => setName(e.target.value)}
                 onBlur={handleRenameSubmit}
                 disabled={isPending}
-                className="h-7 px-2 text-xs font-bold uppercase tracking-wider bg-card border-border text-foreground rounded shadow-sm focus-visible:ring-1 focus-visible:ring-ring"
+                className="h-8 px-2.5 text-xs font-bold uppercase tracking-wider bg-background border-border text-foreground rounded-xl shadow-none focus-visible:ring-1"
               />
             </form>
           ) : (
@@ -240,7 +225,7 @@ export function ListColumn({
               <h3 className="font-bold text-xs uppercase tracking-wider text-foreground">
                 {list.name}
               </h3>
-              <span className="text-xs text-muted-foreground font-semibold">
+              <span className="text-[11px] text-muted-foreground font-semibold px-2 py-0.5 rounded-full bg-secondary">
                 {filtering
                   ? `${visibleTasks.length}/${list.tasks.length}`
                   : list.tasks.length}
@@ -268,12 +253,12 @@ export function ListColumn({
         <div
           ref={setDroppableRef}
           onPointerDown={(e) => e.stopPropagation()}
-          className={`flex flex-col rounded-lg transition-colors min-h-12.5 ${
+          className={`flex flex-col rounded-2xl transition-colors min-h-14 bg-transparent ${
             isOver ? "ring-2 ring-primary/40 bg-primary/10 p-1" : ""
           }`}
         >
-          {/* Scrollable Tasks List — Added py-1.5 to prevent first/last card underlapping/clipping */}
-          <div className="overflow-y-auto overflow-x-visible space-y-3 px-1.5 py-1.5 max-h-[calc(100vh-14rem)]">
+          {/* Scrollable Tasks List with correct dark/light mode background behavior */}
+          <div className="overflow-y-auto overflow-x-visible space-y-3 px-1 py-1 max-h-[calc(100vh-16rem)] bg-transparent">
             <SortableContext
               items={sortableTaskIds}
               strategy={verticalListSortingStrategy}
@@ -285,6 +270,7 @@ export function ListColumn({
                   projectId={list.projectId}
                   allLists={allLists}
                   canEdit={canEdit}
+                  canContribute={canContribute}
                   dragDisabled={filtering || selectionMode}
                   selectionMode={selectionMode}
                   isSelected={selectedTaskIds.includes(task.id)}

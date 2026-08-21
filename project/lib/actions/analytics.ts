@@ -498,39 +498,13 @@ export async function getMemberBreakdown(
   }
   const projectIds = scopedProjects.map((p) => p.id);
 
-  const [statsRows, memberRowsPerProject] = await Promise.all([
+  const [statsRows, peopleMap] = await Promise.all([
     queries.analytics.getMemberBreakdown(projectIds, {
       start: startDate,
       end: endDate,
     }),
-    Promise.all(
-      scopedProjects.map(async (p) => {
-        const [owner, members] = await Promise.all([
-          queries.users.getById(p.ownerId),
-          queries.projectMembers.getByProject(p.id),
-        ]);
-        return [
-          ...(owner
-            ? [{ userId: owner.id, name: owner.name, email: owner.email }]
-            : []),
-          ...members.map((m) => ({
-            userId: m.userId,
-            name: m.userName,
-            email: m.userEmail,
-          })),
-        ];
-      }),
-    ),
+    getEffectivePeopleForProjects(scopedProjects),
   ]);
-
-  // Dedupe by userId — a person can be owner of one scoped project and
-  // a member of another when "All Projects" is selected.
-  const peopleMap = new Map<string, { name: string; email: string }>();
-  memberRowsPerProject.flat().forEach((p) => {
-    if (!peopleMap.has(p.userId)) {
-      peopleMap.set(p.userId, { name: p.name, email: p.email });
-    }
-  });
 
   const statsMap = new Map(statsRows.map((r) => [r.actorId, r]));
 
@@ -567,4 +541,142 @@ export async function getMemberBreakdown(
   };
 
   return { success: true, data: { members, teamAverage } };
+}
+// ---- shared: effective people across scoped projects ----
+
+async function getEffectivePeopleForProjects(
+  scopedProjects: { id: string; ownerId: string }[],
+): Promise<Map<string, { name: string; email: string }>> {
+  const peopleMap = new Map<string, { name: string; email: string }>();
+
+  const perProject = await Promise.all(
+    scopedProjects.map(async (p) => {
+      const [owner, members, projectTeams] = await Promise.all([
+        queries.users.getById(p.ownerId),
+        queries.projectMembers.getByProject(p.id),
+        queries.projectTeams.getByProject(p.id),
+      ]);
+      const teamMemberLists = await Promise.all(
+        projectTeams.map((pt) => queries.teams.getMembers(pt.teamId)),
+      );
+      return [
+        ...(owner
+          ? [{ userId: owner.id, name: owner.name, email: owner.email }]
+          : []),
+        ...members.map((m) => ({
+          userId: m.userId,
+          name: m.userName,
+          email: m.userEmail,
+        })),
+        ...teamMemberLists.flat().map((m) => ({
+          userId: m.userId,
+          name: m.userName,
+          email: m.userEmail,
+        })),
+      ];
+    }),
+  );
+
+  perProject.flat().forEach((p) => {
+    if (!peopleMap.has(p.userId)) {
+      peopleMap.set(p.userId, { name: p.name, email: p.email });
+    }
+  });
+
+  return peopleMap;
+}
+
+export type TeamBreakdownRow = {
+  teamId: string;
+  teamName: string;
+  memberCount: number;
+  completedCount: number; // sum across the team's members
+  activeDays: number; // avg across the team's members
+  avgResolutionDays: number | null;
+};
+
+export type TeamBreakdownData = {
+  teams: TeamBreakdownRow[]; // sorted by completedCount desc
+};
+
+export async function getTeamBreakdown(
+  rawInput: unknown,
+): Promise<ActionResult<TeamBreakdownData>> {
+  const authResult = await getAuthedUserOrError();
+  if ("error" in authResult) {
+    return { success: false, error: authResult.error ?? "Unknown error" };
+  }
+
+  const parsed = drillDownRangeSchema.safeParse(rawInput);
+  if (!parsed.success) return { success: false, error: "Invalid input" };
+  const { startDate, endDate, projectId } = parsed.data;
+
+  const accessibleProjects = await queries.projects.getByOwnerOrMember(
+    authResult.user.id,
+  );
+  let scopedProjects = accessibleProjects;
+  if (projectId) {
+    const match = accessibleProjects.find((p) => p.id === projectId);
+    if (!match) {
+      return { success: false, error: "Project not found or not accessible" };
+    }
+    scopedProjects = [match];
+  }
+  const projectIds = scopedProjects.map((p) => p.id);
+
+  const [statsRows, projectTeamsPerProject] = await Promise.all([
+    queries.analytics.getMemberBreakdown(projectIds, {
+      start: startDate,
+      end: endDate,
+    }),
+    Promise.all(
+      scopedProjects.map((p) => queries.projectTeams.getByProject(p.id)),
+    ),
+  ]);
+
+  const statsMap = new Map(statsRows.map((r) => [r.actorId, r]));
+
+  // Dedupe teams (same team could be attached to multiple scoped projects).
+  const teamsById = new Map<string, string>(); // teamId -> teamName
+  projectTeamsPerProject
+    .flat()
+    .forEach((pt) => teamsById.set(pt.teamId, pt.teamName));
+
+  const teamMemberLists = await Promise.all(
+    Array.from(teamsById.keys()).map((teamId) =>
+      queries.teams.getMembers(teamId),
+    ),
+  );
+
+  const avg = (nums: number[]) =>
+    nums.length > 0
+      ? Math.round((nums.reduce((s, n) => s + n, 0) / nums.length) * 10) / 10
+      : 0;
+
+  const teams: TeamBreakdownRow[] = Array.from(teamsById.entries())
+    .map(([teamId, teamName], i) => {
+      const members = teamMemberLists[i];
+      const memberStats = members.map((m) => statsMap.get(m.userId));
+
+      const completedCount = memberStats.reduce(
+        (sum, s) => sum + (s?.completedCount ?? 0),
+        0,
+      );
+      const activeDays = avg(memberStats.map((s) => s?.activeDays ?? 0));
+      const resolutions = memberStats
+        .filter((s) => s?.avgResolutionDays != null)
+        .map((s) => s!.avgResolutionDays as number);
+
+      return {
+        teamId,
+        teamName,
+        memberCount: members.length,
+        completedCount,
+        activeDays,
+        avgResolutionDays: resolutions.length > 0 ? avg(resolutions) : null,
+      };
+    })
+    .sort((a, b) => b.completedCount - a.completedCount);
+
+  return { success: true, data: { teams } };
 }

@@ -5,6 +5,12 @@ import { ProjectsList } from "@/components/projects/projects-list";
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import { queries } from "@/lib/db";
 import { toMemberList } from "@/lib/utils/utils";
+import {
+  highestTeamRole,
+  resolveEffectiveMemberRole,
+} from "@/lib/services/ownership";
+import type { ProjectMemberRole, ProjectTeamRole } from "@/types";
+import { getEffectiveProjectMembers } from "@/lib/actions/project-member";
 
 export default async function ProjectsPage() {
   const [result, authResult] = await Promise.all([
@@ -14,7 +20,7 @@ export default async function ProjectsPage() {
 
   if ("error" in authResult) {
     return (
-      <div className="p-6 rounded-lg bg-card border border-border text-destructive">
+      <div className="p-6 rounded-2xl bg-card border border-border/80 text-destructive shadow-2xs text-xs">
         Error loading user: {authResult.error}
       </div>
     );
@@ -22,7 +28,7 @@ export default async function ProjectsPage() {
 
   if (!result.success) {
     return (
-      <div className="p-6 rounded-lg bg-card border border-border text-destructive">
+      <div className="p-6 rounded-2xl bg-card border border-border/80 text-destructive shadow-2xs text-xs">
         Error loading projects: {result.error}
       </div>
     );
@@ -31,7 +37,7 @@ export default async function ProjectsPage() {
   const membersByProject = await Promise.all(
     result.data.map(async (project) => {
       const [membersResult, owner] = await Promise.all([
-        getProjectMembers(project.id),
+        getEffectiveProjectMembers(project.id),
         queries.users.getById(project.ownerId),
       ]);
       const members = membersResult.success
@@ -69,6 +75,41 @@ export default async function ProjectsPage() {
     }),
   );
 
+  const teamIds = await queries.teams.getTeamIdsForUser(authResult.user.id);
+
+  const teamRoleByProject = await Promise.all(
+    result.data.map(async (project) => {
+      const roleRows = await queries.projectTeams.getRolesForProjectAndTeams(
+        project.id,
+        teamIds,
+      );
+      const highest = highestTeamRole(roleRows.map((r) => r.role));
+      return [project.id, highest] as const;
+    }),
+  );
+
+  const initialTeamRoleMap = Object.fromEntries(
+    teamRoleByProject.filter(
+      (entry): entry is [string, ProjectTeamRole] => entry[1] !== null,
+    ),
+  );
+
+  const initialMyRoleMap = Object.fromEntries(
+    result.data
+      .filter((p) => p.ownerId !== authResult.user.id)
+      .map((p) => {
+        const direct = initialMembersMap[p.id]?.find(
+          (m) => m.userId === authResult.user.id,
+        )?.role;
+        const teamRole = initialTeamRoleMap[p.id];
+        const role = resolveEffectiveMemberRole(direct, teamRole);
+        return [p.id, role] as const;
+      })
+      .filter(
+        (entry): entry is [string, ProjectMemberRole] => entry[1] !== undefined,
+      ),
+  );
+
   return (
     <div className="space-y-6 w-full min-w-0">
       <ProjectsList
@@ -76,7 +117,8 @@ export default async function ProjectsPage() {
         currentUserId={authResult.user.id}
         initialMembersMap={initialMembersMap}
         initialOwnerMap={initialOwnerMap}
-        initialCompletionMap={initialCompletionMap} // new
+        initialCompletionMap={initialCompletionMap}
+        initialMyRoleMap={initialMyRoleMap}
       />
     </div>
   );

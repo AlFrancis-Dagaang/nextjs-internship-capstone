@@ -1,3 +1,4 @@
+// components/projects/calendar-view.tsx
 "use client";
 
 import { useState, useMemo } from "react";
@@ -245,7 +246,8 @@ export function CalendarView({
   function getPriorityBadge(priority?: CalendarTaskDTO["priority"]) {
     if (!priority) return null;
     let variant: "secondary" | "destructive" = "secondary";
-    let customClasses = "bg-secondary text-secondary-foreground border-border";
+    let customClasses =
+      "bg-secondary text-secondary-foreground border-border/60";
 
     if (priority === "high") {
       variant = "destructive";
@@ -259,7 +261,7 @@ export function CalendarView({
     return (
       <Badge
         variant={variant}
-        className={`text-[11px] capitalize shrink-0 font-medium px-2 py-0.5 ${customClasses}`}
+        className={`text-[10px] capitalize shrink-0 font-semibold px-2 py-0.5 rounded-full ${customClasses}`}
       >
         {priority}
       </Badge>
@@ -307,20 +309,20 @@ export function CalendarView({
   return (
     <div className="flex flex-col gap-6 w-full max-w-screen-2xl mx-auto pt-0 p-4 sm:p-8 sm:pt-0 transition-colors">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-card border border-border rounded-xl p-5 shadow-2xs">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center justify-center p-1.5 rounded-md bg-primary/10 text-primary">
-              <CalendarIcon className="w-5 h-5" />
-            </span>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+      <div className="p-5 sm:p-6 bg-card border border-border/80 rounded-3xl shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center space-x-3.5 min-w-0">
+          <div className="p-2.5 bg-secondary text-foreground rounded-2xl border border-border/60 shrink-0">
+            <CalendarIcon size={18} />
+          </div>
+          <div className="space-y-1 min-w-0">
+            <h1 className="text-base font-semibold text-foreground tracking-tight truncate">
               Schedule & Deadlines
             </h1>
+            <p className="text-xs text-muted-foreground">
+              Manage upcoming milestones, track priority items, and coordinate
+              project workflows.
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Manage upcoming milestones, track priority items, and coordinate
-            project workflows.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
@@ -329,22 +331,23 @@ export function CalendarView({
               setEditingEvent(undefined);
               setIsEventModalOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-2xs"
+            className="h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5"
           >
-            <Plus className="w-3.5 h-3.5" /> New Event
+            <Plus size={14} /> New Event
           </button>
         </div>
       </div>
+
       {/* Main Grid & Panels */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
-        {/* Left Column: Calendar Grid (with Month Navigation on Top) */}
+        {/* Left Column: Calendar Grid */}
         <div className="xl:col-span-8 flex flex-col gap-4">
           {/* Month Navigation Bar */}
-          <div className="flex items-center justify-between bg-card border border-border rounded-xl px-4 py-3 shadow-2xs">
-            <h2 className="text-sm sm:text-base font-bold text-foreground">
+          <div className="p-4 bg-card border border-border/80 rounded-2xl shadow-xs flex items-center justify-between">
+            <h2 className="text-sm font-bold text-foreground tracking-tight">
               {MONTH_NAMES[currentMonth]} {currentYear}
             </h2>
-            <div className="flex items-center bg-secondary border border-border rounded-lg p-1">
+            <div className="flex items-center bg-secondary border border-border/60 rounded-xl p-1">
               <button
                 onClick={() =>
                   currentMonth === 0
@@ -352,9 +355,9 @@ export function CalendarView({
                     : setCurrentMonth((p) => p - 1)
                 }
                 aria-label="Previous Month"
-                className="p-1.5 rounded-md hover:bg-background text-foreground transition-colors"
+                className="p-1.5 rounded-lg hover:bg-background text-foreground transition-colors"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft size={16} />
               </button>
               <button
                 onClick={() =>
@@ -363,16 +366,16 @@ export function CalendarView({
                     : setCurrentMonth((p) => p + 1)
                 }
                 aria-label="Next Month"
-                className="p-1.5 rounded-md hover:bg-background text-foreground transition-colors"
+                className="p-1.5 rounded-lg hover:bg-background text-foreground transition-colors"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight size={16} />
               </button>
             </div>
           </div>
 
-          {/* Calendar Grid Container with Fixed Height */}
-          <div className="bg-card rounded-xl border border-border overflow-hidden shadow-2xs flex flex-col h-[740px]">
-            <div className="grid grid-cols-7 border-b border-border bg-muted/40 text-center py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider shrink-0">
+          {/* Calendar Grid Container */}
+          <div className="bg-card rounded-3xl border border-border/80 overflow-hidden shadow-xs flex flex-col h-[740px]">
+            <div className="grid grid-cols-7 border-b border-border/60 bg-secondary/50 text-center py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider shrink-0">
               {WEEK_DAYS.map((day) => (
                 <div key={day}>{day}</div>
               ))}
@@ -396,19 +399,19 @@ export function CalendarView({
                     <button
                       key={`${dateKey}-${index}`}
                       onClick={() => setSelectedDate(dateKey)}
-                      className={`p-2 sm:p-2.5 flex flex-col justify-between border-b border-r border-border text-left transition-all relative group focus-visible:outline-none focus-visible:z-25 overflow-hidden ${
+                      className={`p-2.5 flex flex-col justify-between border-b border-r border-border/60 text-left transition-all relative group focus-visible:outline-none focus-visible:z-25 overflow-hidden ${
                         !isCurrentMonth ? "opacity-30 bg-muted/10" : ""
-                      } ${isSelected ? "bg-accent text-accent-foreground ring-1 ring-inset ring-ring z-20 font-semibold" : "hover:bg-muted/40"}`}
+                      } ${isSelected ? "bg-secondary text-secondary-foreground ring-1 ring-inset ring-ring z-20 font-semibold" : "hover:bg-secondary/40"}`}
                     >
                       <div className="flex items-center justify-between w-full">
                         <span
-                          className={`inline-flex items-center justify-center w-6 h-6 text-xs sm:text-sm font-semibold rounded-full ${isToday ? "bg-primary text-primary-foreground font-bold shadow-xs" : "text-foreground"}`}
+                          className={`inline-flex items-center justify-center w-6 h-6 text-xs font-semibold rounded-full ${isToday ? "bg-teal-700 text-white font-bold shadow-2xs" : "text-foreground"}`}
                         >
                           {dayNum}
                         </span>
                         {hasHighPriority && (
                           <span
-                            className="flex h-2 w-2 rounded-full bg-destructive shadow-xs shrink-0"
+                            className="flex h-2 w-2 rounded-full bg-destructive shadow-2xs shrink-0"
                             title="High priority items due"
                           />
                         )}
@@ -416,7 +419,7 @@ export function CalendarView({
 
                       <div className="flex flex-col gap-1 mt-auto pt-1 w-full overflow-hidden">
                         {dayTasks.length > 0 && (
-                          <div className="hidden sm:flex items-center justify-between px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 truncate">
+                          <div className="hidden sm:flex items-center justify-between px-1.5 py-0.5 rounded-lg text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 truncate">
                             <span className="truncate">
                               {dayTasks[0].title}
                             </span>
@@ -428,7 +431,7 @@ export function CalendarView({
                           </div>
                         )}
                         {dayEvents.length > 0 && (
-                          <div className="hidden sm:flex items-center justify-between px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 truncate">
+                          <div className="hidden sm:flex items-center justify-between px-1.5 py-0.5 rounded-lg text-[10px] font-medium bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 truncate">
                             <span className="truncate">
                               {dayEvents[0].title}
                             </span>
@@ -440,7 +443,7 @@ export function CalendarView({
                           </div>
                         )}
                         {dayProjects.length > 0 && (
-                          <div className="hidden sm:flex items-center justify-between px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 truncate">
+                          <div className="hidden sm:flex items-center justify-between px-1.5 py-0.5 rounded-lg text-[10px] font-medium bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30 truncate">
                             <span className="truncate">
                               {dayProjects[0].name}
                             </span>
@@ -468,54 +471,54 @@ export function CalendarView({
 
         {/* Right Column: Sidebar matching calendar height (740px) */}
         <div className="xl:col-span-4 flex flex-col h-[740px] gap-4">
-          {/* Combined Metrics Card (Compact) */}
-          <div className="bg-card rounded-xl border border-border p-4 shadow-2xs flex flex-col shrink-0">
-            <h3 className="text-sm font-bold tracking-tight text-foreground flex items-center gap-2 pb-2 border-b border-border">
-              <TrendingUp className="w-4 h-4 text-primary" /> Month Overview
+          {/* Combined Metrics Card */}
+          <div className="bg-card rounded-3xl border border-border/80 p-5 shadow-xs flex flex-col shrink-0">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2 pb-3 border-b border-border/60">
+              <TrendingUp size={15} className="text-teal-600" /> Month Overview
             </h3>
-            <div className="grid grid-cols-4 gap-2 mt-3">
-              <div className="flex flex-col p-2.5 rounded-lg bg-muted/40 border border-border/60">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            <div className="grid grid-cols-4 gap-2.5 mt-4">
+              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Tasks
                 </span>
-                <span className="text-lg font-bold text-foreground mt-0.5">
+                <span className="text-base font-bold text-foreground mt-0.5">
                   {totalMonthTasks}
                 </span>
               </div>
-              <div className="flex flex-col p-2.5 rounded-lg bg-muted/40 border border-border/60">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Projects
                 </span>
-                <span className="text-lg font-bold text-purple-600 dark:text-purple-400 mt-0.5">
+                <span className="text-base font-bold text-purple-600 dark:text-purple-400 mt-0.5">
                   {totalMonthProjects}
                 </span>
               </div>
-              <div className="flex flex-col p-2.5 rounded-lg bg-muted/40 border border-border/60">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   High Prio
                 </span>
-                <span className="text-lg font-bold text-destructive mt-0.5">
+                <span className="text-base font-bold text-destructive mt-0.5">
                   {highPriorityCount}
                 </span>
               </div>
-              <div className="flex flex-col p-2.5 rounded-lg bg-muted/40 border border-border/60">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Queue
                 </span>
-                <span className="text-lg font-bold text-foreground mt-0.5">
+                <span className="text-base font-bold text-foreground mt-0.5">
                   {upcomingMilestones.length}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Bottom Container splitting remaining space equally between Selected Day & Upcoming Milestones */}
+          {/* Bottom Container splitting remaining space */}
           <div className="flex-1 grid grid-rows-2 gap-4 min-h-0">
             {/* Selected Day Panel */}
-            <div className="bg-card rounded-xl border border-border p-4 shadow-2xs flex flex-col min-h-0">
-              <div className="flex items-center justify-between pb-2 border-b border-border mb-3 shrink-0">
-                <h3 className="text-xs sm:text-sm font-bold tracking-tight text-foreground flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-primary" />
+            <div className="bg-card rounded-3xl border border-border/80 p-5 shadow-xs flex flex-col min-h-0">
+              <div className="flex items-center justify-between pb-3 border-b border-border/60 mb-3 shrink-0">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                  <Layers size={15} className="text-teal-600" />
                   {selectedDate
                     ? new Date(selectedDate + "T00:00:00").toLocaleDateString(
                         undefined,
@@ -546,7 +549,7 @@ export function CalendarView({
                   <div className="flex flex-col gap-4">
                     {selectedDayTasks.length > 0 && (
                       <div className="flex flex-col gap-2">
-                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                           Tasks ({selectedDayTasks.length})
                         </span>
                         {selectedDayTasks.map((task) => (
@@ -557,10 +560,10 @@ export function CalendarView({
                                 `/projects/${task.projectId}?openTask=${task.id}`,
                               )
                             }
-                            className="flex items-center justify-between p-2.5 rounded-lg border border-border hover:border-ring bg-background hover:bg-accent/40 cursor-pointer transition-all group"
+                            className="flex items-center justify-between p-3 rounded-2xl border border-border/80 hover:border-teal-500/50 bg-secondary/30 hover:bg-card cursor-pointer transition-all group shadow-2xs"
                           >
                             <div className="flex flex-col gap-0.5 overflow-hidden pr-2">
-                              <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                              <span className="text-xs font-semibold text-foreground group-hover:text-teal-600 transition-colors truncate">
                                 {task.title}
                               </span>
                               <span className="text-[11px] text-muted-foreground truncate">
@@ -575,7 +578,7 @@ export function CalendarView({
 
                     {selectedDayEvents.length > 0 && (
                       <div className="flex flex-col gap-2">
-                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                           Events ({selectedDayEvents.length})
                         </span>
                         {selectedDayEvents.map((event) => (
@@ -585,14 +588,17 @@ export function CalendarView({
                               setEditingEvent(event);
                               setIsEventModalOpen(true);
                             }}
-                            className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-background transition-all group hover:border-ring hover:bg-accent/40 cursor-pointer"
+                            className="flex items-center justify-between p-3 rounded-2xl border border-border/80 bg-secondary/30 transition-all group hover:border-teal-500/50 hover:bg-card cursor-pointer shadow-2xs"
                           >
                             <div className="flex flex-col gap-0.5 overflow-hidden pr-2">
-                              <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                              <span className="text-xs font-semibold text-foreground group-hover:text-teal-600 transition-colors truncate">
                                 {event.title}
                               </span>
                               <span className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
-                                <CalendarDays className="w-3 h-3 text-amber-500 shrink-0" />
+                                <CalendarDays
+                                  size={12}
+                                  className="text-amber-500 shrink-0"
+                                />
                                 {formatEventTimeRange(
                                   event.startAt,
                                   event.endAt,
@@ -600,9 +606,9 @@ export function CalendarView({
                               </span>
                             </div>
                             <span
-                              className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${event.projectId ? "bg-primary/10 text-primary border border-primary/20" : "bg-secondary text-secondary-foreground"}`}
+                              className={`text-[10px] font-medium px-2.5 py-0.5 rounded-full shrink-0 ${event.projectId ? "bg-primary/10 text-primary border border-primary/20" : "bg-secondary text-secondary-foreground"}`}
                             >
-                              {event.projectId ? "Project Linked" : "Personal"}
+                              {event.projectId ? "Project" : "Personal"}
                             </span>
                           </div>
                         ))}
@@ -611,25 +617,28 @@ export function CalendarView({
 
                     {selectedDayProjects.length > 0 && (
                       <div className="flex flex-col gap-2">
-                        <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                           Projects ({selectedDayProjects.length})
                         </span>
                         {selectedDayProjects.map((project) => (
                           <div
                             key={project.id}
-                            className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-background"
+                            className="flex items-center justify-between p-3 rounded-2xl border border-border/80 bg-secondary/30 shadow-2xs"
                           >
                             <div className="flex flex-col gap-0.5 overflow-hidden pr-2">
                               <span className="text-xs font-semibold text-foreground truncate">
                                 {project.name}
                               </span>
                               <span className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
-                                <CalendarIcon className="w-3 h-3 text-purple-500 shrink-0" />
-                                Due
+                                <CalendarIcon
+                                  size={12}
+                                  className="text-purple-500 shrink-0"
+                                />
+                                Due Deadline
                               </span>
                             </div>
-                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
-                              Project Deadline
+                            <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full shrink-0 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                              Deadline
                             </span>
                           </div>
                         ))}
@@ -641,12 +650,13 @@ export function CalendarView({
             </div>
 
             {/* Upcoming Milestones Queue Card */}
-            <div className="bg-card rounded-xl border border-border p-4 shadow-2xs flex flex-col min-h-0">
-              <div className="flex items-center justify-between pb-2 border-b border-border mb-3 shrink-0">
-                <h3 className="text-xs sm:text-sm font-bold tracking-tight text-foreground flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-primary" /> Upcoming Milestones
+            <div className="bg-card rounded-3xl border border-border/80 p-5 shadow-xs flex flex-col min-h-0">
+              <div className="flex items-center justify-between pb-3 border-b border-border/60 mb-3 shrink-0">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                  <Clock size={15} className="text-teal-600" /> Upcoming
+                  Milestones
                 </h3>
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-[11px] font-semibold text-muted-foreground">
                   {upcomingMilestones.length} items
                 </span>
               </div>
@@ -659,7 +669,7 @@ export function CalendarView({
                     </p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2.5">
                     {upcomingMilestones.map((item, idx) => {
                       const isToday = item.dateKey === todayKey;
                       return (
@@ -675,10 +685,10 @@ export function CalendarView({
                               setIsEventModalOpen(true);
                             }
                           }}
-                          className={`flex flex-col p-2.5 rounded-lg border border-border bg-background transition-all gap-1 group ${item.type === "project" ? "" : "hover:border-ring hover:bg-accent/40 cursor-pointer"}`}
+                          className={`flex flex-col p-3 rounded-2xl border border-border/80 bg-secondary/30 transition-all gap-1.5 group shadow-2xs ${item.type === "project" ? "" : "hover:border-teal-500/50 hover:bg-card cursor-pointer"}`}
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                            <span className="text-xs font-semibold text-foreground group-hover:text-teal-600 transition-colors line-clamp-1">
                               {item.title}
                             </span>
                             {item.type === "task" ? (
@@ -690,23 +700,23 @@ export function CalendarView({
                                   | undefined,
                               )
                             ) : item.type === "event" ? (
-                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                                 Event
                               </span>
                             ) : (
-                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
                                 Project
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
+                          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                             <span className="truncate max-w-[140px]">
                               {item.subtext}
                             </span>
                             <span
                               className={`font-semibold flex items-center gap-1 ${isToday ? "text-destructive" : "text-muted-foreground"}`}
                             >
-                              {isToday && <AlertCircle className="w-3 h-3" />}
+                              {isToday && <AlertCircle size={12} />}
                               {formatRelativeDays(item.dateKey)}
                             </span>
                           </div>
@@ -720,6 +730,7 @@ export function CalendarView({
           </div>
         </div>
       </div>
+
       <EventFormModal
         open={isEventModalOpen}
         onOpenChange={(open: boolean) => {

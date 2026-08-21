@@ -35,6 +35,7 @@ type TaskCommentsProps = {
   refreshKey?: number;
   previewCount?: number;
   canEdit: boolean;
+  canContribute: boolean;
   onCommentCountChanged?: (taskId: string, delta: number) => void;
   onActivityChanged?: () => void;
 };
@@ -43,7 +44,7 @@ export function TaskComments({
   taskId,
   refreshKey,
   previewCount = 4,
-  canEdit,
+  canContribute,
   onCommentCountChanged,
   onActivityChanged,
 }: TaskCommentsProps) {
@@ -161,93 +162,93 @@ export function TaskComments({
   return (
     <div className="flex flex-col h-full space-y-4">
       <div className="flex items-center justify-between shrink-0">
-        <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
           Comments ({comments?.length ?? 0})
         </h3>
       </div>
 
-      {canEdit && (
-        <div className="shrink-0 border border-border rounded-lg overflow-hidden bg-card focus-within:border-ring transition-colors">
+      {canContribute && (
+        <div className="shrink-0 border border-border/80 rounded-2xl overflow-hidden bg-card focus-within:border-ring transition-colors shadow-2xs">
           {!isExpanded ? (
             <div
               onClick={() => setIsExpanded(true)}
-              className="px-3 py-2 cursor-text bg-muted/50 hover:bg-muted transition-colors"
+              className="px-3 py-2 cursor-text bg-muted/30 hover:bg-muted transition-colors"
             >
               <Input
                 readOnly
                 placeholder="Write a comment......"
-                className="border-0 outline-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 cursor-text text-sm bg-transparent px-0 h-8 text-muted-foreground"
+                className="border-0 outline-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 cursor-text text-xs bg-transparent px-0 h-8 text-muted-foreground"
               />
             </div>
           ) : (
             <div className="space-y-0">
-              <div className="bg-muted border-b border-border px-2 py-1.5 flex items-center gap-1">
+              <div className="bg-muted border-b border-border/60 px-2 py-1.5 flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
                   type="button"
                 >
-                  <Bold size={14} />
+                  <Bold size={13} />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
                   type="button"
                 >
-                  <Italic size={14} />
+                  <Italic size={13} />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
                   type="button"
                 >
-                  <Strikethrough size={14} />
+                  <Strikethrough size={13} />
                 </Button>
-                <div className="w-px h-4 bg-border mx-1" />
+                <div className="w-px h-4 bg-border/80 mx-1" />
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
                   type="button"
                 >
-                  <LinkIcon size={14} />
+                  <LinkIcon size={13} />
                 </Button>
-                <div className="w-px h-4 bg-border mx-1" />
+                <div className="w-px h-4 bg-border/80 mx-1" />
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
                   type="button"
                 >
-                  <List size={14} />
+                  <List size={13} />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
                   type="button"
                 >
-                  <ListOrdered size={14} />
+                  <ListOrdered size={13} />
                 </Button>
                 <div className="flex-1" />
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
                   type="button"
                 >
-                  <AtSign size={14} />
+                  <AtSign size={13} />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-lg"
                   type="button"
                 >
-                  <Smile size={14} />
+                  <Smile size={13} />
                 </Button>
               </div>
 
@@ -256,14 +257,14 @@ export function TaskComments({
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Write a comment......"
-                className="min-h-20 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none shadow-none text-sm bg-card px-3 py-2 text-card-foreground"
+                className="min-h-20 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none shadow-none text-xs bg-card px-3 py-2 text-card-foreground"
               />
 
-              <div className="p-2 flex justify-end gap-2 bg-card border-t border-border">
+              <div className="p-2 flex justify-end gap-2 bg-card border-t border-border/60">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs border-input"
+                  className="h-7 text-xs font-medium border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl shadow-2xs cursor-pointer"
                   onClick={handleCancel}
                   disabled={isPending}
                   type="button"
@@ -272,7 +273,7 @@ export function TaskComments({
                 </Button>
                 <Button
                   size="sm"
-                  className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+                  className="h-7 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl shadow-2xs cursor-pointer"
                   onClick={handlePost}
                   disabled={isPending || !content.trim()}
                   type="button"
@@ -289,7 +290,7 @@ export function TaskComments({
       <div className="flex-1 min-h-0 flex flex-col">
         <div className="flex-1 min-h-0 overflow-y-auto pr-1">
           {comments === null ? (
-            <ul className="space-y-5 pb-2">
+            <ul className="space-y-4 pb-2">
               {Array.from({ length: previewCount }).map((_, i) => (
                 <CommentRowSkeleton key={i} />
               ))}
@@ -299,7 +300,7 @@ export function TaskComments({
               No comments yet.
             </p>
           ) : (
-            <ul className="space-y-5 pb-2">
+            <ul className="space-y-4 pb-2">
               {preview.map((c) => (
                 <CommentRow
                   key={c.id}
@@ -317,7 +318,7 @@ export function TaskComments({
         {hasMore && (
           <button
             onClick={() => setShowAllOpen(true)}
-            className="shrink-0 text-xs text-primary hover:underline font-medium pt-2 text-left"
+            className="shrink-0 text-xs text-primary hover:underline font-medium pt-2 text-left cursor-pointer"
           >
             See all comments ({comments!.length})
           </button>

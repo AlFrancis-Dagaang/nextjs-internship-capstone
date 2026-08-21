@@ -19,7 +19,7 @@ type TaskSidebarProps = {
   assignableUsers: { id: string; name?: string; email?: string }[];
   activityRefreshKey: number;
   canEdit: boolean;
-  role: "owner" | "editor" | "viewer";
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   onRestored?: () => void;
   onChanged?: (task: TaskWithCommentCount) => void;
   onMoved?: (task: Task, affectedTasks: Task[]) => void;
@@ -52,7 +52,7 @@ export function TaskSidebar({
           onChanged={onChanged}
         />
 
-        <div className="border-t border-border">
+        <div className="border-t border-border/80 pt-4">
           <TaskDatesSection
             task={task}
             canEdit={canEdit}
@@ -61,7 +61,7 @@ export function TaskSidebar({
         </div>
 
         {!task.isArchived && (
-          <div className="border-t border-border">
+          <div className="border-t border-border/80 pt-4">
             <TaskMoveSection
               task={task}
               canEdit={canEdit}
@@ -71,7 +71,7 @@ export function TaskSidebar({
           </div>
         )}
 
-        <div className="border-t border-border">
+        <div className="border-t border-border/80 pt-4">
           <TaskMembersSection
             task={task}
             projectId={projectId}
@@ -82,15 +82,15 @@ export function TaskSidebar({
           />
         </div>
 
-        <div className="border-t border-border">
-          <h4 className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider mb-2">
+        <div className="border-t border-border/80 pt-4">
+          <h4 className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mb-2">
             Activity Log
           </h4>
           <TaskActivityFeed taskId={task.id} refreshKey={activityRefreshKey} />
         </div>
       </div>
 
-      <div className="shrink-0 pt-3 mt-2 border-t border-border bg-muted/50">
+      <div className="shrink-0 pt-3 mt-2 border-t border-border/80 bg-muted/40">
         <TaskQuickActions
           task={task}
           onDeleteClick={onDeleteClick}
