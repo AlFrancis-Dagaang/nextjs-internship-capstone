@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { ProjectInfo } from "../project-detail/project-info";
 import { ProjectMembers } from "../project-detail/project-members";
-import type { Member } from "@/stores/project-store"; // <--- Import from store
+import type { Member } from "@/stores/project-store";
 
 type ProjectDetailModalProps = {
   project: Project;

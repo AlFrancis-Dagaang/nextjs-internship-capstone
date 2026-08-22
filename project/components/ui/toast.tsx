@@ -27,16 +27,15 @@ ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 // Inside your components/ui/toast.tsx file, update the toastVariants:
 
 const toastVariants = cva(
-  "data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none group relative pointer-events-auto flex w-full items-center justify-between space-x-4 overflow-hidden rounded-xl border p-4 pr-6 shadow-xl backdrop-blur-md transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  "data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none group relative pointer-events-auto flex w-full items-center justify-between space-x-4 overflow-hidden rounded-3xl border p-4 pr-6 shadow-xl backdrop-blur-xl transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
     variants: {
       variant: {
-        default:
-          "border-border/60 bg-background/95 text-foreground shadow-black/5",
+        default: "border-border/80 bg-card text-card-foreground shadow-xs",
         success:
-          "border-emerald-500/20 bg-emerald-500/10 text-emerald-900 dark:text-emerald-100",
+          "border-emerald-500/30 bg-emerald-500/10 text-emerald-900 dark:text-emerald-100",
         warning:
-          "border-amber-500/20 bg-amber-500/10 text-amber-900 dark:text-amber-100",
+          "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-100",
         destructive:
           "border-destructive/30 bg-destructive/10 text-destructive-foreground",
       },

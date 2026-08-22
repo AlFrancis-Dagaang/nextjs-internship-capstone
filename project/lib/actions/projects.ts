@@ -5,16 +5,13 @@ import { queries } from "@/lib/db";
 import { projectCreateSchema, projectUpdateSchema } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
 import {
-  assertProjectOwnership,
   assertProjectManageAccess,
   assertProjectViewAccess,
 } from "@/lib/services/ownership";
-import { Project } from "../db/schema";
+import { Project } from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
-type ActionResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string; fieldErrors?: Record<string, string[]> };
-import { publishProjectEvent } from "@/lib/realtime/server"; // ← add
+import { publishProjectEvent } from "@/lib/realtime/server";
+import type { ActionResult } from "@/types";
 
 export async function createProject(
   input: unknown,
@@ -38,11 +35,6 @@ export async function createProject(
     ownerId: authResult.user.id,
   });
 
-  // Seed every new project with a standard Todo/In Progress/Done
-  // structure + one sample task, so it isn't a blank board on first
-  // load. No realtime publish needed here — nobody else can be
-  // subscribed to this project's channel yet, since it didn't exist
-  // until this line.
   const [todoList] = await Promise.all([
     queries.lists.create({ name: "Todo", projectId: project.id, position: 0 }),
     queries.lists.create({
