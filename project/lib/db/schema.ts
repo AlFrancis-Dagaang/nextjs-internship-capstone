@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -11,6 +11,25 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
+// Near the top of lib/db/schema.ts, before either table definition
+export const NOTIFICATION_TYPES = [
+  "project_added",
+  "project_removed",
+  "task_assigned",
+  "task_unassigned",
+  "task_comment_added",
+  "task_moved",
+  "task_archived",
+  "task_due_soon_24h",
+  "task_due_soon_today",
+  "project_event_added",
+  "team_member_added",
+  "team_member_removed",
+  "team_attached_to_project",
+] as const;
+
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
 // ---------- Tables ----------
 
 export const users = pgTable("users", {
@@ -22,6 +41,10 @@ export const users = pgTable("users", {
   hasImage: boolean("has_image").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  notificationPreferences: jsonb("notification_preferences")
+    .$type<Partial<Record<NotificationType, boolean>>>()
+    .notNull()
+    .default(sql`'{}'::jsonb`),
 });
 
 export const projects = pgTable("projects", {
@@ -209,22 +232,7 @@ export const notifications = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    type: text("type", {
-      enum: [
-        "project_added",
-        "project_removed",
-        "task_assigned",
-        "task_unassigned",
-        "task_comment_added",
-        "task_moved",
-        "task_archived",
-        "task_due_soon_24h",
-        "task_due_soon_today",
-        "project_event_added",
-        "team_member_added",
-        "team_attached_to_project",
-      ],
-    }).notNull(),
+    type: text("type", { enum: NOTIFICATION_TYPES }).notNull(),
     projectId: uuid("project_id").references(() => projects.id, {
       onDelete: "cascade",
     }),
@@ -406,7 +414,6 @@ export type TaskAssignee = typeof taskAssignees.$inferSelect;
 export type NewTaskAssignee = typeof taskAssignees.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
-export type NotificationType = Notification["type"];
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type Team = typeof teams.$inferSelect;

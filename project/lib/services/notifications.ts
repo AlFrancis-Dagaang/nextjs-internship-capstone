@@ -1,6 +1,7 @@
 import { queries } from "@/lib/db";
 import type { NotificationType } from "@/lib/db/schema";
 import { publishNotification } from "@/lib/realtime/server";
+import { isNotificationEnabled } from "@/lib/services/notification-preferences";
 
 export async function createNotification(params: {
   userId: string;
@@ -10,8 +11,12 @@ export async function createNotification(params: {
   taskId?: string;
   actorId?: string;
 }) {
-  // Don't notify someone about their own action.
   if (params.actorId && params.actorId === params.userId) return;
+
+  const recipient = await queries.users.getById(params.userId);
+  if (!isNotificationEnabled(recipient?.notificationPreferences, params.type)) {
+    return;
+  }
 
   const notification = await queries.notifications.create({
     userId: params.userId,
@@ -22,9 +27,6 @@ export async function createNotification(params: {
     actorId: params.actorId ?? null,
   });
 
-  // NotificationRealtimePayload requires projectId — only publish when
-  // one exists (every current call site passes it, but the param is
-  // typed optional, so guard rather than assume).
   if (params.projectId) {
     await publishNotification(params.userId, {
       id: notification.id,

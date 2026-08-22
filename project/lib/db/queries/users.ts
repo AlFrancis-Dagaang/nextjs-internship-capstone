@@ -1,6 +1,6 @@
 import { eq, ilike, or } from "drizzle-orm";
 import { db } from "../client";
-import { users } from "../schema";
+import { NotificationType, users } from "../schema";
 
 export const usersQueries = {
   getByClerkId: async (clerkId: string) => {
@@ -47,5 +47,20 @@ export const usersQueries = {
   },
   getById: async (id: string) => {
     return db.query.users.findFirst({ where: eq(users.id, id) });
+  },
+  updateNotificationPreferences: async (
+    userId: string,
+    patch: Partial<Record<NotificationType, boolean>>,
+  ) => {
+    const existing = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+    const merged = { ...(existing?.notificationPreferences ?? {}), ...patch };
+    const [updated] = await db
+      .update(users)
+      .set({ notificationPreferences: merged, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
   },
 };
