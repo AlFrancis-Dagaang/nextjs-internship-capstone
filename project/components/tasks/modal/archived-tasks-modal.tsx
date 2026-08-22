@@ -1,3 +1,4 @@
+// components/tasks/modal/archived-tasks-modal.tsx
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
@@ -47,7 +48,13 @@ export function ArchivedTasksModal({
   const [openArchivedTask, setOpenArchivedTask] =
     useState<TaskWithCommentCount | null>(null);
   const [assignableUsers, setAssignableUsers] = useState<
-    { id: string; name?: string; email?: string }[]
+    {
+      id: string;
+      name?: string;
+      email?: string;
+      imageUrl?: string | null;
+      hasImage?: boolean | null;
+    }[]
   >([]);
 
   useEffect(() => {
@@ -75,7 +82,8 @@ export function ArchivedTasksModal({
     }
   }, [open, projectId, role, toast]);
 
-  const handleRestore = (task: Task) => {
+  const handleRestore = (task: TaskWithCommentCount) => {
+    // note type updated to TaskWithCommentCount
     startTransition(async () => {
       const res = await restoreTask(task.id, getRealtimeClientId());
       if (res.success) {
@@ -84,7 +92,16 @@ export function ArchivedTasksModal({
           description: `"${task.title}" has been restored.`,
         });
         setArchivedTasks((prev) => prev.filter((t) => t.id !== task.id));
-        insertTaskAt(task.listId, res.data, res.data.position);
+
+        // Preserve assignees so avatars don't revert to initials
+        const restoredTaskWithAssignees = {
+          ...res.data,
+          commentCount: task.commentCount ?? 0,
+          assignees: task.assignees,
+        };
+
+        insertTaskAt(task.listId, restoredTaskWithAssignees, res.data.position);
+
         if (openArchivedTask?.id === task.id) {
           setOpenArchivedTask(null);
         }
@@ -149,6 +166,8 @@ export function ArchivedTasksModal({
                   userId: a.userId ?? a.id ?? a.user?.id,
                   name: a.name ?? a.userName ?? a.user?.name,
                   email: a.email ?? a.userEmail ?? a.user?.email,
+                  imageUrl: a.imageUrl ?? a.userImageUrl ?? a.user?.imageUrl,
+                  hasImage: a.hasImage ?? a.userHasImage ?? a.user?.hasImage,
                 })),
               };
 

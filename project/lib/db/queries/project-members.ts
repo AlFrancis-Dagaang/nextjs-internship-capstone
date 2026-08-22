@@ -28,6 +28,8 @@ export const projectMembersQueries = {
         createdAt: projectMembers.createdAt,
         userName: users.name,
         userEmail: users.email,
+        userImageUrl: users.imageUrl,
+        userHasImage: users.hasImage,
       })
       .from(projectMembers)
       .innerJoin(users, eq(projectMembers.userId, users.id))

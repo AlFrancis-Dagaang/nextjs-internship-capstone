@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   ShieldAlert,
   Lock,
+  AlertCircle,
 } from "lucide-react";
 
 export function SecurityTab() {
@@ -43,17 +44,30 @@ export function SecurityTab() {
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  // Clerk sensitive action wrappers using useReverification
-  const createEmailAddress = useReverification((email: string) => {
-    if (!user) throw new Error("User not loaded");
-    return user.createEmailAddress({ email });
-  });
+  /**
+   * Clerk treats password changes/creation as sensitive actions.
+   *
+   * useReverification() handles the case where Clerk requires
+   * the user to verify their identity again before the password
+   * operation can continue.
+   *
+   * currentPassword is optional here because an account may not
+   * have an existing password yet.
+   */
+  const updatePasswordWithReverification = useReverification(
+    async (args: { currentPassword?: string; newPassword: string }) => {
+      if (!user) {
+        throw new Error("User not loaded");
+      }
 
-  const updatePassword = useReverification(
-    (args: { currentPassword?: string; newPassword: string }) => {
-      if (!user) throw new Error("User not loaded");
-      return user.updatePassword(args);
+      return user.updatePassword({
+        ...(args.currentPassword
+          ? { currentPassword: args.currentPassword }
+          : {}),
+        newPassword: args.newPassword,
+      });
     },
   );
 
@@ -70,14 +84,22 @@ export function SecurityTab() {
 
   function handleAddEmail(e: React.FormEvent) {
     e.preventDefault();
+
     if (!newEmail.trim() || !user) return;
 
     startEmailTransition(async () => {
       try {
-        const emailRes = await createEmailAddress(newEmail.trim());
+        const emailRes = await user.createEmailAddress({
+          email: newEmail.trim(),
+        });
+
         if (emailRes) {
-          await emailRes.prepareVerification({ strategy: "email_code" });
+          await emailRes.prepareVerification({
+            strategy: "email_code",
+          });
+
           setPendingEmailObj(emailRes);
+
           toast({
             title: "Verification code sent",
             description: `Please check ${newEmail} for your 6-digit verification code.`,
@@ -98,6 +120,7 @@ export function SecurityTab() {
 
   function handleVerifyEmailCode(e: React.FormEvent) {
     e.preventDefault();
+
     if (!verificationCode.trim() || !pendingEmailObj || !user) return;
 
     startEmailTransition(async () => {
@@ -105,12 +128,14 @@ export function SecurityTab() {
         await pendingEmailObj.attemptVerification({
           code: verificationCode.trim(),
         });
+
         await user.reload();
 
         toast({
           title: "Email verified",
           description: "Successfully added and verified new email address.",
         });
+
         setPendingEmailObj(null);
         setNewEmail("");
         setVerificationCode("");
@@ -132,8 +157,12 @@ export function SecurityTab() {
 
     startEmailTransition(async () => {
       try {
-        await user.update({ primaryEmailAddressId: emailId });
+        await user.update({
+          primaryEmailAddressId: emailId,
+        });
+
         await user.reload();
+
         toast({
           title: "Primary email updated",
           description:
@@ -158,7 +187,9 @@ export function SecurityTab() {
     startEmailTransition(async () => {
       try {
         await emailObj.destroy();
+
         await user.reload();
+
         toast({
           title: "Email removed",
           description: "The email address has been removed from your account.",
@@ -179,8 +210,12 @@ export function SecurityTab() {
   function handleResendVerification(emailObj: any) {
     startEmailTransition(async () => {
       try {
-        await emailObj.prepareVerification({ strategy: "email_code" });
+        await emailObj.prepareVerification({
+          strategy: "email_code",
+        });
+
         setPendingEmailObj(emailObj);
+
         toast({
           title: "Verification code sent",
           description: `A new code has been sent to ${emailObj.emailAddress}.`,
@@ -198,34 +233,70 @@ export function SecurityTab() {
 
   function handleUpdatePassword(e: React.FormEvent) {
     e.preventDefault();
-    if (!newPassword.trim() || !user) return;
+
+    if (!user || !newPassword.trim()) return;
+
+    setPasswordError(null);
 
     startPasswordTransition(async () => {
       try {
-        if (user.passwordEnabled) {
-          await updatePassword({ currentPassword, newPassword });
-        } else {
-          await updatePassword({ newPassword });
+        // Capture this before the password operation.
+        const hadPassword = user.passwordEnabled;
+
+        if (hadPassword && !currentPassword.trim()) {
+          setPasswordError("Please enter your current password.");
+          return;
         }
-        await user.reload();
-        toast({
-          title: "Password updated",
-          description: user.passwordEnabled
-            ? "Your password has been changed."
-            : "Password created successfully.",
+
+        /**
+         * Both cases go through Clerk's reverification wrapper.
+         *
+         * Existing password:
+         *   currentPassword + newPassword
+         *
+         * No existing password:
+         *   newPassword only
+         *
+         * Clerk can then request the appropriate reverification
+         * method before allowing the sensitive operation.
+         */
+        await updatePasswordWithReverification({
+          ...(hadPassword
+            ? {
+                currentPassword: currentPassword.trim(),
+              }
+            : {}),
+          newPassword: newPassword.trim(),
         });
+
+        await user.reload();
+
+        toast({
+          title: hadPassword ? "Password updated" : "Password created",
+          description: hadPassword
+            ? "Your password has been changed successfully."
+            : "Your password has been created successfully.",
+        });
+
         setCurrentPassword("");
         setNewPassword("");
+        setPasswordError(null);
         setPasswordModalOpen(false);
       } catch (err: any) {
-        toast({
-          title: "Failed to update password",
-          description:
-            err?.errors?.[0]?.message ||
-            err?.message ||
-            "Could not update password.",
-          variant: "destructive",
-        });
+        // User cancelled Clerk reverification.
+        if (
+          err?.code === "reverification_cancelled" ||
+          err?.message?.toLowerCase().includes("cancelled")
+        ) {
+          return;
+        }
+
+        const errorMsg =
+          err?.errors?.[0]?.message ||
+          err?.message ||
+          "Could not update password.";
+
+        setPasswordError(errorMsg);
       }
     });
   }
@@ -236,10 +307,12 @@ export function SecurityTab() {
       <div className="bg-card border border-border/80 rounded-2xl shadow-xs p-6 space-y-4">
         <div className="flex items-center gap-2">
           <Mail size={16} className="text-primary" />
+
           <h2 className="text-base font-semibold tracking-tight text-foreground">
             Email Addresses
           </h2>
         </div>
+
         <p className="text-xs text-muted-foreground">
           Manage email addresses linked to your account.
         </p>
@@ -256,23 +329,29 @@ export function SecurityTab() {
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Mail size={14} className="text-muted-foreground shrink-0" />
+
                   <span className="font-medium text-foreground truncate">
                     {emailObj.emailAddress}
                   </span>
 
                   {isPrimary && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
-                      <CheckCircle2 size={11} /> Primary
+                      <CheckCircle2 size={11} />
+                      Primary
                     </span>
                   )}
+
                   {isVerified && !isPrimary && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-secondary text-muted-foreground border border-border shrink-0">
-                      <CheckCircle2 size={11} /> Verified
+                      <CheckCircle2 size={11} />
+                      Verified
                     </span>
                   )}
+
                   {!isVerified && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-destructive/10 text-destructive border border-destructive/20 shrink-0">
-                      <ShieldAlert size={11} /> Unverified
+                      <ShieldAlert size={11} />
+                      Unverified
                     </span>
                   )}
                 </div>
@@ -288,6 +367,7 @@ export function SecurityTab() {
                         <MoreHorizontal size={15} />
                       </Button>
                     </DropdownMenuTrigger>
+
                     <DropdownMenuContent
                       align="end"
                       className="w-48 bg-card text-card-foreground border-border rounded-xl shadow-xl p-1 z-50 text-xs"
@@ -300,14 +380,16 @@ export function SecurityTab() {
                           Set as primary
                         </DropdownMenuItem>
                       )}
+
                       {!isVerified && (
                         <DropdownMenuItem
                           onClick={() => handleResendVerification(emailObj)}
-                          className="cursor-pointer px-2.5 py-2 rounded-lg focus:bg-accent focus:text-accent-foreground font-medium"
+                          className="cursor-pointer px-2.5 py-2 rounded-lg focus:bg-accent/10 focus:text-accent-foreground font-medium"
                         >
                           Verify email
                         </DropdownMenuItem>
                       )}
+
                       {emailAddresses.length > 1 && (
                         <DropdownMenuItem
                           onClick={() => handleRemoveEmail(emailObj)}
@@ -333,6 +415,7 @@ export function SecurityTab() {
               onChange={(e) => setNewEmail(e.target.value)}
               className="h-8 text-xs bg-muted border-border rounded-xl shadow-2xs flex-1"
             />
+
             <Button
               type="submit"
               disabled={isEmailPending || !newEmail.trim()}
@@ -352,6 +435,7 @@ export function SecurityTab() {
             <p className="text-xs font-semibold text-foreground">
               Enter 6-digit verification code sent to {newEmail}
             </p>
+
             <div className="flex gap-2">
               <Input
                 placeholder="123456"
@@ -359,6 +443,7 @@ export function SecurityTab() {
                 onChange={(e) => setVerificationCode(e.target.value)}
                 className="h-8 text-xs bg-card border-border rounded-xl shadow-2xs flex-1"
               />
+
               <Button
                 type="submit"
                 disabled={isEmailPending || !verificationCode.trim()}
@@ -375,10 +460,12 @@ export function SecurityTab() {
       <div className="bg-card border border-border/80 rounded-2xl shadow-xs p-6 space-y-4">
         <div className="flex items-center gap-2">
           <KeyRound size={16} className="text-primary" />
+
           <h2 className="text-base font-semibold tracking-tight text-foreground">
             Password
           </h2>
         </div>
+
         <p className="text-xs text-muted-foreground">
           Manage your account password credentials.
         </p>
@@ -386,8 +473,9 @@ export function SecurityTab() {
         <div className="border border-border/80 rounded-xl bg-muted/30 px-4 py-3 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2.5">
             <Lock size={14} className="text-muted-foreground" />
+
             <span className="font-mono tracking-widest text-foreground text-sm">
-              ••••••••••••
+              {user.passwordEnabled ? "••••••••••••" : "No password set"}
             </span>
           </div>
 
@@ -401,12 +489,18 @@ export function SecurityTab() {
                 <MoreHorizontal size={15} />
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent
               align="end"
               className="w-48 bg-card text-card-foreground border-border rounded-xl shadow-xl p-1 z-50 text-xs"
             >
               <DropdownMenuItem
-                onClick={() => setPasswordModalOpen(true)}
+                onClick={() => {
+                  setPasswordError(null);
+                  setCurrentPassword("");
+                  setNewPassword("");
+                  setPasswordModalOpen(true);
+                }}
                 className="cursor-pointer px-2.5 py-2 rounded-lg focus:bg-accent focus:text-accent-foreground font-medium"
               >
                 {user.passwordEnabled ? "Change password" : "Set password"}
@@ -417,24 +511,52 @@ export function SecurityTab() {
       </div>
 
       {/* Password Modal */}
-      <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
+      <Dialog
+        open={passwordModalOpen}
+        onOpenChange={(open) => {
+          setPasswordModalOpen(open);
+
+          if (!open) {
+            setPasswordError(null);
+            setCurrentPassword("");
+            setNewPassword("");
+          }
+        }}
+      >
         <DialogContent className="max-w-md bg-card text-card-foreground border border-border/80 rounded-2xl shadow-xl p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
               {user.passwordEnabled ? "Change Password" : "Set Password"}
             </DialogTitle>
           </DialogHeader>
+
           <form onSubmit={handleUpdatePassword} className="space-y-4 pt-2">
+            {passwordError && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+                <AlertCircle size={15} className="shrink-0" />
+                <span>{passwordError}</span>
+              </div>
+            )}
+
+            {/* Only show current password when one already exists */}
             {user.passwordEnabled && (
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   Current Password
                 </Label>
+
                 <Input
                   type="password"
                   value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  onChange={(e) => {
+                    setCurrentPassword(e.target.value);
+
+                    if (passwordError) {
+                      setPasswordError(null);
+                    }
+                  }}
                   className="h-9 text-xs bg-muted border-border rounded-xl shadow-2xs"
+                  autoComplete="current-password"
                 />
               </div>
             )}
@@ -443,11 +565,19 @@ export function SecurityTab() {
               <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 New Password
               </Label>
+
               <Input
                 type="password"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+
+                  if (passwordError) {
+                    setPasswordError(null);
+                  }
+                }}
                 className="h-9 text-xs bg-muted border-border rounded-xl shadow-2xs"
+                autoComplete="new-password"
               />
             </div>
 
@@ -460,6 +590,7 @@ export function SecurityTab() {
               >
                 Cancel
               </Button>
+
               <Button
                 type="submit"
                 disabled={isPasswordPending || !newPassword.trim()}
@@ -468,7 +599,8 @@ export function SecurityTab() {
                 {isPasswordPending && (
                   <Loader2 size={13} className="mr-1.5 animate-spin" />
                 )}
-                Save Changes
+
+                {user.passwordEnabled ? "Change Password" : "Set Password"}
               </Button>
             </div>
           </form>

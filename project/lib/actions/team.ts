@@ -208,11 +208,18 @@ export async function removeTeamMember(
 
   await queries.teams.removeMember(teamId, userId);
 
+  const actor = await queries.users.getById(authResult.user.id);
+  await createNotification({
+    userId,
+    type: "team_member_removed",
+    message: `${actor?.name ?? "Someone"} removed you from the team "${access.team.name}"`,
+    actorId: authResult.user.id,
+  });
+
   revalidatePath("/team");
 
   return { success: true, data: null };
 }
-
 // lib/actions/team.ts
 export async function getTeamMembers(teamId: string) {
   const authResult = await getAuthedUserOrError();

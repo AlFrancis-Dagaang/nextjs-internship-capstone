@@ -1,3 +1,4 @@
+// components/projects/project-card.tsx
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -11,14 +12,16 @@ import { ProjectDetailModal } from "./modals/project-detail-modal";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Users, Calendar, ArrowUpRight, CheckCircle2 } from "lucide-react";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import { getCompletionLabel } from "@/lib/utils/utils";
+import { UserAvatar } from "../ui/user-avatar";
 
 type Member = {
   id: string;
   userId: string;
   email?: string;
   name?: string;
+  imageUrl?: string | null;
+  hasImage?: boolean;
   role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 
@@ -33,6 +36,8 @@ export function ProjectCard({
   initialMembers = [],
   ownerName,
   ownerEmail,
+  ownerImageUrl,
+  ownerHasImage,
   myRole,
   completion,
 }: {
@@ -41,6 +46,8 @@ export function ProjectCard({
   initialMembers?: Member[];
   ownerName?: string;
   ownerEmail?: string;
+  ownerImageUrl?: string | null;
+  ownerHasImage?: boolean | null;
   myRole?: "owner" | "admin" | "editor" | "contributor" | "viewer";
   completion: CompletionInfo;
 }) {
@@ -178,15 +185,15 @@ export function ProjectCard({
 
         {/* Footer Metadata & SaaS Actions */}
         <div className="relative z-10 pt-3 border-t border-border/80 flex flex-col gap-3">
-          {/* Owner Info Row */}
+          {/* Owner Info Row with UserAvatar */}
           <div className="flex items-center gap-2">
-            <div
-              className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold uppercase shadow-2xs ${getAvatarColor(
-                project.ownerId || ownerDisplayString,
-              )}`}
-            >
-              {getInitials(ownerName || ownerEmail || "U")}
-            </div>
+            <UserAvatar
+              userId={project.ownerId || ownerEmail || "owner"}
+              name={ownerName || ownerEmail || "Project Owner"}
+              imageUrl={ownerImageUrl}
+              hasImage={ownerHasImage ?? false}
+              className="w-5 h-5 text-[9px]"
+            />
             <span className="text-[11px] text-muted-foreground">
               Owner:{" "}
               <span className="font-medium text-foreground">
@@ -201,11 +208,11 @@ export function ProjectCard({
               <div className="flex items-center space-x-1.5 text-muted-foreground">
                 <CheckCircle2 size={13} className="text-muted-foreground" />
                 <span className="font-medium text-[11px] text-muted-foreground">
-                  Task Completion
+                  Tasks ({completion.total})
                 </span>
               </div>
               <span className="font-medium text-[11px] text-foreground">
-                {completionLabel}
+                {completionPercent}% completed
               </span>
             </div>
             {completion.total > 0 && (
@@ -240,20 +247,17 @@ export function ProjectCard({
             {/* Unified Colored Avatar Stack */}
             <div className="flex items-center">
               <div className="flex items-center -space-x-1.5">
-                {members.slice(0, 3).map((m) => {
-                  const stableKey = m.userId || m.email || m.id;
-                  return (
-                    <div
-                      key={m.id}
-                      className={`w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase shadow-2xs ${getAvatarColor(
-                        stableKey,
-                      )}`}
-                      title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
-                    >
-                      {getInitials(m.name || m.email || "U")}
-                    </div>
-                  );
-                })}
+                {members.slice(0, 3).map((m) => (
+                  <UserAvatar
+                    key={m.id}
+                    userId={m.userId || m.email || m.id}
+                    name={m.name || m.email || "U"}
+                    imageUrl={m.imageUrl}
+                    hasImage={m.hasImage}
+                    className="w-7 h-7"
+                    title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
+                  />
+                ))}
                 {members.length > 3 && (
                   <div
                     className="w-7 h-7 rounded-full border-2 border-card bg-muted text-muted-foreground flex items-center justify-center text-[10px] font-bold shadow-2xs"
@@ -300,6 +304,8 @@ export function ProjectCard({
         canManage={canManage}
         ownerName={ownerName}
         ownerEmail={ownerEmail}
+        ownerImageUrl={ownerImageUrl}
+        ownerHasImage={ownerHasImage}
         open={detailOpen}
         onOpenChange={setDetailOpen}
         onMemberAdded={addMember}

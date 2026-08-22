@@ -12,6 +12,8 @@ export const taskAssigneesQueries = {
         createdAt: taskAssignees.createdAt,
         userName: users.name,
         userEmail: users.email,
+        userImageUrl: users.imageUrl,
+        userHasImage: users.hasImage,
       })
       .from(taskAssignees)
       .innerJoin(users, eq(taskAssignees.userId, users.id))
@@ -39,6 +41,7 @@ export const taskAssigneesQueries = {
         and(eq(taskAssignees.taskId, taskId), eq(taskAssignees.userId, userId)),
       );
   },
+  // in your db queries file (e.g. queries.taskAssignees)
   getByProject: async (projectId: string) => {
     return db
       .select({
@@ -46,6 +49,8 @@ export const taskAssigneesQueries = {
         userId: taskAssignees.userId,
         userName: users.name,
         userEmail: users.email,
+        userImageUrl: users.imageUrl, // <-- Add this
+        userHasImage: users.hasImage, // <-- Add this
       })
       .from(taskAssignees)
       .innerJoin(tasks, eq(taskAssignees.taskId, tasks.id))

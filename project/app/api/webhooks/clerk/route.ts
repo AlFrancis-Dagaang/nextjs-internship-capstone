@@ -45,7 +45,8 @@ export async function POST(req: Request) {
   const eventType = event.type;
 
   if (eventType === "user.created" || eventType === "user.updated") {
-    const { id, email_addresses, first_name, last_name } = event.data;
+    const { id, email_addresses, first_name, last_name, image_url, has_image } =
+      event.data;
     console.log("Webhook received:", eventType, id);
 
     const primaryEmail = email_addresses?.[0]?.email_address;
@@ -56,7 +57,13 @@ export async function POST(req: Request) {
 
     const name = [first_name, last_name].filter(Boolean).join(" ") || "Unknown";
 
-    const result = await syncUserFromClerkData(id, primaryEmail, name);
+    const result = await syncUserFromClerkData(
+      id,
+      primaryEmail,
+      name,
+      image_url,
+      has_image,
+    );
     console.log("Upsert result:", result);
   }
 

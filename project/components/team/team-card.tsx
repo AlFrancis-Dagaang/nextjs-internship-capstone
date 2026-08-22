@@ -9,12 +9,14 @@ import { TeamCardActions } from "./team-card-actions";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Users, ArrowUpRight } from "lucide-react";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type MemberInfo = {
   userId: string;
   name: string;
   email: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
 };
 
 export function TeamCard({
@@ -44,6 +46,8 @@ export function TeamCard({
           userId: m.userId,
           name: m.userName,
           email: m.userEmail,
+          imageUrl: m.userImageUrl ?? m.imageUrl,
+          hasImage: m.userHasImage ?? m.hasImage,
         }));
         setMembers(mapped);
       }
@@ -143,7 +147,7 @@ export function TeamCard({
             </span>
           </div>
 
-          {/* Unified Colored Avatar Stack */}
+          {/* Unified Avatar Stack */}
           <div
             className="flex items-center pointer-events-auto"
             onClick={(e) => e.stopPropagation()}
@@ -151,16 +155,17 @@ export function TeamCard({
             <div className="flex items-center -space-x-1.5">
               {members.slice(0, 3).map((m) => {
                 const stableKey = m.userId || m.email;
+                const displayName = m.name || m.email || "User";
                 return (
-                  <div
+                  <UserAvatar
                     key={m.userId}
-                    className={`w-7 h-7 rounded-full border-2 border-white dark:border-card flex items-center justify-center text-[10px] font-bold uppercase shadow-2xs ${getAvatarColor(
-                      stableKey,
-                    )}`}
-                    title={`${m.name ?? m.email}`}
-                  >
-                    {getInitials(m.name || m.email || "U")}
-                  </div>
+                    userId={stableKey}
+                    name={displayName}
+                    imageUrl={m.imageUrl}
+                    hasImage={m.hasImage ?? false}
+                    className="w-7 h-7 text-[10px] border-2 border-white dark:border-card shadow-2xs"
+                    title={displayName}
+                  />
                 );
               })}
               {members.length > 3 && (

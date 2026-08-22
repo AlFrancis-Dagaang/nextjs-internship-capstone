@@ -38,7 +38,13 @@ import { getRealtimeClientId } from "@/lib/realtime/client";
 
 export type TaskWithCommentCount = Task & {
   commentCount?: number;
-  assignees?: { userId: string; name?: string; email?: string }[];
+  assignees?: {
+    userId: string;
+    name?: string;
+    email?: string;
+    imageUrl?: string | null;
+    hasImage?: boolean | null;
+  }[];
 };
 export type ListWithTasks = List & { tasks: TaskWithCommentCount[] };
 

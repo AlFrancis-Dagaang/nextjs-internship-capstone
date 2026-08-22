@@ -7,6 +7,8 @@ export type Member = {
   userId: string;
   email?: string;
   name?: string;
+  imageUrl?: string | null;
+  hasImage?: boolean;
   role: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
 

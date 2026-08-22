@@ -1,3 +1,4 @@
+// components/settings/teams-tab.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -39,7 +40,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { getInitials } from "@/lib/utils/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type TeamForUser = {
   id: string;
@@ -55,6 +57,8 @@ type TeamMember = {
   createdAt: Date;
   userName?: string;
   userEmail?: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
 };
 
 export function TeamsTab({
@@ -166,10 +170,15 @@ export function TeamsTab({
       setLoadingMembersId(teamId);
       const res = await getTeamMembers(teamId);
       if (res.success) {
+        const mappedMembers = (res.data as any[]).map((m) => ({
+          ...m,
+          imageUrl: m.userImageUrl ?? m.imageUrl,
+          hasImage: m.userHasImage ?? m.hasImage,
+        }));
         setMembersMap(
           (prev): Record<string, TeamMember[]> => ({
             ...prev,
-            [teamId]: res.data as TeamMember[],
+            [teamId]: mappedMembers,
           }),
         );
       } else {
@@ -203,10 +212,15 @@ export function TeamsTab({
       if (res.success) {
         const membersRes = await getTeamMembers(teamId);
         if (membersRes.success) {
+          const mappedMembers = (membersRes.data as any[]).map((m) => ({
+            ...m,
+            imageUrl: m.userImageUrl ?? m.imageUrl,
+            hasImage: m.userHasImage ?? m.hasImage,
+          }));
           setMembersMap(
             (prev): Record<string, TeamMember[]> => ({
               ...prev,
-              [teamId]: membersRes.data as TeamMember[],
+              [teamId]: mappedMembers,
             }),
           );
         }
@@ -382,17 +396,21 @@ export function TeamsTab({
                         {members.map((m) => {
                           const displayName =
                             m.userName || m.userEmail || "Member";
+                          const stableKey = m.userId || displayName;
+
                           return (
                             <div
                               key={m.id}
                               className="px-3 py-2 flex items-center justify-between text-xs"
                             >
                               <div className="flex items-center gap-2">
-                                <div
-                                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold uppercase ${getAvatarColor(m.userId || displayName)}`}
-                                >
-                                  {getInitials(displayName)}
-                                </div>
+                                <UserAvatar
+                                  userId={stableKey}
+                                  name={displayName}
+                                  imageUrl={m.imageUrl}
+                                  hasImage={m.hasImage ?? false}
+                                  className="w-6 h-6 text-[9px] shrink-0"
+                                />
                                 <span className="font-medium text-foreground">
                                   {displayName}
                                 </span>

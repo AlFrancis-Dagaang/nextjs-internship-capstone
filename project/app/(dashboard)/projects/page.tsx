@@ -45,7 +45,13 @@ export default async function ProjectsPage() {
         : [];
       return [
         project.id,
-        { members, ownerName: owner?.name, ownerEmail: owner?.email },
+        {
+          members,
+          ownerName: owner?.name,
+          ownerEmail: owner?.email,
+          ownerImageUrl: owner?.imageUrl,
+          ownerHasImage: owner?.hasImage,
+        },
       ] as const;
     }),
   );
@@ -57,10 +63,14 @@ export default async function ProjectsPage() {
   const initialOwnerMap = Object.fromEntries(
     membersByProject.map(([id, v]) => [
       id,
-      { name: v.ownerName, email: v.ownerEmail },
+      {
+        name: v.ownerName,
+        email: v.ownerEmail,
+        imageUrl: v.ownerImageUrl,
+        hasImage: v.ownerHasImage,
+      },
     ]),
   );
-
   const completionStats = await queries.tasks.getCompletionStatsByProject(
     result.data.map((p) => p.id),
   );

@@ -1,3 +1,4 @@
+// components/tasks/modal/assign-task-modal.tsx
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
@@ -17,12 +18,14 @@ import {
   unassignUserFromTask,
 } from "@/lib/actions/task-assignees";
 import { getAssignableUsers } from "@/lib/actions/project-member";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type AssigneeUser = {
   id: string;
   name?: string;
   email?: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
 };
 
 type AssignTaskModalProps = {
@@ -77,7 +80,7 @@ export function AssignTaskModal({
     return () => {
       cancelled = true;
     };
-  }, [open, projectId]);
+  }, [open, projectId, currentAssignees, toast]);
 
   const originalIds = new Set(currentAssignees.map((u) => u.id));
 
@@ -193,21 +196,19 @@ export function AssignTaskModal({
                   <div className="divide-y divide-border/60 border border-border/80 rounded-xl overflow-hidden bg-muted/30">
                     {currentlyAssignedUsers.map((user) => {
                       const displayName = user.name || user.email || "U";
-                      const stableColorKey =
-                        user.id || user.email || user.name || "";
                       return (
                         <div
                           key={user.id}
                           className="px-3 py-2 flex items-center justify-between transition-colors"
                         >
                           <div className="flex items-center gap-2.5">
-                            <div
-                              className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-2xs ${getAvatarColor(
-                                stableColorKey,
-                              )}`}
-                            >
-                              {getInitials(displayName)}
-                            </div>
+                            <UserAvatar
+                              userId={user.id}
+                              name={displayName}
+                              imageUrl={user.imageUrl}
+                              hasImage={user.hasImage ?? false}
+                              className="w-6 h-6 text-[10px]"
+                            />
                             <div className="flex flex-col">
                               <span className="text-xs font-medium text-foreground">
                                 {user.name ?? user.email}
@@ -264,8 +265,6 @@ export function AssignTaskModal({
                     filteredAvailableUsers.map((user) => {
                       const isChecked = selectedUserIds.has(user.id);
                       const displayName = user.name || user.email || "U";
-                      const stableColorKey =
-                        user.id || user.email || user.name || "";
 
                       return (
                         <div
@@ -274,13 +273,13 @@ export function AssignTaskModal({
                           className="px-3 py-2.5 flex items-center justify-between hover:bg-accent/60 cursor-pointer transition-colors"
                         >
                           <div className="flex items-center gap-2.5">
-                            <div
-                              className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-2xs ${getAvatarColor(
-                                stableColorKey,
-                              )}`}
-                            >
-                              {getInitials(displayName)}
-                            </div>
+                            <UserAvatar
+                              userId={user.id}
+                              name={displayName}
+                              imageUrl={user.imageUrl}
+                              hasImage={user.hasImage ?? false}
+                              className="w-6 h-6 text-[10px]"
+                            />
                             <div className="flex flex-col">
                               <span className="text-xs font-medium text-foreground">
                                 {user.name ?? user.email}

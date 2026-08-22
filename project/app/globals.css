@@ -111,12 +111,13 @@
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
-    /* Upgraded from 14px to 16px for a clean, bold Trello-like feel */
     font-size: 16px;
     line-height: 1.6;
     font-weight: 400;
     letter-spacing: -0.005em;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   /* Global Custom Scrollbar for Dark & Light Mode */

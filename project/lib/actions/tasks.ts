@@ -511,6 +511,7 @@ export async function restoreTask(
   };
 }
 
+// inside your tasks action file (e.g., lib/actions/tasks.ts)
 export async function getArchivedTasksByProject(
   projectId: string,
 ): Promise<ActionResult<TaskWithCommentCount[]>> {
@@ -534,10 +535,12 @@ export async function getArchivedTasksByProject(
         queries.comments.getByTask(task.id).catch(() => []),
       ]);
 
-      const assignees = assigneeRows.map((row) => ({
+      const assignees = assigneeRows.map((row: any) => ({
         userId: row.userId,
         name: row.userName,
         email: row.userEmail,
+        imageUrl: row.userImageUrl,
+        hasImage: row.userHasImage,
       }));
 
       return {

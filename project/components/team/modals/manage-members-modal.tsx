@@ -21,12 +21,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Loader2, Users, Search, Crown, X, Mail } from "lucide-react";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type MemberInfo = {
   userId: string;
   name: string;
   email: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
 };
 
 type SearchUser = {
@@ -55,10 +57,7 @@ export function ManageMembersModal({
 
   const isOwner = team.createdBy === currentUserId;
 
-  // Toggle state for showing the add member form
   const [showAddForm, setShowAddForm] = useState(false);
-
-  // Invite search states
   const [query, setQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
@@ -67,9 +66,7 @@ export function ManageMembersModal({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRequestIdRef = useRef(0);
 
-  // Directory filter search state
   const [filterQuery, setFilterQuery] = useState("");
-
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -93,6 +90,8 @@ export function ManageMembersModal({
             userId: m.userId,
             name: m.userName,
             email: m.userEmail,
+            imageUrl: m.userImageUrl ?? m.imageUrl,
+            hasImage: m.userHasImage ?? m.hasImage,
           }));
 
           setMembers(mapped);
@@ -108,7 +107,6 @@ export function ManageMembersModal({
       });
   }, [open, team.id]);
 
-  // Click outside listener for invite dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -120,13 +118,11 @@ export function ManageMembersModal({
     }
 
     document.addEventListener("mousedown", handleClickOutside);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
-  // Debounced live user search for inviting a new member
   useEffect(() => {
     if (!isOwner) {
       setSearchResults([]);
@@ -206,6 +202,8 @@ export function ManageMembersModal({
               userId: m.userId,
               name: m.userName,
               email: m.userEmail,
+              imageUrl: m.userImageUrl ?? m.imageUrl,
+              hasImage: m.userHasImage ?? m.hasImage,
             }),
           );
 
@@ -272,7 +270,6 @@ export function ManageMembersModal({
         </DialogHeader>
 
         <div className="space-y-5 pt-2">
-          {/* Owner Action: Add Member Button / Collapsible Form */}
           {isOwner && (
             <div>
               {!showAddForm ? (
@@ -404,7 +401,6 @@ export function ManageMembersModal({
             </div>
           )}
 
-          {/* Members Grid & Search */}
           <div className="space-y-3">
             <div className="flex items-center justify-between px-0.5">
               <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -445,6 +441,7 @@ export function ManageMembersModal({
                 {filteredMembers.map((m) => {
                   const stableKey = m.userId || m.email;
                   const isCreator = team.createdBy === m.userId;
+                  const displayName = m.name || m.email || "User";
 
                   return (
                     <div
@@ -453,13 +450,13 @@ export function ManageMembersModal({
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center space-x-3 overflow-hidden">
-                          <div
-                            className={`w-9 h-9 rounded-xl border border-border flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-2xs ${getAvatarColor(
-                              stableKey,
-                            )}`}
-                          >
-                            {getInitials(m.name || m.email || "U")}
-                          </div>
+                          <UserAvatar
+                            userId={stableKey}
+                            name={displayName}
+                            imageUrl={m.imageUrl}
+                            hasImage={m.hasImage ?? false}
+                            className="w-9 h-9 text-xs rounded-xl border border-border shrink-0 shadow-2xs"
+                          />
                           <div className="truncate space-y-0.5">
                             <p className="text-xs font-semibold text-foreground tracking-tight truncate">
                               {m.name}
@@ -484,7 +481,6 @@ export function ManageMembersModal({
                           </span>
                         )}
 
-                        {/* Owner-only: Remove button */}
                         {isOwner && !isCreator && (
                           <Button
                             variant="ghost"

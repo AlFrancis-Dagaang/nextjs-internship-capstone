@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Project } from "@/lib/db/schema";
 import { InviteMemberModal } from "./modals/invite-member-modal";
-import { useProjectStore } from "@/stores/project-store";
+import { useProjectStore, type Member } from "@/stores/project-store";
 import { useUiStore } from "@/stores/ui-store";
 import { useBoardStore } from "@/stores/board-store";
 import { ArchivedTasksModal } from "../tasks/modal/archived-tasks-modal";
@@ -52,17 +52,9 @@ import { moveTaskToList, deleteTask } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeProject } from "@/hooks/use-realtime-project";
 import type { ProjectRealtimeEvent } from "@/lib/realtime/server";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import { CalendarTaskDTO } from "@/types";
 import { ProjectCalendarModal } from "./modals/project-calendar-modal";
-
-type Member = {
-  id: string;
-  userId: string;
-  email?: string;
-  name?: string;
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-};
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 export function ProjectHeader({
   project,
@@ -71,6 +63,8 @@ export function ProjectHeader({
   canManage,
   ownerName,
   ownerEmail,
+  ownerImageUrl,
+  ownerHasImage,
   role,
   currentUserId,
   upcomingTasks,
@@ -81,6 +75,8 @@ export function ProjectHeader({
   canManage: boolean;
   ownerName?: string;
   ownerEmail?: string;
+  ownerImageUrl?: string | null;
+  ownerHasImage?: boolean | null;
   role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   currentUserId: string;
   upcomingTasks: CalendarTaskDTO[];
@@ -242,14 +238,20 @@ export function ProjectHeader({
   const allMembersList = [
     {
       id: project.ownerId,
+      userId: project.ownerId,
       name: ownerName || "Project Owner",
       email: ownerEmail,
+      imageUrl: ownerImageUrl,
+      hasImage: ownerHasImage,
       role: "owner" as const,
     },
     ...membersState.map((m) => ({
-      id: m.userId,
+      id: m.id,
+      userId: m.userId,
       name: m.name,
       email: m.email,
+      imageUrl: m.imageUrl,
+      hasImage: m.hasImage,
       role: m.role,
     })),
   ];
@@ -289,7 +291,7 @@ export function ProjectHeader({
           userId: event.member.userId,
           email: event.member.email,
           name: event.member.name,
-          role: event.member.role as "editor" | "viewer",
+          role: event.member.role as any,
         });
       } else if (event.type === "member_removed") {
         removeMember(project.id, event.memberId);
@@ -616,7 +618,7 @@ export function ProjectHeader({
                 </Button>
               )}
 
-              {/* Consolidated More Actions Menu (Calendar, Team Access, Archived Tasks, Add Members) */}
+              {/* Consolidated More Actions Menu */}
               <DropdownMenu
                 open={actionsDropdownOpen}
                 onOpenChange={setActionsDropdownOpen}
@@ -705,19 +707,22 @@ export function ProjectHeader({
                       : "Viewer";
 
                 const displayName = m.name || m.email || "User";
-                const stableColorKey = m.id || m.email || displayName;
 
                 return (
                   <DropdownMenu key={m.id}>
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className={`w-7 h-7 rounded-full border-2 border-card flex items-center justify-center text-[10px] font-bold uppercase transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer shadow-2xs ${getAvatarColor(
-                          stableColorKey,
-                        )}`}
+                        className="transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
                         title={`${displayName} (${m.role})`}
                       >
-                        {getInitials(displayName)}
+                        <UserAvatar
+                          userId={m.userId || m.email || m.id}
+                          name={displayName}
+                          imageUrl={m.imageUrl}
+                          hasImage={m.hasImage ?? false}
+                          className="w-7 h-7"
+                        />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -725,13 +730,13 @@ export function ProjectHeader({
                       sideOffset={8}
                       className="w-72 bg-card border border-border rounded-2xl shadow-xl p-4 flex items-center space-x-3 z-50"
                     >
-                      <div
-                        className={`w-12 h-12 rounded-2xl border border-border flex items-center justify-center text-base font-bold uppercase shrink-0 shadow-2xs ${getAvatarColor(
-                          stableColorKey,
-                        )}`}
-                      >
-                        {getInitials(displayName)}
-                      </div>
+                      <UserAvatar
+                        userId={m.userId || m.email || m.id}
+                        name={displayName}
+                        imageUrl={m.imageUrl}
+                        hasImage={m.hasImage ?? false}
+                        className="w-12 h-12 text-base shrink-0"
+                      />
                       <div className="flex flex-col min-w-0">
                         <span className="text-sm font-semibold text-foreground truncate">
                           {displayName}

@@ -1,6 +1,6 @@
 import { eq, ilike, or } from "drizzle-orm";
 import { db } from "../client";
-import { users } from "../schema";
+import { NotificationType, users } from "../schema";
 
 export const usersQueries = {
   getByClerkId: async (clerkId: string) => {
@@ -9,14 +9,26 @@ export const usersQueries = {
   getByEmail: async (email: string) => {
     return db.query.users.findFirst({ where: eq(users.email, email) });
   },
-  upsert: async (data: { clerkId: string; email: string; name: string }) => {
+  upsert: async (data: {
+    clerkId: string;
+    email: string;
+    name: string;
+    imageUrl?: string | null;
+    hasImage?: boolean;
+  }) => {
     const existing = await db.query.users.findFirst({
       where: eq(users.clerkId, data.clerkId),
     });
     if (existing) {
       const [updated] = await db
         .update(users)
-        .set({ email: data.email, name: data.name, updatedAt: new Date() })
+        .set({
+          email: data.email,
+          name: data.name,
+          imageUrl: data.imageUrl,
+          hasImage: data.hasImage ?? false,
+          updatedAt: new Date(),
+        })
         .where(eq(users.clerkId, data.clerkId))
         .returning();
       return updated;
@@ -35,5 +47,20 @@ export const usersQueries = {
   },
   getById: async (id: string) => {
     return db.query.users.findFirst({ where: eq(users.id, id) });
+  },
+  updateNotificationPreferences: async (
+    userId: string,
+    patch: Partial<Record<NotificationType, boolean>>,
+  ) => {
+    const existing = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+    const merged = { ...(existing?.notificationPreferences ?? {}), ...patch };
+    const [updated] = await db
+      .update(users)
+      .set({ notificationPreferences: merged, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return updated;
   },
 };

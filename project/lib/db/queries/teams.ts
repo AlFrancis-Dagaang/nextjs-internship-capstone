@@ -55,6 +55,8 @@ export const teamsQueries = {
         createdAt: teamMembers.createdAt,
         userName: users.name,
         userEmail: users.email,
+        userImageUrl: users.imageUrl,
+        userHasImage: users.hasImage,
       })
       .from(teamMembers)
       .innerJoin(users, eq(teamMembers.userId, users.id))

@@ -1,3 +1,4 @@
+// components/projects/project-team/project-team-view.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -40,7 +41,8 @@ import {
 } from "@/lib/actions/project-team";
 import { AddIndividualModal } from "./modals/add-individual-modal";
 import { AttachTeamModal } from "./modals/attach-team-modal";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { getInitials } from "@/lib/utils/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type ProjectTeamIndividual = {
   id: string;
@@ -50,6 +52,8 @@ type ProjectTeamIndividual = {
   role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   activeTaskCount: number;
   recentActivity: unknown[];
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
 };
 
 type ProjectTeamEntry = {
@@ -293,11 +297,13 @@ export function ProjectTeamView({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center space-x-3 overflow-hidden">
-                    <div
-                      className={`w-10 h-10 rounded-xl border border-border flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-2xs ${getAvatarColor(avatarKey)}`}
-                    >
-                      {getInitials(ind.name || ind.email || "U")}
-                    </div>
+                    <UserAvatar
+                      userId={avatarKey}
+                      name={ind.name || ind.email || "User"}
+                      imageUrl={ind.imageUrl}
+                      hasImage={ind.hasImage ?? false}
+                      className="w-10 h-10 text-xs rounded-xl border border-border shrink-0 shadow-2xs"
+                    />
                     <div className="truncate space-y-0.5">
                       <p className="text-xs font-semibold text-foreground tracking-tight truncate">
                         {ind.name}
