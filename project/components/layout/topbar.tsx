@@ -82,6 +82,7 @@ export function Header({
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [showOnlyUnread, setShowOnlyUnread] = useState<boolean>(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,6 +106,12 @@ export function Header({
       setNotifications(res.data);
     }
   };
+
+  // Fetch initial unread count and notifications on mount so the badge isn't blank on fresh login
+  useEffect(() => {
+    fetchUnreadCount();
+    fetchNotifications();
+  }, []);
 
   useRealtimeNotifications(currentUserId, (notification) => {
     setNotifications((prev) => [
@@ -206,6 +213,10 @@ export function Header({
     }
   };
 
+  const filteredNotifications = showOnlyUnread
+    ? notifications.filter((n) => !n.isRead)
+    : notifications;
+
   const hasResults =
     searchResults.projects.length > 0 || searchResults.tasks.length > 0;
 
@@ -213,7 +224,8 @@ export function Header({
     user?.fullName || user?.primaryEmailAddress?.emailAddress || "User";
 
   return (
-    <header className="flex h-16 items-center gap-x-4 border-b border-border bg-card/80 backdrop-blur-md px-4 sm:gap-x-6 sm:px-6 lg:px-8 w-full">
+    <header className="flex h-16 items-center gap-x-4 border border-border/80 bg-card/80 backdrop-blur-md px-4 sm:px-6 rounded-2xl shadow-xs w-full">
+      {" "}
       {/* Left side: Mobile menu toggle, Desktop sidebar collapse toggle, and Search */}
       <div className="flex items-center gap-x-3 flex-1">
         {/* Mobile menu trigger */}
@@ -331,7 +343,6 @@ export function Header({
           )}
         </div>
       </div>
-
       {/* Right side actions */}
       <div className="flex items-center gap-x-3 sm:gap-x-4">
         <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
@@ -351,13 +362,46 @@ export function Header({
 
           <DropdownMenuContent
             align="end"
-            className="w-80 bg-card border border-border rounded-xl shadow-2xl p-2 space-y-1 text-left z-50"
+            className="w-80 bg-card border border-border rounded-xl shadow-2xl p-2 space-y-2 text-left z-50"
           >
-            <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-border mb-1">
+            {/* Header row with Title, "Only show unread" Toggle, and Mark all read option */}
+            <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-border pb-2 gap-2">
               <span className="text-xs font-semibold text-foreground">
                 Notifications
               </span>
-              {unreadCount > 0 && (
+
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                    Only show unread
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={showOnlyUnread}
+                    onClick={() => setShowOnlyUnread(!showOnlyUnread)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      showOnlyUnread ? "bg-primary" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none flex h-4 w-4 transform rounded-full bg-background shadow-xs ring-0 transition duration-200 ease-in-out items-center justify-center ${
+                        showOnlyUnread ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    >
+                      {showOnlyUnread && (
+                        <span className="text-[9px] font-bold text-primary">
+                          ✓
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {unreadCount > 0 && (
+              <div className="px-2.5 pb-1 flex justify-end">
                 <button
                   onClick={handleMarkAllRead}
                   className="text-[11px] font-medium text-foreground hover:underline flex items-center gap-1"
@@ -365,16 +409,18 @@ export function Header({
                   <CheckCheck size={13} />
                   Mark all as read
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="max-h-72 overflow-y-auto space-y-1">
-              {notifications.length === 0 ? (
+              {filteredNotifications.length === 0 ? (
                 <div className="py-8 text-center text-xs text-muted-foreground">
-                  No notifications yet
+                  {showOnlyUnread
+                    ? "No unread notifications"
+                    : "No notifications yet"}
                 </div>
               ) : (
-                notifications.map((notification) => (
+                filteredNotifications.map((notification) => (
                   <DropdownMenuItem
                     key={notification.id}
                     onSelect={() => handleNotificationClick(notification)}
@@ -423,15 +469,25 @@ export function Header({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-56 bg-card border border-border rounded-2xl shadow-xl p-1.5 space-y-1 z-50"
+              className="w-64 bg-card border border-border rounded-2xl shadow-xl p-2 space-y-1 z-50"
             >
-              <div className="px-3 py-2 border-b border-border/60 mb-1">
-                <p className="text-xs font-semibold text-foreground truncate">
-                  {displayName}
-                </p>
-                <p className="text-[11px] text-muted-foreground truncate">
-                  {user?.primaryEmailAddress?.emailAddress}
-                </p>
+              {/* Enlarged Avatar Section Inside Dropdown Modal */}
+              <div className="flex flex-col items-center text-center px-3 py-4 border-b border-border/60 mb-1 gap-2">
+                <UserAvatar
+                  userId={currentUserId}
+                  name={displayName}
+                  imageUrl={user?.imageUrl}
+                  hasImage={!!user?.hasImage}
+                  className="w-14 h-14 text-base rounded-full border-2 border-primary/20 shadow-md"
+                />
+                <div className="space-y-0.5 overflow-hidden w-full">
+                  <p className="text-sm font-bold text-foreground truncate">
+                    {displayName}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user?.primaryEmailAddress?.emailAddress}
+                  </p>
+                </div>
               </div>
 
               <DropdownMenuItem

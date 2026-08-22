@@ -47,26 +47,24 @@ export function Sidebar({
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-card border-r border-border/80 flex flex-col shrink-0 transition-[width] duration-300 ease-in-out lg:translate-x-0 shadow-xs ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } ${isCollapsed ? "w-64 lg:w-20" : "w-64"}`}
+        className={`fixed lg:relative inset-y-0 left-0 z-50 bg-card border border-border/80 rounded-3xl flex flex-col shrink-0 transition-all duration-300 ease-in-out shadow-xs ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        } ${isCollapsed ? "lg:w-20" : "w-64"}`}
       >
         {/* Brand Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-border/80 shrink-0">
+        <div className="flex items-center h-16 px-4 border-b border-border/80 shrink-0 overflow-hidden">
           <Link
             href="/"
-            className={`flex items-center gap-3 font-bold text-foreground tracking-tight whitespace-nowrap overflow-hidden ${
-              isCollapsed ? "lg:justify-center lg:w-full lg:px-0" : ""
-            }`}
+            className="flex items-center gap-3 font-bold text-foreground tracking-tight whitespace-nowrap w-full"
           >
-            <div className="h-9 w-9 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-2xs shrink-0">
+            <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-2xs shrink-0">
               G
             </div>
             <span
-              className={`transition-all duration-300 origin-left truncate text-sm font-bold tracking-tight ${
+              className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap text-sm font-bold tracking-tight ${
                 isCollapsed
-                  ? "lg:opacity-0 lg:scale-95 lg:w-0 lg:hidden"
-                  : "opacity-100 scale-100 w-auto"
+                  ? "lg:w-0 lg:opacity-0 lg:pointer-events-none"
+                  : "w-auto opacity-100"
               }`}
             >
               GenZpace
@@ -76,7 +74,7 @@ export function Sidebar({
           {/* Mobile Close Button */}
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors ml-auto"
+            className="lg:hidden p-2 rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors ml-auto shrink-0"
             aria-label="Close sidebar"
           >
             <X size={18} />
@@ -85,43 +83,36 @@ export function Sidebar({
 
         {/* Navigation Links */}
         <nav className="flex-1 mt-5 px-3 overflow-y-auto overflow-x-hidden">
-          <ul className="space-y-1.5 flex flex-col items-center lg:items-stretch">
+          <ul className="space-y-1.5 flex flex-col items-stretch">
             {navigation.map((item) => {
               const current = pathname === item.href;
               const Icon = item.icon;
               return (
-                <li
-                  key={item.name}
-                  className={
-                    isCollapsed ? "w-full flex justify-center" : "w-full"
-                  }
-                >
+                <li key={item.name} className="w-full">
                   <Link
                     href={item.href}
                     title={isCollapsed ? item.name : undefined}
-                    className={`flex items-center gap-x-3 text-xs font-semibold transition-all group relative whitespace-nowrap ${
+                    className={`flex items-center gap-x-3 text-xs font-semibold transition-colors duration-200 group relative whitespace-nowrap overflow-hidden px-3 py-2.5 w-full ${
                       current
                         ? "bg-primary text-primary-foreground shadow-2xs font-bold"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                    } ${
-                      isCollapsed
-                        ? "lg:w-11 lg:h-11 lg:justify-center lg:p-0 rounded-2xl"
-                        : "px-3 py-2.5 rounded-2xl w-full"
-                    }`}
+                    } ${isCollapsed ? "lg:rounded-full lg:w-11 lg:h-11 lg:mx-auto" : "rounded-2xl"}`}
                   >
-                    <Icon
-                      size={18}
-                      className={
-                        current
-                          ? "text-primary-foreground shrink-0"
-                          : "text-muted-foreground group-hover:text-foreground shrink-0 transition-colors"
-                      }
-                    />
+                    <div className="flex items-center justify-center shrink-0 w-5">
+                      <Icon
+                        size={18}
+                        className={
+                          current
+                            ? "text-primary-foreground"
+                            : "text-muted-foreground group-hover:text-foreground transition-colors"
+                        }
+                      />
+                    </div>
                     <span
-                      className={`transition-all duration-300 origin-left truncate ${
+                      className={`transition-all duration-300 ease-in-out whitespace-nowrap overflow-hidden ${
                         isCollapsed
-                          ? "lg:opacity-0 lg:scale-95 lg:w-0 lg:overflow-hidden lg:hidden"
-                          : "opacity-100 scale-100 w-auto"
+                          ? "lg:w-0 lg:opacity-0 lg:pointer-events-none"
+                          : "w-auto opacity-100"
                       }`}
                     >
                       {item.name}
