@@ -61,7 +61,19 @@ export type ProjectMemberInfo = {
 export type ProjectRealtimeEvent =
   | { type: "project_updated"; project: Project }
   | { type: "member_added"; member: ProjectMemberInfo }
-  | { type: "member_removed"; memberId: string; userId: string };
+  | { type: "member_removed"; memberId: string; userId: string }
+  | {
+      type: "member_role_changed";
+      memberId: string;
+      userId: string;
+      role: string;
+    }
+  | {
+      type: "team_role_changed";
+      projectTeamId: string;
+      teamId: string;
+      role: string;
+    };
 
 export async function publishProjectEvent(
   projectId: string,

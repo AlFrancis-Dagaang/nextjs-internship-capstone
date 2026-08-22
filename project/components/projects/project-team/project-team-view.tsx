@@ -315,7 +315,7 @@ export function ProjectTeamView({
                     </div>
                   </div>
 
-                  {canManage && !isOwnerRow ? (
+                  {canManage && !isOwnerRow && !ind.id.startsWith("team-") ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -359,7 +359,14 @@ export function ProjectTeamView({
                       </DropdownMenuContent>
                     </DropdownMenu>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border/60 capitalize shrink-0">
+                    <span
+                      title={
+                        ind.id.startsWith("team-")
+                          ? "Managed via team membership"
+                          : undefined
+                      }
+                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border/60 capitalize shrink-0"
+                    >
                       {isOwnerRow && (
                         <Shield size={10} className="text-muted-foreground" />
                       )}

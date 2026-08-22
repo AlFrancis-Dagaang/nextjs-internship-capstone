@@ -10,6 +10,7 @@ import {
   assertProjectOwnership,
   assertProjectManageAccess,
   assertProjectViewAccess,
+  assertProjectAccess,
 } from "@/lib/services/ownership";
 import type { ProjectMember } from "../db/schema";
 import { searchUsersSchema } from "@/lib/validations";
@@ -175,6 +176,13 @@ export async function updateMemberRole(
     parsed.data.role,
   );
 
+  await publishProjectEvent(projectId, {
+    type: "member_role_changed",
+    memberId,
+    userId: existingMember.userId,
+    role: updated.role,
+  });
+
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
   return { success: true, data: updated };
@@ -200,41 +208,50 @@ export async function removeProjectMember(
     return { success: false, error: "Not found" };
   }
 
-  // Clear the removed member's task assignments before removing membership
-  // itself, so no orphaned task_assignees rows reference a user who no
-  // longer has any access to this project (#65's follow-up gap).
-  const affectedAssignments = await queries.taskAssignees.getByProjectAndUser(
+  // Remove the direct membership row, then re-resolve access — the user
+  // may still have effective access via an attached team (#83's
+  // highest-of-direct-or-team resolution), in which case their task
+  // assignments should be left alone. Mirrors detachTeamFromProject's
+  // snapshot-then-re-check pattern (#83); previously missing here.
+  await queries.projectMembers.remove(memberId);
+
+  const stillHasAccess = await assertProjectAccess(
     projectId,
     existingMember.userId,
   );
 
-  await Promise.all(
-    affectedAssignments.map(async (assignment) => {
-      await queries.taskAssignees.remove(
-        assignment.taskId,
-        existingMember.userId,
-      );
-      await logTaskActivity(
-        assignment.taskId,
-        authResult.user.id,
-        "assignee_changed",
-        {
-          type: "unassigned",
-          assigneeId: existingMember.userId,
-          assigneeName: assignment.userName ?? "Unknown user",
-          reason: "removed_from_project",
-        },
-      );
-    }),
-  );
+  if ("error" in stillHasAccess) {
+    const affectedAssignments = await queries.taskAssignees.getByProjectAndUser(
+      projectId,
+      existingMember.userId,
+    );
 
-  await queries.projectMembers.remove(memberId);
+    await Promise.all(
+      affectedAssignments.map(async (assignment) => {
+        await queries.taskAssignees.remove(
+          assignment.taskId,
+          existingMember.userId,
+        );
+        await logTaskActivity(
+          assignment.taskId,
+          authResult.user.id,
+          "assignee_changed",
+          {
+            type: "unassigned",
+            assigneeId: existingMember.userId,
+            assigneeName: assignment.userName ?? "Unknown user",
+            reason: "removed_from_project",
+          },
+        );
+      }),
+    );
+  }
 
   const actor = await queries.users.getById(authResult.user.id);
   await createNotification({
     userId: existingMember.userId,
     type: "project_removed",
-    message: `${actor?.name ?? "Someone"} removed you from "${access.project.name}"`,
+    message: `${actor?.name ?? "Someone"} removed you as a project member of "${access.project.name}"`,
     projectId,
     actorId: authResult.user.id,
   });

@@ -178,28 +178,6 @@ export function ProjectInfo({
     });
   }
 
-  function handleDelete() {
-    startTransition(async () => {
-      const result = await deleteProject(project.id);
-      if (result.success) {
-        toast({
-          title: "Project deleted",
-          description: `"${project.name}" was permanently deleted.`,
-        });
-        setDeleteOpen(false);
-        onProjectDeleted?.();
-        router.push("/projects");
-        router.refresh();
-      } else {
-        toast({
-          title: "Failed to delete project",
-          description: result.error,
-          variant: "destructive",
-        });
-      }
-    });
-  }
-
   const displayedEvents = events.slice(0, 2);
 
   return (
@@ -390,9 +368,13 @@ export function ProjectInfo({
       <DeleteProjectModal
         isOpen={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        onConfirm={handleDelete}
+        onSuccess={() => {
+          onProjectDeleted?.();
+          router.push("/projects");
+          router.refresh();
+        }}
+        projectId={project.id}
         projectName={project.name}
-        isPending={isPending}
       />
 
       <ProjectEventsModal

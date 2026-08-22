@@ -1,5 +1,6 @@
 "use server";
 
+import { auth, reverificationError } from "@clerk/nextjs/server";
 import { queries } from "@/lib/db";
 import { projectCreateSchema, projectUpdateSchema } from "@/lib/validations";
 import { getAuthedUserOrError } from "@/lib/services/auth";
@@ -131,7 +132,7 @@ export async function updateProject(
   return { success: true, data: updated };
 }
 
-export async function deleteProject(id: string): Promise<ActionResult<null>> {
+export async function deleteProject(id: string) {
   const authResult = await getAuthedUserOrError();
   if ("error" in authResult) {
     return { success: false, error: authResult.error ?? "Unknown error" };
@@ -140,6 +141,11 @@ export async function deleteProject(id: string): Promise<ActionResult<null>> {
   const access = await assertProjectManageAccess(id, authResult.user.id);
   if ("error" in access) {
     return { success: false, error: access.error ?? "Unknown error" };
+  }
+
+  const { has } = await auth();
+  if (!has({ reverification: "strict" })) {
+    return reverificationError("strict");
   }
 
   await queries.projects.delete(id);

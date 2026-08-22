@@ -163,26 +163,6 @@ export function ProjectListAction({
     return () => clearTimeout(timer);
   }, [query, project.id]);
 
-  function handleDelete() {
-    startTransition(async () => {
-      const result = await deleteProject(project.id);
-      if (result.success) {
-        toast({
-          title: "Project deleted",
-          description: `"${project.name}" was permanently deleted.`,
-        });
-        setDeleteOpen(false);
-        onDeleted(project.id);
-      } else {
-        toast({
-          title: "Failed to delete project",
-          description: result.error,
-          variant: "destructive",
-        });
-      }
-    });
-  }
-
   async function handleAddMember(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedUser) return;
@@ -471,9 +451,9 @@ export function ProjectListAction({
       <DeleteProjectModal
         isOpen={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        onConfirm={handleDelete}
+        onSuccess={(id) => onDeleted(id)}
+        projectId={project.id}
         projectName={project.name}
-        isPending={isPending}
       />
     </>
   );
