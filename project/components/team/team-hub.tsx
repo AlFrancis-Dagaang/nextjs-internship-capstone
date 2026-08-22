@@ -200,7 +200,7 @@ export function TeamHub({
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
               <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                Workspace Members
+                Project Members
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary text-secondary-foreground">
                 {filteredWorkspaceMembers.length}

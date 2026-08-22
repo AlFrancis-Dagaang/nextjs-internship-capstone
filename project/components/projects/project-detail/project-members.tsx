@@ -257,7 +257,7 @@ export function ProjectMembers({
                 </div>
 
                 <div className="flex items-center space-x-2 shrink-0">
-                  {canManage ? (
+                  {canManage && !member.id.startsWith("team-") ? (
                     <>
                       <Select
                         value={member.role}
@@ -294,7 +294,10 @@ export function ProjectMembers({
                       </Button>
                     </>
                   ) : (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-secondary text-secondary-foreground capitalize border border-border">
+                    <span
+                      title="Managed via team membership"
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-secondary text-secondary-foreground capitalize border border-border"
+                    >
                       {member.role}
                     </span>
                   )}
