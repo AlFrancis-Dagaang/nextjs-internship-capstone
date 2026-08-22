@@ -22,7 +22,7 @@ import { InviteMemberModal } from "../modals/invite-member-modal";
 import { DeleteMemberModal } from "../modals/delete-member-modal";
 import { getRealtimeClientId } from "@/lib/realtime/client";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import type { Member } from "@/stores/project-store"; // <--- Import from store
+import type { Member } from "@/stores/project-store";
 
 type ProjectMembersProps = {
   project: Project;
@@ -67,8 +67,12 @@ export function ProjectMembers({
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
 
+  // Filter out any existing members from invitations or non-member dropdowns
   const filteredMembers = useMemo(() => {
     return members.filter((m) => {
+      // Hide team-only members entirely from the direct project members list
+      if (m.id.startsWith("team-")) return false;
+
       const q = searchQuery.toLowerCase();
       const matchesSearch =
         !searchQuery ||
@@ -141,7 +145,7 @@ export function ProjectMembers({
         <div className="flex items-center justify-between">
           <div>
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Team Members ({members.length + 1})
+              Project Members ({members.length + 1})
             </h4>
           </div>
           {canManage && (

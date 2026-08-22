@@ -18,17 +18,51 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users, Shield, Mail, Search } from "lucide-react";
+import {
+  Plus,
+  Users,
+  Shield,
+  Mail,
+  Search,
+  CheckSquare,
+  FolderKanban,
+} from "lucide-react";
 import { TeamModal } from "./modals/team-modal";
 import { ManageMembersModal } from "./modals/manage-members-modal";
 import { TeamCard } from "./team-card";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
+type ProjectOption = {
+  id: string;
+  name: string;
+};
+
+type EnhancedWorkspaceMember = WorkspaceMember & {
+  isProjectMember: boolean;
+  isTeamMember: boolean;
+  projectIds?: string[]; // Added this to resolve the property error
+  assignedTasks?: {
+    taskId: string;
+    title: string;
+    projectId: string;
+    projectName: string;
+    isCompleted: boolean;
+  }[];
+};
+
 type WorkspaceHub = {
   yourTeams: WorkspaceTeam[];
   teamsYouBelongTo: WorkspaceTeam[];
-  workspaceMembers: WorkspaceMember[];
+  workspaceMembers: EnhancedWorkspaceMember[];
+  projects?: ProjectOption[];
 };
 
 export function TeamHub({
@@ -48,8 +82,10 @@ export function TeamHub({
   const [managingTeam, setManagingTeam] = useState<WorkspaceTeam | null>(null);
   const [deletingTeamId, setDeletingTeamId] = useState<string | null>(null);
 
-  // Workspace members search filter state
+  // Search, Project Filter, and Membership Filter states
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("all");
+  const [membershipFilter, setMembershipFilter] = useState<string>("all");
 
   function handleCreateClick() {
     setEditingTeam(null);
@@ -76,10 +112,34 @@ export function TeamHub({
     });
   }
 
+  // Filter workspace members by search query, membership type, and project association
+  // Filter workspace members by search query, membership type, and project association
   const filteredWorkspaceMembers = initialHub.workspaceMembers.filter(
-    (member) =>
-      member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(memberSearchQuery.toLowerCase()),
+    (member) => {
+      const matchesSearch =
+        member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+        member.email.toLowerCase().includes(memberSearchQuery.toLowerCase());
+
+      if (!matchesSearch) return false;
+
+      // Membership Type check based on flags returned from service
+      if (membershipFilter === "project" && !member.isProjectMember)
+        return false;
+      if (membershipFilter === "team" && !member.isTeamMember) return false;
+
+      // Project Dropdown check: matches if assigned to a task in that project or associated
+      if (selectedProjectId !== "all") {
+        const matchesProjectTasks = member.assignedTasks?.some(
+          (t) => t.projectId === selectedProjectId,
+        );
+        const matchesProjectIdList =
+          member.projectIds?.includes(selectedProjectId);
+
+        if (!matchesProjectTasks && !matchesProjectIdList) return false;
+      }
+
+      return true;
+    },
   );
 
   return (
@@ -194,34 +254,76 @@ export function TeamHub({
         )}
       </section>
 
-      {/* SECTION 3: Workspace Members (Grid with functional search) */}
+      {/* SECTION 3: Workspace Members (Grid with membership type & project filters) */}
       <section className="space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pb-3.5 border-b border-border/80">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 pb-3.5 border-b border-border/80">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
               <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                Project Members
+                Workspace Members
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-secondary text-secondary-foreground">
                 {filteredWorkspaceMembers.length}
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
-              All active participants registered across your projects.
+              All active participants registered across your projects and teams.
             </p>
           </div>
 
-          <div className="relative w-full sm:w-72">
-            <Search
-              size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-            />
-            <Input
-              placeholder="Search members..."
-              value={memberSearchQuery}
-              onChange={(e) => setMemberSearchQuery(e.target.value)}
-              className="h-10 text-sm pl-10 bg-card border-border rounded-xl w-full"
-            />
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+            {/* Membership Type Filter */}
+            <Select
+              value={membershipFilter}
+              onValueChange={setMembershipFilter}
+            >
+              <SelectTrigger className="h-10 text-sm bg-card border-border rounded-xl w-full sm:w-44">
+                <SelectValue placeholder="All Members" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Members</SelectItem>
+                <SelectItem value="project">Project Members Only</SelectItem>
+                <SelectItem value="team">Team Members Only</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Project Filter Dropdown */}
+            {initialHub.projects && initialHub.projects.length > 0 && (
+              <Select
+                value={selectedProjectId}
+                onValueChange={setSelectedProjectId}
+              >
+                <SelectTrigger className="h-10 text-sm bg-card border-border rounded-xl w-full sm:w-48">
+                  <FolderKanban
+                    size={14}
+                    className="text-muted-foreground mr-2 shrink-0"
+                  />
+                  <SelectValue placeholder="All Projects" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Projects</SelectItem>
+                  {initialHub.projects.map((proj) => (
+                    <SelectItem key={proj.id} value={proj.id}>
+                      {proj.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64">
+              <Search
+                size={15}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                placeholder="Search members..."
+                value={memberSearchQuery}
+                onChange={(e) => setMemberSearchQuery(e.target.value)}
+                className="h-10 text-sm pl-10 bg-card border-border rounded-xl w-full"
+              />
+            </div>
           </div>
         </div>
 
@@ -229,8 +331,10 @@ export function TeamHub({
           <Card className="border-dashed border-border bg-card/40 rounded-2xl shadow-none">
             <CardContent className="flex flex-col items-center justify-center py-10 text-center">
               <p className="text-sm text-muted-foreground">
-                {memberSearchQuery
-                  ? "No workspace members found matching your search."
+                {memberSearchQuery ||
+                selectedProjectId !== "all" ||
+                membershipFilter !== "all"
+                  ? "No workspace members found matching your filters."
                   : "No workspace members found."}
               </p>
             </CardContent>
@@ -241,9 +345,15 @@ export function TeamHub({
               const stableKey = member.id || member.email;
               const displayName = member.name || "User";
 
+              const tasksList = member.assignedTasks || [];
+              const filteredTasks =
+                selectedProjectId === "all"
+                  ? tasksList
+                  : tasksList.filter((t) => t.projectId === selectedProjectId);
+
               return (
                 <div
-                  key={member.id}
+                  key={stableKey}
                   className="relative flex flex-col justify-between p-5 sm:p-6 border border-border/80 rounded-2xl bg-card shadow-2xs transition-all"
                 >
                   <div className="flex items-start justify-between gap-2.5">
@@ -268,10 +378,15 @@ export function TeamHub({
                   </div>
 
                   <div className="mt-5 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="text-xs font-medium">Status</span>
-                    <span className="inline-flex items-center gap-2 font-medium text-foreground">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                      Active
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <CheckSquare
+                        size={14}
+                        className="text-muted-foreground"
+                      />
+                      Assigned Tasks
+                    </span>
+                    <span className="font-semibold text-foreground bg-secondary px-2.5 py-0.5 rounded-md">
+                      {filteredTasks.length}
                     </span>
                   </div>
                 </div>

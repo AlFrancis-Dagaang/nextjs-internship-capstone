@@ -20,7 +20,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Loader2, Users, Search, Crown, X, Mail } from "lucide-react";
+import {
+  UserPlus,
+  Loader2,
+  Users,
+  Search,
+  Crown,
+  X,
+  Mail,
+  FolderKanban,
+} from "lucide-react";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 type MemberInfo = {
@@ -263,13 +272,36 @@ export function ManageMembersModal({
               Team Directory
             </span>
           </div>
-
-          <DialogTitle className="text-base font-semibold tracking-tight text-foreground flex items-center justify-between">
-            <span>{team.name}</span>
+          <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
+            {team.name}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 pt-2">
+          {/* Attached Projects Section */}
+          <div className="bg-secondary/40 border border-border/60 rounded-2xl p-4 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+              <FolderKanban size={14} className="text-muted-foreground" />
+              <span>Attached Projects</span>
+            </div>
+            {team.projects && team.projects.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {team.projects.map((proj) => (
+                  <span
+                    key={proj.id}
+                    className="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-medium bg-card text-foreground border border-border/80 shadow-2xs"
+                  >
+                    {proj.name}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">
+                No projects currently attached to this team.
+              </p>
+            )}
+          </div>
+
           {isOwner && (
             <div>
               {!showAddForm ? (
@@ -489,7 +521,7 @@ export function ManageMembersModal({
                             onClick={() => handleRemoveMember(m.userId)}
                             disabled={isPending}
                           >
-                            Remove
+                            Remove member
                           </Button>
                         )}
                       </div>
