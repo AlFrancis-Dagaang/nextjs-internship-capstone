@@ -255,7 +255,7 @@ export function EventFormModal({
 
     if (projectId) {
       return (
-        <div className="flex items-center justify-between px-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground shadow-2xs">
+        <div className="flex items-center justify-between px-3 py-2.5 text-xs rounded-xl border border-border bg-card text-foreground shadow-2xs">
           <span className="font-semibold flex items-center gap-2 truncate">
             <FolderKanban
               size={14}
@@ -271,7 +271,7 @@ export function EventFormModal({
               setIsSearchingProject(false);
               setProjectSearchQuery("");
             }}
-            className="text-muted-foreground hover:text-foreground p-1 rounded-lg transition-colors shrink-0"
+            className="text-muted-foreground hover:text-foreground p-1 rounded-lg transition-colors shrink-0 cursor-pointer"
             title="Clear project"
           >
             <X size={13} />
@@ -282,7 +282,7 @@ export function EventFormModal({
 
     if (isSearchingProject) {
       return (
-        <div className="flex flex-col gap-2 p-3 rounded-2xl border border-border bg-card shadow-2xs">
+        <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl border border-border bg-secondary/40 shadow-2xs">
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -290,7 +290,7 @@ export function EventFormModal({
               value={projectSearchQuery}
               onChange={(e) => setProjectSearchQuery(e.target.value)}
               placeholder="Search projects..."
-              className="w-full px-3 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground focus-visible:outline-none focus-visible:ring-1"
+              className="w-full h-9 px-3 text-xs rounded-xl border border-border bg-card text-foreground focus-visible:outline-none focus-visible:ring-1 shadow-2xs"
             />
 
             <button
@@ -299,18 +299,18 @@ export function EventFormModal({
                 setIsSearchingProject(false);
                 setProjectSearchQuery("");
               }}
-              className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 shrink-0 font-medium"
+              className="text-xs text-muted-foreground hover:text-foreground px-3 py-2 shrink-0 font-medium cursor-pointer bg-card border border-border rounded-xl"
             >
               Cancel
             </button>
           </div>
 
           {isProjectsLoading ? (
-            <p className="text-xs text-muted-foreground py-2 text-center">
+            <p className="text-xs text-muted-foreground py-3 text-center">
               Loading projects...
             </p>
           ) : filteredProjects.length > 0 ? (
-            <div className="max-h-32 overflow-y-auto flex flex-col gap-0.5">
+            <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
               {filteredProjects.map((p) => (
                 <button
                   key={p.id}
@@ -320,14 +320,18 @@ export function EventFormModal({
                     setIsSearchingProject(false);
                     setProjectSearchQuery("");
                   }}
-                  className="text-left px-2.5 py-1.5 text-xs rounded-xl hover:bg-secondary text-foreground transition-colors truncate font-medium"
+                  className="w-full text-left px-3.5 py-2.5 text-xs rounded-xl hover:bg-card text-foreground transition-colors truncate font-medium flex items-center gap-2 border border-transparent hover:border-border cursor-pointer bg-card/60 shadow-2xs"
                 >
-                  {p.name}
+                  <FolderKanban
+                    size={13}
+                    className="text-muted-foreground shrink-0"
+                  />
+                  <span className="truncate">{p.name}</span>
                 </button>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground py-2 text-center">
+            <p className="text-xs text-muted-foreground py-3 text-center italic">
               No projects available
             </p>
           )}
@@ -336,7 +340,7 @@ export function EventFormModal({
     }
 
     return (
-      <div className="flex items-center justify-between px-3 py-2 text-xs rounded-xl border border-border bg-card text-foreground shadow-2xs">
+      <div className="flex items-center justify-between px-3 py-2.5 text-xs rounded-xl border border-border bg-card text-foreground shadow-2xs">
         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border/60">
           Personal
         </span>
@@ -344,7 +348,7 @@ export function EventFormModal({
         <button
           type="button"
           onClick={handleOpenProjectSearch}
-          className="inline-flex items-center gap-1.5 text-xs text-teal-600 dark:text-teal-400 hover:underline font-semibold"
+          className="inline-flex items-center gap-1.5 text-xs text-teal-600 dark:text-teal-400 hover:underline font-semibold cursor-pointer"
         >
           <Link2 size={13} />
           Attach to a project
@@ -355,9 +359,9 @@ export function EventFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px] bg-card text-card-foreground border border-border p-5 sm:p-6 shadow-2xl rounded-3xl">
-        <DialogHeader className="mb-1 flex flex-row items-center justify-between space-y-0 pb-2.5 border-b border-border/60">
-          <DialogTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
+      <DialogContent className="w-[90vw] sm:max-w-[420px] max-h-[85vh] bg-card text-card-foreground border border-border p-5 sm:p-6 shadow-2xl rounded-3xl flex flex-col overflow-hidden">
+        <DialogHeader className="mb-1 flex flex-row items-center justify-between space-y-0 pb-2.5 border-b border-border/60 shrink-0">
+          <DialogTitle className="text-sm sm:text-base font-semibold flex items-center gap-2 truncate pr-2">
             <span className="truncate">
               {entity
                 ? isEditing
@@ -378,147 +382,155 @@ export function EventFormModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 pt-1">
-          {/* TITLE */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-              <span>Title</span>
-              {!canEdit && (
-                <span className="text-[10px] font-normal text-muted-foreground">
-                  Read-only
-                </span>
-              )}
-            </label>
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col flex-1 overflow-hidden"
+        >
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1 py-1">
+            {/* TITLE */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span>Title</span>
+                {!canEdit && (
+                  <span className="text-[10px] font-normal text-muted-foreground">
+                    Read-only
+                  </span>
+                )}
+              </label>
 
-            <input
-              type="text"
-              required={canEdit}
-              disabled={!canEdit}
-              readOnly={!canEdit}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Event title..."
-              className="px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus-visible:outline-none focus-visible:ring-1 disabled:bg-muted/30 disabled:text-muted-foreground disabled:border-border/60 disabled:cursor-default"
-            />
+              <input
+                type="text"
+                required={canEdit}
+                disabled={!canEdit}
+                readOnly={!canEdit}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Event title..."
+                className="px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus-visible:outline-none focus-visible:ring-1 disabled:bg-muted/30 disabled:text-muted-foreground disabled:border-border/60 disabled:cursor-default"
+              />
 
-            {fieldErrors.title && (
-              <p className="text-[11px] text-destructive">
-                {fieldErrors.title[0]}
-              </p>
-            )}
-          </div>
-
-          {/* DESCRIPTION */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-              <span>Description</span>
-              {!canEdit && (
-                <span className="text-[10px] font-normal text-muted-foreground">
-                  Read-only
-                </span>
-              )}
-            </label>
-
-            <textarea
-              disabled={!canEdit}
-              readOnly={!canEdit}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional description..."
-              rows={2}
-              className="px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus-visible:outline-none focus-visible:ring-1 resize-none disabled:bg-muted/30 disabled:text-muted-foreground disabled:border-border/60 disabled:cursor-default"
-            />
-          </div>
-
-          {/* DATE */}
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Date
-              </span>
-              {!canEdit && (
-                <span className="text-[10px] font-normal text-muted-foreground">
-                  Read-only
-                </span>
+              {fieldErrors.title && (
+                <p className="text-[11px] text-destructive">
+                  {fieldErrors.title[0]}
+                </p>
               )}
             </div>
 
-            <input
-              type="date"
-              disabled={!canEdit}
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus-visible:outline-none focus-visible:ring-1 cursor-pointer disabled:bg-transparent disabled:text-muted-foreground disabled:border-transparent disabled:cursor-default"
-            />
-          </div>
+            {/* DESCRIPTION */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span>Description</span>
+                {!canEdit && (
+                  <span className="text-[10px] font-normal text-muted-foreground">
+                    Read-only
+                  </span>
+                )}
+              </label>
 
-          {/* TIME RANGE */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Clock size={13} className="text-teal-600 dark:text-teal-400" />
-                Time Range
-              </span>
-              {!canEdit && (
-                <span className="text-[10px] font-normal text-muted-foreground">
-                  Read-only
-                </span>
-              )}
-            </label>
-
-            <div className="grid grid-cols-2 gap-2.5 bg-secondary/50 p-3 rounded-2xl border border-border/60">
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                  Start
-                </span>
-
-                <input
-                  type="time"
-                  disabled={!canEdit}
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="px-2.5 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus-visible:outline-none focus-visible:ring-1 cursor-pointer disabled:bg-transparent disabled:text-muted-foreground disabled:border-transparent disabled:cursor-default"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                  End
-                </span>
-
-                <input
-                  type="time"
-                  disabled={!canEdit}
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="px-2.5 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus-visible:outline-none focus-visible:ring-1 cursor-pointer disabled:bg-transparent disabled:text-muted-foreground disabled:border-transparent disabled:cursor-default"
-                />
-              </div>
+              <textarea
+                disabled={!canEdit}
+                readOnly={!canEdit}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Optional description..."
+                rows={3}
+                className="px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground focus-visible:outline-none focus-visible:ring-1 resize-none disabled:bg-muted/30 disabled:text-muted-foreground disabled:border-border/60 disabled:cursor-default"
+              />
             </div>
 
-            {fieldErrors.endAt && (
-              <p className="text-[11px] text-destructive">
-                {fieldErrors.endAt[0]}
-              </p>
-            )}
-          </div>
+            {/* DATE */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  Date
+                </span>
+                {!canEdit && (
+                  <span className="text-[10px] font-normal text-muted-foreground">
+                    Read-only
+                  </span>
+                )}
+              </div>
 
-          {/* PROJECT */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Project (Optional)
-            </label>
-            {renderProjectField()}
+              <input
+                type="date"
+                disabled={!canEdit}
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="px-3 py-2 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus-visible:outline-none focus-visible:ring-1 cursor-pointer disabled:bg-transparent disabled:text-muted-foreground disabled:border-transparent disabled:cursor-default"
+              />
+            </div>
+
+            {/* TIME RANGE */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Clock
+                    size={13}
+                    className="text-teal-600 dark:text-teal-400"
+                  />
+                  Time Range
+                </span>
+                {!canEdit && (
+                  <span className="text-[10px] font-normal text-muted-foreground">
+                    Read-only
+                  </span>
+                )}
+              </label>
+
+              <div className="grid grid-cols-2 gap-2.5 bg-secondary/50 p-3 rounded-2xl border border-border/60">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    Start
+                  </span>
+
+                  <input
+                    type="time"
+                    disabled={!canEdit}
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="px-2.5 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus-visible:outline-none focus-visible:ring-1 cursor-pointer disabled:bg-transparent disabled:text-muted-foreground disabled:border-transparent disabled:cursor-default"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    End
+                  </span>
+
+                  <input
+                    type="time"
+                    disabled={!canEdit}
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="px-2.5 py-1.5 text-xs rounded-xl border border-border bg-background text-foreground font-medium focus-visible:outline-none focus-visible:ring-1 cursor-pointer disabled:bg-transparent disabled:text-muted-foreground disabled:border-transparent disabled:cursor-default"
+                  />
+                </div>
+              </div>
+
+              {fieldErrors.endAt && (
+                <p className="text-[11px] text-destructive">
+                  {fieldErrors.endAt[0]}
+                </p>
+              )}
+            </div>
+
+            {/* PROJECT */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-foreground">
+                Project (Optional)
+              </label>
+              {renderProjectField()}
+            </div>
           </div>
 
           {/* FOOTER ACTIONS */}
-          <div className="flex items-center justify-between pt-3 border-t border-border/60 mt-1">
+          <div className="flex items-center justify-between pt-3 border-t border-border/60 mt-2 shrink-0">
             {entity && userHasPermission && isEditing ? (
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={isPending}
-                className="px-3 py-1.5 text-xs font-semibold rounded-xl text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                className="px-3 py-1.5 text-xs font-semibold rounded-xl text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
                 <Trash2 size={13} />
                 Delete
@@ -533,7 +545,7 @@ export function EventFormModal({
                   <button
                     type="button"
                     onClick={() => onOpenChange(false)}
-                    className="h-8 px-3.5 text-xs font-semibold rounded-xl border border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all shadow-2xs"
+                    className="h-8 px-3.5 text-xs font-semibold rounded-xl border border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all shadow-2xs cursor-pointer"
                   >
                     Close
                   </button>
@@ -545,7 +557,7 @@ export function EventFormModal({
                       e.stopPropagation();
                       setIsEditing(true);
                     }}
-                    className="h-8 px-3.5 text-xs font-semibold rounded-xl bg-teal-700 text-white hover:bg-teal-800 transition-all shadow-2xs flex items-center gap-1.5"
+                    className="h-8 px-3.5 text-xs font-semibold rounded-xl bg-teal-700 text-white hover:bg-teal-800 transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
                   >
                     <Pencil size={12} />
                     Edit
@@ -564,7 +576,7 @@ export function EventFormModal({
                       }
                     }}
                     disabled={isPending}
-                    className="h-8 px-3.5 text-xs font-semibold rounded-xl border border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all shadow-2xs disabled:opacity-50"
+                    className="h-8 px-3.5 text-xs font-semibold rounded-xl border border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -572,7 +584,7 @@ export function EventFormModal({
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="h-8 px-4 text-xs font-semibold rounded-xl bg-teal-700 text-white hover:bg-teal-800 transition-all shadow-2xs disabled:opacity-50"
+                    className="h-8 px-4 text-xs font-semibold rounded-xl bg-teal-700 text-white hover:bg-teal-800 transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
                   >
                     {isPending
                       ? "Saving..."

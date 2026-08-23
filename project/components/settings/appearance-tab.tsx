@@ -1,7 +1,7 @@
+// components/settings/appearance-tab.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import { Label } from "@/components/ui/label";
 import { Palette, Sun, Moon, Laptop } from "lucide-react";
 
 export function AppearanceTab() {
@@ -37,11 +37,13 @@ export function AppearanceTab() {
   }
 
   return (
-    <div className="bg-card border border-border/80 rounded-2xl shadow-xs p-6 space-y-6">
-      <div className="flex items-center gap-2">
-        <Palette size={16} className="text-primary" />
+    <div className="bg-card border border-border/80 rounded-3xl shadow-xs p-5 sm:p-6 space-y-6">
+      <div className="flex items-center gap-2.5 pb-3 border-b border-border/60">
+        <div className="p-2 bg-secondary text-foreground rounded-xl border border-border/60">
+          <Palette size={16} />
+        </div>
         <div>
-          <h2 className="text-base font-semibold tracking-tight text-foreground">
+          <h2 className="text-sm font-bold tracking-wider text-foreground">
             Appearance
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -50,7 +52,7 @@ export function AppearanceTab() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 pt-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
         <button
           type="button"
           onClick={() => handleThemeChange("light")}
