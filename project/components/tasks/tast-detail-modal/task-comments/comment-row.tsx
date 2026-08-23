@@ -1,39 +1,20 @@
+// components/tasks/tast-detail-modal/comment-row.tsx
 "use client";
 
 import { useState } from "react";
 import type { Comment, User } from "@/lib/db/schema";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
-export type CommentWithAuthor = Comment & { author: User };
-
-const avatarColors = [
-  "bg-blue-500 text-white",
-  "bg-emerald-500 text-white",
-  "bg-amber-500 text-white",
-  "bg-purple-500 text-white",
-  "bg-rose-500 text-white",
-  "bg-indigo-500 text-white",
-];
-
-export function getAvatarColor(nameOrInitials: string): string {
-  const initials = getInitials(nameOrInitials);
-  let hash = 0;
-  for (let i = 0; i < initials.length; i++) {
-    hash = initials.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return avatarColors[Math.abs(hash) % avatarColors.length];
-}
-
-export function getInitials(name: string): string {
-  if (!name) return "U";
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
+export type CommentWithAuthor = Comment & {
+  author: User & {
+    imageUrl?: string | null;
+    image_url?: string | null;
+    hasImage?: boolean | null;
+    has_image?: boolean | null;
+  };
+};
 
 export function formatRelativeTime(d: Date | string) {
   const date = typeof d === "string" ? new Date(d) : d;
@@ -83,19 +64,28 @@ export function CommentRow({
     setIsEditing(false);
   }
 
-  const authorName = comment.author?.name ?? "User";
-  const stableColorKey =
-    comment.author?.id || comment.author?.name || comment.id;
+  const authorName = comment.author?.name || comment.author?.email || "User";
+  const stableUserId =
+    comment.author?.id || comment.author?.email || comment.id;
+
+  // Fallback safely across both camelCase and snake_case properties
+  const authorImageUrl =
+    comment.author?.imageUrl || comment.author?.image_url || null;
+  const authorHasImage =
+    comment.author?.hasImage ??
+    comment.author?.has_image ??
+    Boolean(authorImageUrl);
 
   return (
     <li className="flex gap-3">
-      <div
-        className={`inline-flex items-center justify-center h-7 w-7 rounded-full text-[10px] font-medium uppercase ring-2 ring-card shrink-0 shadow-2xs ${getAvatarColor(
-          stableColorKey,
-        )}`}
-      >
-        {getInitials(authorName)}
-      </div>
+      <UserAvatar
+        userId={stableUserId}
+        name={authorName}
+        imageUrl={authorImageUrl}
+        hasImage={Boolean(authorHasImage)}
+        className="w-7 h-7 shrink-0 text-[10px]"
+        title={authorName}
+      />
 
       <div className="flex-1 space-y-1.5">
         <div className="flex items-baseline gap-2">

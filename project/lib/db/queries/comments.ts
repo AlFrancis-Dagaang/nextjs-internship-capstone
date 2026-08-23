@@ -1,15 +1,33 @@
 import { asc, eq } from "drizzle-orm";
 import type { InferInsertModel } from "drizzle-orm";
 import { db } from "../client";
-import { comments } from "../schema";
+import { comments, users } from "../schema";
 
 export const commentsQueries = {
+  // Update your getByTask query in commentsQueries or your actions:
   getByTask: async (taskId: string) => {
-    return db.query.comments.findMany({
-      where: eq(comments.taskId, taskId),
-      orderBy: asc(comments.createdAt),
-      with: { author: true },
-    });
+    const rows = await db
+      .select({
+        id: comments.id,
+        taskId: comments.taskId,
+        authorId: comments.authorId,
+        content: comments.content,
+        createdAt: comments.createdAt,
+        updatedAt: comments.updatedAt,
+        author: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          imageUrl: users.imageUrl, // Explicitly selected
+          hasImage: users.hasImage, // Explicitly selected
+        },
+      })
+      .from(comments)
+      .leftJoin(users, eq(comments.authorId, users.id))
+      .where(eq(comments.taskId, taskId))
+      .orderBy(asc(comments.createdAt));
+
+    return rows;
   },
   getById: async (id: string) => {
     return db.query.comments.findFirst({ where: eq(comments.id, id) });

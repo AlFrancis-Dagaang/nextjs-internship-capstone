@@ -21,10 +21,11 @@ import { AddListForm } from "./add-list-form";
 import type { List, Task } from "@/lib/db/schema";
 import { useToast } from "@/hooks/use-toast";
 import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
-import { deleteTask, moveTaskToList, archiveTask } from "@/lib/actions/tasks";
+import { deleteTask, moveTaskToList } from "@/lib/actions/tasks";
 import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
 import { useUiStore } from "@/stores/ui-store";
 import { useBoardStore } from "@/stores/board-store";
+import { useTaskDetailStore } from "@/stores/task-detail-store";
 import { useTrackProjectView } from "@/hooks/use-track-project-view";
 import { getAssignableUsers } from "@/lib/actions/project-member";
 import { moveList } from "@/lib/actions/lists";
@@ -84,10 +85,12 @@ export function Board({
   const endDragAction = useBoardStore((s) => s.endDrag);
   const revertToSnapshot = useBoardStore((s) => s.revertToSnapshot);
 
-  const openTaskId = useUiStore((s) => s.openTaskId);
+  const openModal = useTaskDetailStore((s) => s.openModal);
+  const closeModal = useTaskDetailStore((s) => s.closeModal);
+  const taskDetailOpen = useTaskDetailStore((s) => s.isOpen);
+  const currentOpenTask = useTaskDetailStore((s) => s.task);
+
   const deleteTaskOpen = useUiStore((s) => s.deleteTaskOpen);
-  const openTaskDetail = useUiStore((s) => s.openTaskDetail);
-  const closeTaskDetail = useUiStore((s) => s.closeTaskDetail);
   const openDeleteTaskDialog = useUiStore((s) => s.openDeleteTaskDialog);
   const closeDeleteTaskDialog = useUiStore((s) => s.closeDeleteTaskDialog);
 
@@ -111,10 +114,15 @@ export function Board({
   const openTaskParam = searchParams.get("openTask");
 
   useEffect(() => {
-    if (openTaskParam) {
-      openTaskDetail(openTaskParam);
+    if (openTaskParam && lists.length > 0) {
+      const foundTask = lists
+        .flatMap((l) => l.tasks)
+        .find((t) => t.id === openTaskParam);
+      if (foundTask) {
+        openModal(foundTask, projectId);
+      }
     }
-  }, [openTaskParam, openTaskDetail]);
+  }, [openTaskParam, lists, projectId, openModal]);
 
   const [assignableUsers, setAssignableUsers] = useState<
     { id: string; name?: string; email?: string }[]
@@ -171,7 +179,7 @@ export function Board({
     if (initialLists) {
       setInitialLists(initialLists);
     }
-  }, [projectId]);
+  }, [projectId, initialLists, setInitialLists]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -179,68 +187,32 @@ export function Board({
     }),
   );
 
-  const [openTask, setOpenTask] = useState<TaskWithCommentCount | null>(null);
-
-  useEffect(() => {
-    if (openTaskId == null) {
-      setOpenTask(null);
-      return;
-    }
-    const found = lists
-      .flatMap((l) => l.tasks)
-      .find((t) => t.id === openTaskId);
+  function handleOpenTask(taskId: string) {
+    const found = lists.flatMap((l) => l.tasks).find((t) => t.id === taskId);
     if (found) {
-      setOpenTask(found);
+      openModal(found, projectId);
     }
-  }, [openTaskId, lists]);
-
-  const customCollisionDetection: CollisionDetection = (args) => {
-    const isDraggingList = args.active.data.current?.type === "list";
-
-    if (isDraggingList) {
-      return rectIntersection({
-        ...args,
-        droppableContainers: args.droppableContainers.filter(
-          (container) => container.data.current?.type === "list",
-        ),
-      });
-    }
-
-    const taskCardCollisions = rectIntersection({
-      ...args,
-      droppableContainers: args.droppableContainers.filter(
-        (container) => container.data.current?.type === undefined,
-      ),
-    });
-
-    if (taskCardCollisions.length > 0) {
-      return taskCardCollisions;
-    }
-
-    return rectIntersection({
-      ...args,
-      droppableContainers: args.droppableContainers.filter(
-        (container) => container.data.current?.type === "list-dropzone",
-      ),
-    });
-  };
+  }
 
   function handleTaskDeleted(listId: string, taskId: string) {
     removeTask(listId, taskId);
-    if (openTaskId === taskId) closeTaskDetail();
+    if (currentOpenTask?.id === taskId) closeModal();
   }
 
   function handleConfirmDeleteTask() {
-    if (!openTask) return;
+    if (!currentOpenTask) return;
     startDeleteTaskTransition(async () => {
-      const result = await deleteTask(openTask.id, getRealtimeClientId());
+      const result = await deleteTask(
+        currentOpenTask.id,
+        getRealtimeClientId(),
+      );
       if (result.success) {
         toast({
           title: "Task deleted",
-          description: `"${openTask.title}" was deleted.`,
+          description: `"${currentOpenTask.title}" was deleted.`,
         });
-        handleTaskDeleted(openTask.listId, openTask.id);
-        closeTaskDetail();
+        handleTaskDeleted(currentOpenTask.listId, currentOpenTask.id);
+        closeModal();
       } else {
         toast({
           title: "Failed to delete task",
@@ -329,13 +301,44 @@ export function Board({
     });
   }
 
+  const customCollisionDetection: CollisionDetection = (args) => {
+    const isDraggingList = args.active.data.current?.type === "list";
+
+    if (isDraggingList) {
+      return rectIntersection({
+        ...args,
+        droppableContainers: args.droppableContainers.filter(
+          (container) => container.data.current?.type === "list",
+        ),
+      });
+    }
+
+    const taskCardCollisions = rectIntersection({
+      ...args,
+      droppableContainers: args.droppableContainers.filter(
+        (container) => container.data.current?.type === undefined,
+      ),
+    });
+
+    if (taskCardCollisions.length > 0) {
+      return taskCardCollisions;
+    }
+
+    return rectIntersection({
+      ...args,
+      droppableContainers: args.droppableContainers.filter(
+        (container) => container.data.current?.type === "list-dropzone",
+      ),
+    });
+  };
+
   function handleTaskArchived(listId: string, taskId: string) {
     removeTask(listId, taskId);
-    if (openTaskId === taskId) closeTaskDetail();
+    if (currentOpenTask?.id === taskId) closeModal();
   }
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden bg-background text-foreground">
+    <div className="flex flex-col h-full w-full overflow-hidden bg-transparent text-foreground">
       <DndContext
         id="kanban-board"
         sensors={sensors}
@@ -370,7 +373,7 @@ export function Board({
                     insertTaskAt(task.listId, task, task.position)
                   }
                   onTaskMoved={reconcileTaskMoved}
-                  onOpenTask={openTaskDetail}
+                  onOpenTask={handleOpenTask}
                 />
               ))}
             </SortableContext>
@@ -420,30 +423,24 @@ export function Board({
         </DragOverlay>
       </DndContext>
 
-      {openTask && (
-        <TaskDetailModal
-          task={openTask}
-          projectId={projectId}
-          allLists={lists}
-          assignableUsers={assignableUsers}
-          role={role}
-          open={true}
-          onOpenChange={(open) => {
-            if (!open) closeTaskDetail();
-          }}
-          onChanged={updateTaskLocal}
-          onMoved={reconcileTaskMoved}
-          onDeleteClick={openDeleteTaskDialog}
-          onCommentCountChanged={changeCommentCount}
-        />
-      )}
+      {/* Global Task Detail Modal driven by Zustand store */}
+      <TaskDetailModal
+        role={role}
+        currentUserId={currentUserId}
+        assignableUsers={assignableUsers}
+        allLists={lists}
+        onChanged={updateTaskLocal}
+        onMoved={reconcileTaskMoved}
+        onDeleteClick={openDeleteTaskDialog}
+        onCommentCountChanged={changeCommentCount}
+      />
 
-      {openTask && (
+      {currentOpenTask && (
         <DeleteTaskDialog
           isOpen={deleteTaskOpen}
           onClose={closeDeleteTaskDialog}
           onConfirm={handleConfirmDeleteTask}
-          taskTitle={openTask.title}
+          taskTitle={currentOpenTask.title}
           isPending={isDeletingTask}
         />
       )}
