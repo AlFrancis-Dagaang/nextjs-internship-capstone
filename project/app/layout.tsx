@@ -35,7 +35,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-background text-foreground min-h-screen antialiased">
+      <body
+        className="bg-background text-foreground min-h-screen antialiased"
+        suppressHydrationWarning
+      >
         <ThemeProvider>
           <ClerkProvider
             appearance={{
