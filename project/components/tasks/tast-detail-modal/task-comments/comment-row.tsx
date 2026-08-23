@@ -68,7 +68,6 @@ export function CommentRow({
   const stableUserId =
     comment.author?.id || comment.author?.email || comment.id;
 
-  // Fallback safely across both camelCase and snake_case properties
   const authorImageUrl =
     comment.author?.imageUrl || comment.author?.image_url || null;
   const authorHasImage =
@@ -159,14 +158,19 @@ export function CommentRow({
 
 export function CommentRowSkeleton() {
   return (
-    <li className="flex gap-3 animate-pulse">
-      <div className="h-7 w-7 shrink-0 rounded-full bg-muted" />
-      <div className="flex-1 space-y-1.5">
-        <div className="flex items-baseline gap-2">
-          <div className="h-3 w-24 rounded bg-muted" />
-          <div className="h-2 w-10 rounded bg-muted" />
+    <li className="flex gap-3 animate-pulse items-start">
+      {/* Avatar Skeleton */}
+      <div className="h-7 w-7 shrink-0 rounded-full bg-muted border border-border/80" />
+
+      <div className="flex-1 space-y-2">
+        <div className="flex items-center gap-2">
+          {/* Author Name Skeleton */}
+          <div className="h-3 w-24 rounded-md bg-muted" />
+          {/* Timestamp Skeleton */}
+          <div className="h-2 w-10 rounded-md bg-muted" />
         </div>
-        <div className="h-12 rounded-2xl bg-muted border border-border/80" />
+        {/* Comment Box Content Skeleton */}
+        <div className="h-12 w-full rounded-2xl bg-muted border border-border/80" />
       </div>
     </li>
   );

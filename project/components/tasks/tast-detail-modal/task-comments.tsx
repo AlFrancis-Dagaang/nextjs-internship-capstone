@@ -53,7 +53,7 @@ export function TaskComments({
   onActivityChanged,
 }: TaskCommentsProps) {
   const { toast } = useToast();
-  const { user } = useUser(); // <--- Integrated Clerk user hook for avatar properties
+  const { user } = useUser();
   const [comments, setComments] = useState<CommentWithAuthor[] | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [content, setContent] = useState("");
@@ -93,7 +93,6 @@ export function TaskComments({
     const tempId = `temp-${crypto.randomUUID()}`;
     const submittedContent = content;
 
-    // Optimistic comment includes avatar metadata immediately
     const optimisticComment = {
       id: tempId,
       taskId,
@@ -104,8 +103,8 @@ export function TaskComments({
       author: {
         id: currentUserId ?? "",
         name: user?.fullName || "You",
-        imageUrl: user?.imageUrl, // <--- Fixes missing avatar for local new comments
-        hasImage: !!user?.hasImage, // <--- Fixes missing avatar for local new comments
+        imageUrl: user?.imageUrl,
+        hasImage: !!user?.hasImage,
       },
     } as CommentWithAuthor;
 
