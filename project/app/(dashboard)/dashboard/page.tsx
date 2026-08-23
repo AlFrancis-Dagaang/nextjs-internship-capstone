@@ -1,7 +1,7 @@
 import { requireAuthedDbUser } from "@/lib/services/auth";
 import { queries } from "@/lib/db";
 import { getCompletionLabel } from "@/lib/utils/utils";
-import { DashboardView } from "@/components/layout/dashboard-view";
+import { DashboardView } from "@/components/dashboard/dashboard-view";
 
 export type UpcomingItemDTO = {
   id: string;
