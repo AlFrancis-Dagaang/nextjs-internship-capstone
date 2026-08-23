@@ -282,6 +282,7 @@ export function ProjectCard({
         onMemberAddConfirmed={replaceOptimisticMember}
         onMemberRoleChanged={updateMemberLocal}
         onMemberRemoved={removeMember}
+        onProjectUpdated={(updated) => updateProjectLocal(updated)}
       />
     </>
   );

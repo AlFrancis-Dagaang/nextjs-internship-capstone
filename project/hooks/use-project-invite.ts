@@ -13,6 +13,8 @@ type SearchUser = {
   id: string;
   email: string;
   name: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
   status: "available" | "member" | "owner";
   role?: ProjectMemberRole;
 };
@@ -124,6 +126,8 @@ export function useProjectInvite({
       email: targetEmail,
       name: targetName,
       role: assignedRole,
+      imageUrl: selectedUser.imageUrl,
+      hasImage: Boolean(selectedUser.imageUrl),
     };
 
     onMemberAdded(projectId, tempMember);
@@ -145,12 +149,16 @@ export function useProjectInvite({
         return;
       }
 
+      const realData = result.data as any;
+
       onMemberAddConfirmed(projectId, tempId, {
-        id: result.data.id,
-        userId: result.data.userId,
-        role: result.data.role,
-        email: targetEmail,
-        name: targetName,
+        id: realData.id,
+        userId: realData.userId,
+        role: realData.role,
+        email: realData.email || targetEmail,
+        name: realData.name || targetName,
+        imageUrl: realData.imageUrl || selectedUser.imageUrl,
+        hasImage: realData.hasImage ?? Boolean(selectedUser.imageUrl),
       });
 
       toast({

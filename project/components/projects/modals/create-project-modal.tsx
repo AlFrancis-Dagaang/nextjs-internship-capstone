@@ -69,7 +69,7 @@ export function CreateProjectModal({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return; // Extra layer of safety protection
+    if (!name.trim()) return;
 
     startTransition(async () => {
       const input = {
@@ -103,7 +103,7 @@ export function CreateProjectModal({
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : !isEdit ? (
         <DialogTrigger asChild>
-          <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold h-9 text-xs px-4 rounded-xl shadow-xs transition-all">
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold h-9 text-xs px-4 rounded-xl shadow-xs transition-all w-full sm:w-auto">
             + New Project
           </Button>
         </DialogTrigger>

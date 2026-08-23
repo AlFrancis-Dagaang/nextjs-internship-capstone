@@ -13,12 +13,11 @@ import {
 } from "lucide-react";
 import type { Project } from "@/lib/db/schema";
 import type { CalendarEventDTO } from "@/types";
-import { updateProject, deleteProject } from "@/lib/actions/projects";
+import { updateProject } from "@/lib/actions/projects";
 import { getProjectEvents } from "@/lib/actions/events";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteProjectModal } from "../modals/delete-project-modal";
 import { ProjectEventsModal } from "../modals/project-events-modal";
@@ -77,8 +76,20 @@ export function ProjectInfo({
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [description, setDescription] = useState(project.description ?? "");
 
+  // Sync local state if the project prop changes from outside / store updates
+  useEffect(() => {
+    if (!isEditingDesc) {
+      setDescription(project.description ?? "");
+    }
+  }, [project.description, isEditingDesc]);
+
   // Due date state
   const [dueDate, setDueDate] = useState(toDateInputValue(project.dueDate));
+
+  // Sync local due date if project prop updates externally
+  useEffect(() => {
+    setDueDate(toDateInputValue(project.dueDate));
+  }, [project.dueDate]);
 
   // Delete modal state
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -130,6 +141,14 @@ export function ProjectInfo({
     const submittedDesc = description;
     setIsEditingDesc(false);
 
+    // Optimistic update locally
+    const updated = {
+      ...project,
+      description: submittedDesc || null,
+      updatedAt: new Date(),
+    };
+    onProjectChanged?.(updated);
+
     startTransition(async () => {
       const result = await updateProject(project.id, {
         description: submittedDesc || undefined,
@@ -143,12 +162,12 @@ export function ProjectInfo({
         });
         setDescription(project.description ?? "");
         setIsEditingDesc(true);
+        onProjectChanged?.(project); // Rollback
         return;
       }
 
       toast({ title: "Project description updated" });
       onProjectChanged?.(result.data);
-      router.refresh();
     });
   }
 
@@ -156,6 +175,14 @@ export function ProjectInfo({
     const newDate = e.target.value;
     setDueDate(newDate);
     const parsedDate = newDate ? new Date(newDate) : null;
+
+    // Optimistic update locally
+    const updated = {
+      ...project,
+      dueDate: parsedDate,
+      updatedAt: new Date(),
+    };
+    onProjectChanged?.(updated);
 
     startTransition(async () => {
       const result = await updateProject(project.id, {
@@ -169,12 +196,12 @@ export function ProjectInfo({
           variant: "destructive",
         });
         setDueDate(toDateInputValue(project.dueDate));
+        onProjectChanged?.(project); // Rollback
         return;
       }
 
       toast({ title: "Project due date updated" });
       onProjectChanged?.(result.data);
-      router.refresh();
     });
   }
 
@@ -182,7 +209,7 @@ export function ProjectInfo({
 
   return (
     <>
-      <div className="flex-1 p-6 space-y-6 overflow-y-auto border-r border-border flex flex-col justify-between bg-muted/10">
+      <div className="flex-1 p-4 sm:p-6 space-y-6 overflow-y-auto border-r border-border flex flex-col justify-between bg-muted/10">
         <div className="space-y-6">
           {/* Description Section */}
           <div className="space-y-3">
@@ -195,7 +222,7 @@ export function ProjectInfo({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsEditingDesc(true)}
-                  className="h-7 text-xs shadow-none border-border bg-card text-foreground hover:bg-muted font-medium transition-colors"
+                  className="h-7 text-xs shadow-none border-border bg-card text-foreground hover:bg-muted font-medium rounded-xl transition-colors cursor-pointer"
                 >
                   <Edit2 className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
                   Edit
@@ -204,19 +231,19 @@ export function ProjectInfo({
             </div>
 
             {isEditingDesc && canManage ? (
-              <div className="border border-border rounded-xl overflow-hidden bg-card shadow-xs focus-within:ring-1 focus-within:ring-ring">
+              <div className="border border-border rounded-2xl overflow-hidden bg-card shadow-xs focus-within:ring-1 focus-within:ring-ring">
                 <Textarea
                   autoFocus
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Add a more detailed description..."
-                  className="h-32 max-h-48 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none shadow-none text-sm bg-card text-foreground px-3.5 py-3 overflow-y-auto"
+                  className="h-32 max-h-48 border-0 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none shadow-none text-sm bg-card text-foreground px-4 py-3.5 overflow-y-auto"
                 />
-                <div className="p-2.5 flex justify-end gap-2 bg-muted/50 border-t border-border">
+                <div className="p-3 flex justify-end gap-2 bg-muted/40 border-t border-border">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 text-xs border-border bg-card text-foreground hover:bg-muted font-medium"
+                    className="h-7 text-xs border-border bg-card text-foreground hover:bg-muted font-medium rounded-xl cursor-pointer"
                     onClick={() => {
                       setDescription(project.description ?? "");
                       setIsEditingDesc(false);
@@ -228,7 +255,7 @@ export function ProjectInfo({
                   </Button>
                   <Button
                     size="sm"
-                    className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-medium shadow-none"
+                    className="h-7 text-xs bg-primary text-primary-foreground hover:bg-primary/90 font-medium shadow-none rounded-xl cursor-pointer"
                     onClick={handleSaveDescription}
                     disabled={isPending}
                     type="button"
@@ -240,7 +267,7 @@ export function ProjectInfo({
             ) : (
               <div
                 onClick={() => canManage && setIsEditingDesc(true)}
-                className={`p-4 rounded-xl bg-card border border-border/80 text-sm text-foreground leading-relaxed min-h-[100px] whitespace-pre-wrap shadow-2xs transition-all ${
+                className={`p-4 rounded-2xl bg-card border border-border/80 text-sm text-foreground leading-relaxed min-h-[100px] whitespace-pre-wrap shadow-2xs transition-all ${
                   canManage
                     ? "hover:border-primary/50 hover:bg-muted/40 cursor-pointer"
                     : ""
@@ -267,9 +294,9 @@ export function ProjectInfo({
                 <button
                   type="button"
                   onClick={() => setIsAllEventsModalOpen(true)}
-                  className="text-xs text-primary hover:underline font-semibold flex items-center gap-1"
+                  className="text-xs text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
                 >
-                  See all events ({events.length})
+                  See all ({events.length})
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -277,11 +304,11 @@ export function ProjectInfo({
 
             <div className="grid grid-cols-1 gap-2">
               {isEventsLoading ? (
-                <div className="p-3.5 rounded-xl bg-card border border-border/80 text-xs text-muted-foreground shadow-2xs">
+                <div className="p-3.5 rounded-2xl bg-card border border-border/80 text-xs text-muted-foreground shadow-2xs">
                   Loading events...
                 </div>
               ) : events.length === 0 ? (
-                <div className="p-3.5 rounded-xl bg-card border border-border/80 text-xs text-muted-foreground italic shadow-2xs">
+                <div className="p-3.5 rounded-2xl bg-card border border-border/80 text-xs text-muted-foreground italic shadow-2xs">
                   No events scheduled for this project.
                 </div>
               ) : (
@@ -289,46 +316,46 @@ export function ProjectInfo({
                   <div
                     key={event.id}
                     onClick={() => handleEventClick(event)}
-                    className="group flex items-center justify-between p-3.5 rounded-xl bg-card border border-border/85 cursor-pointer hover:border-primary/50 hover:bg-muted/40 transition-all shadow-2xs"
+                    className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 px-4 py-3 rounded-2xl bg-card border border-border/85 cursor-pointer hover:border-primary/50 hover:bg-muted/40 transition-all shadow-2xs"
                   >
-                    <div className="space-y-1 truncate pr-2">
-                      <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors block truncate">
+                    <div className="flex items-center gap-3 truncate pr-2">
+                      <Calendar
+                        size={14}
+                        className="text-muted-foreground shrink-0"
+                      />
+                      <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                         {event.title}
                       </span>
-                      <span className="text-[11px] text-muted-foreground block font-medium">
-                        {formatEventDateTime(event.startAt, event.endAt)}
-                      </span>
                     </div>
+                    <span className="text-[11px] text-muted-foreground font-medium shrink-0">
+                      {formatEventDateTime(event.startAt, event.endAt)}
+                    </span>
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          {/* Metadata Section */}
+          {/* Information / Metadata Group */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Project Metadata
-            </h4>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-2">
               {/* Due Date Row */}
-              <div className="p-3.5 rounded-xl bg-card border border-border/85 space-y-2 shadow-2xs">
-                <Label className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider flex items-center gap-1.5">
-                  <Calendar size={13} className="text-foreground" /> Due Date
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="date"
-                    value={dueDate}
-                    onChange={handleDateChange}
-                    disabled={!canManage || isPending}
-                    className="bg-background border-border text-foreground h-9 text-sm focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-80"
-                  />
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 px-4 py-3 rounded-2xl bg-card border border-border/85 shadow-2xs">
+                <div className="flex items-center space-x-2.5 text-xs text-muted-foreground font-medium">
+                  <Calendar size={15} className="text-foreground" />
+                  <span>Due Date</span>
                 </div>
+                <Input
+                  type="date"
+                  value={dueDate}
+                  onChange={handleDateChange}
+                  disabled={!canManage || isPending}
+                  className="bg-background border-border text-foreground h-9 sm:h-8 w-full sm:w-40 text-xs px-2.5 rounded-xl focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-80"
+                />
               </div>
 
               {/* Created At Row */}
-              <div className="flex items-center justify-between p-3.5 rounded-xl bg-card border border-border/85 shadow-2xs">
+              <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-card border border-border/85 shadow-2xs">
                 <div className="flex items-center space-x-2.5 text-xs text-muted-foreground font-medium">
                   <Clock size={15} className="text-foreground" />
                   <span>Created At</span>
@@ -347,17 +374,14 @@ export function ProjectInfo({
           </div>
         </div>
 
-        {/* Quick Actions / Danger Zone Footer */}
+        {/* Footer Actions (Danger Zone) */}
         {canManage && (
-          <div className="pt-4 border-t border-border flex items-center justify-between">
-            <span className="text-xs text-muted-foreground font-medium">
-              Danger Zone
-            </span>
+          <div className="pt-4 border-t border-border flex items-center justify-end">
             <Button
               variant="destructive"
               size="sm"
               onClick={() => setDeleteOpen(true)}
-              className="h-8 text-xs rounded-lg shadow-none flex items-center gap-1.5 font-medium"
+              className="h-9 sm:h-8 text-xs rounded-xl shadow-none flex items-center gap-1.5 font-medium px-3.5 w-full sm:w-auto justify-center cursor-pointer"
             >
               <Trash2 size={13} /> Delete Project
             </Button>

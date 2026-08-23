@@ -95,10 +95,18 @@ export async function addProjectMember(
     originClientId,
   );
 
+  const memberWithUser = {
+    ...member,
+    name: targetUser.name,
+    email: targetUser.email,
+    imageUrl: targetUser.imageUrl,
+    hasImage: Boolean(targetUser.imageUrl),
+  };
+
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
 
-  return { success: true, data: member };
+  return { success: true, data: memberWithUser };
 }
 
 export async function getProjectMembers(

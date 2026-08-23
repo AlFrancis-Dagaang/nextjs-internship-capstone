@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useToast } from "@/hooks/use-toast";
 import { getRealtimeClientId } from "@/lib/realtime/client";
 import type { Member } from "@/stores/project-store";
@@ -31,6 +32,8 @@ type SearchUser = {
   id: string;
   email: string;
   name: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
   status: "available" | "member" | "owner";
   role?: "owner" | "admin" | "editor" | "contributor" | "viewer";
 };
@@ -146,6 +149,8 @@ export function InviteMemberModal({
       email: targetEmail,
       name: targetName,
       role: assignedRole,
+      imageUrl: selectedUser.imageUrl,
+      hasImage: Boolean(selectedUser.imageUrl),
     };
 
     onMemberAdded(project.id, tempMember);
@@ -174,6 +179,8 @@ export function InviteMemberModal({
         role: result.data.role,
         email: targetEmail,
         name: targetName,
+        imageUrl: selectedUser.imageUrl,
+        hasImage: Boolean(selectedUser.imageUrl),
       });
 
       toast({
@@ -185,7 +192,7 @@ export function InviteMemberModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-card border border-border rounded-xl shadow-2xl p-6 [&>button]:hidden">
+      <DialogContent className="max-w-md bg-card border border-border rounded-3xl shadow-2xl p-6 [&>button]:hidden">
         <div className="flex items-center justify-between border-b border-border pb-4">
           <DialogHeader className="p-0 space-y-1">
             <DialogTitle className="text-base font-semibold text-foreground">
@@ -194,7 +201,7 @@ export function InviteMemberModal({
           </DialogHeader>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="p-1.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <X size={18} />
           </button>
@@ -218,11 +225,11 @@ export function InviteMemberModal({
                   setShowDropdown(true);
               }}
               disabled={isPending}
-              className="h-9 text-xs bg-muted border-input text-foreground rounded-lg w-full focus-visible:ring-1"
+              className="h-9 text-xs bg-muted border-input text-foreground rounded-xl w-full focus-visible:ring-1"
             />
 
             {showDropdown && !selectedUser && query.trim().length >= 2 && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden py-1">
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-card border border-border rounded-2xl shadow-xl z-50 overflow-hidden py-1">
                 {isLoadingSearch ? (
                   <div className="flex items-center justify-center py-4 text-xs text-muted-foreground gap-2">
                     <Loader2
@@ -253,21 +260,30 @@ export function InviteMemberModal({
                               : "opacity-50 cursor-not-allowed"
                           }`}
                         >
-                          <div className="flex flex-col">
-                            <span className="text-xs font-medium text-foreground">
-                              {user.name}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground">
-                              {user.email}
-                            </span>
+                          <div className="flex items-center gap-2.5 truncate pr-2">
+                            <UserAvatar
+                              userId={user.id || user.email}
+                              name={user.name || user.email}
+                              imageUrl={user.imageUrl}
+                              hasImage={Boolean(user.imageUrl)}
+                              className="w-6 h-6 text-[10px]"
+                            />
+                            <div className="flex flex-col truncate">
+                              <span className="text-xs font-medium text-foreground truncate">
+                                {user.name}
+                              </span>
+                              <span className="text-[11px] text-muted-foreground truncate">
+                                {user.email}
+                              </span>
+                            </div>
                           </div>
                           {user.status === "owner" && (
-                            <span className="text-[10px] font-semibold text-foreground uppercase">
+                            <span className="text-[10px] font-semibold text-foreground uppercase shrink-0">
                               Owner
                             </span>
                           )}
                           {user.status === "member" && (
-                            <span className="text-[10px] font-semibold text-muted-foreground uppercase">
+                            <span className="text-[10px] font-semibold text-muted-foreground uppercase shrink-0">
                               Already {user.role}
                             </span>
                           )}
@@ -290,10 +306,10 @@ export function InviteMemberModal({
                 val: "admin" | "editor" | "contributor" | "viewer",
               ) => setRole(val)}
             >
-              <SelectTrigger className="w-full h-9 text-xs bg-muted border-input text-foreground rounded-lg shadow-none focus:ring-0">
+              <SelectTrigger className="w-full h-9 text-xs bg-muted border-input text-foreground rounded-xl shadow-none focus:ring-0">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
-              <SelectContent className="z-50 bg-card border border-border rounded-xl shadow-xl">
+              <SelectContent className="z-50 bg-card border border-border rounded-2xl shadow-xl">
                 <SelectItem value="viewer" className="text-xs">
                   Viewer (Read-only)
                 </SelectItem>
@@ -316,14 +332,14 @@ export function InviteMemberModal({
               variant="outline"
               size="sm"
               onClick={() => onOpenChange(false)}
-              className="h-9 text-xs rounded-lg border-border bg-card text-foreground hover:bg-muted"
+              className="h-9 text-xs rounded-xl border-border bg-card text-foreground hover:bg-muted font-medium"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isPending || !selectedUser}
-              className="h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-lg shadow-none"
+              className="h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium rounded-xl shadow-none"
             >
               <UserPlus size={14} className="mr-1.5" />
               Add Member
