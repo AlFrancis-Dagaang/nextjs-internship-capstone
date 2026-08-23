@@ -5,7 +5,8 @@ import { projectsQueries } from "@/lib/db/queries/projects";
 import { taskAssigneesQueries } from "@/lib/db/queries/task-assignees";
 import { queries } from "@/lib/db";
 import { TeamHub } from "@/components/team/team-hub";
-import { Users2 } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
+import { CreateTeamButton } from "@/components/team/create-team-button";
 
 export const dynamic = "force-dynamic";
 
@@ -66,22 +67,13 @@ export default async function TeamPage() {
   };
 
   return (
-    <div className="w-full space-y-8 pb-12">
-      <div className="p-5 sm:p-6 bg-card/70 backdrop-blur-md border border-border/80 rounded-3xl shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center space-x-3.5 min-w-0">
-          <div className="p-2.5 bg-secondary text-foreground rounded-2xl border border-border/60 shrink-0">
-            <Users2 size={18} />
-          </div>
-          <div className="space-y-1 min-w-0">
-            <h1 className="text-base font-semibold text-foreground tracking-tight truncate">
-              Teams & Directory
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Manage your teams, view memberships, and browse workspace members.
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="w-full space-y-6 sm:space-y-8 pb-12">
+      <PageHeader
+        title="Teams & Directory"
+        description="Manage your teams, view memberships, and browse workspace members."
+      >
+        <CreateTeamButton />
+      </PageHeader>
 
       <TeamHub initialHub={enhancedHub} currentUserId={user.id} />
     </div>

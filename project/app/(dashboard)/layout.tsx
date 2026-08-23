@@ -1,6 +1,6 @@
 // app/(dashboard)/layout.tsx
 import { ReactNode } from "react";
-import { DashboardShell } from "@/components/dashboard-shell";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { requireAuthedDbUser } from "@/lib/services/auth";
 
 export default async function DashboardLayout({

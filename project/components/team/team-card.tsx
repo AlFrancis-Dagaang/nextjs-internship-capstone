@@ -21,6 +21,7 @@ type MemberInfo = {
 
 export function TeamCard({
   team,
+  creatorName,
   isOwner,
   currentUserId,
   initialMembers = [],
@@ -28,6 +29,7 @@ export function TeamCard({
   onDeleted,
 }: {
   team: WorkspaceTeam;
+  creatorName: string;
   isOwner: boolean;
   currentUserId: string;
   initialMembers?: MemberInfo[];
@@ -128,11 +130,21 @@ export function TeamCard({
           )}
         </div>
 
-        <p className="text-[11px] text-muted-foreground line-clamp-1">
-          {isOwner
-            ? "You created and manage this team"
-            : "Team membership access"}
-        </p>
+        <div className="flex flex-col space-y-1">
+          <p className="text-[11px] text-muted-foreground line-clamp-1">
+            {isOwner
+              ? "You created and manage this team"
+              : "Team membership access"}
+          </p>
+
+          {/* Creator Label */}
+          <div className="text-[10px] text-muted-foreground/80 pt-0.5 truncate">
+            Created by:{" "}
+            <span className="text-foreground font-semibold">
+              {isOwner ? "You" : creatorName}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Footer Metadata & SaaS Actions */}

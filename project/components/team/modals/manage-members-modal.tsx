@@ -264,32 +264,27 @@ export function ManageMembersModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-card border border-border text-card-foreground shadow-2xl rounded-3xl p-6">
-        <DialogHeader className="space-y-1">
-          <div className="flex items-center space-x-2 text-muted-foreground">
-            <Users size={15} />
-            <span className="text-[10px] font-bold uppercase tracking-wider">
-              Team Directory
-            </span>
-          </div>
-          <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
+      <DialogContent className="max-w-xl w-[95vw] max-h-[85vh] bg-card border border-border text-card-foreground shadow-2xl rounded-3xl p-5 sm:p-6 flex flex-col overflow-hidden">
+        <DialogHeader className="space-y-1 shrink-0">
+          <DialogTitle className="text-base font-semibold tracking-tight text-foreground truncate">
             {team.name}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 pt-2">
+        {/* Scrollable Container Body */}
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1 pt-2">
           {/* Attached Projects Section */}
-          <div className="bg-secondary/40 border border-border/60 rounded-2xl p-4 space-y-2">
+          <div className="bg-secondary/40 border border-border rounded-2xl p-3.5 space-y-2 shrink-0">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
               <FolderKanban size={14} className="text-muted-foreground" />
               <span>Attached Projects</span>
             </div>
             {team.projects && team.projects.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                 {team.projects.map((proj) => (
                   <span
                     key={proj.id}
-                    className="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-medium bg-card text-foreground border border-border/80 shadow-2xs"
+                    className="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-medium bg-card text-foreground border border-border shadow-2xl"
                   >
                     {proj.name}
                   </span>
@@ -303,12 +298,12 @@ export function ManageMembersModal({
           </div>
 
           {isOwner && (
-            <div>
+            <div className="shrink-0">
               {!showAddForm ? (
                 <Button
                   onClick={() => setShowAddForm(true)}
                   size="sm"
-                  className="h-9 px-4 text-xs bg-teal-700 text-white hover:bg-teal-800 rounded-xl gap-1.5 shadow-2xs font-medium"
+                  className="h-9 px-4 text-xs bg-teal-700 text-white hover:bg-teal-800 rounded-xl gap-1.5 shadow-2xs font-medium cursor-pointer"
                 >
                   <UserPlus size={14} />
                   Add Member
@@ -316,7 +311,7 @@ export function ManageMembersModal({
               ) : (
                 <form
                   onSubmit={handleAddMember}
-                  className="space-y-2.5 bg-secondary/50 p-3.5 rounded-2xl border border-border/60 relative animate-in fade-in-50 duration-200"
+                  className="space-y-2.5 bg-secondary/50 p-3.5 rounded-2xl border border-border relative animate-in fade-in-50 duration-200"
                 >
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold text-foreground">
@@ -329,7 +324,7 @@ export function ManageMembersModal({
                         setQuery("");
                         setSelectedUser(null);
                       }}
-                      className="text-muted-foreground hover:text-foreground p-0.5 rounded-md"
+                      className="text-muted-foreground hover:text-foreground p-0.5 rounded-md cursor-pointer"
                     >
                       <X size={14} />
                     </button>
@@ -371,7 +366,7 @@ export function ManageMembersModal({
                                 No matching users
                               </div>
                             ) : (
-                              <div className="max-h-[160px] overflow-y-auto divide-y divide-border/60">
+                              <div className="max-h-[160px] overflow-y-auto divide-y divide-border">
                                 {searchResults.map((user) => {
                                   const isSelectable =
                                     user.status === "available";
@@ -423,7 +418,7 @@ export function ManageMembersModal({
                       type="submit"
                       size="sm"
                       disabled={isPending || !selectedUser}
-                      className="h-9 px-4 text-xs bg-teal-700 text-white hover:bg-teal-800 rounded-xl shadow-2xs shrink-0 font-medium"
+                      className="h-9 px-4 text-xs bg-teal-700 text-white hover:bg-teal-800 rounded-xl shadow-2xs shrink-0 font-medium cursor-pointer"
                     >
                       Confirm
                     </Button>
@@ -469,7 +464,7 @@ export function ManageMembersModal({
                 </p>
               </div>
             ) : (
-              <div className="max-h-72 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3 pr-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-1">
                 {filteredMembers.map((m) => {
                   const stableKey = m.userId || m.email;
                   const isCreator = team.createdBy === m.userId;
@@ -478,10 +473,10 @@ export function ManageMembersModal({
                   return (
                     <div
                       key={m.userId}
-                      className="relative flex flex-col justify-between p-3.5 border border-border/80 rounded-2xl bg-secondary/30 hover:bg-card shadow-2xs transition-all"
+                      className="relative flex flex-col justify-between p-3.5 border border-border rounded-2xl bg-secondary/30 hover:bg-card shadow-2xs transition-all"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center space-x-3 overflow-hidden">
+                        <div className="flex items-center space-x-3 overflow-hidden min-w-0">
                           <UserAvatar
                             userId={stableKey}
                             name={displayName}
@@ -489,21 +484,21 @@ export function ManageMembersModal({
                             hasImage={m.hasImage ?? false}
                             className="w-9 h-9 text-xs rounded-xl border border-border shrink-0 shadow-2xs"
                           />
-                          <div className="truncate space-y-0.5">
+                          <div className="truncate space-y-0.5 min-w-0 flex-1">
                             <p className="text-xs font-semibold text-foreground tracking-tight truncate">
                               {m.name}
                             </p>
                             <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
                               <Mail size={10} className="shrink-0 opacity-70" />
-                              {m.email}
+                              <span className="truncate">{m.email}</span>
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="mt-3 pt-2.5 border-t border-border/60 flex items-center justify-between">
+                      <div className="mt-3 pt-2.5 border-t border-border flex items-center justify-between">
                         {isCreator ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-secondary text-secondary-foreground border border-border/60">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-secondary text-secondary-foreground border border-border">
                             <Crown size={9} />
                             Creator
                           </span>
@@ -517,7 +512,7 @@ export function ManageMembersModal({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-6 px-2 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg font-medium transition-colors"
+                            className="h-6 px-2 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg font-medium transition-colors cursor-pointer"
                             onClick={() => handleRemoveMember(m.userId)}
                             disabled={isPending}
                           >

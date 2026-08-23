@@ -256,20 +256,20 @@ export function ProjectTeamView({
   }, [memberToRemove, teamToDetach, inspectingTeam]);
 
   return (
-    <div className="w-full space-y-6 pb-12">
+    <div className="w-full space-y-5 sm:space-y-6 pb-12 px-2 sm:px-0">
       {/* SaaS Tab Header Navigation */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-border/80">
-        <div className="flex items-center space-x-2 bg-secondary/70 p-1 rounded-2xl border border-border/60">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-4 border-b border-border/80">
+        <div className="flex items-center space-x-1.5 bg-secondary/70 p-1 rounded-2xl border border-border/60 w-full sm:w-auto">
           <button
             onClick={() => setActiveTab("individuals")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
               activeTab === "individuals"
                 ? "bg-card text-foreground shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <UsersIcon size={14} />
-            <span>Project Members</span>
+            <span>Members</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-secondary text-secondary-foreground">
               {individuals.length}
             </span>
@@ -277,14 +277,14 @@ export function ProjectTeamView({
 
           <button
             onClick={() => setActiveTab("teams")}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
               activeTab === "teams"
                 ? "bg-card text-foreground shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Shield size={14} />
-            <span>Added Teams</span>
+            <span>Teams</span>
             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-secondary text-secondary-foreground">
               {teams.length}
             </span>
@@ -293,11 +293,11 @@ export function ProjectTeamView({
 
         {/* Action Button for Active Tab */}
         {canManage && (
-          <div>
+          <div className="w-full sm:w-auto">
             {activeTab === "individuals" ? (
               <Button
                 onClick={() => setAddIndividualOpen(true)}
-                className="h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5"
+                className="w-full sm:w-auto h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <UserPlus size={13} />
                 Add Member
@@ -305,7 +305,7 @@ export function ProjectTeamView({
             ) : (
               <Button
                 onClick={() => setAttachTeamOpen(true)}
-                className="h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5"
+                className="w-full sm:w-auto h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <UserPlus size={13} />
                 Add Team
@@ -325,10 +325,10 @@ export function ProjectTeamView({
             return (
               <div
                 key={ind.id}
-                className="relative flex flex-col justify-between p-5 border border-border/80 rounded-2xl bg-card shadow-2xs hover:shadow-md transition-all group"
+                className="relative flex flex-col justify-between p-4 sm:p-5 border border-border/80 rounded-2xl bg-card shadow-2xs hover:shadow-md transition-all group"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center space-x-3 overflow-hidden">
+                  <div className="flex items-center space-x-3 overflow-hidden min-w-0">
                     <UserAvatar
                       userId={avatarKey}
                       name={ind.name || ind.email || "User"}
@@ -336,13 +336,13 @@ export function ProjectTeamView({
                       hasImage={ind.hasImage ?? false}
                       className="w-10 h-10 text-xs rounded-xl border border-border shrink-0 shadow-2xs"
                     />
-                    <div className="truncate space-y-0.5">
+                    <div className="truncate space-y-0.5 min-w-0 flex-1">
                       <p className="text-xs font-semibold text-foreground tracking-tight truncate">
                         {ind.name}
                       </p>
                       <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
                         <Mail size={11} className="shrink-0 opacity-70" />
-                        {ind.email}
+                        <span className="truncate">{ind.email}</span>
                       </p>
                     </div>
                   </div>
@@ -354,7 +354,7 @@ export function ProjectTeamView({
                           variant="ghost"
                           size="icon"
                           disabled={isPending}
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg shrink-0 -mr-1"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl shrink-0 cursor-pointer"
                         >
                           <MoreHorizontal size={16} />
                         </Button>
@@ -431,19 +431,19 @@ export function ProjectTeamView({
               {teams.map((t) => (
                 <div
                   key={t.projectTeamId}
-                  className="relative flex flex-col justify-between p-5 border border-border/80 rounded-2xl bg-card shadow-2xs hover:shadow-md transition-all group"
+                  className="relative flex flex-col justify-between p-4 sm:p-5 border border-border/80 rounded-2xl bg-card shadow-2xs hover:shadow-md transition-all group"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center space-x-3 overflow-hidden">
+                      <div className="flex items-center space-x-3 overflow-hidden min-w-0">
                         <div className="w-10 h-10 rounded-xl bg-secondary text-secondary-foreground border border-border flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-2xs">
                           {getInitials(t.teamName)}
                         </div>
-                        <div className="truncate space-y-0.5">
+                        <div className="truncate space-y-0.5 min-w-0 flex-1">
                           <p className="text-xs font-semibold text-foreground tracking-tight truncate">
                             {t.teamName}
                           </p>
-                          <p className="text-[11px] text-muted-foreground">
+                          <p className="text-[11px] text-muted-foreground truncate">
                             {t.members?.length || 0} members in this team
                           </p>
                         </div>
@@ -456,7 +456,7 @@ export function ProjectTeamView({
                               variant="ghost"
                               size="icon"
                               disabled={isPending}
-                              className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg shrink-0 -mr-1"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-xl shrink-0 cursor-pointer"
                             >
                               <MoreHorizontal size={16} />
                             </Button>
@@ -500,7 +500,7 @@ export function ProjectTeamView({
                     </div>
 
                     <div className="mt-5 pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="text-[11px] font-medium">
+                      <span className="text-[11px] font-medium truncate pr-2">
                         Access Scope:{" "}
                         <span className="text-foreground capitalize font-semibold">
                           {t.role}
@@ -510,7 +510,7 @@ export function ProjectTeamView({
                         variant="outline"
                         size="sm"
                         onClick={() => setInspectingTeam(t)}
-                        className="h-7 text-xs rounded-xl gap-1.5 border-border"
+                        className="h-7 text-xs rounded-xl gap-1.5 border-border shrink-0 cursor-pointer"
                       >
                         <Eye size={13} />
                         View Members
@@ -529,7 +529,7 @@ export function ProjectTeamView({
         open={inspectingTeam !== null}
         onOpenChange={(open) => !open && setInspectingTeam(null)}
       >
-        <DialogContent className="max-w-md bg-card border border-border rounded-3xl shadow-2xl p-6">
+        <DialogContent className="max-w-md bg-card border border-border rounded-3xl shadow-2xl p-6 w-[90vw]">
           <DialogHeader className="space-y-1">
             <div className="flex items-center space-x-2 text-muted-foreground">
               <UsersIcon size={15} />
@@ -537,7 +537,7 @@ export function ProjectTeamView({
                 Team Roster
               </span>
             </div>
-            <DialogTitle className="text-base font-semibold tracking-tight text-foreground">
+            <DialogTitle className="text-base font-semibold tracking-tight text-foreground truncate">
               {inspectingTeam?.teamName}
             </DialogTitle>
           </DialogHeader>
@@ -600,7 +600,7 @@ export function ProjectTeamView({
         open={memberToRemove !== null}
         onOpenChange={(open) => !open && setMemberToRemove(null)}
       >
-        <AlertDialogContent className="bg-card border border-border rounded-3xl shadow-2xl max-w-md p-6">
+        <AlertDialogContent className="bg-card border border-border rounded-3xl shadow-2xl max-w-md p-6 w-[90vw]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base font-semibold tracking-tight">
               Remove team member?
@@ -614,13 +614,13 @@ export function ProjectTeamView({
               immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="pt-4">
-            <AlertDialogCancel className="h-9 text-xs rounded-xl">
+          <AlertDialogFooter className="pt-4 flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="h-9 text-xs rounded-xl m-0">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmRemoveMember}
-              className="h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/95 rounded-xl shadow-xs"
+              className="h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/95 rounded-xl shadow-xs m-0"
             >
               Remove Member
             </AlertDialogAction>
@@ -632,7 +632,7 @@ export function ProjectTeamView({
         open={teamToDetach !== null}
         onOpenChange={(open) => !open && setTeamToDetach(null)}
       >
-        <AlertDialogContent className="bg-card border border-border rounded-3xl shadow-2xl max-w-md p-6">
+        <AlertDialogContent className="bg-card border border-border rounded-3xl shadow-2xl max-w-md p-6 w-[90vw]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base font-semibold tracking-tight">
               Remove team?
@@ -646,13 +646,13 @@ export function ProjectTeamView({
               explicitly granted direct individual roles.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="pt-4">
-            <AlertDialogCancel className="h-9 text-xs rounded-xl">
+          <AlertDialogFooter className="pt-4 flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="h-9 text-xs rounded-xl m-0">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDetachTeam}
-              className="h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/95 rounded-xl shadow-xs"
+              className="h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/95 rounded-xl shadow-xs m-0"
             >
               Remove Team
             </AlertDialogAction>
