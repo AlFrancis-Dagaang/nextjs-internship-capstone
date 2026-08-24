@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { FolderGit2, ArrowUpRight } from "lucide-react";
+import { FolderGit2, ArrowUpRight, FolderKanban } from "lucide-react";
 
 type ActiveProjectDTO = {
   id: string;
@@ -28,7 +28,7 @@ export function ActiveProjectsCard({
       <div className="space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-border/60">
           <div className="flex items-center gap-2">
-            <FolderGit2 size={15} className="text-primary" />
+            <FolderKanban size={13} className="text-foreground shrink-0" />
             <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">
               Active Projects
             </h2>

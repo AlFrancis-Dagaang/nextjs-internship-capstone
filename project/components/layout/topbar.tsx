@@ -244,7 +244,8 @@ export function Header({
 
   return (
     <>
-      <header className="flex h-16 items-center gap-x-4 border border-border/80 bg-card/80 backdrop-blur-md px-4 sm:px-6 rounded-2xl shadow-xs w-full">
+      {/* Added relative and high z-index to the header container so stacking works correctly */}
+      <header className="flex h-16 items-center gap-x-4 border border-border/80 bg-card/80 backdrop-blur-md px-4 sm:px-6 rounded-2xl shadow-xs w-full relative z-40">
         <div className="flex items-center gap-x-3 flex-1">
           {/* Mobile Hamburger Trigger for Full-Screen Menu */}
           <button
@@ -269,8 +270,8 @@ export function Header({
             )}
           </button>
 
-          {/* Search Bar Container */}
-          <div className="relative flex-1 max-w-md">
+          {/* Search Bar Container with z-50 */}
+          <div className="relative flex-1 max-w-md z-50">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
               size={16}
@@ -291,7 +292,7 @@ export function Header({
 
             {searchOpen && (
               <div
-                className="absolute left-0 right-0 top-full mt-2 bg-card border border-border rounded-2xl shadow-xl z-50 max-h-96 overflow-y-auto p-1.5 space-y-3"
+                className="absolute left-0 right-0 top-full mt-2 bg-card border border-border rounded-2xl shadow-2xl z-[100] max-h-96 overflow-y-auto p-1.5 space-y-3"
                 onMouseDown={(e) => e.preventDefault()}
               >
                 {isSearching ? (

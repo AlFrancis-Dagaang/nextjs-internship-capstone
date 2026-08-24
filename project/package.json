@@ -28,7 +28,9 @@
     "type-check": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "test": "jest"
+    "test": "jest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.20",
@@ -65,6 +67,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.4",
+    "@clerk/testing": "^2.2.28",
+    "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@types/jest": "^30.0.0",
