@@ -9,6 +9,7 @@ export type WorkspaceTeam = {
   name: string;
   memberCount: number;
   createdBy: string;
+  projects?: { id: string; name: string }[]; // <-- Add this property
 };
 
 export type WorkspaceMember = {
@@ -17,6 +18,8 @@ export type WorkspaceMember = {
   email: string;
   imageUrl?: string | null;
   hasImage?: boolean | null;
+  isProjectMember: boolean;
+  isTeamMember: boolean;
 };
 
 export type WorkspaceHub = {
@@ -36,88 +39,122 @@ export async function getWorkspaceHub(userId: string): Promise<WorkspaceHub> {
   const yourTeamRows = allTeams.filter((t) => t.createdBy === userId);
   const belongToRows = allTeams.filter((t) => t.createdBy !== userId);
 
+  // Fetch projects once at the top to avoid duplicate declarations
+  const projects = await queries.projects.getByOwnerOrMember(userId);
+  const projectNameMap = new Map(projects.map((p) => [p.id, p.name]));
+
   const [yourTeams, teamsYouBelongTo] = await Promise.all([
     Promise.all(
       yourTeamRows.map(async (t) => {
-        const members = await queries.teams.getMembers(t.id);
+        const [members, attachedProjects] = await Promise.all([
+          queries.teams.getMembers(t.id),
+          queries.projectTeams.getByTeam(t.id),
+        ]);
         return {
           id: t.id,
           name: t.name,
           memberCount: members.length,
           createdBy: t.createdBy,
+          projects: attachedProjects.map((p) => ({
+            id: p.projectId,
+            name: projectNameMap.get(p.projectId) || "Project",
+          })),
         };
       }),
     ),
     Promise.all(
       belongToRows.map(async (t) => {
-        const members = await queries.teams.getMembers(t.id);
+        const [members, attachedProjects] = await Promise.all([
+          queries.teams.getMembers(t.id),
+          queries.projectTeams.getByTeam(t.id),
+        ]);
         return {
           id: t.id,
           name: t.name,
           memberCount: members.length,
           createdBy: t.createdBy,
+          projects: attachedProjects.map((p) => ({
+            id: p.projectId,
+            name: projectNameMap.get(p.projectId) || "Project",
+          })),
         };
       }),
     ),
   ]);
 
-  // Workspace Members: union of (a) users sharing a project with this
-  // user, and (b) users sharing a team with this user. Not a global
-  // directory — no invite/accept flow exists per #29.
-  const projects = await queries.projects.getByOwnerOrMember(userId);
-  const projectCollaboratorLists = await Promise.all(
-    projects.map(async (project) => {
-      const [owner, members] = await Promise.all([
-        queries.users.getById(project.ownerId),
-        queries.projectMembers.getByProject(project.id),
-      ]);
-      return [
-        ...(owner
-          ? [
-              {
-                id: owner.id,
-                name: owner.name,
-                email: owner.email,
-                imageUrl: owner.imageUrl,
-                hasImage: owner.hasImage,
-              },
-            ]
-          : []),
-        ...members.map((m: any) => ({
-          id: m.userId,
-          name: m.userName,
-          email: m.userEmail,
-          imageUrl: m.userImageUrl ?? m.imageUrl,
-          hasImage: m.userHasImage ?? m.hasImage,
-        })),
-      ];
-    }),
-  );
+  const projectUserIds = new Set<string>();
+  const projectCollaboratorsMap = new Map<string, any>();
 
-  const teamCollaboratorLists = await Promise.all(
-    allTeams.map((t) => queries.teams.getMembers(t.id)),
-  );
+  for (const project of projects) {
+    const [owner, members] = await Promise.all([
+      queries.users.getById(project.ownerId),
+      queries.projectMembers.getByProject(project.id),
+    ]);
 
-  const collaboratorMap = new Map<string, WorkspaceMember>();
-  for (const person of projectCollaboratorLists.flat()) {
-    if (person.id !== userId) collaboratorMap.set(person.id, person);
-  }
-  for (const member of teamCollaboratorLists.flat() as any[]) {
-    if (member.userId !== userId) {
-      collaboratorMap.set(member.userId, {
-        id: member.userId,
-        name: member.userName,
-        email: member.userEmail,
-        imageUrl: member.userImageUrl ?? member.imageUrl,
-        hasImage: member.userHasImage ?? member.hasImage,
+    if (owner && owner.id !== userId) {
+      projectUserIds.add(owner.id);
+      projectCollaboratorsMap.set(owner.id, {
+        id: owner.id,
+        name: owner.name,
+        email: owner.email,
+        imageUrl: owner.imageUrl,
+        hasImage: owner.hasImage,
       });
     }
+
+    for (const m of members) {
+      if (m.userId !== userId) {
+        projectUserIds.add(m.userId);
+        if (!projectCollaboratorsMap.has(m.userId)) {
+          projectCollaboratorsMap.set(m.userId, {
+            id: m.userId,
+            name: m.userName,
+            email: m.userEmail,
+            imageUrl: m.userImageUrl,
+            hasImage: m.userHasImage,
+          });
+        }
+      }
+    }
   }
+
+  const teamUserIds = new Set<string>();
+  const teamCollaboratorsMap = new Map<string, any>();
+
+  for (const t of allTeams) {
+    const members = await queries.teams.getMembers(t.id);
+    for (const member of members) {
+      if (member.userId !== userId) {
+        teamUserIds.add(member.userId);
+        if (!teamCollaboratorsMap.has(member.userId)) {
+          teamCollaboratorsMap.set(member.userId, {
+            id: member.userId,
+            name: member.userName,
+            email: member.userEmail,
+            imageUrl: member.userImageUrl,
+            hasImage: member.userHasImage,
+          });
+        }
+      }
+    }
+  }
+
+  const allCollaboratorIds = new Set([...projectUserIds, ...teamUserIds]);
+
+  const workspaceMembers = Array.from(allCollaboratorIds).map((id) => {
+    const person =
+      projectCollaboratorsMap.get(id) || teamCollaboratorsMap.get(id);
+    return {
+      ...person,
+      isProjectMember: projectUserIds.has(id),
+      isTeamMember: teamUserIds.has(id),
+    };
+  });
 
   return {
     yourTeams,
     teamsYouBelongTo,
-    workspaceMembers: Array.from(collaboratorMap.values()),
+    workspaceMembers,
   };
 }
 // ---------- /projects/[projectId]/team ----------
@@ -139,6 +176,13 @@ export type ProjectTeamEntry = {
   teamId: string;
   teamName: string;
   role: "editor" | "contributor" | "viewer";
+  members: {
+    userId: string;
+    userName: string;
+    userEmail: string;
+    imageUrl?: string | null;
+    hasImage?: boolean | null;
+  }[];
 };
 
 export type ProjectTeamResult =
@@ -181,8 +225,8 @@ export async function getProjectTeam(
             name: owner.name,
             email: owner.email,
             role: "owner" as const,
-            imageUrl: owner.imageUrl, // <--- Add this
-            hasImage: owner.hasImage, // <--- Add this
+            imageUrl: owner.imageUrl,
+            hasImage: owner.hasImage,
           },
         ]
       : []),
@@ -192,8 +236,8 @@ export async function getProjectTeam(
       name: m.userName,
       email: m.userEmail,
       role: m.role,
-      imageUrl: m.userImageUrl ?? m.imageUrl, // <--- Add this
-      hasImage: m.userHasImage ?? m.hasImage, // <--- Add this
+      imageUrl: m.userImageUrl ?? m.imageUrl,
+      hasImage: m.userHasImage ?? m.hasImage,
     })),
   ];
 
@@ -210,14 +254,25 @@ export async function getProjectTeam(
     }),
   );
 
-  // ... rest of your return statement
-
-  const teams: ProjectTeamEntry[] = projectTeams.map((pt) => ({
-    projectTeamId: pt.id,
-    teamId: pt.teamId,
-    teamName: pt.teamName,
-    role: pt.role,
-  }));
+  const teams: ProjectTeamEntry[] = await Promise.all(
+    projectTeams.map(async (pt) => {
+      const rawMembers = await queries.teams.getMembers(pt.teamId);
+      const members = rawMembers.map((m: any) => ({
+        userId: m.userId,
+        userName: m.userName,
+        userEmail: m.userEmail,
+        imageUrl: m.userImageUrl ?? m.imageUrl,
+        hasImage: m.userHasImage ?? m.hasImage,
+      }));
+      return {
+        projectTeamId: pt.id,
+        teamId: pt.teamId,
+        teamName: pt.teamName,
+        role: pt.role,
+        members,
+      };
+    }),
+  );
 
   return {
     project: access.project,

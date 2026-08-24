@@ -38,7 +38,12 @@ export const usersQueries = {
   },
   searchByNameOrEmailPrefix: async (query: string, limit = 8) => {
     return db
-      .select({ id: users.id, email: users.email, name: users.name })
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        imageUrl: users.imageUrl,
+      })
       .from(users)
       .where(
         or(ilike(users.name, `%${query}%`), ilike(users.email, `%${query}%`)),

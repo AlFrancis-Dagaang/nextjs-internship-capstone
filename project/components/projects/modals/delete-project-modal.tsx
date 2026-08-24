@@ -81,27 +81,37 @@ export function DeleteProjectModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-card border border-border rounded-xl shadow-2xl">
+      <DialogContent className="sm:max-w-md bg-card border border-border rounded-3xl shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-center font-bold text-foreground">
             Delete Project
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
+          {/* Warning Note Box */}
+          <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-3 flex items-start space-x-3">
+            <p className="text-xs font-medium text-destructive leading-tight">
+              <strong>Note:</strong> The project &quot;{projectName}&quot; and
+              all its lists, tasks, and member mappings will be permanently
+              deleted.
+            </p>
+          </div>
+
+          {/* Agreement Checkbox Box */}
           <div
             onClick={() => setConfirmed((prev) => !prev)}
-            className="bg-destructive/10 border border-destructive/20 rounded-md p-3 flex items-start space-x-3 cursor-pointer select-none"
+            className="border border-border bg-muted/50 rounded-2xl p-3 flex items-start space-x-3 cursor-pointer select-none hover:bg-muted transition-colors"
           >
             <div className="mt-0.5 pointer-events-none">
               <Checkbox
                 checked={confirmed}
                 onCheckedChange={() => {}}
-                className="border-destructive data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
+                className="border-input data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
             </div>
-            <p className="text-xs font-medium text-destructive leading-tight">
-              The project &quot;{projectName}&quot; and all its lists, tasks,
-              and member mappings will be permanently deleted.
+            <p className="text-xs font-medium text-foreground leading-tight">
+              I am agreeing that this action is irreversible and permanently
+              removes all related project data.
             </p>
           </div>
 
@@ -112,7 +122,7 @@ export function DeleteProjectModal({
               size="sm"
               onClick={onClose}
               disabled={isDeleting}
-              className="rounded-lg border-border bg-card text-foreground hover:bg-muted"
+              className="rounded-xl border-border bg-card text-foreground hover:bg-muted"
             >
               Cancel
             </Button>
@@ -122,7 +132,7 @@ export function DeleteProjectModal({
               size="sm"
               onClick={handleConfirmDelete}
               disabled={!confirmed || isDeleting}
-              className="rounded-lg"
+              className="rounded-xl"
             >
               {isDeleting ? "Deleting..." : "Delete project"}
             </Button>

@@ -16,6 +16,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/layout/page-header";
 import { EventFormModal } from "../calendar/modals/event-form-modal";
 import type { CalendarTaskDTO, CalendarEventDTO } from "@/types";
 
@@ -307,36 +308,22 @@ export function CalendarView({
     : [];
 
   return (
-    <div className="w-full space-y-6 pb-12">
-      {/* Header Bar matching Dashboard style */}
-      <div className="p-5 sm:p-6 bg-card border border-border/80 rounded-3xl shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center space-x-3.5 min-w-0">
-          <div className="p-2.5 bg-secondary text-foreground rounded-2xl border border-border/60 shrink-0">
-            <CalendarIcon size={18} />
-          </div>
-          <div className="space-y-1 min-w-0">
-            <h1 className="text-base font-semibold text-foreground tracking-tight truncate">
-              Schedule & Deadlines
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Manage upcoming milestones, track priority items, and coordinate
-              project workflows.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
-          <button
-            onClick={() => {
-              setEditingEvent(undefined);
-              setIsEventModalOpen(true);
-            }}
-            className="h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <Plus size={14} /> New Event
-          </button>
-        </div>
-      </div>
+    <div className="w-full space-y-6 pb-12 px-2 sm:px-0">
+      {/* Reusable PageHeader implementation */}
+      <PageHeader
+        title="Schedule & Deadlines"
+        description="Manage upcoming milestones, track priority items, and coordinate project workflows."
+      >
+        <button
+          onClick={() => {
+            setEditingEvent(undefined);
+            setIsEventModalOpen(true);
+          }}
+          className="h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          <Plus size={14} /> New Event
+        </button>
+      </PageHeader>
 
       {/* Main Grid & Panels */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
@@ -374,13 +361,14 @@ export function CalendarView({
           </div>
 
           {/* Calendar Grid Container */}
-          <div className="bg-card rounded-3xl border border-border/80 overflow-hidden shadow-xs flex flex-col h-[740px]">
+          {/* Calendar Grid Container */}
+          <div className="bg-card rounded-3xl border border-border/80 overflow-hidden shadow-xs flex flex-col h-auto sm:h-[740px]">
             <div className="grid grid-cols-7 border-b border-border/60 bg-secondary/50 text-center py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider shrink-0">
               {WEEK_DAYS.map((day) => (
                 <div key={day}>{day}</div>
               ))}
             </div>
-            <div className="grid grid-cols-7 auto-rows-fr flex-1">
+            <div className="grid grid-cols-7 auto-rows-fr flex-1 min-h-[460px] sm:min-h-0">
               {calendarGrid.map(
                 ({ dateKey, dayNum, isCurrentMonth }, index) => {
                   const dayTasks = safeTasksByDate[dateKey] || [];
@@ -399,13 +387,13 @@ export function CalendarView({
                     <button
                       key={`${dateKey}-${index}`}
                       onClick={() => setSelectedDate(dateKey)}
-                      className={`p-2.5 flex flex-col justify-between border-b border-r border-border/60 text-left transition-all relative group focus-visible:outline-none focus-visible:z-25 overflow-hidden cursor-pointer ${
+                      className={`p-1.5 sm:p-2.5 flex flex-col justify-between border-b border-r border-border/60 text-left transition-all relative group focus-visible:outline-none focus-visible:z-25 overflow-hidden cursor-pointer min-h-[64px] sm:min-h-0 ${
                         !isCurrentMonth ? "opacity-30 bg-muted/10" : ""
                       } ${isSelected ? "bg-secondary text-secondary-foreground ring-1 ring-inset ring-ring z-20 font-semibold" : "hover:bg-secondary/40"}`}
                     >
                       <div className="flex items-center justify-between w-full">
                         <span
-                          className={`inline-flex items-center justify-center w-6 h-6 text-xs font-semibold rounded-full ${isToday ? "bg-teal-700 text-white font-bold shadow-2xs" : "text-foreground"}`}
+                          className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 text-[11px] sm:text-xs font-semibold rounded-full ${isToday ? "bg-teal-700 text-white font-bold shadow-2xs" : "text-foreground"}`}
                         >
                           {dayNum}
                         </span>
@@ -455,9 +443,10 @@ export function CalendarView({
                           </div>
                         )}
 
-                        {totalItemsCount > 2 && (
-                          <span className="sm:hidden text-[9px] font-semibold text-muted-foreground px-1">
-                            {totalItemsCount} items
+                        {totalItemsCount > 0 && (
+                          <span className="sm:hidden text-[9px] font-semibold text-muted-foreground px-0.5 truncate">
+                            {totalItemsCount} item
+                            {totalItemsCount === 1 ? "" : "s"}
                           </span>
                         )}
                       </div>
@@ -469,40 +458,40 @@ export function CalendarView({
           </div>
         </div>
 
-        {/* Right Column: Sidebar matching calendar height (740px) */}
-        <div className="xl:col-span-4 flex flex-col h-[740px] gap-4">
+        {/* Right Column: Sidebar */}
+        <div className="xl:col-span-4 flex flex-col gap-4">
           {/* Combined Metrics Card */}
           <div className="bg-card rounded-3xl border border-border/80 p-5 shadow-xs flex flex-col shrink-0">
             <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2 pb-3 border-b border-border/60">
               <TrendingUp size={15} className="text-teal-600" /> Month Overview
             </h3>
-            <div className="grid grid-cols-4 gap-2.5 mt-4">
-              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <div className="grid grid-cols-4 gap-2 mt-4">
+              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60 text-center">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
                   Tasks
                 </span>
                 <span className="text-base font-bold text-foreground mt-0.5">
                   {totalMonthTasks}
                 </span>
               </div>
-              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60 text-center">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
                   Projects
                 </span>
                 <span className="text-base font-bold text-purple-600 dark:text-purple-400 mt-0.5">
                   {totalMonthProjects}
                 </span>
               </div>
-              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60 text-center">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
                   High Prio
                 </span>
                 <span className="text-base font-bold text-destructive mt-0.5">
                   {highPriorityCount}
                 </span>
               </div>
-              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60">
-                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <div className="flex flex-col p-2.5 rounded-2xl bg-secondary/50 border border-border/60 text-center">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
                   Queue
                 </span>
                 <span className="text-base font-bold text-foreground mt-0.5">
@@ -512,220 +501,216 @@ export function CalendarView({
             </div>
           </div>
 
-          {/* Bottom Container splitting remaining space */}
-          <div className="flex-1 grid grid-rows-2 gap-4 min-h-0">
-            {/* Selected Day Panel */}
-            <div className="bg-card rounded-3xl border border-border/80 p-5 shadow-xs flex flex-col min-h-0">
-              <div className="flex items-center justify-between pb-3 border-b border-border/60 mb-3 shrink-0">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
-                  <Layers size={15} className="text-teal-600" />
+          {/* Selected Day Panel */}
+          <div className="bg-card rounded-3xl border border-border/80 p-5 shadow-xs flex flex-col h-[320px]">
+            <div className="flex items-center justify-between pb-3 border-b border-border/60 mb-3 shrink-0">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2 truncate pr-2">
+                <Layers size={15} className="text-teal-600 shrink-0" />
+                <span className="truncate">
                   {selectedDate
                     ? new Date(selectedDate + "T00:00:00").toLocaleDateString(
                         undefined,
                         { month: "short", day: "numeric", year: "numeric" },
                       )
                     : "Select a Date"}
-                </h3>
-              </div>
-
-              <div className="flex-1 overflow-y-auto pr-1">
-                {!selectedDate ? (
-                  <div className="flex flex-col items-center justify-center h-full py-6 text-center">
-                    <CalendarIcon className="w-7 h-7 text-muted-foreground/40 mb-2" />
-                    <p className="text-xs text-muted-foreground italic">
-                      Click any calendar tile to review tasks and events.
-                    </p>
-                  </div>
-                ) : selectedDayTasks.length === 0 &&
-                  selectedDayEvents.length === 0 &&
-                  selectedDayProjects.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full py-6 text-center">
-                    <CheckCircle2 className="w-7 h-7 text-muted-foreground/40 mb-2" />
-                    <p className="text-xs text-muted-foreground italic">
-                      No deliverables or events scheduled for this date.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    {selectedDayTasks.length > 0 && (
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                          Tasks ({selectedDayTasks.length})
-                        </span>
-                        {selectedDayTasks.map((task) => (
-                          <div
-                            key={task.id}
-                            onClick={() =>
-                              router.push(
-                                `/projects/${task.projectId}?openTask=${task.id}`,
-                              )
-                            }
-                            className="flex items-center justify-between p-3 rounded-2xl border border-border/80 hover:border-teal-500/50 bg-secondary/30 hover:bg-card cursor-pointer transition-all group shadow-2xs"
-                          >
-                            <div className="flex flex-col gap-0.5 overflow-hidden pr-2">
-                              <span className="text-xs font-semibold text-foreground group-hover:text-teal-600 transition-colors truncate">
-                                {task.title}
-                              </span>
-                              <span className="text-[11px] text-muted-foreground truncate">
-                                {task.projectName}
-                              </span>
-                            </div>
-                            {getPriorityBadge(task.priority)}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {selectedDayEvents.length > 0 && (
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                          Events ({selectedDayEvents.length})
-                        </span>
-                        {selectedDayEvents.map((event) => (
-                          <div
-                            key={event.id}
-                            onClick={() => {
-                              setEditingEvent(event);
-                              setIsEventModalOpen(true);
-                            }}
-                            className="flex items-center justify-between p-3 rounded-2xl border border-border/80 bg-secondary/30 transition-all group hover:border-teal-500/50 hover:bg-card cursor-pointer shadow-2xs"
-                          >
-                            <div className="flex flex-col gap-0.5 overflow-hidden pr-2">
-                              <span className="text-xs font-semibold text-foreground group-hover:text-teal-600 transition-colors truncate">
-                                {event.title}
-                              </span>
-                              <span className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
-                                <CalendarDays
-                                  size={12}
-                                  className="text-amber-500 shrink-0"
-                                />
-                                {formatEventTimeRange(
-                                  event.startAt,
-                                  event.endAt,
-                                )}
-                              </span>
-                            </div>
-                            <span
-                              className={`text-[10px] font-medium px-2.5 py-0.5 rounded-full shrink-0 ${event.projectId ? "bg-primary/10 text-primary border border-primary/20" : "bg-secondary text-secondary-foreground"}`}
-                            >
-                              {event.projectId ? "Project" : "Personal"}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {selectedDayProjects.length > 0 && (
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                          Projects ({selectedDayProjects.length})
-                        </span>
-                        {selectedDayProjects.map((project) => (
-                          <div
-                            key={project.id}
-                            className="flex items-center justify-between p-3 rounded-2xl border border-border/80 bg-secondary/30 shadow-2xs"
-                          >
-                            <div className="flex flex-col gap-0.5 overflow-hidden pr-2">
-                              <span className="text-xs font-semibold text-foreground truncate">
-                                {project.name}
-                              </span>
-                              <span className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
-                                <CalendarIcon
-                                  size={12}
-                                  className="text-purple-500 shrink-0"
-                                />
-                                Due Deadline
-                              </span>
-                            </div>
-                            <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full shrink-0 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
-                              Deadline
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                </span>
+              </h3>
             </div>
 
-            {/* Upcoming Milestones Queue Card */}
-            <div className="bg-card rounded-3xl border border-border/80 p-5 shadow-xs flex flex-col min-h-0">
-              <div className="flex items-center justify-between pb-3 border-b border-border/60 mb-3 shrink-0">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
-                  <Clock size={15} className="text-teal-600" /> Upcoming
-                  Milestones
-                </h3>
-                <span className="text-[11px] font-semibold text-muted-foreground">
-                  {upcomingMilestones.length} items
-                </span>
-              </div>
-
-              <div className="flex-1 overflow-y-auto pr-1">
-                {upcomingMilestones.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full py-6 text-center">
-                    <p className="text-xs text-muted-foreground italic">
-                      No immediate upcoming deadlines.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2.5">
-                    {upcomingMilestones.map((item, idx) => {
-                      const isToday = item.dateKey === todayKey;
-                      return (
+            <div className="flex-1 overflow-y-auto pr-1">
+              {!selectedDate ? (
+                <div className="flex flex-col items-center justify-center h-full py-6 text-center">
+                  <CalendarIcon className="w-7 h-7 text-muted-foreground/40 mb-2" />
+                  <p className="text-xs text-muted-foreground italic">
+                    Click any calendar tile to review tasks and events.
+                  </p>
+                </div>
+              ) : selectedDayTasks.length === 0 &&
+                selectedDayEvents.length === 0 &&
+                selectedDayProjects.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full py-6 text-center">
+                  <CheckCircle2 className="w-7 h-7 text-muted-foreground/40 mb-2" />
+                  <p className="text-xs text-muted-foreground italic">
+                    No deliverables or events scheduled for this date.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {selectedDayTasks.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                        Tasks ({selectedDayTasks.length})
+                      </span>
+                      {selectedDayTasks.map((task) => (
                         <div
-                          key={`upcoming-${item.type}-${item.task?.id || item.event?.id || item.project?.id || idx}`}
-                          onClick={() => {
-                            if (item.type === "task" && item.task) {
-                              router.push(
-                                `/projects/${item.task.projectId}?openTask=${item.task.id}`,
-                              );
-                            } else if (item.type === "event" && item.event) {
-                              setEditingEvent(item.event);
-                              setIsEventModalOpen(true);
-                            }
-                          }}
-                          className={`flex flex-col p-3 rounded-2xl border border-border/80 bg-secondary/30 transition-all gap-1.5 group shadow-2xs ${item.type === "project" ? "" : "hover:border-teal-500/50 hover:bg-card cursor-pointer"}`}
+                          key={task.id}
+                          onClick={() =>
+                            router.push(
+                              `/projects/${task.projectId}?openTask=${task.id}`,
+                            )
+                          }
+                          className="flex items-center justify-between p-3 rounded-2xl border border-border/80 hover:border-teal-500/50 bg-secondary/30 hover:bg-card cursor-pointer transition-all group shadow-2xs"
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="text-xs font-semibold text-foreground group-hover:text-teal-600 transition-colors line-clamp-1">
-                              {item.title}
+                          <div className="flex flex-col gap-0.5 overflow-hidden pr-2">
+                            <span className="text-xs font-semibold text-foreground group-hover:text-teal-600 transition-colors truncate">
+                              {task.title}
                             </span>
-                            {item.type === "task" ? (
-                              getPriorityBadge(
-                                item.priority as
-                                  | "low"
-                                  | "medium"
-                                  | "high"
-                                  | undefined,
-                              )
-                            ) : item.type === "event" ? (
-                              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                                Event
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
-                                Project
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                            <span className="truncate max-w-[140px]">
-                              {item.subtext}
-                            </span>
-                            <span
-                              className={`font-semibold flex items-center gap-1 ${isToday ? "text-destructive" : "text-muted-foreground"}`}
-                            >
-                              {isToday && <AlertCircle size={12} />}
-                              {formatRelativeDays(item.dateKey)}
+                            <span className="text-[11px] text-muted-foreground truncate">
+                              {task.projectName}
                             </span>
                           </div>
+                          {getPriorityBadge(task.priority)}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedDayEvents.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                        Events ({selectedDayEvents.length})
+                      </span>
+                      {selectedDayEvents.map((event) => (
+                        <div
+                          key={event.id}
+                          onClick={() => {
+                            setEditingEvent(event);
+                            setIsEventModalOpen(true);
+                          }}
+                          className="flex items-center justify-between p-3 rounded-2xl border border-border/80 bg-secondary/30 transition-all group hover:border-teal-500/50 hover:bg-card cursor-pointer shadow-2xs"
+                        >
+                          <div className="flex flex-col gap-0.5 overflow-hidden pr-2">
+                            <span className="text-xs font-semibold text-foreground group-hover:text-teal-600 transition-colors truncate">
+                              {event.title}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
+                              <CalendarDays
+                                size={12}
+                                className="text-amber-500 shrink-0"
+                              />
+                              {formatEventTimeRange(event.startAt, event.endAt)}
+                            </span>
+                          </div>
+                          <span
+                            className={`text-[10px] font-medium px-2.5 py-0.5 rounded-full shrink-0 ${event.projectId ? "bg-primary/10 text-primary border border-primary/20" : "bg-secondary text-secondary-foreground"}`}
+                          >
+                            {event.projectId ? "Project" : "Personal"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedDayProjects.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                        Projects ({selectedDayProjects.length})
+                      </span>
+                      {selectedDayProjects.map((project) => (
+                        <div
+                          key={project.id}
+                          className="flex items-center justify-between p-3 rounded-2xl border border-border/80 bg-secondary/30 shadow-2xs"
+                        >
+                          <div className="flex flex-col gap-0.5 overflow-hidden pr-2">
+                            <span className="text-xs font-semibold text-foreground truncate">
+                              {project.name}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground truncate flex items-center gap-1.5">
+                              <CalendarIcon
+                                size={12}
+                                className="text-purple-500 shrink-0"
+                              />
+                              Due Deadline
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full shrink-0 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                            Deadline
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Upcoming Milestones Queue Card */}
+          <div className="bg-card rounded-3xl border border-border/80 p-5 shadow-xs flex flex-col h-[320px]">
+            <div className="flex items-center justify-between pb-3 border-b border-border/60 mb-3 shrink-0">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                <Clock size={15} className="text-teal-600" /> Upcoming
+                Milestones
+              </h3>
+              <span className="text-[11px] font-semibold text-muted-foreground">
+                {upcomingMilestones.length} items
+              </span>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-1">
+              {upcomingMilestones.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full py-6 text-center">
+                  <p className="text-xs text-muted-foreground italic">
+                    No immediate upcoming deadlines.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  {upcomingMilestones.map((item, idx) => {
+                    const isToday = item.dateKey === todayKey;
+                    return (
+                      <div
+                        key={`upcoming-${item.type}-${item.task?.id || item.event?.id || item.project?.id || idx}`}
+                        onClick={() => {
+                          if (item.type === "task" && item.task) {
+                            router.push(
+                              `/projects/${item.task.projectId}?openTask=${item.task.id}`,
+                            );
+                          } else if (item.type === "event" && item.event) {
+                            setEditingEvent(item.event);
+                            setIsEventModalOpen(true);
+                          }
+                        }}
+                        className={`flex flex-col p-3 rounded-2xl border border-border/80 bg-secondary/30 transition-all gap-1.5 group shadow-2xs ${item.type === "project" ? "" : "hover:border-teal-500/50 hover:bg-card cursor-pointer"}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-xs font-semibold text-foreground group-hover:text-teal-600 transition-colors line-clamp-1">
+                            {item.title}
+                          </span>
+                          {item.type === "task" ? (
+                            getPriorityBadge(
+                              item.priority as
+                                | "low"
+                                | "medium"
+                                | "high"
+                                | undefined,
+                            )
+                          ) : item.type === "event" ? (
+                            <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                              Event
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                              Project
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                          <span className="truncate max-w-[140px]">
+                            {item.subtext}
+                          </span>
+                          <span
+                            className={`font-semibold flex items-center gap-1 ${isToday ? "text-destructive" : "text-muted-foreground"}`}
+                          >
+                            {isToday && <AlertCircle size={12} />}
+                            {formatRelativeDays(item.dateKey)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { useEffect } from "react";
 const STORAGE_KEY = "recently-viewed-projects";
 const MAX_ENTRIES = 8;
 
-type RecentEntry = { projectId: string; viewedAt: number };
+export type RecentEntry = { projectId: string; viewedAt: number };
 
 export function useTrackProjectView(projectId: string) {
   useEffect(() => {
@@ -23,20 +23,20 @@ export function useTrackProjectView(projectId: string) {
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     } catch {
-      // localStorage unavailable (private browsing, disabled, etc.) —
-      // fail silently, recently-viewed is a nice-to-have, not critical
+      // localStorage unavailable — fail silently
     }
   }, [projectId]);
 }
 
 export function getRecentlyViewedIds(): string[] {
+  return getRecentlyViewedEntries().map((e) => e.projectId);
+}
+export function getRecentlyViewedEntries(): RecentEntry[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const entries: RecentEntry[] = JSON.parse(raw);
-    return entries
-      .sort((a, b) => b.viewedAt - a.viewedAt)
-      .map((e) => e.projectId);
+    return entries.sort((a, b) => b.viewedAt - a.viewedAt);
   } catch {
     return [];
   }

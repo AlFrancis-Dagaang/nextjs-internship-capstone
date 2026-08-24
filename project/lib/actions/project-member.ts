@@ -95,10 +95,18 @@ export async function addProjectMember(
     originClientId,
   );
 
+  const memberWithUser = {
+    ...member,
+    name: targetUser.name,
+    email: targetUser.email,
+    imageUrl: targetUser.imageUrl,
+    hasImage: Boolean(targetUser.imageUrl),
+  };
+
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}`);
 
-  return { success: true, data: member };
+  return { success: true, data: memberWithUser };
 }
 
 export async function getProjectMembers(
@@ -302,15 +310,24 @@ export async function searchUsersForInvite(
     existingMembers.map((m) => [m.userId, m.role]),
   );
 
-  const annotated: UserSearchResult[] = results.map((u) => {
+  const annotated: UserSearchResult[] = results.map((u: any) => {
+    // Map your database fields here (e.g., u.image or u.avatarUrl)
+    const userImage = u.imageUrl || u.image || u.avatarUrl;
+
+    const baseUser = {
+      ...u,
+      imageUrl: userImage,
+      hasImage: Boolean(userImage),
+    };
+
     if (u.id === access.project.ownerId) {
-      return { ...u, status: "owner" };
+      return { ...baseUser, status: "owner" };
     }
     const role = memberRoleById.get(u.id);
     if (role) {
-      return { ...u, status: "member", role };
+      return { ...baseUser, status: "member", role };
     }
-    return { ...u, status: "available" };
+    return { ...baseUser, status: "available" };
   });
 
   return { success: true, data: annotated };

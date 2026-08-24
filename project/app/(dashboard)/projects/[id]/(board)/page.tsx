@@ -131,9 +131,8 @@ export default async function ProjectPage({
       isCompleted: t.isCompleted,
     }))
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-
   return (
-    <div className="h-full flex flex-col overflow-hidden px-1 space-y-4">
+    <div className="h-full flex flex-col min-h-0 overflow-hidden space-y-4">
       <div className="shrink-0">
         <ProjectHeader
           project={project}
@@ -149,7 +148,9 @@ export default async function ProjectPage({
           upcomingTasks={upcomingTasks}
         />
       </div>
-      <div className="flex-1 min-h-0">
+
+      {/* Board container takes remaining height with strict overflow bounds */}
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         <Board
           projectId={id}
           initialLists={listsWithTasks}

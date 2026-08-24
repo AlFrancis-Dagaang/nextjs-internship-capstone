@@ -1,6 +1,8 @@
+// components/tasks/tast-detail-modal/task-comments.tsx
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useUser } from "@clerk/nextjs";
 import {
   Bold,
   Italic,
@@ -36,6 +38,7 @@ type TaskCommentsProps = {
   previewCount?: number;
   canEdit: boolean;
   canContribute: boolean;
+  currentUserId?: string | null;
   onCommentCountChanged?: (taskId: string, delta: number) => void;
   onActivityChanged?: () => void;
 };
@@ -45,10 +48,12 @@ export function TaskComments({
   refreshKey,
   previewCount = 4,
   canContribute,
+  currentUserId: propUserId,
   onCommentCountChanged,
   onActivityChanged,
 }: TaskCommentsProps) {
   const { toast } = useToast();
+  const { user } = useUser();
   const [comments, setComments] = useState<CommentWithAuthor[] | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [content, setContent] = useState("");
@@ -71,8 +76,12 @@ export function TaskComments({
   }
 
   useEffect(() => {
-    getCurrentUserId().then(setCurrentUserId);
-  }, [taskId]);
+    if (!propUserId) {
+      getCurrentUserId().then(setCurrentUserId);
+    } else {
+      setCurrentUserId(propUserId);
+    }
+  }, [taskId, propUserId]);
 
   useEffect(() => {
     refresh();
@@ -83,6 +92,7 @@ export function TaskComments({
 
     const tempId = `temp-${crypto.randomUUID()}`;
     const submittedContent = content;
+
     const optimisticComment = {
       id: tempId,
       taskId,
@@ -90,7 +100,12 @@ export function TaskComments({
       content: submittedContent,
       createdAt: new Date(),
       updatedAt: new Date(),
-      author: { id: currentUserId ?? "", name: "You" },
+      author: {
+        id: currentUserId ?? "",
+        name: user?.fullName || "You",
+        imageUrl: user?.imageUrl,
+        hasImage: !!user?.hasImage,
+      },
     } as CommentWithAuthor;
 
     setContent("");

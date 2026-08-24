@@ -1,33 +1,34 @@
 // components/projects/project-card.tsx
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useProjectStore } from "@/stores/project-store";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import type { Project } from "@/lib/db/schema";
+import type {
+  Project,
+  ProjectMember,
+  CompletionInfo,
+  MemberRole,
+} from "@/types";
 import { updateProject } from "@/lib/actions/projects";
 import { ProjectListAction } from "./project-list-action";
 import { ProjectDetailModal } from "./modals/project-detail-modal";
+import { ProjectMemberStack } from "./project-member-stack";
+import { useInlineRename } from "@/hooks/use-inline-rename";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Users, Calendar, ArrowUpRight, CheckCircle2 } from "lucide-react";
-import { getCompletionLabel } from "@/lib/utils/utils";
+import { Users, Calendar, ArrowUpRight, CheckCircle2, X } from "lucide-react";
 import { UserAvatar } from "../ui/user-avatar";
 
-type Member = {
-  id: string;
-  userId: string;
-  email?: string;
-  name?: string;
-  imageUrl?: string | null;
-  hasImage?: boolean;
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-};
-
-type CompletionInfo = {
-  total: number;
-  completed: number;
+type ProjectCardProps = {
+  project: Project;
+  currentUserId: string;
+  initialMembers?: ProjectMember[];
+  ownerName?: string;
+  ownerEmail?: string;
+  ownerImageUrl?: string | null;
+  ownerHasImage?: boolean | null;
+  myRole?: MemberRole;
+  completion: CompletionInfo;
 };
 
 export function ProjectCard({
@@ -40,19 +41,7 @@ export function ProjectCard({
   ownerHasImage,
   myRole,
   completion,
-}: {
-  project: Project;
-  currentUserId: string;
-  initialMembers?: Member[];
-  ownerName?: string;
-  ownerEmail?: string;
-  ownerImageUrl?: string | null;
-  ownerHasImage?: boolean | null;
-  myRole?: "owner" | "admin" | "editor" | "contributor" | "viewer";
-  completion: CompletionInfo;
-}) {
-  const router = useRouter();
-
+}: ProjectCardProps) {
   const updateProjectLocal = useProjectStore((s) => s.updateProjectLocal);
   const removeProject = useProjectStore((s) => s.removeProject);
 
@@ -72,62 +61,54 @@ export function ProjectCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project.id]);
 
-  const { toast } = useToast();
   const isOwner = project.ownerId === currentUserId;
   const canManage = isOwner || myRole === "admin";
-
   const [detailOpen, setDetailOpen] = useState(false);
 
-  // Inline rename state
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [name, setName] = useState(project.name);
-  const [isRenamePending, startRenameTransition] = useTransition();
-
-  function handleRenameSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim() || name === project.name) {
-      setIsRenaming(false);
-      setName(project.name);
-      return;
-    }
-    const submittedName = name;
-    const prevProject = project;
-    setIsRenaming(false);
-    updateProjectLocal({ ...project, name: submittedName });
-
-    startRenameTransition(async () => {
-      const result = await updateProject(project.id, { name: submittedName });
-      if (!result.success) {
-        updateProjectLocal(prevProject);
-        toast({
-          title: "Failed to rename project",
-          description: result.error,
-          variant: "destructive",
-        });
-        setName(project.name);
-        return;
-      }
-      toast({ title: "Project updated", description: result.data?.name });
-    });
-  }
-
+  const {
+    isRenaming,
+    setIsRenaming,
+    name,
+    setName,
+    isPending: isRenamePending,
+    handleSubmit: handleRenameSubmit,
+    handleCancel, // <--- Add this here
+  } = useInlineRename({
+    initialName: project.name,
+    onSave: (newName) => updateProject(project.id, { name: newName }),
+    onOptimisticUpdate: (newName) =>
+      updateProjectLocal({ ...project, name: newName }),
+    onRollback: () => updateProjectLocal(project),
+  });
   const ownerDisplayString = ownerName || ownerEmail || "Project Owner";
-  const completionLabel = getCompletionLabel(
-    completion.total,
-    completion.completed,
-  );
   const completionPercent =
     completion.total > 0
       ? Math.round((completion.completed / completion.total) * 100)
       : 0;
 
+  // Inside the component function:
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isRenaming && inputRef.current) {
+      // A tiny timeout guarantees the DOM node is fully painted before focusing
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.setSelectionRange(
+          inputRef.current.value.length,
+          inputRef.current.value.length,
+        );
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isRenaming]);
   return (
     <>
-      <div className="group relative bg-card backdrop-blur-xl rounded-2xl border border-border/80 hover:border-ring hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 p-5 flex flex-col justify-between space-y-4 shadow-xs">
+      <div className="group relative bg-card backdrop-blur-xl rounded-3xl border border-border/85 hover:border-ring hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 p-5 flex flex-col justify-between space-y-4 shadow-xs">
         {/* Main Card Link Wrapper */}
         <Link
           href={`/projects/${project.id}`}
-          className="absolute inset-0 rounded-2xl z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="absolute inset-0 rounded-3xl z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={`Open project ${project.name}`}
         />
 
@@ -139,15 +120,31 @@ export function ProjectCard({
                 className="pointer-events-auto flex-1 mr-2"
                 onClick={(e) => e.stopPropagation()}
               >
-                <form onSubmit={handleRenameSubmit}>
+                <form
+                  onSubmit={handleRenameSubmit}
+                  className="relative flex items-center w-full"
+                >
                   <Input
-                    autoFocus
+                    ref={inputRef} // <--- This forces the blinking cursor to appear
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    onBlur={handleRenameSubmit}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") handleCancel();
+                    }}
                     disabled={isRenamePending}
-                    className="h-8 px-2.5 text-xs font-medium bg-card border border-border rounded-xl shadow-2xs focus-visible:ring-1 focus-visible:ring-ring text-foreground"
+                    className="h-8 pl-2.5 pr-8 text-xs font-medium bg-card border border-border rounded-xl shadow-2xs focus-visible:ring-1 focus-visible:ring-ring text-foreground w-full"
                   />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancel();
+                    }}
+                    className="absolute right-2 text-muted-foreground hover:text-foreground hover:bg-muted transition-all p-1 rounded-lg flex items-center justify-center"
+                    title="Cancel"
+                  >
+                    <X size={12} />
+                  </button>
                 </form>
               </div>
             ) : (
@@ -155,8 +152,6 @@ export function ProjectCard({
                 {project.name}
               </h3>
             )}
-
-            {/* Owner or Member Role Badge */}
             {!isRenaming && (
               <div className="shrink-0 pointer-events-none">
                 {isOwner ? (
@@ -185,13 +180,12 @@ export function ProjectCard({
 
         {/* Footer Metadata & SaaS Actions */}
         <div className="relative z-10 pt-3 border-t border-border/80 flex flex-col gap-3">
-          {/* Owner Info Row with UserAvatar */}
           <div className="flex items-center gap-2">
             <UserAvatar
               userId={project.ownerId || ownerEmail || "owner"}
               name={ownerName || ownerEmail || "Project Owner"}
               imageUrl={ownerImageUrl}
-              hasImage={ownerHasImage ?? false}
+              hasImage={Boolean(ownerHasImage)}
               className="w-5 h-5 text-[9px]"
             />
             <span className="text-[11px] text-muted-foreground">
@@ -202,7 +196,6 @@ export function ProjectCard({
             </span>
           </div>
 
-          {/* Full-width completion section */}
           <div className="flex flex-col space-y-1.5 w-full">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <div className="flex items-center space-x-1.5 text-muted-foreground">
@@ -226,7 +219,6 @@ export function ProjectCard({
           </div>
 
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            {/* Metadata stack */}
             <div className="flex items-center space-x-3">
               {project.dueDate && (
                 <div className="flex items-center space-x-1.5 text-muted-foreground">
@@ -244,31 +236,8 @@ export function ProjectCard({
               </div>
             </div>
 
-            {/* Unified Colored Avatar Stack */}
             <div className="flex items-center">
-              <div className="flex items-center -space-x-1.5">
-                {members.slice(0, 3).map((m) => (
-                  <UserAvatar
-                    key={m.id}
-                    userId={m.userId || m.email || m.id}
-                    name={m.name || m.email || "U"}
-                    imageUrl={m.imageUrl}
-                    hasImage={m.hasImage}
-                    className="w-7 h-7"
-                    title={`${m.name ?? m.email ?? "Member"} (${m.role})`}
-                  />
-                ))}
-                {members.length > 3 && (
-                  <div
-                    className="w-7 h-7 rounded-full border-2 border-card bg-muted text-muted-foreground flex items-center justify-center text-[10px] font-bold shadow-2xs"
-                    title={`+${members.length - 3} more members`}
-                  >
-                    +{members.length - 3}
-                  </div>
-                )}
-              </div>
-
-              {/* SaaS interactive navigation cue icon */}
+              <ProjectMemberStack members={members} />
               <div className="ml-3 w-6 h-6 rounded-xl bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center transition-all duration-200 shadow-2xs">
                 <ArrowUpRight size={13} />
               </div>
@@ -276,7 +245,7 @@ export function ProjectCard({
           </div>
         </div>
 
-        {/* Absolute corner action menu (isolated click layer) */}
+        {/* Action menu */}
         <div
           className="absolute top-3 right-3 z-20 pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
@@ -297,6 +266,7 @@ export function ProjectCard({
           />
         </div>
       </div>
+
       <ProjectDetailModal
         project={project}
         members={members}
@@ -312,6 +282,7 @@ export function ProjectCard({
         onMemberAddConfirmed={replaceOptimisticMember}
         onMemberRoleChanged={updateMemberLocal}
         onMemberRemoved={removeMember}
+        onProjectUpdated={(updated) => updateProjectLocal(updated)}
       />
     </>
   );

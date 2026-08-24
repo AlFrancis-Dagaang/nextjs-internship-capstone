@@ -1,3 +1,4 @@
+// components/tasks/modal/delete-task-dialog.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -31,54 +32,59 @@ export function DeleteTaskDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-card text-card-foreground border-border/80 rounded-2xl shadow-2xl p-6">
+      <DialogContent className="w-[90vw] sm:max-w-md bg-card border border-border rounded-3xl shadow-2xl p-5 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold tracking-tight text-foreground text-center">
+          <DialogTitle className="text-center font-bold text-foreground text-base">
             Delete Task
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-2">
-          {taskTitle && (
-            <p className="text-xs text-muted-foreground text-center truncate px-2">
-              Are you sure you want to delete{" "}
-              <span className="font-semibold text-foreground">
-                &quot;{taskTitle}&quot;
-              </span>
-              ?
-            </p>
-          )}
 
-          <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3 flex items-start space-x-3">
-            <Checkbox
-              id="confirm-task-delete"
-              checked={confirmed}
-              onCheckedChange={(checked) => setConfirmed(checked === true)}
-              className="mt-0.5 border-destructive/50 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive rounded-md"
-            />
-            <label
-              htmlFor="confirm-task-delete"
-              className="text-xs font-medium text-destructive cursor-pointer leading-tight select-none"
-            >
-              The task will be permanently deleted from this list.
-            </label>
+        <div className="space-y-4 py-2">
+          {/* Warning Note Box */}
+          <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-3 flex items-start space-x-3">
+            <p className="text-xs font-medium text-destructive leading-tight">
+              <strong>Note:</strong> The task{" "}
+              {taskTitle ? <>&quot;{taskTitle}&quot;</> : "selected"} will be
+              permanently deleted from this list.
+            </p>
           </div>
 
-          <div className="flex items-center justify-end space-x-2 pt-2">
+          {/* Agreement Checkbox Box */}
+          <div
+            onClick={() => setConfirmed((prev) => !prev)}
+            className="border border-border bg-muted/50 rounded-2xl p-3.5 flex items-start space-x-3 cursor-pointer select-none hover:bg-muted transition-colors"
+          >
+            <div className="mt-0.5 pointer-events-none">
+              <Checkbox
+                checked={confirmed}
+                onCheckedChange={() => {}}
+                className="border-input data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+              />
+            </div>
+            <p className="text-xs font-medium text-foreground leading-tight">
+              I agree that this action is irreversible and permanently removes
+              the task.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-2">
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={onClose}
               disabled={isPending}
-              className="h-8 text-xs font-medium border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl shadow-2xs cursor-pointer"
+              className="w-full sm:w-auto h-9 text-xs rounded-xl border-border bg-card text-foreground hover:bg-muted cursor-pointer"
             >
               Cancel
             </Button>
             <Button
+              type="button"
               variant="destructive"
               size="sm"
               onClick={onConfirm}
               disabled={!confirmed || isPending}
-              className="h-8 text-xs font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl shadow-2xs cursor-pointer"
+              className="w-full sm:w-auto h-9 text-xs rounded-xl cursor-pointer"
             >
               {isPending ? "Deleting..." : "Delete task"}
             </Button>

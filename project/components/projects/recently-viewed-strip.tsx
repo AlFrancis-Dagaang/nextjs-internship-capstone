@@ -1,11 +1,13 @@
-// components/projects/recently-viewed-strip.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Clock, ArrowUpRight } from "lucide-react";
-import type { Project } from "@/lib/db/schema";
-import { getRecentlyViewedIds } from "@/hooks/use-track-project-view";
+import type { Project } from "@/types";
+import {
+  getRecentlyViewedEntries,
+  RecentEntry,
+} from "@/hooks/use-track-project-view";
 import {
   Carousel,
   CarouselContent,
@@ -14,39 +16,43 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-type Member = {
-  id: string;
-  userId: string;
-  email?: string;
-  name?: string;
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-};
-
-type OwnerInfo = {
-  name?: string;
-  email?: string;
-};
-
 type RecentlyViewedStripProps = {
   projects: Project[];
-  initialMembersMap: Record<string, Member[]>;
-  initialOwnerMap: Record<string, OwnerInfo>;
   currentUserId: string;
 };
+
+function getRelativeTimeString(timestamp: number): string {
+  if (!timestamp) return "";
+  const now = Date.now();
+  const diffInSeconds = Math.floor((now - timestamp) / 1000);
+
+  if (diffInSeconds < 60) return "Just now";
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) return `${diffInDays}d ago`;
+  const diffInMonths = Math.floor(diffInDays / 30);
+  return `${diffInMonths}mo ago`;
+}
 
 export function RecentlyViewedStrip({
   projects,
   currentUserId,
 }: RecentlyViewedStripProps) {
-  const [recentIds, setRecentIds] = useState<string[]>([]);
+  const [recentEntries, setRecentEntries] = useState<RecentEntry[]>([]);
 
   useEffect(() => {
-    setRecentIds(getRecentlyViewedIds());
+    setRecentEntries(getRecentlyViewedEntries());
   }, []);
 
-  const recentProjects = recentIds
-    .map((id) => projects.find((p) => p.id === id))
-    .filter((p): p is Project => p !== undefined)
+  const recentProjects = recentEntries
+    .map((entry) => {
+      const project = projects.find((p) => p.id === entry.projectId);
+      return project ? { ...project, viewedAt: entry.viewedAt } : null;
+    })
+    .filter((p): p is Project & { viewedAt: number } => p !== null)
     .slice(0, 6);
 
   if (recentProjects.length === 0) return null;
@@ -58,7 +64,6 @@ export function RecentlyViewedStrip({
         Recently Viewed
       </h2>
 
-      {/* shadcn Carousel integration */}
       <Carousel
         opts={{
           align: "start",
@@ -69,12 +74,13 @@ export function RecentlyViewedStrip({
         <CarouselContent className="-ml-3 py-1">
           {recentProjects.map((project) => {
             const isOwner = project.ownerId === currentUserId;
+            const timeAgo = getRelativeTimeString(project.viewedAt);
 
             return (
               <CarouselItem key={project.id} className="pl-3 basis-auto">
                 <Link
                   href={`/projects/${project.id}`}
-                  className="group/card relative shrink-0 w-60 p-4 rounded-2xl border border-border/80 bg-card backdrop-blur-xl hover:border-ring hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between space-y-3 shadow-xs block"
+                  className="group/card relative shrink-0 w-60 p-4 rounded-3xl border border-border/80 bg-card backdrop-blur-xl hover:border-ring hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between space-y-3 shadow-xs block"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-start justify-between gap-2">
@@ -100,7 +106,11 @@ export function RecentlyViewedStrip({
 
                   <div className="pt-2.5 border-t border-border/80 flex items-center justify-between text-[11px]">
                     <span className="text-muted-foreground font-medium">
-                      {isOwner ? "Owned by you" : "Shared"}
+                      {timeAgo
+                        ? `Seen ${timeAgo}`
+                        : isOwner
+                          ? "Owned by you"
+                          : "Shared"}
                     </span>
 
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border/60 capitalize">
@@ -113,7 +123,6 @@ export function RecentlyViewedStrip({
           })}
         </CarouselContent>
 
-        {/* Carousel navigation buttons visible on hover */}
         <CarouselPrevious className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-card border-border/80 text-foreground hover:bg-secondary shadow-md rounded-xl" />
         <CarouselNext className="absolute -right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-card border-border/80 text-foreground hover:bg-secondary shadow-md rounded-xl" />
       </Carousel>

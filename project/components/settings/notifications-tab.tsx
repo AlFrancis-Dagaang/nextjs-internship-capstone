@@ -1,3 +1,4 @@
+// components/settings/notifications-tab.tsx
 "use client";
 
 import { useState } from "react";
@@ -55,12 +56,10 @@ export function NotificationsTab({
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  // Local-only toggle while inside customization view
   function handleLocalToggle(type: NotificationType, newValue: boolean) {
     setPreferences((prev) => ({ ...prev, [type]: newValue }));
   }
 
-  // Master toggle switch handler
   async function handleMasterToggle() {
     const newValue = !isNotificationsOn;
     setIsNotificationsOn(newValue);
@@ -90,7 +89,7 @@ export function NotificationsTab({
           ? "Notifications enabled."
           : "All notifications disabled.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to update preferences. Please try again.",
@@ -99,7 +98,6 @@ export function NotificationsTab({
     }
   }
 
-  // Save button handler to batch-save current custom preferences
   async function handleSaveCustomizations() {
     setIsSaving(true);
     try {
@@ -112,7 +110,7 @@ export function NotificationsTab({
         description: "Your custom notification settings have been updated.",
       });
       setIsCustomizing(false);
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to save preferences. Please try again.",
@@ -124,15 +122,16 @@ export function NotificationsTab({
   }
 
   return (
-    <div className="bg-card border border-border/80 rounded-2xl shadow-xs p-6 space-y-6">
+    <div className="bg-card border border-border/80 rounded-3xl shadow-xs p-5 sm:p-6 space-y-6">
       {!isCustomizing ? (
-        /* --- MAIN VIEW (Master Toggle Switch & Customize Trigger) --- */
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bell size={16} className="text-primary" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-border/60">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-secondary text-foreground rounded-xl border border-border/60">
+                <Bell size={16} />
+              </div>
               <div>
-                <h2 className="text-base font-semibold tracking-tight text-foreground">
+                <h2 className="text-sm font-bold tracking-wider text-foreground">
                   Notification Preferences
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -143,7 +142,7 @@ export function NotificationsTab({
             </div>
 
             {/* Custom Pill Toggle Switch */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between sm:justify-end gap-3">
               <span className="text-xs font-medium text-foreground">
                 Notifications
               </span>
@@ -165,7 +164,7 @@ export function NotificationsTab({
             </div>
           </div>
 
-          <div className="pt-4 border-t border-border/60">
+          <div>
             <button
               type="button"
               disabled={!isNotificationsOn}
@@ -186,9 +185,8 @@ export function NotificationsTab({
           </div>
         </div>
       ) : (
-        /* --- CUSTOMIZATION VIEW (Back Button + Two-Column Grid + Save Button) --- */
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
             <button
               type="button"
               onClick={() => setIsCustomizing(false)}
@@ -196,17 +194,16 @@ export function NotificationsTab({
             >
               <ArrowLeft size={14} /> Back to main settings
             </button>
-            <h2 className="text-base font-semibold tracking-tight text-foreground">
+            <h2 className="text-sm font-bold tracking-wider text-foreground">
               Customize Notifications
             </h2>
           </div>
 
-          {/* Two-Column Grid of Checkboxes */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             {notificationEntries.map((type) => (
               <div
                 key={type}
-                className="flex items-start justify-between gap-3 p-3 rounded-xl border border-border/80 bg-muted/30 shadow-2xs"
+                className="flex items-start justify-between gap-3 p-3.5 rounded-2xl border border-border/80 bg-muted/30 shadow-2xs"
               >
                 <div className="space-y-0.5 pr-2">
                   <Label className="text-xs font-semibold text-foreground">
@@ -227,13 +224,12 @@ export function NotificationsTab({
             ))}
           </div>
 
-          {/* Save Button */}
           <div className="flex justify-end pt-4 border-t border-border/60">
             <button
               type="button"
               disabled={isSaving}
               onClick={handleSaveCustomizations}
-              className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
             >
               {isSaving ? "Saving..." : "Save changes"}
             </button>
