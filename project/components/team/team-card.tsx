@@ -19,6 +19,19 @@ type MemberInfo = {
   hasImage?: boolean | null;
 };
 
+function mapMemberInfo(member: any): MemberInfo {
+  const imageUrl =
+    member.userImageUrl ?? member.imageUrl ?? member.image ?? null;
+
+  return {
+    userId: member.userId ?? member.id,
+    name: member.userName ?? member.name ?? "",
+    email: member.userEmail ?? member.email ?? "",
+    imageUrl,
+    hasImage: member.userHasImage ?? member.hasImage ?? !!imageUrl,
+  };
+}
+
 export function TeamCard({
   team,
   creatorName,
@@ -39,63 +52,100 @@ export function TeamCard({
   const router = useRouter();
   const { toast } = useToast();
 
+  // Single declaration using initialMembers as primary source of truth
   const [members, setMembers] = useState<MemberInfo[]>(initialMembers);
-
-  useEffect(() => {
-    getTeamMembers(team.id).then((res) => {
-      if (res.success && res.data) {
-        const mapped: MemberInfo[] = (res.data as any[]).map((m) => ({
-          userId: m.userId,
-          name: m.userName,
-          email: m.userEmail,
-          imageUrl: m.userImageUrl ?? m.imageUrl,
-          hasImage: m.userHasImage ?? m.hasImage,
-        }));
-        setMembers(mapped);
-      }
-    });
-  }, [team.id]);
-
   const [isRenaming, setIsRenaming] = useState(false);
   const [name, setName] = useState(team.name);
   const [isRenamePending, startRenameTransition] = useTransition();
 
+  useEffect(() => {
+    setMembers(initialMembers);
+  }, [initialMembers]);
+
+  useEffect(() => {
+    setName(team.name);
+  }, [team.name]);
+
+  // Fetch team members locally on mount / team change
+  useEffect(() => {
+    let cancelled = false;
+
+    getTeamMembers(team.id)
+      .then((res) => {
+        if (cancelled) return;
+
+        if (res.success && res.data) {
+          const mapped = (res.data as any[]).map(mapMemberInfo);
+          setMembers(mapped);
+        } else {
+          setMembers([]);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMembers([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [team.id]);
+
   function handleRenameSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     if (!isOwner || !name.trim() || name === team.name) {
       setIsRenaming(false);
       setName(team.name);
       return;
     }
-    const submittedName = name;
+
+    const submittedName = name.trim();
     setIsRenaming(false);
 
     startRenameTransition(async () => {
-      const result = await updateTeam(team.id, { name: submittedName });
+      const result = await updateTeam(team.id, {
+        name: submittedName,
+      });
+
       if (!result.success) {
         toast({
           title: "Failed to rename team",
           description: result.error,
           variant: "destructive",
         });
+
         setName(team.name);
         return;
       }
-      toast({ title: "Team updated", description: result.data?.name });
+
+      toast({
+        title: "Team updated",
+        description: result.data?.name,
+      });
+
       router.refresh();
+    });
+  }
+
+  function handleAddNewMember(newMember: MemberInfo) {
+    setMembers((prev) => {
+      if (prev.some((member) => member.userId === newMember.userId)) {
+        return prev;
+      }
+      return [...prev, newMember];
     });
   }
 
   return (
     <div className="group relative bg-white dark:bg-card backdrop-blur-md rounded-2xl border border-border/90 hover:border-teal-500/50 hover:shadow-md transition-all duration-300 p-5 flex flex-col justify-between space-y-4 shadow-xs">
-      {/* Clickable Card Link / Trigger to Manage Members */}
       <div
         onClick={() => onManageMembers(team)}
         className="absolute inset-0 rounded-2xl z-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={`Manage team ${team.name}`}
       />
 
-      {/* Content Header */}
       <div className="relative z-10 space-y-1.5 pointer-events-none">
         <div className="flex items-start justify-between pr-8 gap-2">
           {isOwner && isRenaming ? (
@@ -120,7 +170,6 @@ export function TeamCard({
             </h3>
           )}
 
-          {/* Role Badge */}
           {(!isOwner || !isRenaming) && (
             <div className="shrink-0 pointer-events-none">
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-secondary-foreground border border-border/60">
@@ -137,7 +186,6 @@ export function TeamCard({
               : "Team membership access"}
           </p>
 
-          {/* Creator Label */}
           <div className="text-[10px] text-muted-foreground/80 pt-0.5 truncate">
             Created by:{" "}
             <span className="text-foreground font-semibold">
@@ -147,39 +195,40 @@ export function TeamCard({
         </div>
       </div>
 
-      {/* Footer Metadata & SaaS Actions */}
       <div className="relative z-10 pt-3 border-t border-border/60 flex flex-col gap-3">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          {/* Metadata stack (Member Count) */}
           <div className="flex items-center space-x-1.5 text-muted-foreground">
             <Users size={13} className="text-muted-foreground" />
+
             <span className="font-semibold text-[11px]">
               {members.length > 0 ? members.length : team.memberCount}{" "}
               {members.length === 1 ? "member" : "members"}
             </span>
           </div>
 
-          {/* Unified Avatar Stack */}
           <div
             className="flex items-center pointer-events-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center -space-x-1.5">
-              {members.slice(0, 3).map((m) => {
-                const stableKey = m.userId || m.email;
-                const displayName = m.name || m.email || "User";
+              {members.slice(0, 3).map((member) => {
+                const stableKey = member.userId || member.email;
+                const displayName = member.name || member.email || "User";
+                const resolvedImage = member.imageUrl ?? null;
+
                 return (
                   <UserAvatar
-                    key={m.userId}
+                    key={stableKey}
                     userId={stableKey}
                     name={displayName}
-                    imageUrl={m.imageUrl}
-                    hasImage={m.hasImage ?? false}
+                    imageUrl={resolvedImage}
+                    hasImage={member.hasImage ?? !!resolvedImage}
                     className="w-7 h-7 text-[10px] border-2 border-white dark:border-card shadow-2xs"
                     title={displayName}
                   />
                 );
               })}
+
               {members.length > 3 && (
                 <div
                   className="w-7 h-7 rounded-full border-2 border-white dark:border-card bg-secondary text-secondary-foreground flex items-center justify-center text-[10px] font-bold shadow-2xs"
@@ -190,7 +239,6 @@ export function TeamCard({
               )}
             </div>
 
-            {/* SaaS interactive navigation cue icon */}
             <div className="ml-3 w-6 h-6 rounded-xl bg-secondary text-muted-foreground group-hover:bg-teal-700 group-hover:text-white flex items-center justify-center transition-all duration-200 shadow-2xs">
               <ArrowUpRight size={13} />
             </div>
@@ -198,7 +246,6 @@ export function TeamCard({
         </div>
       </div>
 
-      {/* Absolute corner action menu */}
       {isOwner && (
         <div
           className="absolute top-3 right-3 z-20 pointer-events-auto"
@@ -212,9 +259,7 @@ export function TeamCard({
               setName(team.name);
               setIsRenaming(true);
             }}
-            onMemberAdded={(newMember) =>
-              setMembers((prev) => [...prev, newMember])
-            }
+            onMemberAdded={handleAddNewMember}
           />
         </div>
       )}

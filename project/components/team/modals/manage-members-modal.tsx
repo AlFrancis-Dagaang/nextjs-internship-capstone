@@ -1,4 +1,3 @@
-// components/team/modals/manage-members-modal.tsx
 "use client";
 
 import { useState, useTransition, useEffect, useRef } from "react";
@@ -19,16 +18,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
   UserPlus,
   Loader2,
-  Users,
   Search,
   Crown,
   X,
   Mail,
   FolderKanban,
+  Edit2,
 } from "lucide-react";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
@@ -44,6 +44,8 @@ type SearchUser = {
   id: string;
   email: string;
   name: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
   status: "available" | "member" | "creator";
 };
 
@@ -52,13 +54,53 @@ type ManageMembersModalProps = {
   onOpenChange: (open: boolean) => void;
   team: WorkspaceTeam;
   currentUserId: string;
+  onMembersChanged?: (members: MemberInfo[]) => void;
 };
+
+function mapMemberInfo(member: any): MemberInfo {
+  const imageUrl =
+    member.userImageUrl ?? member.imageUrl ?? member.image ?? null;
+
+  return {
+    userId: member.userId ?? member.id,
+    name: member.userName ?? member.name ?? "",
+    email: member.userEmail ?? member.email ?? "",
+    imageUrl,
+    hasImage: member.userHasImage ?? member.hasImage ?? !!imageUrl,
+  };
+}
+
+function mapSearchUser(user: any, creatorId: string): SearchUser {
+  const id = user.id ?? user.userId;
+  const email = user.email ?? user.userEmail ?? "";
+  const name = user.name ?? user.userName ?? "";
+
+  const imageUrl = user.imageUrl ?? user.userImageUrl ?? user.image ?? null;
+
+  let status: SearchUser["status"] = "available";
+
+  if (id === creatorId) {
+    status = "creator";
+  } else if (user.status === "member") {
+    status = "member";
+  }
+
+  return {
+    id,
+    email,
+    name,
+    imageUrl,
+    hasImage: user.hasImage ?? user.userHasImage ?? !!imageUrl,
+    status,
+  };
+}
 
 export function ManageMembersModal({
   open,
   onOpenChange,
   team,
   currentUserId,
+  onMembersChanged,
 }: ManageMembersModalProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -78,7 +120,12 @@ export function ManageMembersModal({
   const [filterQuery, setFilterQuery] = useState("");
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
 
+  function updateMembers(nextMembers: MemberInfo[]) {
+    setMembers(nextMembers);
+    onMembersChanged?.(nextMembers);
+  }
   useEffect(() => {
     if (!open) {
       setShowAddForm(false);
@@ -87,6 +134,7 @@ export function ManageMembersModal({
       setSearchResults([]);
       setShowDropdown(false);
       setFilterQuery("");
+      setEditingMemberId(null);
       return;
     }
 
@@ -95,14 +143,7 @@ export function ManageMembersModal({
     getTeamMembers(team.id)
       .then((res) => {
         if (res.success && res.data) {
-          const mapped: MemberInfo[] = (res.data as any[]).map((m) => ({
-            userId: m.userId,
-            name: m.userName,
-            email: m.userEmail,
-            imageUrl: m.userImageUrl ?? m.imageUrl,
-            hasImage: m.userHasImage ?? m.hasImage,
-          }));
-
+          const mapped = (res.data as any[]).map(mapMemberInfo);
           setMembers(mapped);
         } else {
           setMembers([]);
@@ -127,6 +168,7 @@ export function ManageMembersModal({
     }
 
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -162,7 +204,11 @@ export function ManageMembersModal({
         }
 
         if (res.success && res.data) {
-          setSearchResults((res.data as SearchUser[]).slice(0, 8));
+          const mappedResults = (res.data as any[])
+            .map((user) => mapSearchUser(user, team.createdBy))
+            .slice(0, 8);
+
+          setSearchResults(mappedResults);
         } else {
           setSearchResults([]);
         }
@@ -178,7 +224,7 @@ export function ManageMembersModal({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query, team.id, isOwner]);
+  }, [query, team.id, team.createdBy, isOwner]);
 
   function handleAddMember(e: React.FormEvent) {
     e.preventDefault();
@@ -187,46 +233,43 @@ export function ManageMembersModal({
       return;
     }
 
-    const targetEmail = selectedUser.email;
+    const targetUser = selectedUser;
 
     startTransition(async () => {
       const res = await addTeamMember(team.id, {
-        email: targetEmail,
+        email: targetUser.email,
       });
 
-      if (res.success) {
-        toast({
-          title: "Member added to team",
-        });
-
-        setQuery("");
-        setSelectedUser(null);
-        setShowAddForm(false);
-
-        const updatedRes = await getTeamMembers(team.id);
-
-        if (updatedRes.success && updatedRes.data) {
-          const mappedUpdated: MemberInfo[] = (updatedRes.data as any[]).map(
-            (m) => ({
-              userId: m.userId,
-              name: m.userName,
-              email: m.userEmail,
-              imageUrl: m.userImageUrl ?? m.imageUrl,
-              hasImage: m.userHasImage ?? m.hasImage,
-            }),
-          );
-
-          setMembers(mappedUpdated);
-        }
-
-        router.refresh();
-      } else {
+      if (!res.success) {
         toast({
           title: "Failed to add member",
           description: res.error,
           variant: "destructive",
         });
+
+        return;
       }
+
+      const newMemberInfo: MemberInfo = {
+        userId: targetUser.id,
+        name: targetUser.name,
+        email: targetUser.email,
+        imageUrl: targetUser.imageUrl ?? null,
+        hasImage: targetUser.hasImage ?? !!targetUser.imageUrl,
+      };
+
+      setQuery("");
+      setSelectedUser(null);
+      setShowAddForm(false);
+      setShowDropdown(false);
+
+      updateMembers([...members, newMemberInfo]);
+
+      toast({
+        title: "Member added to team",
+      });
+
+      router.refresh();
     });
   }
 
@@ -238,28 +281,34 @@ export function ManageMembersModal({
     startTransition(async () => {
       const res = await removeTeamMember(team.id, userId);
 
-      if (res.success) {
-        toast({
-          title: "Member removed from team",
-        });
-
-        setMembers((prev) => prev.filter((m) => m.userId !== userId));
-
-        router.refresh();
-      } else {
+      if (!res.success) {
         toast({
           title: "Failed to remove member",
           description: res.error,
           variant: "destructive",
         });
+
+        return;
       }
+
+      const nextMembers = members.filter((member) => member.userId !== userId);
+
+      updateMembers(nextMembers);
+
+      setEditingMemberId(null);
+
+      toast({
+        title: "Member removed from team",
+      });
+
+      router.refresh();
     });
   }
 
   const filteredMembers = members.filter(
-    (m) =>
-      m.name.toLowerCase().includes(filterQuery.toLowerCase()) ||
-      m.email.toLowerCase().includes(filterQuery.toLowerCase()),
+    (member) =>
+      member.name.toLowerCase().includes(filterQuery.toLowerCase()) ||
+      member.email.toLowerCase().includes(filterQuery.toLowerCase()),
   );
 
   return (
@@ -271,14 +320,13 @@ export function ManageMembersModal({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Scrollable Container Body */}
         <div className="flex-1 overflow-y-auto space-y-4 pr-1 pt-2">
-          {/* Attached Projects Section */}
           <div className="bg-secondary/40 border border-border rounded-2xl p-3.5 space-y-2 shrink-0">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
               <FolderKanban size={14} className="text-muted-foreground" />
               <span>Attached Projects</span>
             </div>
+
             {team.projects && team.projects.length > 0 ? (
               <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                 {team.projects.map((proj) => (
@@ -317,12 +365,14 @@ export function ManageMembersModal({
                     <Label className="text-xs font-semibold text-foreground">
                       Search Workspace User
                     </Label>
+
                     <button
                       type="button"
                       onClick={() => {
                         setShowAddForm(false);
                         setQuery("");
                         setSelectedUser(null);
+                        setShowDropdown(false);
                       }}
                       className="text-muted-foreground hover:text-foreground p-0.5 rounded-md cursor-pointer"
                     >
@@ -375,7 +425,10 @@ export function ManageMembersModal({
                                     <div
                                       key={user.id}
                                       onClick={() => {
-                                        if (!isSelectable) return;
+                                        if (!isSelectable) {
+                                          return;
+                                        }
+
                                         setSelectedUser(user);
                                         setShowDropdown(false);
                                       }}
@@ -389,20 +442,21 @@ export function ManageMembersModal({
                                         <span className="text-xs font-semibold text-foreground truncate">
                                           {user.name}
                                         </span>
+
                                         <span className="text-[11px] text-muted-foreground truncate">
                                           {user.email}
                                         </span>
                                       </div>
 
-                                      {user.status === "creator" && (
-                                        <span className="text-[10px] font-semibold text-foreground uppercase shrink-0">
-                                          Creator
-                                        </span>
-                                      )}
-
                                       {user.status === "member" && (
                                         <span className="text-[10px] font-semibold text-muted-foreground uppercase shrink-0">
                                           Added
+                                        </span>
+                                      )}
+
+                                      {user.status === "creator" && (
+                                        <span className="text-[10px] font-semibold text-muted-foreground uppercase shrink-0">
+                                          Creator
                                         </span>
                                       )}
                                     </div>
@@ -431,7 +485,7 @@ export function ManageMembersModal({
           <div className="space-y-3">
             <div className="flex items-center justify-between px-0.5">
               <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Team Members ({members.length})
+                Team Members ({loading ? "..." : members.length})
               </Label>
             </div>
 
@@ -440,6 +494,7 @@ export function ManageMembersModal({
                 size={13}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               />
+
               <Input
                 placeholder="Search members..."
                 value={filterQuery}
@@ -449,11 +504,27 @@ export function ManageMembersModal({
             </div>
 
             {loading ? (
-              <div className="flex justify-center py-10">
-                <Loader2
-                  className="animate-spin text-muted-foreground"
-                  size={20}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-1">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="flex flex-col justify-between p-3.5 border border-border rounded-2xl bg-secondary/20 space-y-3"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
+
+                      <div className="space-y-1.5 flex-1">
+                        <Skeleton className="h-3 w-24 rounded-md" />
+                        <Skeleton className="h-2.5 w-32 rounded-md" />
+                      </div>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-border/60 flex items-center justify-between">
+                      <Skeleton className="h-4 w-14 rounded-full" />
+                      <Skeleton className="h-5 w-12 rounded-md" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : filteredMembers.length === 0 ? (
               <div className="border border-dashed border-border rounded-2xl py-8 text-center bg-card/40">
@@ -465,14 +536,20 @@ export function ManageMembersModal({
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-1">
-                {filteredMembers.map((m) => {
-                  const stableKey = m.userId || m.email;
-                  const isCreator = team.createdBy === m.userId;
-                  const displayName = m.name || m.email || "User";
+                {filteredMembers.map((member) => {
+                  const stableKey = member.userId || member.email;
+
+                  const isCreator = team.createdBy === member.userId;
+
+                  const displayName = member.name || member.email || "User";
+
+                  const isEditing = editingMemberId === member.userId;
+
+                  const resolvedImage = member.imageUrl ?? null;
 
                   return (
                     <div
-                      key={m.userId}
+                      key={stableKey}
                       className="relative flex flex-col justify-between p-3.5 border border-border rounded-2xl bg-secondary/30 hover:bg-card shadow-2xs transition-all"
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -480,17 +557,20 @@ export function ManageMembersModal({
                           <UserAvatar
                             userId={stableKey}
                             name={displayName}
-                            imageUrl={m.imageUrl}
-                            hasImage={m.hasImage ?? false}
+                            imageUrl={resolvedImage}
+                            hasImage={member.hasImage ?? !!resolvedImage}
                             className="w-9 h-9 text-xs rounded-xl border border-border shrink-0 shadow-2xs"
                           />
+
                           <div className="truncate space-y-0.5 min-w-0 flex-1">
                             <p className="text-xs font-semibold text-foreground tracking-tight truncate">
-                              {m.name}
+                              {displayName}
                             </p>
+
                             <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
                               <Mail size={10} className="shrink-0 opacity-70" />
-                              <span className="truncate">{m.email}</span>
+
+                              <span className="truncate">{member.email}</span>
                             </p>
                           </div>
                         </div>
@@ -509,15 +589,44 @@ export function ManageMembersModal({
                         )}
 
                         {isOwner && !isCreator && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 px-2 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg font-medium transition-colors cursor-pointer"
-                            onClick={() => handleRemoveMember(m.userId)}
-                            disabled={isPending}
-                          >
-                            Remove member
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            {!isEditing ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg font-medium transition-colors cursor-pointer"
+                                onClick={() =>
+                                  setEditingMemberId(member.userId)
+                                }
+                              >
+                                <Edit2 size={11} className="mr-1" />
+                                Edit
+                              </Button>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg font-medium transition-colors cursor-pointer"
+                                  onClick={() => setEditingMemberId(null)}
+                                >
+                                  Cancel
+                                </Button>
+
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10 rounded-lg font-medium transition-colors cursor-pointer"
+                                  onClick={() =>
+                                    handleRemoveMember(member.userId)
+                                  }
+                                  disabled={isPending}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>

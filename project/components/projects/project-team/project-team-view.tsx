@@ -112,6 +112,14 @@ export function ProjectTeamView({
   const [individuals, setIndividuals] = useState(initialIndividuals);
   const [teams, setTeams] = useState(initialTeams);
 
+  useEffect(() => {
+    setIndividuals(initialIndividuals);
+  }, [initialIndividuals]);
+
+  useEffect(() => {
+    setTeams(initialTeams);
+  }, [initialTeams]);
+
   // Modal inspection state for team members
   const [inspectingTeam, setInspectingTeam] = useState<ProjectTeamEntry | null>(
     null,
