@@ -1,6 +1,7 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "../client";
 import { lists, projects, taskAssignees, tasks, users } from "../schema";
+import { getTableColumns } from "drizzle-orm";
 
 export const taskAssigneesQueries = {
   getByTask: async (taskId: string) => {
@@ -102,12 +103,7 @@ export const taskAssigneesQueries = {
   getAssignedToUserAcrossProjects: async (userId: string) => {
     return db
       .select({
-        taskId: taskAssignees.taskId,
-        title: tasks.title,
-        dueDate: tasks.dueDate,
-        priority: tasks.priority,
-        isCompleted: tasks.isCompleted,
-        listId: tasks.listId,
+        ...getTableColumns(tasks),
         projectId: lists.projectId,
         projectName: projects.name,
       })
@@ -118,5 +114,20 @@ export const taskAssigneesQueries = {
       .where(
         and(eq(taskAssignees.userId, userId), eq(tasks.isArchived, false)),
       );
+  },
+  getByTaskIds: async (taskIds: string[]) => {
+    if (taskIds.length === 0) return [];
+    return db
+      .select({
+        taskId: taskAssignees.taskId,
+        userId: users.id,
+        userName: users.name,
+        userEmail: users.email,
+        userImageUrl: users.imageUrl,
+        userHasImage: users.hasImage,
+      })
+      .from(taskAssignees)
+      .innerJoin(users, eq(taskAssignees.userId, users.id))
+      .where(inArray(taskAssignees.taskId, taskIds));
   },
 };

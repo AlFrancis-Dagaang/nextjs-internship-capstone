@@ -121,10 +121,10 @@ export function AssignedTasksCard({
 
       <div className="pt-3 mt-4 border-t border-border/60 flex justify-end">
         <Link
-          href="/analytics"
+          href="/my-tasks"
           className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
         >
-          <span>View Analytics</span>
+          <span>View All Tasks</span>
           <ArrowUpRight size={13} />
         </Link>
       </div>

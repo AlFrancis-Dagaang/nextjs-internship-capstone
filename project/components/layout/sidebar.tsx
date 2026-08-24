@@ -12,11 +12,17 @@ import {
   Settings,
   Users,
   X,
+  CheckSquare,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Projects", href: "/projects", icon: FolderOpen },
+  {
+    name: "My Tasks",
+    href: "/my-tasks",
+    icon: CheckSquare,
+  },
   { name: "Team", href: "/team", icon: Users },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Calendar", href: "/calendar", icon: Calendar },
@@ -53,13 +59,11 @@ export function Sidebar({
         } ${isCollapsed ? "lg:w-20" : "w-64"}`}
       >
         {/* Brand Header */}
-        {/* Brand Header */}
         <div className="flex items-center h-16 px-4 border-b border-border/80 shrink-0 overflow-hidden">
           <Link
             href="/"
             className="flex items-center gap-3 font-bold text-foreground tracking-tight whitespace-nowrap w-full"
           >
-            {/* Increased size from h-9 w-9 to h-11 w-11 and added a slight padding/scale */}
             <div className="relative h-11 w-11 rounded-full bg-white flex items-center justify-center shrink-0 shadow-xs border border-border/50 p-0.5">
               <Image
                 src="/logo.svg"

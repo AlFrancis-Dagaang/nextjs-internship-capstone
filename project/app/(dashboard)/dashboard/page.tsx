@@ -109,7 +109,8 @@ export default async function DashboardPage() {
       return a.dueDate.getTime() - b.dueDate.getTime();
     })
     .map((t) => ({
-      id: t.taskId,
+      // 💡 Use t.id (or fallback to a composite string if multiple assignments exist)
+      id: t.id ?? (t as any).taskId,
       title: t.title,
       dueDate: t.dueDate ? t.dueDate.toISOString() : null,
       priority: t.priority,

@@ -1,8 +1,8 @@
-// components/tasks/modal/task-detail-modal.tsx
 "use client";
 
-import { useState, useCallback, useEffect, useTransition } from "react";
+import { useCallback, useEffect, useTransition } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { X, FileText, Sidebar } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { Task } from "@/lib/db/schema";
@@ -18,6 +18,11 @@ import { archiveTask } from "@/lib/actions/tasks";
 import { useToast } from "@/hooks/use-toast";
 import { useBoardStore } from "@/stores/board-store";
 import { useTaskDetailStore } from "@/stores/task-detail-store";
+
+type TaskWithMetadata = TaskWithCommentCount & {
+  projectId?: string;
+  projectName?: string;
+};
 
 type TaskDetailModalProps = {
   role: "owner" | "admin" | "editor" | "contributor" | "viewer";
@@ -57,15 +62,16 @@ export function TaskDetailModal({
   const revertArchiveSnapshot = useBoardStore((s) => s.revertArchiveSnapshot);
 
   const isOpen = useTaskDetailStore((s) => s.isOpen);
-  const task = useTaskDetailStore((s) => s.task);
-  const projectId = useTaskDetailStore((s) => s.projectId);
+  const task = useTaskDetailStore((s) => s.task) as TaskWithMetadata | null;
+  const storeProjectId = useTaskDetailStore((s) => s.projectId);
   const closeModal = useTaskDetailStore((s) => s.closeModal);
   const activeTab = useTaskDetailStore((s) => s.activeTab);
   const setActiveTab = useTaskDetailStore((s) => s.setActiveTab);
   const bumpActivity = useTaskDetailStore((s) => s.bumpActivity);
   const updateTaskLocal = useTaskDetailStore((s) => s.updateTaskLocal);
 
-  // Clean close handler that resets store AND strips the query parameter from URL
+  const activeProjectId = task?.projectId ?? storeProjectId;
+
   const handleModalClose = useCallback(() => {
     closeModal();
     router.replace(pathname, { scroll: false });
@@ -77,7 +83,7 @@ export function TaskDetailModal({
     }
   }, [task, bumpActivity]);
 
-  if (!task || !projectId) return null;
+  if (!task || !activeProjectId) return null;
 
   const isArchived = Boolean(task.isArchived);
   const canEdit = role !== "viewer" && role !== "contributor" && !isArchived;
@@ -119,6 +125,16 @@ export function TaskDetailModal({
         {/* Header */}
         <div className="px-4 sm:px-6 py-4 border-b border-border/80 shrink-0 flex items-start justify-between gap-4 bg-card">
           <div className="flex-1 min-w-0">
+            {task.projectName && task.projectId && (
+              <div className="mb-2">
+                <Link
+                  href={`/projects/${task.projectId}`}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border/60 transition-colors"
+                >
+                  <span>Project: {task.projectName}</span>
+                </Link>
+              </div>
+            )}
             <TaskHeader
               task={task}
               canEdit={canEdit}
@@ -190,7 +206,7 @@ export function TaskDetailModal({
           <div className="w-[320px] shrink-0 border-l border-border/80 bg-muted/30 p-6 flex flex-col overflow-y-auto">
             <TaskSidebar
               task={task}
-              projectId={projectId}
+              projectId={activeProjectId}
               allLists={allLists}
               assignableUsers={assignableUsers}
               canEdit={canEdit}
@@ -234,7 +250,7 @@ export function TaskDetailModal({
             <div className="w-full p-4 sm:p-6 bg-muted/30 flex flex-col">
               <TaskSidebar
                 task={task}
-                projectId={projectId}
+                projectId={activeProjectId}
                 allLists={allLists}
                 assignableUsers={assignableUsers}
                 canEdit={canEdit}
