@@ -168,9 +168,12 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
   addTask: (listId, task) =>
     set((s) => ({
-      lists: s.lists.map((l) =>
-        l.id === listId ? { ...l, tasks: [...l.tasks, task] } : l,
-      ),
+      lists: s.lists.map((l) => {
+        if (l.id !== listId) return l;
+        // Prevent duplicate if task already exists in this list
+        if (l.tasks.some((t) => t.id === task.id)) return l;
+        return { ...l, tasks: [...l.tasks, task] };
+      }),
     })),
 
   insertTaskAt: (listId, task, index) =>
@@ -275,24 +278,54 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     set((s) => {
       const allExistingTasks = s.lists.flatMap((l) => l.tasks);
       const commentCountMap = new Map(
-        allExistingTasks.map((t) => [t.id, t.commentCount]),
+        allExistingTasks.map((t) => [
+          t.id,
+          (t as TaskWithCommentCount).commentCount,
+        ]),
       );
       const assigneesMap = new Map(
-        allExistingTasks.map((t) => [t.id, t.assignees]),
+        allExistingTasks.map((t) => [
+          t.id,
+          (t as TaskWithCommentCount).assignees,
+        ]),
       );
+
       const affectedListIds = new Set(affectedTasks.map((t) => t.listId));
+      const movedTaskId = movedTask.id;
+
       return {
         lists: s.lists.map((l) => {
-          if (!affectedListIds.has(l.id)) return l;
-          const tasksForThisList = affectedTasks
-            .filter((t) => t.listId === l.id)
-            .sort((a, b) => a.position - b.position)
-            .map((t) => ({
-              ...t,
-              commentCount: commentCountMap.get(t.id),
-              assignees: assigneesMap.get(t.id),
-            }));
-          return { ...l, tasks: tasksForThisList };
+          if (affectedListIds.has(l.id)) {
+            const listAffectedTasks = affectedTasks
+              .filter((t) => t.listId === l.id)
+              .sort((a, b) => a.position - b.position)
+              .map((t) => ({
+                ...t,
+                commentCount:
+                  commentCountMap.get(t.id) ??
+                  (t.id === movedTask.id
+                    ? (movedTask as TaskWithCommentCount).commentCount
+                    : 0),
+                assignees:
+                  assigneesMap.get(t.id) ??
+                  (t.id === movedTask.id
+                    ? (movedTask as TaskWithCommentCount).assignees
+                    : []),
+              }));
+            return { ...l, tasks: listAffectedTasks };
+          }
+
+          if (
+            l.tasks.some((t) => t.id === movedTaskId) &&
+            l.id !== movedTask.listId
+          ) {
+            return {
+              ...l,
+              tasks: l.tasks.filter((t) => t.id !== movedTaskId),
+            };
+          }
+
+          return l;
         }),
       };
     }),
