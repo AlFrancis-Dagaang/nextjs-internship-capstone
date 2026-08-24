@@ -100,6 +100,26 @@ export function resolveEffectiveMemberRole(
 
 export const assertProjectAccess = cache(
   async (projectId: string, userId: string): Promise<ProjectAccessResult> => {
+    // 💡 Handle the virtual My Tasks board gracefully
+    if (projectId === "my-tasks") {
+      const syntheticProject = {
+        id: "my-tasks",
+        name: "My Tasks",
+        description: "Cross-project personal task board",
+        ownerId: userId,
+        dueDate: null,
+        isArchived: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      return {
+        project: syntheticProject as any,
+        role: "owner",
+        isOwner: true,
+        membership: null,
+      };
+    }
+
     const project = await queries.projects.getById(projectId);
     if (!project) return { error: "Not found" };
 
@@ -126,7 +146,6 @@ export const assertProjectAccess = cache(
     return { project, role, isOwner: false, membership: membership ?? null };
   },
 );
-
 export async function assertProjectViewAccess(
   projectId: string,
   userId: string,

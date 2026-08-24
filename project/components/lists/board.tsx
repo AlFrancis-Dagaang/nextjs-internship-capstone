@@ -387,9 +387,11 @@ export function Board({
               ))}
             </SortableContext>
 
-            <div className="shrink-0 w-80">
-              <AddListForm projectId={projectId} onCreated={addList} />
-            </div>
+            {projectId !== "my-tasks" && (
+              <div className="shrink-0 w-80">
+                <AddListForm projectId={projectId} onCreated={addList} />
+              </div>
+            )}
           </div>
         </div>
         <DragOverlay dropAnimation={dropAnimation}>

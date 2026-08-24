@@ -168,6 +168,12 @@ export async function getProjectEvents(
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
+  // 💡 Handle the virtual My Tasks board gracefully
+  if (projectId === "my-tasks") {
+    const events = await queries.events.getForUser(authResult.user.id);
+    return { success: true, data: events as any };
+  }
+
   const access = await assertProjectViewAccess(projectId, authResult.user.id);
   if ("error" in access) {
     return { success: false, error: access.error ?? "Unknown error" };

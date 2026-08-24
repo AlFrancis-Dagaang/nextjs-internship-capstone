@@ -348,6 +348,25 @@ export async function getAssignableUsers(projectId: string): Promise<
     return { success: false, error: authResult.error ?? "Unknown error" };
   }
 
+  // 💡 Handle the virtual My Tasks board gracefully
+  if (projectId === "my-tasks") {
+    const currentUser = await queries.users.getById(authResult.user.id);
+    return {
+      success: true,
+      data: currentUser
+        ? [
+            {
+              id: currentUser.id,
+              name: currentUser.name,
+              email: currentUser.email,
+              imageUrl: currentUser.imageUrl,
+              hasImage: currentUser.hasImage,
+            },
+          ]
+        : [],
+    };
+  }
+
   const access = await assertProjectViewAccess(projectId, authResult.user.id);
   if ("error" in access) {
     return { success: false, error: access.error ?? "Unknown error" };
@@ -388,7 +407,7 @@ export async function getAssignableUsers(projectId: string): Promise<
       id: m.userId,
       name: m.userName,
       email: m.userEmail,
-      imageUrl: m.userImageUrl, // Ensure your projectMembers query selects userImageUrl & userHasImage
+      imageUrl: m.userImageUrl,
       hasImage: m.userHasImage,
     });
   }
@@ -399,7 +418,7 @@ export async function getAssignableUsers(projectId: string): Promise<
           id: m.userId,
           name: m.userName,
           email: m.userEmail,
-          imageUrl: m.userImageUrl, // Ensure your team members query selects these as well
+          imageUrl: m.userImageUrl,
           hasImage: m.userHasImage,
         });
       }

@@ -1,7 +1,7 @@
-// components/tasks/task-card.tsx
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { Calendar, MessageSquare, Check } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { TaskActions } from "./modal/task-actions";
 import { DeleteTaskDialog } from "./modal/delete-task-dialog";
 import { Input } from "@/components/ui/input";
-import { ListWithTasks, TaskWithCommentCount } from "../lists/board";
 import { useBoardStore } from "@/stores/board-store";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
@@ -25,13 +24,19 @@ const priorityBarStyles: Record<string, string> = {
   high: "bg-destructive",
 };
 
-/**
- * #21 — pure presentational card body, no hooks. Used by `TaskCard` below
- * (the real, draggable, interactive card) AND directly by board.tsx's
- * `DragOverlay` (the floating preview while dragging). Kept hook-free
- * specifically so DragOverlay can render it without a second `useSortable`
- * call for the same task id fighting the real card's.
- */
+export type TaskWithCommentCount = Task & {
+  commentCount?: number;
+  projectId?: string;
+  projectName?: string;
+  assignees?: {
+    userId: string;
+    name?: string;
+    email?: string;
+    imageUrl?: string | null;
+    hasImage?: boolean | null;
+  }[];
+};
+
 export function TaskCardView({
   task,
   interactive = true,
@@ -129,15 +134,28 @@ export function TaskCardView({
               {task.isCompleted && <Check size={10} strokeWidth={3} />}
             </div>
           )}
-          <h4
-            className={`font-medium text-sm ${
-              task.isCompleted
-                ? "line-through text-muted-foreground/60"
-                : "text-foreground"
-            }`}
-          >
-            {task.title}
-          </h4>
+          <div className="flex flex-col min-w-0">
+            <h4
+              className={`font-medium text-sm truncate ${
+                task.isCompleted
+                  ? "line-through text-muted-foreground/60"
+                  : "text-foreground"
+              }`}
+            >
+              {task.title}
+            </h4>
+            {task.projectName && task.projectId && (
+              <div className="mt-1">
+                <Link
+                  href={`/projects/${task.projectId}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border/60 transition-colors"
+                >
+                  {task.projectName}
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -211,14 +229,13 @@ export function TaskCard({
 }: {
   task: TaskWithCommentCount;
   projectId: string;
-  allLists: ListWithTasks[];
+  allLists: any[];
   canEdit: boolean;
   canContribute: boolean;
   dragDisabled?: boolean;
   selectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelected?: () => void;
-
   onUpdated?: (task: TaskWithCommentCount) => void;
   onDeleted?: () => void;
   onDeleteFailed?: (task: Task) => void;
