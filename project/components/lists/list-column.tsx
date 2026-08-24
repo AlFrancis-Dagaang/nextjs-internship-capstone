@@ -196,6 +196,7 @@ export function ListColumn({
         style={listDragStyle}
         {...(canEdit ? listDragAttributes : {})}
         {...(canEdit ? listDragListeners : {})}
+        data-testid="list-column"
         className={`shrink-0 w-80 bg-card/90 backdrop-blur-md border border-border/85 rounded-3xl p-4 flex flex-col h-fit max-h-full transition-all cursor-grab active:cursor-grabbing shadow-xs ${
           isListDragging ? "opacity-40" : ""
         }`}

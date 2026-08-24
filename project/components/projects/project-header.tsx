@@ -23,6 +23,7 @@ import {
   Trash2,
   Calendar,
   Users2,
+  Clock,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,7 @@ export function ProjectHeader({
   role,
   currentUserId,
   upcomingTasks,
+  dueDate,
 }: {
   project: Project;
   initialMembers: Member[];
@@ -85,6 +87,7 @@ export function ProjectHeader({
   role: "owner" | "admin" | "editor" | "contributor" | "viewer";
   currentUserId: string;
   upcomingTasks: CalendarTaskDTO[];
+  dueDate?: Date | string | null;
 }) {
   const { toast } = useToast();
   const canEdit = role !== "viewer" && role !== "contributor";
@@ -312,9 +315,18 @@ export function ProjectHeader({
 
   const formattedRoleLabel = role.charAt(0).toUpperCase() + role.slice(1);
 
+  // Format due date for display if available
+  const formattedDueDate = dueDate
+    ? new Date(dueDate).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-card/70 backdrop-blur-md p-4 sm:p-5 border border-border/80 rounded-3xl shadow-xs m-0">
-      {/* Left side: Back button + Title + Role Badge */}
+      {/* Left side: Back button + Title + Role Badge + Due Date */}
       <div className="flex items-center space-x-3.5 min-w-0">
         <Link
           href="/projects"
@@ -323,13 +335,19 @@ export function ProjectHeader({
         >
           <ArrowLeft size={16} />
         </Link>
-        <div className="flex items-center space-x-3 min-w-0">
+        <div className="flex items-center space-x-2.5 min-w-0 flex-wrap gap-y-1">
           <h1 className="text-sm sm:text-base font-semibold text-foreground truncate tracking-tight">
             {liveProject.name}
           </h1>
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-secondary text-secondary-foreground border border-border/60 tracking-wide shrink-0">
             {formattedRoleLabel}
           </span>
+          {formattedDueDate && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-secondary/60 text-muted-foreground border border-border/60 shrink-0">
+              <Clock size={11} className="text-muted-foreground" />
+              <span>Due {formattedDueDate}</span>
+            </span>
+          )}
         </div>
       </div>
 
@@ -435,9 +453,8 @@ export function ProjectHeader({
           </div>
         ) : (
           <div className="flex items-center gap-2 justify-end shrink-0">
-            {/* --- FILTER BUTTON (Dropdown on Desktop, Dialog Modal on Mobile) --- */}
+            {/* --- FILTER BUTTON --- */}
             <>
-              {/* Desktop Dropdown */}
               <div className="hidden sm:block">
                 <DropdownMenu
                   open={filterDropdownOpen}
@@ -509,9 +526,8 @@ export function ProjectHeader({
               </Button>
             )}
 
-            {/* --- MORE ACTIONS BUTTON (Dropdown on Desktop, Dialog Modal on Mobile) --- */}
+            {/* --- MORE ACTIONS BUTTON --- */}
             <>
-              {/* Desktop Dropdown */}
               <div className="hidden sm:block">
                 <DropdownMenu
                   open={actionsDropdownOpen}
@@ -569,7 +585,6 @@ export function ProjectHeader({
               </div>
             </>
 
-            {/* Team Members Avatars */}
             {/* Team Members Avatars */}
             <div className="hidden sm:flex items-center pl-2.5 border-l border-border ml-1">
               <div className="flex -space-x-1.5">
@@ -639,7 +654,7 @@ export function ProjectHeader({
         )}
       </div>
 
-      {/* --- TRUE MOBILE MODAL DIALOG FOR FILTER --- */}
+      {/* --- MOBILE MODAL DIALOGS --- */}
       <Dialog
         open={mobileFilterModalOpen}
         onOpenChange={setMobileFilterModalOpen}
@@ -670,7 +685,6 @@ export function ProjectHeader({
         </DialogContent>
       </Dialog>
 
-      {/* --- TRUE MOBILE MODAL DIALOG FOR MORE ACTIONS --- */}
       <Dialog
         open={mobileActionsModalOpen}
         onOpenChange={setMobileActionsModalOpen}

@@ -1,7 +1,7 @@
 // components/dashboard/dashboard-header.tsx
 "use client";
 
-import { FolderGit2, CheckSquare, Clock } from "lucide-react";
+import { FolderGit2, CheckSquare, Clock, FolderKanban } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 
 export function DashboardHeader({
@@ -24,7 +24,7 @@ export function DashboardHeader({
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
         <div className="flex items-center justify-between sm:justify-start gap-2 px-3 py-1.5 rounded-xl bg-secondary/70 border border-border/60 text-xs">
           <div className="flex items-center gap-2">
-            <FolderGit2 size={13} className="text-primary" />
+            <FolderKanban size={13} className="text-foreground shrink-0" />
             <span className="text-muted-foreground">Projects</span>
           </div>
           <span className="font-semibold text-foreground sm:ml-2">

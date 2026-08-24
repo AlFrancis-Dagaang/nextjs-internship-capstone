@@ -1,4 +1,3 @@
-// components/team/team-card-actions.tsx
 "use client";
 
 import { useState, useTransition, useEffect, useRef } from "react";
@@ -25,10 +24,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DeleteTeamModal } from "./modals/delete-team-modal";
 
+type MemberInfo = {
+  userId: string;
+  name: string;
+  email: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
+};
+
 type SearchUser = {
   id: string;
   email: string;
   name: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
 };
 
 export function TeamCardActions({
@@ -42,29 +51,28 @@ export function TeamCardActions({
   onDeleted: (teamId: string) => void;
   onViewMembers: () => void;
   onRename: () => void;
-  onMemberAdded: (member: {
-    userId: string;
-    name: string;
-    email: string;
-  }) => void;
+  onMemberAdded: (member: MemberInfo) => void;
 }) {
   const { toast } = useToast();
+
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"menu" | "invite">("menu");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // Live-search user states inside dropdown view
   const [query, setQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
+
   const [isPending, startTransition] = useTransition();
 
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+
   const [isLoadingSearch, setIsLoadingSearch] = useState(false);
+
   const [showDropdown, setShowDropdown] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchRequestIdRef = useRef(0);
 
-  // Reset view and state when dropdown closes
   useEffect(() => {
     if (!isOpen) {
       const timer = setTimeout(() => {
@@ -74,11 +82,11 @@ export function TeamCardActions({
         setSearchResults([]);
         setShowDropdown(false);
       }, 150);
+
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
-  // Click outside listener for search dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -88,13 +96,17 @@ export function TeamCardActions({
         setShowDropdown(false);
       }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
-  // Debounced live user search effect using Server Action
   useEffect(() => {
     const trimmed = query.trim();
+
     if (trimmed.length < 2) {
       setSearchResults([]);
       setShowDropdown(false);
@@ -104,14 +116,36 @@ export function TeamCardActions({
 
     setIsLoadingSearch(true);
     setShowDropdown(true);
+
     const currentRequestId = ++searchRequestIdRef.current;
 
     const timer = setTimeout(async () => {
       try {
         const res = await searchUsersForTeamInvite(team.id, trimmed);
-        if (currentRequestId !== searchRequestIdRef.current) return;
+
+        if (currentRequestId !== searchRequestIdRef.current) {
+          return;
+        }
+
         if (res.success && res.data) {
-          setSearchResults((res.data as SearchUser[]).slice(0, 8));
+          const mapped: SearchUser[] = (res.data as any[])
+            .map((user) => {
+              const id = user.id ?? user.userId;
+
+              const imageUrl =
+                user.imageUrl ?? user.userImageUrl ?? user.image ?? null;
+
+              return {
+                id,
+                email: user.email ?? user.userEmail ?? "",
+                name: user.name ?? user.userName ?? "",
+                imageUrl,
+                hasImage: user.hasImage ?? user.userHasImage ?? !!imageUrl,
+              };
+            })
+            .slice(0, 8);
+
+          setSearchResults(mapped);
         } else {
           setSearchResults([]);
         }
@@ -129,18 +163,19 @@ export function TeamCardActions({
     return () => clearTimeout(timer);
   }, [query, team.id]);
 
-  async function handleAddMember(e: React.FormEvent) {
+  function handleAddMember(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedUser) return;
 
-    const targetEmail = selectedUser.email;
-    const targetName = selectedUser.name;
-    const targetUserId = selectedUser.id;
+    if (!selectedUser) {
+      return;
+    }
 
-    setIsOpen(false);
+    const targetUser = selectedUser;
 
     startTransition(async () => {
-      const result = await addTeamMember(team.id, { email: targetEmail });
+      const result = await addTeamMember(team.id, {
+        email: targetUser.email,
+      });
 
       if (!result.success) {
         toast({
@@ -148,18 +183,26 @@ export function TeamCardActions({
           description: result.error,
           variant: "destructive",
         });
+
         return;
       }
 
-      onMemberAdded({
-        userId: targetUserId,
-        name: targetName,
-        email: targetEmail,
-      });
+      const newMember: MemberInfo = {
+        userId: targetUser.id,
+        name: targetUser.name,
+        email: targetUser.email,
+        imageUrl: targetUser.imageUrl ?? null,
+        hasImage: targetUser.hasImage ?? !!targetUser.imageUrl,
+      };
+
+      onMemberAdded(newMember);
+
       toast({
         title: "Member added successfully",
-        description: `${targetEmail} added to team "${team.name}".`,
+        description: `${targetUser.email} added to team "${team.name}".`,
       });
+
+      setIsOpen(false);
     });
   }
 
@@ -183,6 +226,7 @@ export function TeamCardActions({
           onClick={(e) => e.stopPropagation()}
           onInteractOutside={(e) => {
             const target = e.target as Element;
+
             if (target.closest?.("[data-radix-popper-content-wrapper]")) {
               e.preventDefault();
             }
@@ -192,6 +236,7 @@ export function TeamCardActions({
             <>
               <div className="flex items-center justify-between px-2 py-1 text-xs font-semibold text-muted-foreground border-b border-border mb-1">
                 <span>Team Options</span>
+
                 <button
                   onClick={() => setIsOpen(false)}
                   className="text-muted-foreground hover:text-foreground cursor-pointer"
@@ -256,8 +301,10 @@ export function TeamCardActions({
                   onClick={() => setView("menu")}
                   className="text-muted-foreground hover:text-foreground p-0.5 flex items-center gap-1 text-xs font-semibold cursor-pointer"
                 >
-                  <ChevronLeft size={15} /> Back
+                  <ChevronLeft size={15} />
+                  Back
                 </button>
+
                 <button
                   onClick={() => setIsOpen(false)}
                   className="text-muted-foreground hover:text-foreground p-0.5 cursor-pointer"
@@ -266,7 +313,6 @@ export function TeamCardActions({
                 </button>
               </div>
 
-              {/* Add Member Live Search Form */}
               <form
                 onSubmit={handleAddMember}
                 className="space-y-2.5 px-1 pt-1"
@@ -285,8 +331,9 @@ export function TeamCardActions({
                       setShowDropdown(true);
                     }}
                     onFocus={() => {
-                      if (!selectedUser && query.trim().length >= 2)
+                      if (!selectedUser && query.trim().length >= 2) {
                         setShowDropdown(true);
+                      }
                     }}
                     disabled={isPending}
                     className="h-8 text-xs bg-muted border-input text-foreground rounded-lg w-full focus-visible:ring-1"
@@ -323,6 +370,7 @@ export function TeamCardActions({
                                   <span className="text-xs font-medium text-foreground truncate">
                                     {user.name}
                                   </span>
+
                                   <span className="text-[10px] text-muted-foreground truncate">
                                     {user.email}
                                   </span>
@@ -340,7 +388,8 @@ export function TeamCardActions({
                   disabled={isPending || !selectedUser}
                   className="w-full h-8 bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-xs shadow-none rounded-lg cursor-pointer"
                 >
-                  <UserPlus size={13} className="mr-1.5" /> Add Member
+                  <UserPlus size={13} className="mr-1.5" />
+                  Add Member
                 </Button>
               </form>
             </div>

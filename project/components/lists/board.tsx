@@ -1,7 +1,7 @@
 // components/projects/board.tsx
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   type CollisionDetection,
   DndContext,
@@ -175,11 +175,20 @@ export function Board({
     requestBulkDelete,
   ]);
 
+  // Inside Board component:
+  const hasInitializedRef = useRef(false);
+
   useEffect(() => {
-    if (initialLists) {
+    if (initialLists && !hasInitializedRef.current) {
       setInitialLists(initialLists);
+      hasInitializedRef.current = true;
     }
-  }, [projectId, initialLists, setInitialLists]);
+  }, [initialLists, setInitialLists]);
+
+  // Reset initialization ref if project changes
+  useEffect(() => {
+    hasInitializedRef.current = false;
+  }, [projectId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

@@ -1,9 +1,11 @@
+// components/team/modals/team-modal.tsx
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { WorkspaceTeam } from "@/lib/services/team";
 import { createTeam, updateTeam } from "@/lib/actions/team";
+import { useTeamStore } from "@/stores/team-store";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +28,7 @@ type TeamModalProps = {
 export function TeamModal({ open, onOpenChange, team }: TeamModalProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -41,29 +43,42 @@ export function TeamModal({ open, onOpenChange, team }: TeamModalProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+
+    // 1. Close the modal INSTANTLY for a snappy UI experience
+    onOpenChange(false);
 
     startTransition(async () => {
       let res;
       if (isEdit && team) {
-        res = await updateTeam(team.id, { name });
+        res = await updateTeam(team.id, { name: trimmedName });
       } else {
-        res = await createTeam({ name });
+        res = await createTeam({ name: trimmedName });
       }
 
-      if (res.success) {
+      if (res.success && res.data) {
         toast({
           title: isEdit
             ? "Team updated successfully"
             : "Team created successfully",
         });
-        onOpenChange(false);
+
+        if (!isEdit) {
+          const newTeam: WorkspaceTeam = {
+            ...(res.data as unknown as WorkspaceTeam),
+            memberCount: 0,
+          };
+          useTeamStore.getState().triggerTeamCreated(newTeam);
+        }
+
         router.refresh();
       } else {
-        setError(res.error);
+        // Safe check or fallback since `res` is guaranteed to be the failure case here
+        const errorMessage = !res.success ? res.error : "Failed to save team";
         toast({
           title: "Error",
-          description: res.error,
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -98,7 +113,6 @@ export function TeamModal({ open, onOpenChange, team }: TeamModalProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Core Engineering, Product Design"
-              disabled={isPending}
               autoFocus
               className="h-9 text-xs bg-card border-input shadow-sm"
             />
@@ -115,7 +129,6 @@ export function TeamModal({ open, onOpenChange, team }: TeamModalProps) {
               variant="outline"
               size="sm"
               onClick={() => onOpenChange(false)}
-              disabled={isPending}
               className="h-8 text-xs shadow-sm"
             >
               Cancel
@@ -123,7 +136,7 @@ export function TeamModal({ open, onOpenChange, team }: TeamModalProps) {
             <Button
               type="submit"
               size="sm"
-              disabled={isPending || !name.trim()}
+              disabled={!name.trim()}
               className="h-8 text-xs shadow-sm"
             >
               {isEdit ? "Save Changes" : "Create Team"}

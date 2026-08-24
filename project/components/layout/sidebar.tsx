@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
@@ -52,13 +53,21 @@ export function Sidebar({
         } ${isCollapsed ? "lg:w-20" : "w-64"}`}
       >
         {/* Brand Header */}
+        {/* Brand Header */}
         <div className="flex items-center h-16 px-4 border-b border-border/80 shrink-0 overflow-hidden">
           <Link
             href="/"
             className="flex items-center gap-3 font-bold text-foreground tracking-tight whitespace-nowrap w-full"
           >
-            <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-2xs shrink-0">
-              G
+            {/* Increased size from h-9 w-9 to h-11 w-11 and added a slight padding/scale */}
+            <div className="relative h-11 w-11 rounded-full bg-white flex items-center justify-center shrink-0 shadow-xs border border-border/50 p-0.5">
+              <Image
+                src="/logo.svg"
+                alt="GenZpace Logo"
+                fill
+                className="object-contain rounded-full"
+                priority
+              />
             </div>
             <span
               className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap text-sm font-bold tracking-tight ${

@@ -131,6 +131,7 @@ export default async function ProjectPage({
       isCompleted: t.isCompleted,
     }))
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden space-y-4">
       <div className="shrink-0">
@@ -146,6 +147,7 @@ export default async function ProjectPage({
           role={role}
           currentUserId={authResult.user.id}
           upcomingTasks={upcomingTasks}
+          dueDate={project.dueDate ?? null}
         />
       </div>
 

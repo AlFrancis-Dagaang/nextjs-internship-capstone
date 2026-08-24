@@ -1,13 +1,24 @@
 // components/team/create-team-button.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamModal } from "./modals/team-modal";
+import { useRouter } from "next/navigation";
 
 export function CreateTeamButton() {
   const [teamModalOpen, setTeamModalOpen] = useState(false);
+  const router = useRouter();
+  const prevOpenRef = useRef(teamModalOpen);
+
+  useEffect(() => {
+    // If modal was open and is now closed, refresh to sync newly created teams
+    if (prevOpenRef.current && !teamModalOpen) {
+      router.refresh();
+    }
+    prevOpenRef.current = teamModalOpen;
+  }, [teamModalOpen, router]);
 
   return (
     <>
