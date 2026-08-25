@@ -1,4 +1,3 @@
-// app/(dashboard)/my-tasks/loading.tsx
 export default function MyTasksLoading() {
   return (
     <div className="flex flex-col gap-4 bg-transparent px-0 py-0 m-0 animate-pulse w-full h-full overflow-hidden">
@@ -72,5 +71,5 @@ export default function MyTasksLoading() {
         </div>
       </div>
     </div>
-  )
+  );
 }

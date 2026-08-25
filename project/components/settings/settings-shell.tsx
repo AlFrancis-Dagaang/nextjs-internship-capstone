@@ -1,69 +1,68 @@
-// components/settings/settings-shell.tsx
-"use client"
+"use client";
 
-import { Bell, Palette, Shield, User, Users } from "lucide-react"
-import Link from "next/link"
-import { useSearchParams } from "next/navigation"
-import type React from "react"
-import { PageHeader } from "@/components/layout/page-header"
-import { AppearanceTab } from "./appearance-tab"
-import { NotificationsTab } from "./notifications-tab"
-import { ProfileTab } from "./profile-tab"
-import { SecurityTab } from "./security-tab"
-import { TeamsTab } from "./teams-tab"
+import { Bell, Palette, Shield, User, Users } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import type React from "react";
+import { PageHeader } from "@/components/layout/page-header";
+import { AppearanceTab } from "./appearance-tab";
+import { NotificationsTab } from "./notifications-tab";
+import { ProfileTab } from "./profile-tab";
+import { SecurityTab } from "./security-tab";
+import { TeamsTab } from "./teams-tab";
 
 type SettingsTab =
   | "profile"
   | "notifications"
   | "security"
   | "appearance"
-  | "teams"
+  | "teams";
 
 type UserSchema = {
-  id: string
-  clerkId: string
-  email: string
-  name: string
-  createdAt: Date
-  updatedAt: Date
-}
+  id: string;
+  clerkId: string;
+  email: string;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 type TeamForUser = {
-  id: string
-  name: string
-  createdBy: string
-  createdAt: Date
-}
+  id: string;
+  name: string;
+  createdBy: string;
+  createdAt: Date;
+};
 
 type SettingsShellProps = {
-  activeTab: SettingsTab
-  dbUser: UserSchema
-  teams: TeamForUser[]
-}
+  activeTab: SettingsTab;
+  dbUser: UserSchema;
+  teams: TeamForUser[];
+};
 
 const navItems: {
-  id: SettingsTab
-  label: string
-  icon: React.ComponentType<{ size?: number }>
+  id: SettingsTab;
+  label: string;
+  icon: React.ComponentType<{ size?: number }>;
 }[] = [
   { id: "profile", label: "Profile", icon: User },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Shield },
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "teams", label: "Teams", icon: Users },
-]
+];
 
 export function SettingsShell({
   activeTab,
   dbUser,
   teams,
 }: SettingsShellProps) {
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams();
 
   function createTabUrl(tabId: SettingsTab) {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set("tab", tabId)
-    return `/settings?${params.toString()}`
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tabId);
+    return `/settings?${params.toString()}`;
   }
 
   return (
@@ -83,8 +82,8 @@ export function SettingsShell({
           </div>
           <nav className="flex lg:flex-col gap-1 min-w-max lg:min-w-0">
             {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = activeTab === item.id
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
               return (
                 <Link
                   key={item.id}
@@ -98,7 +97,7 @@ export function SettingsShell({
                   <Icon size={15} />
                   <span>{item.label}</span>
                 </Link>
-              )
+              );
             })}
           </nav>
         </div>
@@ -115,5 +114,5 @@ export function SettingsShell({
         </div>
       </div>
     </div>
-  )
+  );
 }

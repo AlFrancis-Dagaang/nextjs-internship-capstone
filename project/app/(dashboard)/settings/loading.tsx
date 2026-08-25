@@ -1,4 +1,3 @@
-// app/(dashboard)/settings/loading.tsx
 export default function SettingsLoading() {
   return (
     <div className="w-full space-y-6 sm:space-y-8 pb-12 px-2 sm:px-0 animate-pulse">
@@ -51,5 +50,5 @@ export default function SettingsLoading() {
         </div>
       </div>
     </div>
-  )
+  );
 }

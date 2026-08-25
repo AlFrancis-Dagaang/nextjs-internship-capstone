@@ -1,4 +1,3 @@
-// components/landing-features.tsx
 import Image from "next/image";
 
 export function LandingFeatures() {

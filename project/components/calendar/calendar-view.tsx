@@ -1,5 +1,4 @@
-// components/projects/calendar-view.tsx
-"use client"
+"use client";
 
 import {
   AlertCircle,
@@ -12,25 +11,25 @@ import {
   Layers,
   Plus,
   TrendingUp,
-} from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useMemo, useState } from "react"
-import { PageHeader } from "@/components/layout/page-header"
-import { Badge } from "@/components/ui/badge"
-import type { CalendarEventDTO, CalendarTaskDTO } from "@/types"
-import { EventFormModal } from "../calendar/modals/event-form-modal"
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { PageHeader } from "@/components/layout/page-header";
+import { Badge } from "@/components/ui/badge";
+import type { CalendarEventDTO, CalendarTaskDTO } from "@/types";
+import { EventFormModal } from "../calendar/modals/event-form-modal";
 
 export type CalendarProjectDTO = {
-  id: string
-  name: string
-  dueDate: string
-}
+  id: string;
+  name: string;
+  dueDate: string;
+};
 
 interface CalendarViewProps {
-  tasksByDate?: Record<string, CalendarTaskDTO[]>
-  eventsByDate?: Record<string, CalendarEventDTO[]>
-  projectsByDate?: Record<string, CalendarProjectDTO[]>
-  currentUserId: string
+  tasksByDate?: Record<string, CalendarTaskDTO[]>;
+  eventsByDate?: Record<string, CalendarEventDTO[]>;
+  projectsByDate?: Record<string, CalendarProjectDTO[]>;
+  currentUserId: string;
 }
 
 const MONTH_NAMES = [
@@ -46,14 +45,14 @@ const MONTH_NAMES = [
   "October",
   "November",
   "December",
-]
-const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+];
+const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function formatDateKey(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, "0")
-  const d = String(date.getDate()).padStart(2, "0")
-  return `${y}-${m}-${d}`
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export function CalendarView({
@@ -62,69 +61,69 @@ export function CalendarView({
   projectsByDate = {},
   currentUserId,
 }: CalendarViewProps) {
-  const router = useRouter()
-  const today = new Date()
+  const router = useRouter();
+  const today = new Date();
 
-  const [currentYear, setCurrentYear] = useState<number>(today.getFullYear())
-  const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth())
+  const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<string | null>(
     formatDateKey(today),
-  )
+  );
 
-  const [isEventModalOpen, setIsEventModalOpen] = useState(false)
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<
     CalendarEventDTO | undefined
-  >(undefined)
+  >(undefined);
 
-  const todayKey = formatDateKey(today)
-  const safeTasksByDate = tasksByDate || {}
-  const safeEventsByDate = eventsByDate || {}
-  const safeProjectsByDate = projectsByDate || {}
+  const todayKey = formatDateKey(today);
+  const safeTasksByDate = tasksByDate || {};
+  const safeEventsByDate = eventsByDate || {};
+  const safeProjectsByDate = projectsByDate || {};
 
   // Month grid calculation
   const calendarGrid = useMemo(() => {
-    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay()
+    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
     const totalDaysInMonth = new Date(
       currentYear,
       currentMonth + 1,
       0,
-    ).getDate()
-    const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate()
+    ).getDate();
+    const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
 
-    const days = []
+    const days = [];
 
     for (let i = firstDayIndex - 1; i >= 0; i--) {
-      const dayNum = prevMonthDays - i
-      const prevDate = new Date(currentYear, currentMonth - 1, dayNum)
+      const dayNum = prevMonthDays - i;
+      const prevDate = new Date(currentYear, currentMonth - 1, dayNum);
       days.push({
         dateKey: formatDateKey(prevDate),
         dayNum,
         isCurrentMonth: false,
-      })
+      });
     }
 
     for (let i = 1; i <= totalDaysInMonth; i++) {
-      const currDate = new Date(currentYear, currentMonth, i)
+      const currDate = new Date(currentYear, currentMonth, i);
       days.push({
         dateKey: formatDateKey(currDate),
         dayNum: i,
         isCurrentMonth: true,
-      })
+      });
     }
 
-    const totalCells = Math.ceil(days.length / 7) * 7
-    const remainingCells = totalCells - days.length
+    const totalCells = Math.ceil(days.length / 7) * 7;
+    const remainingCells = totalCells - days.length;
     for (let i = 1; i <= remainingCells; i++) {
-      const nextDate = new Date(currentYear, currentMonth + 1, i)
+      const nextDate = new Date(currentYear, currentMonth + 1, i);
       days.push({
         dateKey: formatDateKey(nextDate),
         dayNum: i,
         isCurrentMonth: false,
-      })
+      });
     }
 
-    return days
-  }, [currentYear, currentMonth])
+    return days;
+  }, [currentYear, currentMonth]);
 
   // Aggregate stats & upcoming queue (tasks + events + projects)
   const {
@@ -134,31 +133,31 @@ export function CalendarView({
     highPriorityCount,
   } = useMemo(() => {
     const futureOrTodayItems: {
-      dateKey: string
-      sortTime: string
-      type: "task" | "event" | "project"
-      title: string
-      subtext: string
-      priority?: string | null
-      projectId?: string | null
-      task?: CalendarTaskDTO
-      event?: CalendarEventDTO
-      project?: CalendarProjectDTO
-    }[] = []
+      dateKey: string;
+      sortTime: string;
+      type: "task" | "event" | "project";
+      title: string;
+      subtext: string;
+      priority?: string | null;
+      projectId?: string | null;
+      task?: CalendarTaskDTO;
+      event?: CalendarEventDTO;
+      project?: CalendarProjectDTO;
+    }[] = [];
 
-    let monthTotalTasks = 0
-    let monthTotalProjects = 0
-    let highCount = 0
+    let monthTotalTasks = 0;
+    let monthTotalProjects = 0;
+    let highCount = 0;
 
-    const currentMonthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`
+    const currentMonthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`;
 
     // Process Tasks
     Object.entries(safeTasksByDate).forEach(([dateKey, tasks]) => {
       if (dateKey.startsWith(currentMonthPrefix)) {
-        monthTotalTasks += tasks.length
+        monthTotalTasks += tasks.length;
         tasks.forEach((t) => {
-          if (t.priority === "high") highCount++
-        })
+          if (t.priority === "high") highCount++;
+        });
       }
 
       if (dateKey >= todayKey) {
@@ -172,10 +171,10 @@ export function CalendarView({
             priority: task.priority,
             projectId: task.projectId,
             task,
-          })
-        })
+          });
+        });
       }
-    })
+    });
 
     // Process Events
     Object.entries(safeEventsByDate).forEach(([dateKey, events]) => {
@@ -189,15 +188,15 @@ export function CalendarView({
             subtext: event.projectId ? "Project Event" : "Personal Event",
             projectId: event.projectId,
             event,
-          })
-        })
+          });
+        });
       }
-    })
+    });
 
     // Process Projects
     Object.entries(safeProjectsByDate).forEach(([dateKey, projects]) => {
       if (dateKey.startsWith(currentMonthPrefix)) {
-        monthTotalProjects += projects.length
+        monthTotalProjects += projects.length;
       }
 
       if (dateKey >= todayKey) {
@@ -210,31 +209,31 @@ export function CalendarView({
             subtext: "Project Deadline",
             projectId: project.id,
             project,
-          })
-        })
+          });
+        });
       }
-    })
+    });
 
     const sortedUpcoming = futureOrTodayItems.sort((a, b) => {
       if (a.sortTime !== b.sortTime) {
-        return a.sortTime.localeCompare(b.sortTime)
+        return a.sortTime.localeCompare(b.sortTime);
       }
       const priorityOrder: Record<string, number> = {
         high: 3,
         medium: 2,
         low: 1,
-      }
-      const pA = priorityOrder[a.priority || ""] || 0
-      const pB = priorityOrder[b.priority || ""] || 0
-      return pB - pA
-    })
+      };
+      const pA = priorityOrder[a.priority || ""] || 0;
+      const pB = priorityOrder[b.priority || ""] || 0;
+      return pB - pA;
+    });
 
     return {
       upcomingMilestones: sortedUpcoming,
       totalMonthTasks: monthTotalTasks,
       totalMonthProjects: monthTotalProjects,
       highPriorityCount: highCount,
-    }
+    };
   }, [
     safeTasksByDate,
     safeEventsByDate,
@@ -242,20 +241,21 @@ export function CalendarView({
     todayKey,
     currentYear,
     currentMonth,
-  ])
+  ]);
 
   function getPriorityBadge(priority?: CalendarTaskDTO["priority"]) {
-    if (!priority) return null
-    let variant: "secondary" | "destructive" = "secondary"
+    if (!priority) return null;
+    let variant: "secondary" | "destructive" = "secondary";
     let customClasses =
-      "bg-secondary text-secondary-foreground border-border/60"
+      "bg-secondary text-secondary-foreground border-border/60";
 
     if (priority === "high") {
-      variant = "destructive"
-      customClasses = "bg-destructive/15 text-destructive border-destructive/30"
+      variant = "destructive";
+      customClasses =
+        "bg-destructive/15 text-destructive border-destructive/30";
     } else if (priority === "medium") {
       customClasses =
-        "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+        "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30";
     }
 
     return (
@@ -265,7 +265,7 @@ export function CalendarView({
       >
         {priority}
       </Badge>
-    )
+    );
   }
 
   function formatEventTimeRange(startAt: string, endAt: string): string {
@@ -273,38 +273,38 @@ export function CalendarView({
       const start = new Date(startAt).toLocaleTimeString([], {
         hour: "numeric",
         minute: "2-digit",
-      })
+      });
       const end = new Date(endAt).toLocaleTimeString([], {
         hour: "numeric",
         minute: "2-digit",
-      })
-      return `${start} – ${end}`
+      });
+      return `${start} – ${end}`;
     } catch {
-      return "All Day"
+      return "All Day";
     }
   }
 
   function formatRelativeDays(targetDateKey: string): string {
-    if (targetDateKey === todayKey) return "Today"
-    const [tY, tM, tD] = targetDateKey.split("-").map(Number)
-    const [todayY, todayM, todayD] = todayKey.split("-").map(Number)
+    if (targetDateKey === todayKey) return "Today";
+    const [tY, tM, tD] = targetDateKey.split("-").map(Number);
+    const [todayY, todayM, todayD] = todayKey.split("-").map(Number);
     const diffDays = Math.ceil(
       (new Date(tY, tM - 1, tD).getTime() -
         new Date(todayY, todayM - 1, todayD).getTime()) /
         (1000 * 60 * 60 * 24),
-    )
-    return diffDays === 1 ? "Tomorrow" : `In ${diffDays} days`
+    );
+    return diffDays === 1 ? "Tomorrow" : `In ${diffDays} days`;
   }
 
   const selectedDayTasks = selectedDate
     ? safeTasksByDate[selectedDate] || []
-    : []
+    : [];
   const selectedDayEvents = selectedDate
     ? safeEventsByDate[selectedDate] || []
-    : []
+    : [];
   const selectedDayProjects = selectedDate
     ? safeProjectsByDate[selectedDate] || []
-    : []
+    : [];
 
   return (
     <div className="w-full space-y-6 pb-12 px-2 sm:px-0">
@@ -315,8 +315,8 @@ export function CalendarView({
       >
         <button
           onClick={() => {
-            setEditingEvent(undefined)
-            setIsEventModalOpen(true)
+            setEditingEvent(undefined);
+            setIsEventModalOpen(true);
           }}
           className="h-9 px-4 bg-teal-700 text-white hover:bg-teal-800 text-xs font-medium rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
         >
@@ -338,8 +338,8 @@ export function CalendarView({
                 onClick={() =>
                   currentMonth === 0
                     ? (() => {
-                        setCurrentMonth(11)
-                        setCurrentYear((p) => p - 1)
+                        setCurrentMonth(11);
+                        setCurrentYear((p) => p - 1);
                       })()
                     : setCurrentMonth((p) => p - 1)
                 }
@@ -352,8 +352,8 @@ export function CalendarView({
                 onClick={() =>
                   currentMonth === 11
                     ? (() => {
-                        setCurrentMonth(11)
-                        setCurrentYear((p) => p - 1)
+                        setCurrentMonth(11);
+                        setCurrentYear((p) => p - 1);
                       })()
                     : setCurrentMonth((p) => p + 1)
                 }
@@ -376,17 +376,17 @@ export function CalendarView({
             <div className="grid grid-cols-7 auto-rows-fr flex-1 min-h-[460px] sm:min-h-0">
               {calendarGrid.map(
                 ({ dateKey, dayNum, isCurrentMonth }, index) => {
-                  const dayTasks = safeTasksByDate[dateKey] || []
-                  const dayEvents = safeEventsByDate[dateKey] || []
-                  const dayProjects = safeProjectsByDate[dateKey] || []
+                  const dayTasks = safeTasksByDate[dateKey] || [];
+                  const dayEvents = safeEventsByDate[dateKey] || [];
+                  const dayProjects = safeProjectsByDate[dateKey] || [];
                   const hasHighPriority = dayTasks.some(
                     (t) => t.priority === "high",
-                  )
-                  const isSelected = selectedDate === dateKey
-                  const isToday = dateKey === todayKey
+                  );
+                  const isSelected = selectedDate === dateKey;
+                  const isToday = dateKey === todayKey;
 
                   const totalItemsCount =
-                    dayTasks.length + dayEvents.length + dayProjects.length
+                    dayTasks.length + dayEvents.length + dayProjects.length;
 
                   return (
                     <button
@@ -456,7 +456,7 @@ export function CalendarView({
                         )}
                       </div>
                     </button>
-                  )
+                  );
                 },
               )}
             </div>
@@ -579,8 +579,8 @@ export function CalendarView({
                         <div
                           key={event.id}
                           onClick={() => {
-                            setEditingEvent(event)
-                            setIsEventModalOpen(true)
+                            setEditingEvent(event);
+                            setIsEventModalOpen(true);
                           }}
                           className="flex items-center justify-between p-3 rounded-2xl border border-border/80 bg-secondary/30 transition-all group hover:border-teal-500/50 hover:bg-card cursor-pointer shadow-2xs"
                         >
@@ -662,7 +662,7 @@ export function CalendarView({
               ) : (
                 <div className="flex flex-col gap-2.5">
                   {upcomingMilestones.map((item, idx) => {
-                    const isToday = item.dateKey === todayKey
+                    const isToday = item.dateKey === todayKey;
                     return (
                       <div
                         key={`upcoming-${item.type}-${item.task?.id || item.event?.id || item.project?.id || idx}`}
@@ -670,10 +670,10 @@ export function CalendarView({
                           if (item.type === "task" && item.task) {
                             router.push(
                               `/projects/${item.task.projectId}?openTask=${item.task.id}`,
-                            )
+                            );
                           } else if (item.type === "event" && item.event) {
-                            setEditingEvent(item.event)
-                            setIsEventModalOpen(true)
+                            setEditingEvent(item.event);
+                            setIsEventModalOpen(true);
                           }
                         }}
                         className={`flex flex-col p-3 rounded-2xl border border-border/80 bg-secondary/30 transition-all gap-1.5 group shadow-2xs ${item.type === "project" ? "" : "hover:border-teal-500/50 hover:bg-card cursor-pointer"}`}
@@ -712,7 +712,7 @@ export function CalendarView({
                           </span>
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               )}
@@ -724,13 +724,13 @@ export function CalendarView({
       <EventFormModal
         open={isEventModalOpen}
         onOpenChange={(open: boolean) => {
-          setIsEventModalOpen(open)
-          if (!open) setEditingEvent(undefined)
+          setIsEventModalOpen(open);
+          if (!open) setEditingEvent(undefined);
         }}
         entity={editingEvent}
         defaultDate={selectedDate || todayKey}
         currentUserId={currentUserId}
       />
     </div>
-  )
+  );
 }

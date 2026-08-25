@@ -1,17 +1,16 @@
-// hooks/use-inline-rename.ts
-"use client"
+"use client";
 
-import { useState, useTransition } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useTransition } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 type UseInlineRenameProps = {
-  initialName: string
+  initialName: string;
   onSave: (
     newName: string,
-  ) => Promise<{ success: boolean; error?: string; data?: any }>
-  onOptimisticUpdate?: (newName: string) => void
-  onRollback?: () => void
-}
+  ) => Promise<{ success: boolean; error?: string; data?: any }>;
+  onOptimisticUpdate?: (newName: string) => void;
+  onRollback?: () => void;
+};
 
 export function useInlineRename({
   initialName,
@@ -19,42 +18,42 @@ export function useInlineRename({
   onOptimisticUpdate,
   onRollback,
 }: UseInlineRenameProps) {
-  const [isRenaming, setIsRenaming] = useState(false)
-  const [name, setName] = useState(initialName)
-  const [isPending, startTransition] = useTransition()
-  const { toast } = useToast()
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [name, setName] = useState(initialName);
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   function handleCancel() {
-    setIsRenaming(false)
-    setName(initialName)
+    setIsRenaming(false);
+    setName(initialName);
   }
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
     if (!name.trim() || name === initialName) {
-      handleCancel()
-      return
+      handleCancel();
+      return;
     }
 
-    const submittedName = name.trim()
-    setIsRenaming(false)
+    const submittedName = name.trim();
+    setIsRenaming(false);
 
-    onOptimisticUpdate?.(submittedName)
+    onOptimisticUpdate?.(submittedName);
 
     startTransition(async () => {
-      const result = await onSave(submittedName)
+      const result = await onSave(submittedName);
       if (!result.success) {
-        onRollback?.()
+        onRollback?.();
         toast({
           title: "Failed to update",
           description: result.error || "An unexpected error occurred",
           variant: "destructive",
-        })
-        setName(initialName)
-        return
+        });
+        setName(initialName);
+        return;
       }
-      toast({ title: "Updated successfully", description: submittedName })
-    })
+      toast({ title: "Updated successfully", description: submittedName });
+    });
   }
 
   return {
@@ -65,5 +64,5 @@ export function useInlineRename({
     isPending,
     handleSubmit,
     handleCancel,
-  }
+  };
 }

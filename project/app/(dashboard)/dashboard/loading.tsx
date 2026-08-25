@@ -1,4 +1,3 @@
-// app/(dashboard)/loading.tsx
 export default function DashboardLoading() {
   return (
     <div className="w-full space-y-6 pb-12 px-2 sm:px-0 animate-pulse">
@@ -69,5 +68,5 @@ export default function DashboardLoading() {
         ))}
       </div>
     </div>
-  )
+  );
 }

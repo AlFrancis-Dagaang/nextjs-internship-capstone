@@ -1,4 +1,3 @@
-// app/(dashboard)/projects/[id]/(board)/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Board, type ListWithTasks } from "@/components/lists/board";

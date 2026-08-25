@@ -1,31 +1,31 @@
 // components/projects/modals/create-project-modal.tsx
-"use client"
+"use client";
 
-import { CalendarIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useEffect, useState, useTransition } from "react"
-import { Button } from "@/components/ui/button"
+import { CalendarIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { createProject, updateProject } from "@/lib/actions/projects"
-import type { Project } from "@/lib/db/schema"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { createProject, updateProject } from "@/lib/actions/projects";
+import type { Project } from "@/lib/db/schema";
 
 type CreateProjectModalProps = {
-  onCreated?: (project: Project) => void
-  onUpdated?: (project: Project) => void
-  project?: Project
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-  trigger?: React.ReactNode
-}
+  onCreated?: (project: Project) => void;
+  onUpdated?: (project: Project) => void;
+  project?: Project;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
+};
 
 export function CreateProjectModal({
   onCreated,
@@ -35,66 +35,67 @@ export function CreateProjectModal({
   onOpenChange: setControlledOpen,
   trigger,
 }: CreateProjectModalProps) {
-  const isEdit = Boolean(project)
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
-  const open = controlledOpen ?? uncontrolledOpen
-  const setOpen = setControlledOpen ?? setUncontrolledOpen
-  const router = useRouter()
+  const isEdit = Boolean(project);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = setControlledOpen ?? setUncontrolledOpen;
+  const router = useRouter();
 
-  const [name, setName] = useState(project?.name ?? "")
-  const [description, setDescription] = useState(project?.description ?? "")
+  const [name, setName] = useState(project?.name ?? "");
+  const [description, setDescription] = useState(project?.description ?? "");
   const [dueDate, setDueDate] = useState<string>(
     project?.dueDate
       ? new Date(project.dueDate).toISOString().split("T")[0]
       : "",
-  )
+  );
 
   const [fieldErrors, setFieldErrors] = useState<
     Record<string, string[]> | undefined
-  >(undefined)
-  const [isPending, startTransition] = useTransition()
+  >(undefined);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (open) {
-      setName(project?.name ?? "")
-      setDescription(project?.description ?? "")
+      setName(project?.name ?? "");
+      setDescription(project?.description ?? "");
       setDueDate(
         project?.dueDate
           ? new Date(project.dueDate).toISOString().split("T")[0]
           : "",
-      )
-      setFieldErrors(undefined)
+      );
+      setFieldErrors(undefined);
     }
-  }, [open, project])
+  }, [open, project]);
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!name.trim()) return
+    e.preventDefault();
+    if (!name.trim()) return;
 
     startTransition(async () => {
       const input = {
         name,
         description: description || undefined,
         dueDate: dueDate ? new Date(dueDate) : null,
-      }
+      };
 
-      const result = isEdit
-        ? await updateProject(project?.id, input)
-        : await createProject(input)
+      const result =
+        isEdit && project?.id
+          ? await updateProject(project.id, input)
+          : await createProject(input);
 
       if (!result.success) {
-        setFieldErrors(result.fieldErrors)
-        return
+        setFieldErrors(result.fieldErrors);
+        return;
       }
 
-      setOpen(false)
+      setOpen(false);
       if (isEdit) {
-        onUpdated?.(result.data)
+        onUpdated?.(result.data);
       } else {
-        onCreated?.(result.data)
-        router.push(`/projects/${result.data.id}`)
+        onCreated?.(result.data);
+        router.push(`/projects/${result.data.id}`);
       }
-    })
+    });
   }
 
   return (
@@ -217,5 +218,5 @@ export function CreateProjectModal({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

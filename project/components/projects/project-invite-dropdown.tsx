@@ -1,36 +1,35 @@
-// components/projects/invite/project-invite-dropdown.tsx
-"use client"
+"use client";
 
-import { ChevronLeft, Loader2, UserPlus, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { ChevronLeft, Loader2, UserPlus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { UserAvatar } from "@/components/ui/user-avatar"
-import type { ProjectMemberRole } from "@/types"
+} from "@/components/ui/select";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import type { ProjectMemberRole } from "@/types";
 
 type ProjectInviteDropdownProps = {
-  onBack: () => void
-  onClose: () => void
-  query: string
-  setQuery: (q: string) => void
-  selectedUser: any
-  setSelectedUser: (user: any) => void
-  inviteRole: ProjectMemberRole
-  setInviteRole: (role: ProjectMemberRole) => void
-  searchResults: any[]
-  isLoadingSearch: boolean
-  showDropdown: boolean
-  setShowDropdown: (show: boolean) => void
-  dropdownRef: React.RefObject<HTMLDivElement | null>
-  isPending: boolean
-  handleAddMember: (e: React.FormEvent) => void
-}
+  onBack: () => void;
+  onClose: () => void;
+  query: string;
+  setQuery: (q: string) => void;
+  selectedUser: any;
+  setSelectedUser: (user: any) => void;
+  inviteRole: ProjectMemberRole;
+  setInviteRole: (role: ProjectMemberRole) => void;
+  searchResults: any[];
+  isLoadingSearch: boolean;
+  showDropdown: boolean;
+  setShowDropdown: (show: boolean) => void;
+  dropdownRef: React.RefObject<HTMLDivElement | null>;
+  isPending: boolean;
+  handleAddMember: (e: React.FormEvent) => void;
+};
 
 export function ProjectInviteDropdown({
   onBack,
@@ -76,13 +75,13 @@ export function ProjectInviteDropdown({
             placeholder="Search by name or email..."
             value={selectedUser ? selectedUser.email : query}
             onChange={(e) => {
-              setSelectedUser(null)
-              setQuery(e.target.value)
-              setShowDropdown(true)
+              setSelectedUser(null);
+              setQuery(e.target.value);
+              setShowDropdown(true);
             }}
             onFocus={() => {
               if (!selectedUser && query.trim().length >= 2)
-                setShowDropdown(true)
+                setShowDropdown(true);
             }}
             disabled={isPending}
             className="h-8 text-xs bg-muted border-input text-foreground rounded-lg w-full focus-visible:ring-1"
@@ -102,14 +101,14 @@ export function ProjectInviteDropdown({
               ) : (
                 <div className="max-h-40 overflow-y-auto divide-y divide-border">
                   {searchResults.map((user) => {
-                    const isSelectable = user.status === "available"
+                    const isSelectable = user.status === "available";
                     return (
                       <div
                         key={user.id}
                         onClick={() => {
-                          if (!isSelectable) return
-                          setSelectedUser(user)
-                          setShowDropdown(false)
+                          if (!isSelectable) return;
+                          setSelectedUser(user);
+                          setShowDropdown(false);
                         }}
                         className={`px-2.5 py-2 flex items-center justify-between transition-colors ${
                           isSelectable
@@ -146,7 +145,7 @@ export function ProjectInviteDropdown({
                           </span>
                         )}
                       </div>
-                    )
+                    );
                   })}
                 </div>
               )}
@@ -186,5 +185,5 @@ export function ProjectInviteDropdown({
         </Button>
       </form>
     </div>
-  )
+  );
 }

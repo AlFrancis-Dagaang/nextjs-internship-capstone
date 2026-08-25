@@ -1,5 +1,4 @@
-// components/calendar/modals/event-form-modal.tsx
-"use client"
+"use client";
 
 import {
   Clock,
@@ -9,35 +8,35 @@ import {
   Pencil,
   Trash2,
   X,
-} from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useEffect, useState, useTransition } from "react"
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { useToast } from "@/hooks/use-toast"
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import {
   createEvent,
   deleteEvent,
   getEventableProjects,
   updateEvent,
-} from "@/lib/actions/events"
-import { toLocalDateKey } from "@/lib/utils/utils"
-import type { CalendarEventDTO } from "@/types"
+} from "@/lib/actions/events";
+import { toLocalDateKey } from "@/lib/utils/utils";
+import type { CalendarEventDTO } from "@/types";
 
 interface EventFormModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  entity?: CalendarEventDTO
-  currentUserId: string
-  defaultDate?: string
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  entity?: CalendarEventDTO;
+  currentUserId: string;
+  defaultDate?: string;
 }
 
 function toISOStringLocal(dateStr: string, timeStr: string) {
-  return new Date(`${dateStr}T${timeStr}:00`).toISOString()
+  return new Date(`${dateStr}T${timeStr}:00`).toISOString();
 }
 
 function formatReadableDate(dateStr: string) {
@@ -46,9 +45,9 @@ function formatReadableDate(dateStr: string) {
       month: "long",
       day: "numeric",
       year: "numeric",
-    })
+    });
   } catch {
-    return dateStr
+    return dateStr;
   }
 }
 
@@ -59,114 +58,114 @@ export function EventFormModal({
   currentUserId,
   defaultDate,
 }: EventFormModalProps) {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [isPending, startTransition] = useTransition()
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
 
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [date, setDate] = useState("")
-  const [startTime, setStartTime] = useState("09:00")
-  const [endTime, setEndTime] = useState("10:00")
-  const [projectId, setProjectId] = useState("")
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("10:00");
+  const [projectId, setProjectId] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, setIsEditing] = useState(false);
 
   const [eventableProjects, setEventableProjects] = useState<
     { id: string; name: string }[] | null
-  >(null)
+  >(null);
 
-  const [isProjectsLoading, startProjectsTransition] = useTransition()
-  const [isSearchingProject, setIsSearchingProject] = useState(false)
-  const [projectSearchQuery, setProjectSearchQuery] = useState("")
+  const [isProjectsLoading, startProjectsTransition] = useTransition();
+  const [isSearchingProject, setIsSearchingProject] = useState(false);
+  const [projectSearchQuery, setProjectSearchQuery] = useState("");
 
   const resetFormFields = () => {
-    setTitle(entity?.title ?? "")
-    setDescription(entity?.description ?? "")
+    setTitle(entity?.title ?? "");
+    setDescription(entity?.description ?? "");
 
     setDate(
       entity?.startAt
         ? toLocalDateKey(new Date(entity.startAt))
         : (defaultDate ?? toLocalDateKey(new Date())),
-    )
+    );
 
     setStartTime(
       entity?.startAt
         ? new Date(entity.startAt).toTimeString().slice(0, 5)
         : "09:00",
-    )
+    );
 
     setEndTime(
       entity?.endAt
         ? new Date(entity.endAt).toTimeString().slice(0, 5)
         : "10:00",
-    )
+    );
 
-    setProjectId(entity?.projectId ?? "")
-    setFieldErrors({})
-    setIsSearchingProject(false)
-    setProjectSearchQuery("")
-  }
+    setProjectId(entity?.projectId ?? "");
+    setFieldErrors({});
+    setIsSearchingProject(false);
+    setProjectSearchQuery("");
+  };
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
 
-    setIsEditing(!entity)
-    resetFormFields()
+    setIsEditing(!entity);
+    resetFormFields();
 
     if (entity?.projectId || entity) {
       startProjectsTransition(async () => {
-        const res = await getEventableProjects()
-        setEventableProjects(res.success && res.data ? res.data : [])
-      })
+        const res = await getEventableProjects();
+        setEventableProjects(res.success && res.data ? res.data : []);
+      });
     } else {
-      setEventableProjects(null)
+      setEventableProjects(null);
     }
-  }, [open, entity, defaultDate])
+  }, [open, entity, defaultDate]);
 
   const fetchProjectsIfNeeded = () => {
     if (!eventableProjects) {
       startProjectsTransition(async () => {
-        const res = await getEventableProjects()
-        setEventableProjects(res.success && res.data ? res.data : [])
-      })
+        const res = await getEventableProjects();
+        setEventableProjects(res.success && res.data ? res.data : []);
+      });
     }
-  }
+  };
 
   const handleOpenProjectSearch = () => {
-    setIsSearchingProject(true)
-    fetchProjectsIfNeeded()
-  }
+    setIsSearchingProject(true);
+    fetchProjectsIfNeeded();
+  };
 
   const filteredProjects = eventableProjects
     ? eventableProjects.filter((p) =>
         p.name.toLowerCase().includes(projectSearchQuery.toLowerCase()),
       )
-    : []
+    : [];
 
-  const selectedProject = eventableProjects?.find((p) => p.id === projectId)
+  const selectedProject = eventableProjects?.find((p) => p.id === projectId);
 
   const selectedProjectName =
     selectedProject?.name ||
-    (isProjectsLoading && projectId ? "Loading project..." : projectId)
+    (isProjectsLoading && projectId ? "Loading project..." : projectId);
 
   const userHasPermission = !entity
     ? true
     : entity.projectId
       ? eventableProjects?.some((p) => p.id === entity.projectId)
-      : entity.creatorId === currentUserId
+      : entity.creatorId === currentUserId;
 
-  const canEdit = userHasPermission && isEditing
+  const canEdit = userHasPermission && isEditing;
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
 
     if (entity && !isEditing) {
-      return
+      return;
     }
 
-    setFieldErrors({})
+    setFieldErrors({});
 
     const payload = {
       title,
@@ -174,59 +173,59 @@ export function EventFormModal({
       startAt: toISOStringLocal(date, startTime),
       endAt: toISOStringLocal(date, endTime),
       projectId: projectId || null,
-    }
+    };
 
     startTransition(async () => {
       const result = entity
         ? await updateEvent(entity.id, payload)
-        : await createEvent(payload)
+        : await createEvent(payload);
 
       if (!result.success) {
         if (result.fieldErrors) {
-          setFieldErrors(result.fieldErrors)
+          setFieldErrors(result.fieldErrors);
         }
 
         toast({
           title: "Couldn't save event",
           description: result.error,
           variant: "destructive",
-        })
+        });
 
-        return
+        return;
       }
 
       toast({
         title: entity ? "Event updated" : "Event created",
-      })
+      });
 
-      onOpenChange(false)
-      router.refresh()
-    })
+      onOpenChange(false);
+      router.refresh();
+    });
   }
 
   function handleDelete() {
-    if (!entity) return
+    if (!entity) return;
 
     startTransition(async () => {
-      const result = await deleteEvent(entity.id)
+      const result = await deleteEvent(entity.id);
 
       if (!result.success) {
         toast({
           title: "Couldn't delete event",
           description: result.error,
           variant: "destructive",
-        })
+        });
 
-        return
+        return;
       }
 
       toast({
         title: "Event deleted",
-      })
+      });
 
-      onOpenChange(false)
-      router.refresh()
-    })
+      onOpenChange(false);
+      router.refresh();
+    });
   }
 
   const renderProjectField = () => {
@@ -249,7 +248,7 @@ export function EventFormModal({
             )}
           </span>
         </div>
-      )
+      );
     }
 
     if (projectId) {
@@ -266,9 +265,9 @@ export function EventFormModal({
           <button
             type="button"
             onClick={() => {
-              setProjectId("")
-              setIsSearchingProject(false)
-              setProjectSearchQuery("")
+              setProjectId("");
+              setIsSearchingProject(false);
+              setProjectSearchQuery("");
             }}
             className="text-muted-foreground hover:text-foreground p-1 rounded-lg transition-colors shrink-0 cursor-pointer"
             title="Clear project"
@@ -276,7 +275,7 @@ export function EventFormModal({
             <X size={13} />
           </button>
         </div>
-      )
+      );
     }
 
     if (isSearchingProject) {
@@ -295,8 +294,8 @@ export function EventFormModal({
             <button
               type="button"
               onClick={() => {
-                setIsSearchingProject(false)
-                setProjectSearchQuery("")
+                setIsSearchingProject(false);
+                setProjectSearchQuery("");
               }}
               className="text-xs text-muted-foreground hover:text-foreground px-3 py-2 shrink-0 font-medium cursor-pointer bg-card border border-border rounded-xl"
             >
@@ -315,9 +314,9 @@ export function EventFormModal({
                   key={p.id}
                   type="button"
                   onClick={() => {
-                    setProjectId(p.id)
-                    setIsSearchingProject(false)
-                    setProjectSearchQuery("")
+                    setProjectId(p.id);
+                    setIsSearchingProject(false);
+                    setProjectSearchQuery("");
                   }}
                   className="w-full text-left px-3.5 py-2.5 text-xs rounded-xl hover:bg-card text-foreground transition-colors truncate font-medium flex items-center gap-2 border border-transparent hover:border-border cursor-pointer bg-card/60 shadow-2xs"
                 >
@@ -335,7 +334,7 @@ export function EventFormModal({
             </p>
           )}
         </div>
-      )
+      );
     }
 
     return (
@@ -353,8 +352,8 @@ export function EventFormModal({
           Attach to a project
         </button>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -552,9 +551,9 @@ export function EventFormModal({
                   <button
                     type="button"
                     onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      setIsEditing(true)
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsEditing(true);
                     }}
                     className="h-8 px-3.5 text-xs font-semibold rounded-xl bg-teal-700 text-white hover:bg-teal-800 transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
                   >
@@ -568,10 +567,10 @@ export function EventFormModal({
                     type="button"
                     onClick={() => {
                       if (entity) {
-                        resetFormFields()
-                        setIsEditing(false)
+                        resetFormFields();
+                        setIsEditing(false);
                       } else {
-                        onOpenChange(false)
+                        onOpenChange(false);
                       }
                     }}
                     disabled={isPending}
@@ -598,5 +597,5 @@ export function EventFormModal({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

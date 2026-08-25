@@ -1,36 +1,37 @@
-// components/settings/appearance-tab.tsx
-"use client"
+"use client";
 
-import { Laptop, Moon, Palette, Sun } from "lucide-react"
-import { useEffect, useState } from "react"
+import { Laptop, Moon, Palette, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function AppearanceTab() {
-  const [theme, setThemeState] = useState<"light" | "dark" | "system">("system")
+  const [theme, setThemeState] = useState<"light" | "dark" | "system">(
+    "system",
+  );
 
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark")
+    const isDark = document.documentElement.classList.contains("dark");
     const stored = localStorage.getItem("theme") as
       | "light"
       | "dark"
       | "system"
-      | null
-    if (stored) setThemeState(stored)
-    else setThemeState(isDark ? "dark" : "light")
-  }, [])
+      | null;
+    if (stored) setThemeState(stored);
+    else setThemeState(isDark ? "dark" : "light");
+  }, []);
 
   function handleThemeChange(newTheme: "light" | "dark" | "system") {
-    setThemeState(newTheme)
-    localStorage.setItem("theme", newTheme)
+    setThemeState(newTheme);
+    localStorage.setItem("theme", newTheme);
     if (newTheme === "dark") {
-      document.documentElement.classList.add("dark")
+      document.documentElement.classList.add("dark");
     } else if (newTheme === "light") {
-      document.documentElement.classList.remove("dark")
+      document.documentElement.classList.remove("dark");
     } else {
       const systemDark = window.matchMedia(
         "(prefers-color-scheme: dark)",
-      ).matches
-      if (systemDark) document.documentElement.classList.add("dark")
-      else document.documentElement.classList.remove("dark")
+      ).matches;
+      if (systemDark) document.documentElement.classList.add("dark");
+      else document.documentElement.classList.remove("dark");
     }
   }
 
@@ -91,5 +92,5 @@ export function AppearanceTab() {
         </button>
       </div>
     </div>
-  )
+  );
 }

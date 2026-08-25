@@ -1,5 +1,4 @@
-// components/projects/project-list-action.tsx
-"use client"
+"use client";
 
 import {
   Edit2,
@@ -8,35 +7,35 @@ import {
   Trash2,
   UserPlus,
   X,
-} from "lucide-react"
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useProjectInvite } from "@/hooks/use-project-invite"
-import type { Project, ProjectMember } from "@/types"
-import { DeleteProjectModal } from "./modals/delete-project-modal"
-import { ProjectInviteDropdown } from "./project-invite-dropdown"
+} from "@/components/ui/dropdown-menu";
+import { useProjectInvite } from "@/hooks/use-project-invite";
+import type { Project, ProjectMember } from "@/types";
+import { DeleteProjectModal } from "./modals/delete-project-modal";
+import { ProjectInviteDropdown } from "./project-invite-dropdown";
 
 type ProjectListActionProps = {
-  project: Project
-  isOwner: boolean
-  canManage: boolean
-  onDeleted: (projectId: string) => void
-  onViewDetails: () => void
-  onRename: () => void
-  onMemberAdded: (projectId: string, member: ProjectMember) => void
+  project: Project;
+  isOwner: boolean;
+  canManage: boolean;
+  onDeleted: (projectId: string) => void;
+  onViewDetails: () => void;
+  onRename: () => void;
+  onMemberAdded: (projectId: string, member: ProjectMember) => void;
   onMemberAddConfirmed: (
     projectId: string,
     tempId: string,
     realMember: ProjectMember,
-  ) => void
-  onMemberRemoved: (projectId: string, memberId: string) => void
-}
+  ) => void;
+  onMemberRemoved: (projectId: string, memberId: string) => void;
+};
 
 export function ProjectListAction({
   project,
@@ -49,10 +48,10 @@ export function ProjectListAction({
   onMemberAddConfirmed,
   onMemberRemoved,
 }: ProjectListActionProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
-  const [view, setView] = useState<"menu" | "invite">("menu")
-  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const [view, setView] = useState<"menu" | "invite">("menu");
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const {
     query,
@@ -75,21 +74,21 @@ export function ProjectListAction({
     onMemberAddConfirmed,
     onMemberRemoved,
     onSuccess: () => {
-      setIsOpen(false)
-      setMobileSheetOpen(false)
+      setIsOpen(false);
+      setMobileSheetOpen(false);
     },
-  })
+  });
 
   // Reset view when menus close
   useEffect(() => {
     if (!isOpen && !mobileSheetOpen) {
       const timer = setTimeout(() => {
-        setView("menu")
-        resetInviteState()
-      }, 150)
-      return () => clearTimeout(timer)
+        setView("menu");
+        resetInviteState();
+      }, 150);
+      return () => clearTimeout(timer);
     }
-  }, [isOpen, mobileSheetOpen])
+  }, [isOpen, mobileSheetOpen]);
 
   return (
     <>
@@ -126,8 +125,8 @@ export function ProjectListAction({
 
                 <DropdownMenuItem
                   onSelect={() => {
-                    setIsOpen(false)
-                    onViewDetails()
+                    setIsOpen(false);
+                    onViewDetails();
                   }}
                   className="cursor-pointer px-3 py-2.5 text-sm text-foreground focus:bg-muted rounded-xl flex items-center space-x-2.5"
                 >
@@ -141,8 +140,8 @@ export function ProjectListAction({
                 {canManage && (
                   <DropdownMenuItem
                     onSelect={(e) => {
-                      e.preventDefault()
-                      setView("invite")
+                      e.preventDefault();
+                      setView("invite");
                     }}
                     className="cursor-pointer px-3 py-2.5 text-sm text-foreground focus:bg-muted rounded-xl flex items-center space-x-2.5"
                   >
@@ -159,8 +158,8 @@ export function ProjectListAction({
                     <div className="pt-1.5 pb-1 border-t border-border mt-1">
                       <DropdownMenuItem
                         onSelect={() => {
-                          setIsOpen(false)
-                          onRename()
+                          setIsOpen(false);
+                          onRename();
                         }}
                         className="cursor-pointer px-3 py-2.5 text-sm text-foreground focus:bg-muted rounded-xl flex items-center space-x-2.5"
                       >
@@ -175,9 +174,9 @@ export function ProjectListAction({
                     <div className="border-t border-border pt-1 mt-1">
                       <DropdownMenuItem
                         onSelect={(e) => {
-                          e.preventDefault()
-                          setIsOpen(false)
-                          setDeleteOpen(true)
+                          e.preventDefault();
+                          setIsOpen(false);
+                          setDeleteOpen(true);
                         }}
                         className="cursor-pointer px-3 py-2.5 text-sm text-destructive focus:bg-destructive/10 rounded-xl flex items-center space-x-2.5"
                       >
@@ -220,8 +219,8 @@ export function ProjectListAction({
           variant="ghost"
           size="icon"
           onClick={(e) => {
-            e.stopPropagation()
-            setMobileSheetOpen(true)
+            e.stopPropagation();
+            setMobileSheetOpen(true);
           }}
           className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
         >
@@ -232,8 +231,8 @@ export function ProjectListAction({
           <div
             className="fixed inset-0 z-50 bg-background/80 backdrop-blur-xs flex flex-col justify-end animate-in fade-in duration-150"
             onClick={(e) => {
-              e.stopPropagation()
-              setMobileSheetOpen(false)
+              e.stopPropagation();
+              setMobileSheetOpen(false);
             }}
           >
             <div
@@ -259,8 +258,8 @@ export function ProjectListAction({
                 <div className="py-1 space-y-1.5">
                   <button
                     onClick={() => {
-                      setMobileSheetOpen(false)
-                      onViewDetails()
+                      setMobileSheetOpen(false);
+                      onViewDetails();
                     }}
                     className="w-full text-left px-3.5 py-3 text-sm font-semibold text-foreground hover:bg-muted rounded-2xl flex items-center space-x-3.5 cursor-pointer transition-colors"
                   >
@@ -288,8 +287,8 @@ export function ProjectListAction({
                     <>
                       <button
                         onClick={() => {
-                          setMobileSheetOpen(false)
-                          onRename()
+                          setMobileSheetOpen(false);
+                          onRename();
                         }}
                         className="w-full text-left px-3.5 py-3 text-sm font-semibold text-foreground hover:bg-muted rounded-2xl flex items-center space-x-3.5 cursor-pointer transition-colors"
                       >
@@ -303,8 +302,8 @@ export function ProjectListAction({
                       <div className="pt-1.5 border-t border-border">
                         <button
                           onClick={() => {
-                            setMobileSheetOpen(false)
-                            setDeleteOpen(true)
+                            setMobileSheetOpen(false);
+                            setDeleteOpen(true);
                           }}
                           className="w-full text-left px-3.5 py-3 text-sm font-semibold text-destructive hover:bg-destructive/10 rounded-2xl flex items-center space-x-3.5 cursor-pointer transition-colors"
                         >
@@ -352,5 +351,5 @@ export function ProjectListAction({
         projectName={project.name}
       />
     </>
-  )
+  );
 }

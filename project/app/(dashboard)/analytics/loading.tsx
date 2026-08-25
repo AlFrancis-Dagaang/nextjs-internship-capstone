@@ -1,4 +1,3 @@
-// app/(dashboard)/analytics/loading.tsx
 export default function AnalyticsLoading() {
   return (
     <div className="w-full space-y-6 pb-12 px-2 sm:px-0 animate-pulse">
@@ -64,5 +63,5 @@ export default function AnalyticsLoading() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,29 +1,28 @@
-// components/projects/projects-list.tsx
-"use client"
+"use client";
 
-import { Plus } from "lucide-react"
-import { useEffect } from "react"
-import { PageHeader } from "@/components/layout/page-header"
-import type { Project } from "@/lib/db/schema"
-import { useProjectStore } from "@/stores/project-store"
+import { Plus } from "lucide-react";
+import { useEffect } from "react";
+import { PageHeader } from "@/components/layout/page-header";
+import type { Project } from "@/lib/db/schema";
+import { useProjectStore } from "@/stores/project-store";
 import type {
   CompletionInfo,
   OwnerInfo,
   ProjectMember,
   ProjectMemberRole,
-} from "@/types"
-import { CreateProjectModal } from "./modals/create-project-modal"
-import { ProjectCard } from "./project-card"
-import { RecentlyViewedStrip } from "./recently-viewed-strip"
+} from "@/types";
+import { CreateProjectModal } from "./modals/create-project-modal";
+import { ProjectCard } from "./project-card";
+import { RecentlyViewedStrip } from "./recently-viewed-strip";
 
 type ProjectsListProps = {
-  initialProjects: Project[]
-  currentUserId: string
-  initialMembersMap: Record<string, ProjectMember[]>
-  initialOwnerMap: Record<string, OwnerInfo>
-  initialCompletionMap: Record<string, CompletionInfo>
-  initialMyRoleMap: Record<string, ProjectMemberRole>
-}
+  initialProjects: Project[];
+  currentUserId: string;
+  initialMembersMap: Record<string, ProjectMember[]>;
+  initialOwnerMap: Record<string, OwnerInfo>;
+  initialCompletionMap: Record<string, CompletionInfo>;
+  initialMyRoleMap: Record<string, ProjectMemberRole>;
+};
 
 export function ProjectsList({
   initialProjects,
@@ -33,19 +32,19 @@ export function ProjectsList({
   initialCompletionMap,
   initialMyRoleMap,
 }: ProjectsListProps) {
-  const projects = useProjectStore((s) => s.projects)
-  const setInitialProjects = useProjectStore((s) => s.setInitialProjects)
-  const addProject = useProjectStore((s) => s.addProject)
-  const setInitialMembersMap = useProjectStore((s) => s.setInitialMembersMap)
+  const projects = useProjectStore((s) => s.projects);
+  const setInitialProjects = useProjectStore((s) => s.setInitialProjects);
+  const addProject = useProjectStore((s) => s.addProject);
+  const setInitialMembersMap = useProjectStore((s) => s.setInitialMembersMap);
 
   useEffect(() => {
-    setInitialProjects(initialProjects)
-    setInitialMembersMap(initialMembersMap)
+    setInitialProjects(initialProjects);
+    setInitialMembersMap(initialMembersMap);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []);
 
-  const ownedProjects = projects.filter((p) => p.ownerId === currentUserId)
-  const sharedProjects = projects.filter((p) => p.ownerId !== currentUserId)
+  const ownedProjects = projects.filter((p) => p.ownerId === currentUserId);
+  const sharedProjects = projects.filter((p) => p.ownerId !== currentUserId);
 
   return (
     <div className="w-full space-y-6 sm:space-y-8 pb-12 px-2 sm:px-0">
@@ -158,5 +157,5 @@ export function ProjectsList({
         </div>
       )}
     </div>
-  )
+  );
 }

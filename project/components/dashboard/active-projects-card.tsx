@@ -1,27 +1,26 @@
-// components/dashboard/active-projects-card.tsx
-"use client"
+"use client";
 
-import { ArrowUpRight, FolderKanban } from "lucide-react"
-import Link from "next/link"
+import { ArrowUpRight, FolderKanban } from "lucide-react";
+import Link from "next/link";
 
 type ActiveProjectDTO = {
-  id: string
-  name: string
-  completed: number
-  total: number
-  completionLabel: string
-  completionPercent: number
-  dueDate: string | null
-}
+  id: string;
+  name: string;
+  completed: number;
+  total: number;
+  completionLabel: string;
+  completionPercent: number;
+  dueDate: string | null;
+};
 
 export function ActiveProjectsCard({
   activeProjects,
 }: {
-  activeProjects: ActiveProjectDTO[]
+  activeProjects: ActiveProjectDTO[];
 }) {
-  const maxActiveProjects = 4
-  const displayedProjects = activeProjects.slice(0, maxActiveProjects)
-  const remainingProjectsCount = activeProjects.length - maxActiveProjects
+  const maxActiveProjects = 4;
+  const displayedProjects = activeProjects.slice(0, maxActiveProjects);
+  const remainingProjectsCount = activeProjects.length - maxActiveProjects;
 
   return (
     <div className="bg-card border border-border/80 rounded-3xl shadow-xs p-5 sm:p-6 flex flex-col justify-between h-full">
@@ -55,7 +54,7 @@ export function ActiveProjectsCard({
         ) : (
           <div className="space-y-2.5">
             {displayedProjects.map((project) => {
-              const hasValidTotal = project.total > 0
+              const hasValidTotal = project.total > 0;
 
               return (
                 <div
@@ -83,7 +82,7 @@ export function ActiveProjectsCard({
                     </div>
                   )}
                 </div>
-              )
+              );
             })}
 
             {remainingProjectsCount > 0 && (
@@ -108,5 +107,5 @@ export function ActiveProjectsCard({
         </Link>
       </div>
     </div>
-  )
+  );
 }

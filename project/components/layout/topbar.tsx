@@ -1,4 +1,3 @@
-// components/header.tsx
 "use client";
 
 import { useClerk, useUser } from "@clerk/nextjs";

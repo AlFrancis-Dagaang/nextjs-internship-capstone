@@ -1,4 +1,3 @@
-// app/(dashboard)/projects/[id]/loading.tsx
 export default function ProjectLoading() {
   return (
     <div className="flex flex-col gap-4 bg-transparent px-0 py-0 m-0 animate-pulse w-full h-full overflow-hidden">
@@ -91,5 +90,5 @@ export default function ProjectLoading() {
         </div>
       </div>
     </div>
-  )
+  );
 }

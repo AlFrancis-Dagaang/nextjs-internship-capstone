@@ -1,4 +1,3 @@
-// app/(dashboard)/calendar/loading.tsx
 export default function CalendarLoading() {
   return (
     <div className="w-full space-y-6 pb-12 px-2 sm:px-0 animate-pulse">
@@ -107,5 +106,5 @@ export default function CalendarLoading() {
         </div>
       </div>
     </div>
-  )
+  );
 }

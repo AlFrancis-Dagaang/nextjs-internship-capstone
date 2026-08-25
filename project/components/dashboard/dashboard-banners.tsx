@@ -1,8 +1,7 @@
-// components/dashboard/dashboard-banners.tsx
-"use client"
+"use client";
 
-import { ArrowUpRight, TrendingUp, Users } from "lucide-react"
-import Link from "next/link"
+import { ArrowUpRight, TrendingUp, Users } from "lucide-react";
+import Link from "next/link";
 
 export function DashboardBanners({ taskCount }: { taskCount: number }) {
   return (
@@ -57,5 +56,5 @@ export function DashboardBanners({ taskCount }: { taskCount: number }) {
         </Link>
       </div>
     </div>
-  )
+  );
 }

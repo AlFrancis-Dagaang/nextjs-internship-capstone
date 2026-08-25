@@ -1,21 +1,20 @@
-// components/dashboard-shell.tsx
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Sidebar } from "@/components/layout/sidebar"
-import { Header } from "@/components/layout/topbar"
+import { useState } from "react";
+import { Sidebar } from "@/components/layout/sidebar";
+import { Header } from "@/components/layout/topbar";
 
 interface DashboardShellProps {
-  children: React.ReactNode
-  currentUserId: string
+  children: React.ReactNode;
+  currentUserId: string;
 }
 
 export function DashboardShell({
   children,
   currentUserId,
 }: DashboardShellProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     // Reduced outer padding from p-4 lg:p-6 to p-2 sm:p-3
@@ -44,5 +43,5 @@ export function DashboardShell({
         </main>
       </div>
     </div>
-  )
+  );
 }
