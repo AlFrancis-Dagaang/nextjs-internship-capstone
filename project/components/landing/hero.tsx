@@ -1,7 +1,8 @@
-import { Zap } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+// components/landing-hero.tsx
+import { Zap } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export function LandingHero() {
   return (
@@ -32,25 +33,25 @@ export function LandingHero() {
           <Button
             asChild
             size="sm"
-            className="h-9 px-6 text-xs font-semibold bg-teal-700 hover:bg-teal-800 text-white rounded-xl shadow-md transition-all hover:scale-105"
+            className="h-9 px-6 text-xs font-semibold bg-teal-700 hover:bg-teal-800 text-white rounded-xl shadow-md transition-all hover:scale-105 cursor-pointer"
           >
             <Link href="/sign-up">Get started</Link>
           </Button>
         </div>
 
-        {/* Dashboard Preview Image Showcase */}
+        {/* Dashboard Preview Image Showcase with Rounded Curves */}
         <div
           className="pt-2 relative mx-auto max-w-5xl px-2 sm:px-0"
           id="workspace"
         >
-          <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] bg-background rounded-xl sm:rounded-none overflow-hidden shadow-xl sm:shadow-none border border-border/40 sm:border-0">
+          <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] bg-card rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-border/80">
             {/* Light Mode Image */}
             <Image
               src="/images/landing/dashboard-light.png"
               alt="Genzpace Dashboard Light Mode Preview"
               fill
               priority
-              className="block dark:hidden object-cover object-top w-full h-full rounded-none shadow-none border-0 p-0"
+              className="block dark:hidden object-cover object-top w-full h-full p-0"
             />
 
             {/* Dark Mode Image */}
@@ -59,11 +60,11 @@ export function LandingHero() {
               alt="Genzpace Dashboard Dark Mode Preview"
               fill
               priority
-              className="hidden dark:block object-cover object-top w-full h-full rounded-none shadow-none border-0 p-0"
+              className="hidden dark:block object-cover object-top w-full h-full p-0"
             />
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }
