@@ -1,26 +1,26 @@
-"use client";
+"use client"
 
-import { ArrowUpDown, Users } from "lucide-react";
-import { UserAvatar } from "@/components/ui/user-avatar";
+import { ArrowUpDown, Users } from "lucide-react"
+import { UserAvatar } from "@/components/ui/user-avatar"
 
 export type MemberRow = {
-  userId: string;
-  name: string;
-  email: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-  completedCount: number;
-  activeDays: number;
-  avgResolutionDays: number | null;
-};
+  userId: string
+  name: string
+  email: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+  completedCount: number
+  activeDays: number
+  avgResolutionDays: number | null
+}
 
 export type TeamAverage = {
-  completedCount: number;
-  activeDays: number;
-  avgResolutionDays: number | null;
-};
+  completedCount: number
+  activeDays: number
+  avgResolutionDays: number | null
+}
 
-type SortField = "completedCount" | "activeDays" | "avgResolutionDays";
+type SortField = "completedCount" | "activeDays" | "avgResolutionDays"
 
 export function AnalyticsMembersTab({
   loading,
@@ -30,12 +30,12 @@ export function AnalyticsMembersTab({
   sortField: _sortField,
   onSort,
 }: {
-  loading: boolean;
-  error: string | null;
-  membersList: MemberRow[];
-  teamAverage: TeamAverage | null;
-  sortField: SortField;
-  onSort: (field: SortField) => void;
+  loading: boolean
+  error: string | null
+  membersList: MemberRow[]
+  teamAverage: TeamAverage | null
+  sortField: SortField
+  onSort: (field: SortField) => void
 }) {
   return (
     <div
@@ -129,8 +129,8 @@ export function AnalyticsMembersTab({
             </thead>
             <tbody className="divide-y divide-border/60">
               {membersList.map((member) => {
-                const displayName = member.name || member.email || "U";
-                const stableKey = member.userId || member.email;
+                const displayName = member.name || member.email || "U"
+                const stableKey = member.userId || member.email
                 return (
                   <tr
                     key={member.userId}
@@ -193,12 +193,12 @@ export function AnalyticsMembersTab({
                       )}
                     </td>
                   </tr>
-                );
+                )
               })}
             </tbody>
           </table>
         </div>
       )}
     </div>
-  );
+  )
 }
