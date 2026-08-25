@@ -1,39 +1,41 @@
-"use client"
+"use client";
 
-import { ArrowUpDown, Users } from "lucide-react"
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar"
+import { ArrowUpDown, Users } from "lucide-react";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 export type MemberRow = {
-  userId: string
-  name: string
-  email: string
-  completedCount: number
-  activeDays: number
-  avgResolutionDays: number | null
-}
+  userId: string;
+  name: string;
+  email: string;
+  imageUrl?: string | null;
+  hasImage?: boolean | null;
+  completedCount: number;
+  activeDays: number;
+  avgResolutionDays: number | null;
+};
 
 export type TeamAverage = {
-  completedCount: number
-  activeDays: number
-  avgResolutionDays: number | null
-}
+  completedCount: number;
+  activeDays: number;
+  avgResolutionDays: number | null;
+};
 
-type SortField = "completedCount" | "activeDays" | "avgResolutionDays"
+type SortField = "completedCount" | "activeDays" | "avgResolutionDays";
 
 export function AnalyticsMembersTab({
   loading,
   error,
   membersList,
   teamAverage,
-  sortField,
+  sortField: _sortField,
   onSort,
 }: {
-  loading: boolean
-  error: string | null
-  membersList: MemberRow[]
-  teamAverage: TeamAverage | null
-  sortField: SortField
-  onSort: (field: SortField) => void
+  loading: boolean;
+  error: string | null;
+  membersList: MemberRow[];
+  teamAverage: TeamAverage | null;
+  sortField: SortField;
+  onSort: (field: SortField) => void;
 }) {
   return (
     <div
@@ -127,7 +129,8 @@ export function AnalyticsMembersTab({
             </thead>
             <tbody className="divide-y divide-border/60">
               {membersList.map((member) => {
-                const stableKey = member.userId || member.email
+                const displayName = member.name || member.email || "U";
+                const stableKey = member.userId || member.email;
                 return (
                   <tr
                     key={member.userId}
@@ -135,13 +138,14 @@ export function AnalyticsMembersTab({
                   >
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3 min-w-[180px]">
-                        <div
-                          className={`w-8 h-8 rounded-xl border border-border flex items-center justify-center font-bold text-[10px] uppercase shrink-0 shadow-2xs ${getAvatarColor(
-                            stableKey,
-                          )}`}
-                        >
-                          {getInitials(member.name || member.email || "U")}
-                        </div>
+                        <UserAvatar
+                          userId={stableKey}
+                          name={displayName}
+                          imageUrl={member.imageUrl}
+                          hasImage={member.hasImage ?? false}
+                          className="w-8 h-8 rounded-xl"
+                          title={displayName}
+                        />
                         <div className="truncate">
                           <div className="font-semibold text-foreground truncate">
                             {member.name}
@@ -189,12 +193,12 @@ export function AnalyticsMembersTab({
                       )}
                     </td>
                   </tr>
-                )
+                );
               })}
             </tbody>
           </table>
         </div>
       )}
     </div>
-  )
+  );
 }
