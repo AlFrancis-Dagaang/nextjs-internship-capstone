@@ -1,5 +1,5 @@
 // components/sidebar.tsx
-"use client"
+"use client";
 
 import {
   BarChart3,
@@ -7,13 +7,13 @@ import {
   CheckSquare,
   FolderOpen,
   Home,
+  Layers,
   Settings,
   Users,
   X,
-} from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -27,12 +27,12 @@ const navigation = [
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Settings", href: "/settings", icon: Settings },
-]
+];
 
 interface SidebarProps {
-  sidebarOpen: boolean
-  setSidebarOpen: (open: boolean) => void
-  isCollapsed: boolean
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  isCollapsed: boolean;
 }
 
 export function Sidebar({
@@ -40,7 +40,7 @@ export function Sidebar({
   setSidebarOpen,
   isCollapsed,
 }: SidebarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <>
@@ -62,16 +62,10 @@ export function Sidebar({
         <div className="flex items-center h-16 px-4 border-b border-border/80 shrink-0 overflow-hidden">
           <Link
             href="/"
-            className="flex items-center gap-3 font-bold text-foreground tracking-tight whitespace-nowrap w-full"
+            className="flex items-center gap-3 font-bold text-foreground tracking-tight whitespace-nowrap w-full group"
           >
-            <div className="relative h-11 w-11 rounded-full bg-white flex items-center justify-center shrink-0 shadow-xs border border-border/50 p-0.5">
-              <Image
-                src="/logo.svg"
-                alt="GenZpace Logo"
-                fill
-                className="object-contain rounded-full"
-                priority
-              />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-teal-600 dark:bg-teal-500 text-white flex items-center justify-center shadow-sm transition-transform group-hover:scale-105 shrink-0">
+              <Layers size={20} />
             </div>
             <span
               className={`transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap text-sm font-bold tracking-tight ${
@@ -80,7 +74,7 @@ export function Sidebar({
                   : "w-auto opacity-100"
               }`}
             >
-              GenZpace
+              genzpace
             </span>
           </Link>
 
@@ -98,8 +92,8 @@ export function Sidebar({
         <nav className="flex-1 mt-5 px-3 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1.5 flex flex-col items-stretch">
             {navigation.map((item) => {
-              const current = pathname === item.href
-              const Icon = item.icon
+              const current = pathname === item.href;
+              const Icon = item.icon;
               return (
                 <li key={item.name} className="w-full">
                   <Link
@@ -132,11 +126,11 @@ export function Sidebar({
                     </span>
                   </Link>
                 </li>
-              )
+              );
             })}
           </ul>
         </nav>
       </aside>
     </>
-  )
+  );
 }

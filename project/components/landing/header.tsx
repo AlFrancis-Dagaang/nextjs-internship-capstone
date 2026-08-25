@@ -1,6 +1,6 @@
-import { Layers } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Layers } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export function LandingHeader() {
   return (
@@ -8,10 +8,10 @@ export function LandingHeader() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-teal-600 dark:bg-teal-500 text-white flex items-center justify-center shadow-sm transition-transform group-hover:scale-105">
-            <Layers size={16} />
+            <Layers size={20} />
           </div>
           <span className="font-extrabold text-sm sm:text-base tracking-tight">
-            genZpace
+            genzpace
           </span>
         </Link>
 
@@ -51,5 +51,5 @@ export function LandingHeader() {
         </div>
       </div>
     </header>
-  )
+  );
 }

@@ -1,26 +1,30 @@
-import Image from "next/image"
+// components/landing-features.tsx
+import Image from "next/image";
 
 export function LandingFeatures() {
   const features = [
     {
       num: "/01",
       title: "Proven Performance",
-      desc: "Trusted by thousands of teams worldwide for boosting productivity.",
-      image: "/images/landing/dashboard-light.png",
+      desc: "Manage tasks, boards, and team progress seamlessly on your project pages.",
+      lightImage: "/images/landing/project-light.png",
+      darkImage: "/images/landing/project-dark.png",
     },
     {
       num: "/02",
       title: "Innovative Design",
-      desc: "An intuitive interface that makes complex project management simple.",
-      image: "/images/landing/dashboard-light.png",
+      desc: "Stay on top of deadlines and milestones with our integrated calendar view.",
+      lightImage: "/images/landing/calendar-light.png",
+      darkImage: "/images/landing/calendar-dark.png",
     },
     {
       num: "/03",
       title: "Robust Security",
-      desc: "Industry-leading security measures to keep your data safe and secure.",
-      image: "/images/landing/dashboard-light.png",
+      desc: "Industry-leading security and customizable preferences in your settings.",
+      lightImage: "/images/landing/settings-light.png",
+      darkImage: "/images/landing/settings-dark.png",
     },
-  ]
+  ];
 
   return (
     <section
@@ -46,14 +50,23 @@ export function LandingFeatures() {
             key={idx}
             className="bg-card p-5 sm:p-6 rounded-3xl border border-border shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md transition-all duration-300"
           >
-            <div className="w-full aspect-[16/10] relative rounded-2xl bg-muted/50 overflow-hidden border border-border/40 flex items-center justify-center">
+            <div className="w-full aspect-16/10 relative rounded-2xl bg-muted/50 overflow-hidden border border-border/40 flex items-center justify-center">
+              {/* Light Mode Image (Hidden in dark mode) */}
               <Image
-                src={item.image}
-                alt={item.title}
+                src={item.lightImage}
+                alt={`${item.title} light preview`}
                 fill
-                className="object-cover object-top opacity-90"
+                className="object-cover object-top opacity-90 dark:hidden"
+              />
+              {/* Dark Mode Image (Hidden in light mode) */}
+              <Image
+                src={item.darkImage}
+                alt={`${item.title} dark preview`}
+                fill
+                className="object-cover object-top opacity-90 hidden dark:block"
               />
             </div>
+
             <div className="space-y-1.5 text-left">
               <span className="text-xs font-bold text-teal-600 dark:text-teal-400">
                 {item.num}
@@ -69,5 +82,5 @@ export function LandingFeatures() {
         ))}
       </div>
     </section>
-  )
+  );
 }

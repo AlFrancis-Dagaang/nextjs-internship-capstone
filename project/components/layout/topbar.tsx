@@ -1,7 +1,7 @@
 // components/header.tsx
-"use client"
+"use client";
 
-import { useClerk, useUser } from "@clerk/nextjs"
+import { useClerk, useUser } from "@clerk/nextjs";
 import {
   BarChart3,
   Bell,
@@ -11,6 +11,7 @@ import {
   FolderKanban,
   FolderOpen,
   Home,
+  Layers,
   Loader2,
   LogOut,
   Menu,
@@ -20,28 +21,28 @@ import {
   Settings,
   Users,
   X,
-} from "lucide-react"
-import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { ThemeToggle } from "@/components/theme-toggle"
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { UserAvatar } from "@/components/ui/user-avatar"
-import { useRealtimeNotifications } from "@/hooks/use-realtime-notifications"
-import { useToast } from "@/hooks/use-toast"
+} from "@/components/ui/dropdown-menu";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { useRealtimeNotifications } from "@/hooks/use-realtime-notifications";
+import { useToast } from "@/hooks/use-toast";
 import {
   checkProjectAccess,
   getMyNotifications,
   getUnreadNotificationCount,
   markAllNotificationsRead,
   markNotificationRead,
-} from "@/lib/actions/notifications"
-import { globalSearch, type SearchResult } from "@/lib/actions/search"
+} from "@/lib/actions/notifications";
+import { globalSearch, type SearchResult } from "@/lib/actions/search";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -51,37 +52,37 @@ const navigation = [
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Settings", href: "/settings", icon: Settings },
-]
+];
 
 interface HeaderProps {
-  setSidebarOpen: (open: boolean) => void
-  currentUserId: string
-  isCollapsed: boolean
-  setIsCollapsed: (collapsed: boolean) => void
+  setSidebarOpen: (open: boolean) => void;
+  currentUserId: string;
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
 }
 
 type Notification = {
-  id: string
-  type: string
-  message: string
-  projectId: string | null
-  taskId: string | null
-  isRead: boolean
-  createdAt: Date | string
-}
+  id: string;
+  type: string;
+  message: string;
+  projectId: string | null;
+  taskId: string | null;
+  isRead: boolean;
+  createdAt: Date | string;
+};
 
 function formatRelativeTime(dateStr: Date | string) {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return "just now"
-  const diffInMinutes = Math.floor(diffInSeconds / 60)
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`
-  const diffInHours = Math.floor(diffInMinutes / 60)
-  if (diffInHours < 24) return `${diffInHours}h ago`
-  const diffInDays = Math.floor(diffInHours / 24)
-  return `${diffInDays}d ago`
+  if (diffInSeconds < 60) return "just now";
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays}d ago`;
 }
 
 export function Header({
@@ -90,47 +91,47 @@ export function Header({
   isCollapsed,
   setIsCollapsed,
 }: HeaderProps) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const { toast } = useToast()
-  const { user } = useUser()
-  const { signOut } = useClerk()
+  const router = useRouter();
+  const pathname = usePathname();
+  const { toast } = useToast();
+  const { user } = useUser();
+  const { signOut } = useClerk();
 
-  const [unreadCount, setUnreadCount] = useState<number>(0)
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [isOpen, setIsOpen] = useState<boolean>(false)
-  const [showOnlyUnread, setShowOnlyUnread] = useState<boolean>(false)
-  const [mobileModalOpen, setMobileModalOpen] = useState<boolean>(false)
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [showOnlyUnread, setShowOnlyUnread] = useState<boolean>(false);
+  const [mobileModalOpen, setMobileModalOpen] = useState<boolean>(false);
   const [mobileNotifModalOpen, setMobileNotifModalOpen] =
-    useState<boolean>(false)
+    useState<boolean>(false);
 
   // Search state
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult>({
     projects: [],
     tasks: [],
-  })
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [isSearching, setIsSearching] = useState(false)
+  });
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const fetchUnreadCount = async () => {
-    const res = await getUnreadNotificationCount()
+    const res = await getUnreadNotificationCount();
     if (res.success) {
-      setUnreadCount(res.data)
+      setUnreadCount(res.data);
     }
-  }
+  };
 
   const fetchNotifications = async () => {
-    const res = await getMyNotifications()
+    const res = await getMyNotifications();
     if (res.success) {
-      setNotifications(res.data)
+      setNotifications(res.data);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchUnreadCount()
-    fetchNotifications()
-  }, [])
+    fetchUnreadCount();
+    fetchNotifications();
+  }, []);
 
   useRealtimeNotifications(currentUserId, (notification) => {
     setNotifications((prev) => [
@@ -144,111 +145,109 @@ export function Header({
         createdAt: notification.createdAt,
       },
       ...prev,
-    ])
-    setUnreadCount((prev) => prev + 1)
-  })
+    ]);
+    setUnreadCount((prev) => prev + 1);
+  });
 
   useEffect(() => {
     if (searchQuery.trim().length < 2) {
-      setSearchResults({ projects: [], tasks: [] })
-      setSearchOpen(false)
-      setIsSearching(false)
-      return
+      setSearchResults({ projects: [], tasks: [] });
+      setSearchOpen(false);
+      setIsSearching(false);
+      return;
     }
 
-    setIsSearching(true)
-    setSearchOpen(true)
+    setIsSearching(true);
+    setSearchOpen(true);
 
     const handle = setTimeout(async () => {
-      const res = await globalSearch(searchQuery)
+      const res = await globalSearch(searchQuery);
       if (res.success) {
-        setSearchResults(res.data)
+        setSearchResults(res.data);
       }
-      setIsSearching(false)
-    }, 300)
+      setIsSearching(false);
+    }, 300);
 
-    return () => clearTimeout(handle)
-  }, [searchQuery])
+    return () => clearTimeout(handle);
+  }, [searchQuery]);
 
   function handleProjectResultClick(projectId: string) {
-    setSearchOpen(false)
-    setSearchQuery("")
-    router.push(`/projects/${projectId}`)
+    setSearchOpen(false);
+    setSearchQuery("");
+    router.push(`/projects/${projectId}`);
   }
 
   function handleTaskResultClick(projectId: string, taskId: string) {
-    setSearchOpen(false)
-    setSearchQuery("")
-    router.push(`/projects/${projectId}?openTask=${taskId}`)
+    setSearchOpen(false);
+    setSearchQuery("");
+    router.push(`/projects/${projectId}?openTask=${taskId}`);
   }
 
   const handleOpenChange = (open: boolean) => {
-    setIsOpen(open)
+    setIsOpen(open);
     if (open) {
-      fetchNotifications()
-      fetchUnreadCount()
+      fetchNotifications();
+      fetchUnreadCount();
     }
-  }
+  };
 
   const handleMarkAllRead = async () => {
-    const res = await markAllNotificationsRead()
+    const res = await markAllNotificationsRead();
     if (res.success) {
-      setUnreadCount(0)
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     }
-  }
+  };
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.isRead) {
-      await markNotificationRead(notification.id)
-      setUnreadCount((prev) => Math.max(0, prev - 1))
+      await markNotificationRead(notification.id);
+      setUnreadCount((prev) => Math.max(0, prev - 1));
       setNotifications((prev) =>
         prev.map((n) =>
           n.id === notification.id ? { ...n, isRead: true } : n,
         ),
-      )
+      );
     }
 
-    setIsOpen(false)
-    setMobileNotifModalOpen(false)
+    setIsOpen(false);
+    setMobileNotifModalOpen(false);
 
-    if (!notification.projectId) return
+    if (!notification.projectId) return;
 
-    const access = await checkProjectAccess(notification.projectId)
+    const access = await checkProjectAccess(notification.projectId);
     if (!access.success) {
       toast({
         title: "No longer accessible",
         description: "You don't have access to this anymore.",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     if (notification.taskId) {
       router.push(
         `/projects/${notification.projectId}?openTask=${notification.taskId}`,
-      )
+      );
     } else {
-      router.push(`/projects/${notification.projectId}`)
+      router.push(`/projects/${notification.projectId}`);
     }
-  }
+  };
 
   const filteredNotifications = showOnlyUnread
     ? notifications.filter((n) => !n.isRead)
-    : notifications
+    : notifications;
 
   const hasResults =
-    searchResults.projects.length > 0 || searchResults.tasks.length > 0
+    searchResults.projects.length > 0 || searchResults.tasks.length > 0;
 
   const displayName =
-    user?.fullName || user?.primaryEmailAddress?.emailAddress || "User"
+    user?.fullName || user?.primaryEmailAddress?.emailAddress || "User";
 
   return (
     <>
-      {/* Added relative and high z-index to the header container so stacking works correctly */}
       <header className="flex h-16 items-center gap-x-4 border border-border/80 bg-card/80 backdrop-blur-md px-4 sm:px-6 rounded-2xl shadow-xs w-full relative z-40">
         <div className="flex items-center gap-x-3 flex-1">
-          {/* Mobile Hamburger Trigger for Full-Screen Menu */}
           <button
             onClick={() => setMobileModalOpen(true)}
             className="lg:hidden p-2 rounded-xl hover:bg-muted text-foreground transition-colors shrink-0 cursor-pointer"
@@ -257,7 +256,6 @@ export function Header({
             <Menu size={20} />
           </button>
 
-          {/* Desktop sidebar collapse trigger */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="hidden lg:flex p-2 rounded-xl hover:bg-muted text-foreground transition-colors shrink-0 cursor-pointer"
@@ -271,7 +269,6 @@ export function Header({
             )}
           </button>
 
-          {/* Search Bar Container with z-50 */}
           <div className="relative flex-1 max-w-md z-50">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
@@ -283,7 +280,7 @@ export function Header({
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => {
                 if (searchQuery.trim().length >= 2) {
-                  setSearchOpen(true)
+                  setSearchOpen(true);
                 }
               }}
               onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
@@ -367,14 +364,12 @@ export function Header({
           </div>
         </div>
 
-        {/* Right side actions */}
         <div className="flex items-center gap-x-3 sm:gap-x-4">
-          {/* Mobile Notifications Trigger */}
           <button
             onClick={() => {
-              fetchNotifications()
-              fetchUnreadCount()
-              setMobileNotifModalOpen(true)
+              fetchNotifications();
+              fetchUnreadCount();
+              setMobileNotifModalOpen(true);
             }}
             className="lg:hidden p-2 rounded-xl hover:bg-muted text-foreground transition-colors relative cursor-pointer"
             aria-label="View notifications"
@@ -387,7 +382,6 @@ export function Header({
             )}
           </button>
 
-          {/* Desktop Notifications Dropdown */}
           <div className="hidden lg:block">
             <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
               <DropdownMenuTrigger asChild>
@@ -496,7 +490,6 @@ export function Header({
 
           <ThemeToggle />
 
-          {/* Desktop User Avatar Dropdown */}
           <div className="hidden lg:flex items-center pl-2 border-l border-border">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -563,16 +556,16 @@ export function Header({
         <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-md flex flex-col p-5 lg:hidden animate-in fade-in duration-200">
           <div className="flex items-center justify-between pb-4 border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shadow-2xs shrink-0">
-                G
+              <div className="w-9 h-9 rounded-xl bg-teal-600 dark:bg-teal-500 text-white flex items-center justify-center font-bold shadow-sm shrink-0">
+                <Layers size={20} />
               </div>
               <span className="text-sm font-bold text-foreground tracking-tight">
-                GenZpace
+                genzpace
               </span>
             </div>
             <button
               onClick={() => setMobileModalOpen(false)}
-              className="p-2 rounded-xl bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-muted text-foreground hover:bg-muted/85 transition-colors cursor-pointer"
               aria-label="Close menu"
             >
               <X size={20} />
@@ -599,14 +592,14 @@ export function Header({
 
           <nav className="flex-1 py-3 overflow-y-auto space-y-1.5">
             {navigation.map((item) => {
-              const current = pathname === item.href
-              const Icon = item.icon
+              const current = pathname === item.href;
+              const Icon = item.icon;
               return (
                 <button
                   key={item.name}
                   onClick={() => {
-                    setMobileModalOpen(false)
-                    router.push(item.href)
+                    setMobileModalOpen(false);
+                    router.push(item.href);
                   }}
                   className={`w-full flex items-center gap-3.5 px-4 py-3 text-sm font-semibold rounded-2xl transition-colors cursor-pointer ${
                     current
@@ -617,15 +610,15 @@ export function Header({
                   <Icon size={20} />
                   <span>{item.name}</span>
                 </button>
-              )
+              );
             })}
           </nav>
 
           <div className="pt-4 border-t border-border mt-auto">
             <button
               onClick={() => {
-                setMobileModalOpen(false)
-                signOut({ redirectUrl: "/sign-in" })
+                setMobileModalOpen(false);
+                signOut({ redirectUrl: "/sign-in" });
               }}
               className="w-full flex items-center gap-3.5 px-4 py-3 text-sm font-semibold rounded-2xl text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
             >
@@ -733,5 +726,5 @@ export function Header({
         </div>
       )}
     </>
-  )
+  );
 }
