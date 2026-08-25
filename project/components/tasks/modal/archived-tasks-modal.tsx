@@ -1,29 +1,29 @@
 // components/tasks/modal/archived-tasks-modal.tsx
-"use client";
+"use client"
 
-import { Loader2, X } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
-import type { TaskWithCommentCount } from "@/components/lists/board";
-import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
-import { TaskCardView } from "@/components/tasks/task-card";
-import { Button } from "@/components/ui/button";
+import { Loader2, X } from "lucide-react"
+import { useEffect, useState, useTransition } from "react"
+import type { TaskWithCommentCount } from "@/components/lists/board"
+import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal"
+import { TaskCardView } from "@/components/tasks/task-card"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { getAssignableUsers } from "@/lib/actions/project-member";
+} from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
+import { getAssignableUsers } from "@/lib/actions/project-member"
 import {
   deleteTask,
   getArchivedTasksByProject,
   restoreTask,
-} from "@/lib/actions/tasks";
-import type { Task } from "@/lib/db/schema";
-import { getRealtimeClientId } from "@/lib/realtime/client";
-import { useBoardStore } from "@/stores/board-store";
-import { useTaskDetailStore } from "@/stores/task-detail-store";
+} from "@/lib/actions/tasks"
+import type { Task } from "@/lib/db/schema"
+import { getRealtimeClientId } from "@/lib/realtime/client"
+import { useBoardStore } from "@/stores/board-store"
+import { useTaskDetailStore } from "@/stores/task-detail-store"
 
 export function ArchivedTasksModal({
   projectId,
@@ -31,126 +31,124 @@ export function ArchivedTasksModal({
   onOpenChange,
   role,
 }: {
-  projectId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
+  projectId: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer"
 }) {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [archivedTasks, setArchivedTasks] = useState<TaskWithCommentCount[]>(
-    [],
-  );
-  const lists = useBoardStore((s) => s.lists);
-  const insertTaskAt = useBoardStore((s) => s.insertTaskAt);
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
+  const [archivedTasks, setArchivedTasks] = useState<TaskWithCommentCount[]>([])
+  const lists = useBoardStore((s) => s.lists)
+  const insertTaskAt = useBoardStore((s) => s.insertTaskAt)
 
-  const [isPending, startTransition] = useTransition();
-  const [deleteConfirmTask, setDeleteConfirmTask] = useState<Task | null>(null);
+  const [isPending, startTransition] = useTransition()
+  const [deleteConfirmTask, setDeleteConfirmTask] = useState<Task | null>(null)
 
-  const openModalInStore = useTaskDetailStore((s) => s.openModal);
-  const activeModalTaskId = useTaskDetailStore((s) => s.task?.id);
+  const openModalInStore = useTaskDetailStore((s) => s.openModal)
+  const activeModalTaskId = useTaskDetailStore((s) => s.task?.id)
 
   const [assignableUsers, setAssignableUsers] = useState<
     {
-      id: string;
-      name?: string;
-      email?: string;
-      imageUrl?: string | null;
-      hasImage?: boolean | null;
+      id: string
+      name?: string
+      email?: string
+      imageUrl?: string | null
+      hasImage?: boolean | null
     }[]
-  >([]);
+  >([])
 
   useEffect(() => {
     if (open) {
-      setLoading(true);
+      setLoading(true)
       Promise.all([
         getArchivedTasksByProject(projectId),
         getAssignableUsers(projectId),
       ])
         .then(([tasksRes, usersRes]) => {
           if (tasksRes.success) {
-            setArchivedTasks(tasksRes.data);
+            setArchivedTasks(tasksRes.data)
           } else {
             toast({
               title: "Failed to load archived tasks",
               description: tasksRes.error,
               variant: "destructive",
-            });
+            })
           }
           if (usersRes.success) {
-            setAssignableUsers(usersRes.data);
+            setAssignableUsers(usersRes.data)
           }
         })
-        .finally(() => setLoading(false));
+        .finally(() => setLoading(false))
     }
-  }, [open, projectId, role, toast]);
+  }, [open, projectId, role, toast])
 
   const executeRestoreTask = (taskToRestore: {
-    id: string;
-    title: string;
-    listId: string;
-    position: number;
-    commentCount?: number;
-    assignees?: any;
+    id: string
+    title: string
+    listId: string
+    position: number
+    commentCount?: number
+    assignees?: any
   }) => {
     startTransition(async () => {
-      const res = await restoreTask(taskToRestore.id, getRealtimeClientId());
+      const res = await restoreTask(taskToRestore.id, getRealtimeClientId())
       if (res.success) {
         toast({
           title: "Task restored",
           description: `"${taskToRestore.title}" has been restored.`,
-        });
+        })
         setArchivedTasks((prev) =>
           prev.filter((t) => t.id !== taskToRestore.id),
-        );
+        )
 
         const restoredTaskWithAssignees = {
           ...res.data,
           commentCount: taskToRestore.commentCount ?? 0,
           assignees: taskToRestore.assignees ?? [],
-        };
+        }
 
         insertTaskAt(
           taskToRestore.listId,
           restoredTaskWithAssignees,
           res.data.position,
-        );
+        )
 
         if (activeModalTaskId === taskToRestore.id) {
-          useTaskDetailStore.getState().closeModal();
+          useTaskDetailStore.getState().closeModal()
         }
       } else {
         toast({
           title: "Failed to restore task",
           description: res.error,
           variant: "destructive",
-        });
+        })
       }
-    });
-  };
+    })
+  }
 
   const handlePermanentDelete = (task: Task) => {
     startTransition(async () => {
-      const res = await deleteTask(task.id, getRealtimeClientId());
+      const res = await deleteTask(task.id, getRealtimeClientId())
       if (res.success) {
         toast({
           title: "Task deleted permanently",
           description: `"${task.title}" was deleted.`,
-        });
-        setArchivedTasks((prev) => prev.filter((t) => t.id !== task.id));
-        setDeleteConfirmTask(null);
+        })
+        setArchivedTasks((prev) => prev.filter((t) => t.id !== task.id))
+        setDeleteConfirmTask(null)
         if (activeModalTaskId === task.id) {
-          useTaskDetailStore.getState().closeModal();
+          useTaskDetailStore.getState().closeModal()
         }
       } else {
         toast({
           title: "Failed to delete task",
           description: res.error,
           variant: "destructive",
-        });
+        })
       }
-    });
-  };
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -186,7 +184,7 @@ export function ArchivedTasksModal({
             <div className="space-y-4 pr-1">
               {archivedTasks.map((task) => {
                 const rawAssignees =
-                  (task as any).assignees ?? (task as any).taskAssignees ?? [];
+                  (task as any).assignees ?? (task as any).taskAssignees ?? []
                 const formattedTask = {
                   ...task,
                   assignees: rawAssignees.map((a: any) => ({
@@ -196,7 +194,7 @@ export function ArchivedTasksModal({
                     imageUrl: a.imageUrl ?? a.userImageUrl ?? a.user?.imageUrl,
                     hasImage: a.hasImage ?? a.userHasImage ?? a.user?.hasImage,
                   })),
-                };
+                }
 
                 return (
                   <div key={task.id} className="space-y-1.5">
@@ -233,7 +231,7 @@ export function ArchivedTasksModal({
                       </div>
                     )}
                   </div>
-                );
+                )
               })}
             </div>
           )}
@@ -283,27 +281,27 @@ export function ArchivedTasksModal({
           assignableUsers={assignableUsers}
           allLists={lists}
           onRestored={() => {
-            const activeTask = useTaskDetailStore.getState().task;
+            const activeTask = useTaskDetailStore.getState().task
             if (activeTask) {
               setArchivedTasks((prev) =>
                 prev.filter((t) => t.id !== activeTask.id),
-              );
+              )
               insertTaskAt(
                 activeTask.listId,
                 { ...activeTask, isArchived: false },
                 activeTask.position ?? 0,
-              );
-              useTaskDetailStore.getState().closeModal();
+              )
+              useTaskDetailStore.getState().closeModal()
             }
           }}
           onDeleteClick={() => {
             const currentTask = archivedTasks.find(
               (t) => t.id === activeModalTaskId,
-            );
-            if (currentTask) setDeleteConfirmTask(currentTask);
+            )
+            if (currentTask) setDeleteConfirmTask(currentTask)
           }}
         />
       </DialogContent>
     </Dialog>
-  );
+  )
 }

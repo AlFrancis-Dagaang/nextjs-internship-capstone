@@ -1,66 +1,66 @@
 // components/tasks/my-tasks-header.tsx
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { Search, Calendar, Filter, X } from "lucide-react";
-import { ProjectCalendarModal } from "@/components/projects/modals/project-calendar-modal";
-import { PageHeader } from "@/components/layout/page-header";
-import { useUiStore } from "@/stores/ui-store";
-import { Button } from "@/components/ui/button";
+import { Calendar, Filter, Search } from "lucide-react"
+import { useEffect, useState } from "react"
+import { PageHeader } from "@/components/layout/page-header"
+import { ProjectCalendarModal } from "@/components/projects/modals/project-calendar-modal"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import type { CalendarTaskDTO } from "@/types";
+} from "@/components/ui/select"
+import { useUiStore } from "@/stores/ui-store"
+import type { CalendarTaskDTO } from "@/types"
 
 interface MyTasksHeaderProps {
-  currentUserId: string;
-  upcomingTasks: CalendarTaskDTO[];
+  currentUserId: string
+  upcomingTasks: CalendarTaskDTO[]
 }
 
 export function MyTasksHeader({
   currentUserId,
   upcomingTasks,
 }: MyTasksHeaderProps) {
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
-  const [mobileFilterModalOpen, setMobileFilterModalOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false)
+  const [mobileFilterModalOpen, setMobileFilterModalOpen] = useState(false)
 
   // Connect search and filters to the global UI store
-  const searchQuery = useUiStore((s) => s.searchQuery);
-  const setSearchQuery = useUiStore((s) => s.setSearchQuery);
-  const filterCompleted = useUiStore((s) => s.filterCompleted);
-  const setFilterCompleted = useUiStore((s) => s.setFilterCompleted);
-  const filterPriority = useUiStore((s) => s.filterPriority);
-  const setFilterPriority = useUiStore((s) => s.setFilterPriority);
-  const filterDueDate = useUiStore((s) => s.filterDueDate);
-  const setFilterDueDate = useUiStore((s) => s.setFilterDueDate);
-  const clearAllFilters = useUiStore((s) => s.clearAllFilters);
+  const searchQuery = useUiStore((s) => s.searchQuery)
+  const setSearchQuery = useUiStore((s) => s.setSearchQuery)
+  const filterCompleted = useUiStore((s) => s.filterCompleted)
+  const setFilterCompleted = useUiStore((s) => s.setFilterCompleted)
+  const filterPriority = useUiStore((s) => s.filterPriority)
+  const setFilterPriority = useUiStore((s) => s.setFilterPriority)
+  const filterDueDate = useUiStore((s) => s.filterDueDate)
+  const setFilterDueDate = useUiStore((s) => s.setFilterDueDate)
+  const clearAllFilters = useUiStore((s) => s.clearAllFilters)
 
   // Reset search query and filters on mount
   useEffect(() => {
-    setSearchQuery("");
-    clearAllFilters();
-  }, [setSearchQuery, clearAllFilters]);
+    setSearchQuery("")
+    clearAllFilters()
+  }, [setSearchQuery, clearAllFilters])
 
   const isFilterActive =
     filterCompleted !== "all" ||
     filterPriority !== "all" ||
-    filterDueDate !== "all";
+    filterDueDate !== "all"
 
   return (
     <>
@@ -189,7 +189,7 @@ export function MyTasksHeader({
         currentUserId={currentUserId}
       />
     </>
-  );
+  )
 }
 
 // --- REUSABLE FILTER SUB-COMPONENT ---
@@ -299,8 +299,8 @@ function FilterContent({
             variant="ghost"
             size="sm"
             onClick={() => {
-              clearAllFilters();
-              onClose();
+              clearAllFilters()
+              onClose()
             }}
             className="w-full h-9 text-xs text-muted-foreground hover:text-foreground rounded-xl cursor-pointer"
           >
@@ -309,5 +309,5 @@ function FilterContent({
         </div>
       )}
     </div>
-  );
+  )
 }

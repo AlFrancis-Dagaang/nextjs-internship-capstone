@@ -1,32 +1,40 @@
 // components/projects/project-header.tsx
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useTransition,
-  useCallback,
-} from "react";
-import Link from "next/link";
 import {
-  ArrowLeft,
-  Search,
-  Filter,
-  X,
-  MoreVertical,
   Archive,
-  UserPlus,
-  ListChecks,
-  ChevronDown,
-  FolderInput,
-  Trash2,
+  ArrowLeft,
   Calendar,
-  Users2,
+  ChevronDown,
   Clock,
+  Filter,
+  FolderInput,
+  ListChecks,
+  MoreVertical,
+  Search,
+  Trash2,
+  UserPlus,
+  Users2,
+  X,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -34,33 +42,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import type { Project } from "@/lib/db/schema";
-import { InviteMemberModal } from "./modals/invite-member-modal";
-import { useProjectStore, type Member } from "@/stores/project-store";
-import { useUiStore } from "@/stores/ui-store";
-import { useBoardStore } from "@/stores/board-store";
-import { ArchivedTasksModal } from "../tasks/modal/archived-tasks-modal";
-import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
-import { moveTaskToList, deleteTask } from "@/lib/actions/tasks";
-import { useToast } from "@/hooks/use-toast";
-import { useRealtimeProject } from "@/hooks/use-realtime-project";
-import type { ProjectRealtimeEvent } from "@/lib/realtime/server";
-import { CalendarTaskDTO } from "@/types";
-import { ProjectCalendarModal } from "./modals/project-calendar-modal";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { useRealtimeProject } from "@/hooks/use-realtime-project";
+import { useToast } from "@/hooks/use-toast";
+import { deleteTask, moveTaskToList } from "@/lib/actions/tasks";
+import type { Project } from "@/lib/db/schema";
+import type { ProjectRealtimeEvent } from "@/lib/realtime/server";
+import { useBoardStore } from "@/stores/board-store";
+import { type Member, useProjectStore } from "@/stores/project-store";
+import { useUiStore } from "@/stores/ui-store";
+import type { CalendarTaskDTO } from "@/types";
+import { ArchivedTasksModal } from "../tasks/modal/archived-tasks-modal";
+import { InviteMemberModal } from "./modals/invite-member-modal";
+import { ProjectCalendarModal } from "./modals/project-calendar-modal";
 
 export function ProjectHeader({
   project,
@@ -208,11 +202,11 @@ export function ProjectHeader({
     const idsToDelete = selectedTaskIds;
 
     const taskListMap = new Map<string, string>();
-    lists.forEach((l) =>
+    lists.forEach((l) => {
       l.tasks.forEach((t) => {
         if (idsToDelete.includes(t.id)) taskListMap.set(t.id, l.id);
-      }),
-    );
+      });
+    });
 
     startBulkTransition(async () => {
       const results = await Promise.all(
@@ -459,65 +453,63 @@ export function ProjectHeader({
         ) : (
           <div className="flex items-center gap-2 justify-end shrink-0">
             {/* --- FILTER BUTTON (Dropdown on Desktop, Dialog Modal on Mobile) --- */}
-            <>
-              {/* Desktop Dropdown */}
-              <div className="hidden sm:block">
-                <DropdownMenu
-                  open={filterDropdownOpen}
-                  onOpenChange={setFilterDropdownOpen}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="relative h-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs px-3 flex items-center gap-1.5 hover:bg-secondary cursor-pointer"
-                    >
-                      <Filter size={13} className="text-muted-foreground" />
-                      <span>Filter</span>
-                      {isFilterActive && (
-                        <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-teal-500 ring-2 ring-card" />
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="w-64 bg-card border border-border rounded-3xl shadow-xl p-3.5 space-y-3.5 text-left z-50"
+            {/* Desktop Dropdown */}
+            <div className="hidden sm:block">
+              <DropdownMenu
+                open={filterDropdownOpen}
+                onOpenChange={setFilterDropdownOpen}
+              >
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="relative h-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs px-3 flex items-center gap-1.5 hover:bg-secondary cursor-pointer"
                   >
-                    <FilterContent
-                      filterCompleted={filterCompleted}
-                      setFilterCompleted={setFilterCompleted}
-                      filterPriority={filterPriority}
-                      setFilterPriority={setFilterPriority}
-                      filterDueDate={filterDueDate}
-                      setFilterDueDate={setFilterDueDate}
-                      filterAssigneeId={filterAssigneeId}
-                      setFilterAssigneeId={setFilterAssigneeId}
-                      filterAssignedToMe={filterAssignedToMe}
-                      setFilterAssignedToMe={setFilterAssignedToMe}
-                      allProjectUsers={allProjectUsers}
-                      clearAllFilters={clearAllFilters}
-                      onClose={() => setFilterDropdownOpen(false)}
-                    />
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              {/* Mobile Trigger for Filter Dialog Modal */}
-              <div className="block sm:hidden flex-1 sm:flex-none">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMobileFilterModalOpen(true)}
-                  className="relative h-9 w-full sm:w-auto text-xs bg-background border-border text-foreground rounded-xl shadow-2xs px-3 flex items-center justify-center gap-1.5 hover:bg-secondary cursor-pointer"
+                    <Filter size={13} className="text-muted-foreground" />
+                    <span>Filter</span>
+                    {isFilterActive && (
+                      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-teal-500 ring-2 ring-card" />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-64 bg-card border border-border rounded-3xl shadow-xl p-3.5 space-y-3.5 text-left z-50"
                 >
-                  <Filter size={13} className="text-muted-foreground" />
-                  <span>Filter</span>
-                  {isFilterActive && (
-                    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-teal-500 ring-2 ring-card" />
-                  )}
-                </Button>
-              </div>
-            </>
+                  <FilterContent
+                    filterCompleted={filterCompleted}
+                    setFilterCompleted={setFilterCompleted}
+                    filterPriority={filterPriority}
+                    setFilterPriority={setFilterPriority}
+                    filterDueDate={filterDueDate}
+                    setFilterDueDate={setFilterDueDate}
+                    filterAssigneeId={filterAssigneeId}
+                    setFilterAssigneeId={setFilterAssigneeId}
+                    filterAssignedToMe={filterAssignedToMe}
+                    setFilterAssignedToMe={setFilterAssignedToMe}
+                    allProjectUsers={allProjectUsers}
+                    clearAllFilters={clearAllFilters}
+                    onClose={() => setFilterDropdownOpen(false)}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Mobile Trigger for Filter Dialog Modal */}
+            <div className="block sm:hidden flex-1 sm:flex-none">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMobileFilterModalOpen(true)}
+                className="relative h-9 w-full sm:w-auto text-xs bg-background border-border text-foreground rounded-xl shadow-2xs px-3 flex items-center justify-center gap-1.5 hover:bg-secondary cursor-pointer"
+              >
+                <Filter size={13} className="text-muted-foreground" />
+                <span>Filter</span>
+                {isFilterActive && (
+                  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-teal-500 ring-2 ring-card" />
+                )}
+              </Button>
+            </div>
 
             {/* Selection Mode Button */}
             {canEdit && (
@@ -533,64 +525,59 @@ export function ProjectHeader({
             )}
 
             {/* --- MORE ACTIONS BUTTON (Dropdown on Desktop, Dialog Modal on Mobile) --- */}
-            <>
-              {/* Desktop Dropdown */}
-              <div className="hidden sm:block">
-                <DropdownMenu
-                  open={actionsDropdownOpen}
-                  onOpenChange={setActionsDropdownOpen}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs hover:bg-secondary cursor-pointer"
-                      aria-label="Project actions"
-                    >
-                      <MoreVertical
-                        size={16}
-                        className="text-muted-foreground"
-                      />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="w-56 bg-card border border-border rounded-3xl shadow-xl p-1.5 space-y-1 text-left z-50"
+            {/* Desktop Dropdown */}
+            <div className="hidden sm:block">
+              <DropdownMenu
+                open={actionsDropdownOpen}
+                onOpenChange={setActionsDropdownOpen}
+              >
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs hover:bg-secondary cursor-pointer"
+                    aria-label="Project actions"
                   >
-                    <div className="flex items-center justify-between px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border mb-1">
-                      <span>Project Options</span>
-                      <button
-                        onClick={() => setActionsDropdownOpen(false)}
-                        className="text-muted-foreground hover:text-foreground cursor-pointer"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                    <ActionsContent
-                      project={project}
-                      canManage={canManage}
-                      setCalendarModalOpen={setCalendarModalOpen}
-                      setInviteOpen={setInviteOpen}
-                      openArchiveModal={openArchiveModal}
-                      onClose={() => setActionsDropdownOpen(false)}
-                    />
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              {/* Mobile Trigger for Actions Dialog Modal */}
-              <div className="block sm:hidden">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setMobileActionsModalOpen(true)}
-                  className="h-9 w-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs hover:bg-secondary cursor-pointer"
-                  aria-label="Project actions"
+                    <MoreVertical size={16} className="text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 bg-card border border-border rounded-3xl shadow-xl p-1.5 space-y-1 text-left z-50"
                 >
-                  <MoreVertical size={16} className="text-muted-foreground" />
-                </Button>
-              </div>
-            </>
+                  <div className="flex items-center justify-between px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border mb-1">
+                    <span>Project Options</span>
+                    <button
+                      onClick={() => setActionsDropdownOpen(false)}
+                      className="text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <ActionsContent
+                    project={project}
+                    canManage={canManage}
+                    setCalendarModalOpen={setCalendarModalOpen}
+                    setInviteOpen={setInviteOpen}
+                    openArchiveModal={openArchiveModal}
+                    onClose={() => setActionsDropdownOpen(false)}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Mobile Trigger for Actions Dialog Modal */}
+            <div className="block sm:hidden">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setMobileActionsModalOpen(true)}
+                className="h-9 w-9 text-xs bg-background border-border text-foreground rounded-xl shadow-2xs hover:bg-secondary cursor-pointer"
+                aria-label="Project actions"
+              >
+                <MoreVertical size={16} className="text-muted-foreground" />
+              </Button>
+            </div>
 
             {/* Team Members Avatars */}
             <div className="hidden sm:flex items-center pl-2.5 border-l border-border ml-1">
