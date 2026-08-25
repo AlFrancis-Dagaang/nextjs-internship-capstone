@@ -1,27 +1,27 @@
 // components/projects/modals/delete-project-modal.tsx
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useReverification } from "@clerk/nextjs";
-import { isReverificationCancelledError } from "@clerk/nextjs/errors";
-import { Button } from "@/components/ui/button";
+import { useReverification } from "@clerk/nextjs"
+import { isReverificationCancelledError } from "@clerk/nextjs/errors"
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { deleteProject } from "@/lib/actions/projects";
-import { useToast } from "@/hooks/use-toast";
+} from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
+import { deleteProject } from "@/lib/actions/projects"
 
 type DeleteProjectModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: (projectId: string) => void;
-  projectId: string;
-  projectName: string;
-};
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: (projectId: string) => void
+  projectId: string
+  projectName: string
+}
 
 export function DeleteProjectModal({
   isOpen,
@@ -30,25 +30,25 @@ export function DeleteProjectModal({
   projectId,
   projectName,
 }: DeleteProjectModalProps) {
-  const { toast } = useToast();
-  const [confirmed, setConfirmed] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast()
+  const [confirmed, setConfirmed] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Wrap the action in a closure function so arguments are correctly passed through to useReverification
   const deleteProjectWithReverification = useReverification(
     async (id: string) => {
-      return deleteProject(id);
+      return deleteProject(id)
     },
-  );
+  )
 
   useEffect(() => {
-    if (isOpen) setConfirmed(false);
-  }, [isOpen]);
+    if (isOpen) setConfirmed(false)
+  }, [isOpen])
 
   async function handleConfirmDelete() {
-    setIsDeleting(true);
+    setIsDeleting(true)
     try {
-      const result = (await deleteProjectWithReverification(projectId)) as any;
+      const result = (await deleteProjectWithReverification(projectId)) as any
 
       if (!result || typeof result.success !== "boolean" || !result.success) {
         toast({
@@ -56,26 +56,26 @@ export function DeleteProjectModal({
           description:
             result?.error || "Reverification failed or action was blocked.",
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
 
       toast({
         title: "Project deleted",
         description: `"${projectName}" was permanently deleted.`,
-      });
-      onClose();
-      onSuccess(projectId);
+      })
+      onClose()
+      onSuccess(projectId)
     } catch (err) {
-      if (isReverificationCancelledError(err)) return; // User backed out of Clerk reverification
+      if (isReverificationCancelledError(err)) return // User backed out of Clerk reverification
 
       toast({
         title: "Failed to delete project",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(false)
     }
   }
 
@@ -140,5 +140,5 @@ export function DeleteProjectModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

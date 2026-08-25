@@ -1,7 +1,7 @@
-import Link from "next/link";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Zap } from "lucide-react";
+import { Zap } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export function LandingHero() {
   return (
@@ -65,5 +65,5 @@ export function LandingHero() {
         </div>
       </div>
     </section>
-  );
+  )
 }

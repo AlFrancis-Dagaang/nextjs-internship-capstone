@@ -91,5 +91,5 @@ export default function ProjectLoading() {
         </div>
       </div>
     </div>
-  );
+  )
 }

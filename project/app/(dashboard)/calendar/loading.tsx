@@ -107,5 +107,5 @@ export default function CalendarLoading() {
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -1,98 +1,98 @@
 // components/team/team-hub.tsx
-"use client";
+"use client"
 
+import { CheckSquare, FolderKanban, Search, Shield, Users } from "lucide-react"
+import { useRouter } from "next/navigation"
 import {
-  useState,
-  useTransition,
+  forwardRef,
   useEffect,
   useImperativeHandle,
-  forwardRef,
-} from "react";
-import { useRouter } from "next/navigation";
-import { WorkspaceTeam, WorkspaceMember } from "@/lib/services/team";
-import { getTeamMembers } from "@/lib/actions/team";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+  useState,
+  useTransition,
+} from "react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Users, Shield, Search, CheckSquare, FolderKanban } from "lucide-react";
-import { ManageMembersModal } from "./modals/manage-members-modal";
-import { TeamCard } from "./team-card";
-import { UserAvatar } from "../ui/user-avatar";
-import { useTeamStore } from "@/stores/team-store";
+} from "@/components/ui/select"
+import { getTeamMembers } from "@/lib/actions/team"
+import type { WorkspaceMember, WorkspaceTeam } from "@/lib/services/team"
+import { useTeamStore } from "@/stores/team-store"
+import { UserAvatar } from "../ui/user-avatar"
+import { ManageMembersModal } from "./modals/manage-members-modal"
+import { TeamCard } from "./team-card"
 
 type ProjectOption = {
-  id: string;
-  name: string;
-};
+  id: string
+  name: string
+}
 
 type MemberInfo = {
-  userId: string;
-  name: string;
-  email: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-};
+  userId: string
+  name: string
+  email: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+}
 
 type EnhancedWorkspaceMember = WorkspaceMember & {
-  isProjectMember: boolean;
-  isTeamMember: boolean;
-  projectIds?: string[];
+  isProjectMember: boolean
+  isTeamMember: boolean
+  projectIds?: string[]
   assignedTasks?: {
-    taskId: string;
-    title: string;
-    projectId: string;
-    projectName: string;
-    isCompleted: boolean;
-  }[];
-};
+    taskId: string
+    title: string
+    projectId: string
+    projectName: string
+    isCompleted: boolean
+  }[]
+}
 
 type WorkspaceHub = {
-  yourTeams: WorkspaceTeam[];
-  teamsYouBelongTo: WorkspaceTeam[];
-  workspaceMembers: EnhancedWorkspaceMember[];
-  projects?: ProjectOption[];
-};
+  yourTeams: WorkspaceTeam[]
+  teamsYouBelongTo: WorkspaceTeam[]
+  workspaceMembers: EnhancedWorkspaceMember[]
+  projects?: ProjectOption[]
+}
 
 export type TeamHubRef = {
-  addTeam: (newTeam: WorkspaceTeam) => void;
-};
+  addTeam: (newTeam: WorkspaceTeam) => void
+}
 
 export const TeamHub = forwardRef<
   TeamHubRef,
   {
-    initialHub: WorkspaceHub;
-    currentUserId: string;
+    initialHub: WorkspaceHub
+    currentUserId: string
   }
 >(function TeamHub({ initialHub, currentUserId }, ref) {
-  const router = useRouter();
-  const [, startTransition] = useTransition();
+  const router = useRouter()
+  const [, startTransition] = useTransition()
 
-  const [yourTeams, setYourTeams] = useState(initialHub.yourTeams);
+  const [yourTeams, setYourTeams] = useState(initialHub.yourTeams)
   const [teamsYouBelongTo, setTeamsYouBelongTo] = useState(
     initialHub.teamsYouBelongTo,
-  );
+  )
   const [workspaceMembers, setWorkspaceMembers] = useState(
     initialHub.workspaceMembers,
-  );
+  )
 
   // Centralized map of teamId -> MemberInfo[] keeping cards and modals perfectly in sync
   const [teamMembersMap, setTeamMembersMap] = useState<
     Record<string, MemberInfo[]>
-  >({});
+  >({})
 
   useEffect(() => {
-    setYourTeams(initialHub.yourTeams);
-    setTeamsYouBelongTo(initialHub.teamsYouBelongTo);
-    setWorkspaceMembers(initialHub.workspaceMembers);
+    setYourTeams(initialHub.yourTeams)
+    setTeamsYouBelongTo(initialHub.teamsYouBelongTo)
+    setWorkspaceMembers(initialHub.workspaceMembers)
 
     // Pre-fetch members for all visible teams on mount
-    const allTeams = [...initialHub.yourTeams, ...initialHub.teamsYouBelongTo];
+    const allTeams = [...initialHub.yourTeams, ...initialHub.teamsYouBelongTo]
     allTeams.forEach((t) => {
       getTeamMembers(t.id).then((res) => {
         if (res.success && res.data) {
@@ -105,105 +105,105 @@ export const TeamHub = forwardRef<
               m.userHasImage ??
               m.hasImage ??
               !!(m.userImageUrl ?? m.imageUrl ?? m.image),
-          }));
-          setTeamMembersMap((prev) => ({ ...prev, [t.id]: mapped }));
+          }))
+          setTeamMembersMap((prev) => ({ ...prev, [t.id]: mapped }))
         }
-      });
-    });
-  }, [initialHub]);
+      })
+    })
+  }, [initialHub])
 
   useImperativeHandle(ref, () => ({
     addTeam: (newTeam: WorkspaceTeam) => {
-      setYourTeams((prev) => [newTeam, ...prev]);
+      setYourTeams((prev) => [newTeam, ...prev])
     },
-  }));
+  }))
 
-  const newlyCreatedTeam = useTeamStore((state) => state.newlyCreatedTeam);
+  const newlyCreatedTeam = useTeamStore((state) => state.newlyCreatedTeam)
 
   useEffect(() => {
     if (!newlyCreatedTeam) {
-      return;
+      return
     }
 
     setYourTeams((prev) => {
       if (prev.some((team) => team.id === newlyCreatedTeam.id)) {
-        return prev;
+        return prev
       }
 
-      return [newlyCreatedTeam, ...prev];
-    });
-  }, [newlyCreatedTeam]);
+      return [newlyCreatedTeam, ...prev]
+    })
+  }, [newlyCreatedTeam])
 
-  const [managingTeam, setManagingTeam] = useState<WorkspaceTeam | null>(null);
+  const [managingTeam, setManagingTeam] = useState<WorkspaceTeam | null>(null)
 
-  const [memberSearchQuery, setMemberSearchQuery] = useState("");
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("all");
-  const [membershipFilter, setMembershipFilter] = useState<string>("all");
+  const [memberSearchQuery, setMemberSearchQuery] = useState("")
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("all")
+  const [membershipFilter, setMembershipFilter] = useState<string>("all")
 
   function handleTeamDeleted(deletedTeamId: string) {
-    setYourTeams((prev) => prev.filter((team) => team.id !== deletedTeamId));
+    setYourTeams((prev) => prev.filter((team) => team.id !== deletedTeamId))
     setTeamsYouBelongTo((prev) =>
       prev.filter((team) => team.id !== deletedTeamId),
-    );
+    )
     setTeamMembersMap((prev) => {
-      const copy = { ...prev };
-      delete copy[deletedTeamId];
-      return copy;
-    });
+      const copy = { ...prev }
+      delete copy[deletedTeamId]
+      return copy
+    })
 
     startTransition(() => {
-      router.refresh();
-    });
+      router.refresh()
+    })
   }
 
   function handleTeamMembersChanged(teamId: string, members: MemberInfo[]) {
-    setTeamMembersMap((prev) => ({ ...prev, [teamId]: members }));
+    setTeamMembersMap((prev) => ({ ...prev, [teamId]: members }))
 
     setYourTeams((prev) =>
       prev.map((team) =>
         team.id === teamId ? { ...team, memberCount: members.length } : team,
       ),
-    );
+    )
 
     setTeamsYouBelongTo((prev) =>
       prev.map((team) =>
         team.id === teamId ? { ...team, memberCount: members.length } : team,
       ),
-    );
+    )
   }
 
   const filteredWorkspaceMembers = workspaceMembers.filter((member) => {
     const matchesSearch =
       member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(memberSearchQuery.toLowerCase());
+      member.email.toLowerCase().includes(memberSearchQuery.toLowerCase())
 
     if (!matchesSearch) {
-      return false;
+      return false
     }
 
     if (membershipFilter === "project" && !member.isProjectMember) {
-      return false;
+      return false
     }
 
     if (membershipFilter === "team" && !member.isTeamMember) {
-      return false;
+      return false
     }
 
     if (selectedProjectId !== "all") {
       const matchesProjectTasks = member.assignedTasks?.some(
         (task) => task.projectId === selectedProjectId,
-      );
+      )
 
       const matchesProjectIdList =
-        member.projectIds?.includes(selectedProjectId);
+        member.projectIds?.includes(selectedProjectId)
 
       if (!matchesProjectTasks && !matchesProjectIdList) {
-        return false;
+        return false
       }
     }
 
-    return true;
-  });
+    return true
+  })
 
   return (
     <div className="w-full space-y-8 sm:space-y-10">
@@ -234,10 +234,10 @@ export const TeamHub = forwardRef<
             {yourTeams.map((team) => {
               const creator = workspaceMembers.find(
                 (member) => member.id === team.createdBy,
-              );
+              )
 
-              const creatorName = creator?.name || "Team Owner";
-              const teamMembers = teamMembersMap[team.id] || [];
+              const creatorName = creator?.name || "Team Owner"
+              const teamMembers = teamMembersMap[team.id] || []
 
               return (
                 <div key={team.id} className="w-78 sm:w-92 shrink-0">
@@ -253,7 +253,7 @@ export const TeamHub = forwardRef<
                     onDeleted={handleTeamDeleted}
                   />
                 </div>
-              );
+              )
             })}
           </div>
         )}
@@ -281,10 +281,10 @@ export const TeamHub = forwardRef<
             {teamsYouBelongTo.map((team) => {
               const creator = workspaceMembers.find(
                 (member) => member.id === team.createdBy,
-              );
+              )
 
-              const creatorName = creator?.name || "Team Owner";
-              const teamMembers = teamMembersMap[team.id] || [];
+              const creatorName = creator?.name || "Team Owner"
+              const teamMembers = teamMembersMap[team.id] || []
 
               return (
                 <div key={team.id} className="w-78 sm:w-92 shrink-0">
@@ -300,7 +300,7 @@ export const TeamHub = forwardRef<
                     onDeleted={handleTeamDeleted}
                   />
                 </div>
-              );
+              )
             })}
           </div>
         )}
@@ -384,16 +384,16 @@ export const TeamHub = forwardRef<
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
             {filteredWorkspaceMembers.map((member) => {
-              const stableKey = member.id || member.email;
-              const displayName = member.name || "User";
+              const stableKey = member.id || member.email
+              const displayName = member.name || "User"
 
-              const tasksList = member.assignedTasks || [];
+              const tasksList = member.assignedTasks || []
               const filteredTasks =
                 selectedProjectId === "all"
                   ? tasksList
                   : tasksList.filter(
                       (task) => task.projectId === selectedProjectId,
-                    );
+                    )
 
               return (
                 <div
@@ -438,7 +438,7 @@ export const TeamHub = forwardRef<
                     </span>
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
         )}
@@ -449,7 +449,7 @@ export const TeamHub = forwardRef<
           open={!!managingTeam}
           onOpenChange={(open) => {
             if (!open) {
-              setManagingTeam(null);
+              setManagingTeam(null)
             }
           }}
           team={managingTeam}
@@ -460,7 +460,7 @@ export const TeamHub = forwardRef<
         />
       )}
     </div>
-  );
-});
+  )
+})
 
-export default TeamHub;
+export default TeamHub

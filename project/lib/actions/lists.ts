@@ -1,64 +1,64 @@
-"use server";
+"use server"
 
-import { queries } from "@/lib/db";
-import { listCreateSchema, listUpdateSchema } from "@/lib/validations";
-import { getAuthedUserOrError } from "@/lib/services/auth";
+import { revalidatePath } from "next/cache"
+import { queries } from "@/lib/db"
+import { publishBoardEvent } from "@/lib/realtime/server"
+import { getAuthedUserOrError } from "@/lib/services/auth"
 import {
   assertProjectEditAccess,
   assertProjectViewAccess,
-} from "@/lib/services/ownership";
-import { List } from "../db/schema";
-import { revalidatePath } from "next/cache";
-import { publishBoardEvent } from "@/lib/realtime/server";
+} from "@/lib/services/ownership"
+import { listCreateSchema, listUpdateSchema } from "@/lib/validations"
+import type { List } from "../db/schema"
 
 type ActionResult<T> =
   | { success: true; data: T }
-  | { success: false; error: string; fieldErrors?: Record<string, string[]> };
+  | { success: false; error: string; fieldErrors?: Record<string, string[]> }
 
 export async function createList(
   input: unknown,
   originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.lists.create>>>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const parsed = listCreateSchema.safeParse(input);
+  const parsed = listCreateSchema.safeParse(input)
   if (!parsed.success) {
     return {
       success: false,
       error: "Invalid input",
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    }
   }
 
   const access = await assertProjectEditAccess(
     parsed.data.projectId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
-  const existingLists = await queries.lists.getByProject(parsed.data.projectId);
-  const position = existingLists.length;
+  const existingLists = await queries.lists.getByProject(parsed.data.projectId)
+  const position = existingLists.length
 
   const list = await queries.lists.create({
     name: parsed.data.name,
     projectId: parsed.data.projectId,
     position,
-  });
+  })
 
   await publishBoardEvent(
     parsed.data.projectId,
     { type: "list_created", list },
     originClientId,
-  );
+  )
 
-  revalidatePath(`/projects/${parsed.data.projectId}`);
+  revalidatePath(`/projects/${parsed.data.projectId}`)
 
-  return { success: true, data: list };
+  return { success: true, data: list }
 }
 
 export async function getListsByProject(
@@ -66,18 +66,18 @@ export async function getListsByProject(
 ): Promise<
   ActionResult<Awaited<ReturnType<typeof queries.lists.getByProject>>>
 > {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const access = await assertProjectViewAccess(projectId, authResult.user.id);
+  const access = await assertProjectViewAccess(projectId, authResult.user.id)
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
-  const lists = await queries.lists.getByProject(projectId);
-  return { success: true, data: lists };
+  const lists = await queries.lists.getByProject(projectId)
+  return { success: true, data: lists }
 }
 
 export async function updateList(
@@ -85,85 +85,85 @@ export async function updateList(
   input: unknown,
   originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.lists.update>>>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const parsed = listUpdateSchema.safeParse(input);
+  const parsed = listUpdateSchema.safeParse(input)
   if (!parsed.success) {
     return {
       success: false,
       error: "Invalid input",
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    }
   }
 
-  const existingList = await queries.lists.getById(id);
+  const existingList = await queries.lists.getById(id)
   if (!existingList) {
-    return { success: false, error: "Not found" };
+    return { success: false, error: "Not found" }
   }
 
   const access = await assertProjectEditAccess(
     existingList.projectId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
   const {
     position: _ignoredPosition,
     projectId: _ignoredProjectId,
     ...safeUpdate
-  } = parsed.data;
+  } = parsed.data
 
-  const updated = await queries.lists.update(id, safeUpdate);
+  const updated = await queries.lists.update(id, safeUpdate)
 
   await publishBoardEvent(
     existingList.projectId,
     { type: "list_updated", list: updated },
     originClientId,
-  );
+  )
 
-  revalidatePath(`/projects/${existingList.projectId}`);
+  revalidatePath(`/projects/${existingList.projectId}`)
 
-  return { success: true, data: updated };
+  return { success: true, data: updated }
 }
 
 export async function deleteList(
   id: string,
   originClientId?: string,
 ): Promise<ActionResult<null>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const existingList = await queries.lists.getById(id);
+  const existingList = await queries.lists.getById(id)
   if (!existingList) {
-    return { success: false, error: "Not found" };
+    return { success: false, error: "Not found" }
   }
 
   const access = await assertProjectEditAccess(
     existingList.projectId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
-  await queries.lists.delete(id);
+  await queries.lists.delete(id)
 
   await publishBoardEvent(
     existingList.projectId,
     { type: "list_deleted", listId: id },
     originClientId,
-  );
+  )
 
-  revalidatePath(`/projects/${existingList.projectId}`);
+  revalidatePath(`/projects/${existingList.projectId}`)
 
-  return { success: true, data: null };
+  return { success: true, data: null }
 }
 
 export async function moveList(
@@ -171,50 +171,50 @@ export async function moveList(
   newPosition: number,
   originClientId?: string,
 ): Promise<ActionResult<List[]>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const existingList = await queries.lists.getById(id);
+  const existingList = await queries.lists.getById(id)
   if (!existingList) {
-    return { success: false, error: "Not found" };
+    return { success: false, error: "Not found" }
   }
 
   const access = await assertProjectEditAccess(
     existingList.projectId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
-  const projectLists = await queries.lists.getByProject(existingList.projectId);
+  const projectLists = await queries.lists.getByProject(existingList.projectId)
   const clampedPosition = Math.max(
     0,
     Math.min(newPosition, projectLists.length - 1),
-  );
+  )
 
-  const reordered = projectLists.filter((l) => l.id !== id);
-  reordered.splice(clampedPosition, 0, existingList);
+  const reordered = projectLists.filter((l) => l.id !== id)
+  reordered.splice(clampedPosition, 0, existingList)
 
   const finalLists = reordered.map((list, index) =>
     list.position !== index ? { ...list, position: index } : list,
-  );
+  )
 
   const updates = finalLists
-    .filter((list, index) => reordered[index].position !== index)
-    .map((list) => queries.lists.update(list.id, { position: list.position }));
+    .filter((_list, index) => reordered[index].position !== index)
+    .map((list) => queries.lists.update(list.id, { position: list.position }))
 
-  await Promise.all(updates);
+  await Promise.all(updates)
 
   await publishBoardEvent(
     existingList.projectId,
     { type: "list_moved", lists: finalLists },
     originClientId,
-  );
+  )
 
-  revalidatePath(`/projects/${existingList.projectId}`);
+  revalidatePath(`/projects/${existingList.projectId}`)
 
-  return { success: true, data: finalLists };
+  return { success: true, data: finalLists }
 }

@@ -1,26 +1,18 @@
 // components/projects/project-team/project-team-view.tsx
-"use client";
+"use client"
 
-import { useState, useTransition, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
-  UserPlus,
-  Users as UsersIcon,
-  Trash2,
-  Shield,
-  MoreHorizontal,
-  Mail,
   Check,
   Eye,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Mail,
+  MoreHorizontal,
+  Shield,
+  Trash2,
+  UserPlus,
+  Users as UsersIcon,
+} from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState, useTransition } from "react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,74 +22,82 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+} from "@/components/ui/dialog"
 import {
-  updateMemberRole,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useToast } from "@/hooks/use-toast"
+import {
   removeProjectMember,
-} from "@/lib/actions/project-member";
+  updateMemberRole,
+} from "@/lib/actions/project-member"
 import {
-  updateProjectTeamRole,
   detachTeamFromProject,
-} from "@/lib/actions/project-team";
-import { AddIndividualModal } from "./modals/add-individual-modal";
-import { AttachTeamModal } from "./modals/attach-team-modal";
-import { getInitials } from "@/lib/utils/avatar";
-import { UserAvatar } from "@/components/ui/user-avatar";
+  updateProjectTeamRole,
+} from "@/lib/actions/project-team"
+import { getInitials } from "@/lib/utils/avatar"
+import { AddIndividualModal } from "./modals/add-individual-modal"
+import { AttachTeamModal } from "./modals/attach-team-modal"
 
 type ProjectTeamIndividual = {
-  id: string;
-  userId: string;
-  name: string;
-  email: string;
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-  activeTaskCount: number;
-  recentActivity: unknown[];
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-};
+  id: string
+  userId: string
+  name: string
+  email: string
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer"
+  activeTaskCount: number
+  recentActivity: unknown[]
+  imageUrl?: string | null
+  hasImage?: boolean | null
+}
 
 type ProjectTeamMemberInfo = {
-  userId: string;
-  userName: string;
-  userEmail: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-};
+  userId: string
+  userName: string
+  userEmail: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+}
 
 type ProjectTeamEntry = {
-  projectTeamId: string;
-  teamId: string;
-  teamName: string;
-  role: "editor" | "contributor" | "viewer";
-  members: ProjectTeamMemberInfo[];
-};
+  projectTeamId: string
+  teamId: string
+  teamName: string
+  role: "editor" | "contributor" | "viewer"
+  members: ProjectTeamMemberInfo[]
+}
 
 type ProjectTeamViewProps = {
-  projectId: string;
-  initialIndividuals: ProjectTeamIndividual[];
-  initialTeams: ProjectTeamEntry[];
-  canManage: boolean;
-};
+  projectId: string
+  initialIndividuals: ProjectTeamIndividual[]
+  initialTeams: ProjectTeamEntry[]
+  canManage: boolean
+}
 
 const ROLES = [
   { value: "viewer", label: "Viewer" },
   { value: "contributor", label: "Contributor" },
   { value: "editor", label: "Editor" },
   { value: "admin", label: "Admin" },
-] as const;
+] as const
 
 const TEAM_ROLES = [
   { value: "viewer", label: "Viewer" },
   { value: "contributor", label: "Contributor" },
   { value: "editor", label: "Editor" },
-] as const;
+] as const
 
 export function ProjectTeamView({
   projectId,
@@ -105,92 +105,92 @@ export function ProjectTeamView({
   initialTeams,
   canManage,
 }: ProjectTeamViewProps) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isPending, startTransition] = useTransition()
 
-  const [individuals, setIndividuals] = useState(initialIndividuals);
-  const [teams, setTeams] = useState(initialTeams);
-
-  useEffect(() => {
-    setIndividuals(initialIndividuals);
-  }, [initialIndividuals]);
+  const [individuals, setIndividuals] = useState(initialIndividuals)
+  const [teams, setTeams] = useState(initialTeams)
 
   useEffect(() => {
-    setTeams(initialTeams);
-  }, [initialTeams]);
+    setIndividuals(initialIndividuals)
+  }, [initialIndividuals])
+
+  useEffect(() => {
+    setTeams(initialTeams)
+  }, [initialTeams])
 
   // Modal inspection state for team members
   const [inspectingTeam, setInspectingTeam] = useState<ProjectTeamEntry | null>(
     null,
-  );
+  )
 
   // Tab state: "individuals" | "teams"
   const [activeTab, setActiveTab] = useState<"individuals" | "teams">(
     "individuals",
-  );
+  )
 
   // Modals state
-  const [addIndividualOpen, setAddIndividualOpen] = useState(false);
-  const [attachTeamOpen, setAttachTeamOpen] = useState(false);
+  const [addIndividualOpen, setAddIndividualOpen] = useState(false)
+  const [attachTeamOpen, setAttachTeamOpen] = useState(false)
 
   // Removal confirm dialog state
   const [memberToRemove, setMemberToRemove] =
-    useState<ProjectTeamIndividual | null>(null);
+    useState<ProjectTeamIndividual | null>(null)
   const [teamToDetach, setTeamToDetach] = useState<ProjectTeamEntry | null>(
     null,
-  );
+  )
 
   // Handlers — Individuals
   async function handleMemberRoleChange(
     memberId: string,
     newRole: "admin" | "editor" | "contributor" | "viewer",
   ) {
-    const prev = individuals;
+    const prev = individuals
     setIndividuals((curr) =>
       curr.map((m) => (m.id === memberId ? { ...m, role: newRole } : m)),
-    );
+    )
 
     startTransition(async () => {
       const result = await updateMemberRole(projectId, memberId, {
         role: newRole,
-      });
+      })
       if (!result.success) {
-        setIndividuals(prev);
+        setIndividuals(prev)
         toast({
           title: "Failed to update role",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
-      toast({ title: "Role updated successfully" });
-      router.refresh();
-    });
+      toast({ title: "Role updated successfully" })
+      router.refresh()
+    })
   }
 
   async function handleConfirmRemoveMember() {
-    if (!memberToRemove) return;
-    const target = memberToRemove;
-    setMemberToRemove(null);
+    if (!memberToRemove) return
+    const target = memberToRemove
+    setMemberToRemove(null)
 
-    const prev = individuals;
-    setIndividuals((curr) => curr.filter((m) => m.id !== target.id));
+    const prev = individuals
+    setIndividuals((curr) => curr.filter((m) => m.id !== target.id))
 
     startTransition(async () => {
-      const result = await removeProjectMember(projectId, target.id);
+      const result = await removeProjectMember(projectId, target.id)
       if (!result.success) {
-        setIndividuals(prev);
+        setIndividuals(prev)
         toast({
           title: "Failed to remove member",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
-      toast({ title: "Member removed from project" });
-      router.refresh();
-    });
+      toast({ title: "Member removed from project" })
+      router.refresh()
+    })
   }
 
   // Handlers — Teams
@@ -198,58 +198,58 @@ export function ProjectTeamView({
     projectTeamId: string,
     newRole: "editor" | "contributor" | "viewer",
   ) {
-    const prev = teams;
+    const prev = teams
     setTeams((curr) =>
       curr.map((t) =>
         t.projectTeamId === projectTeamId ? { ...t, role: newRole } : t,
       ),
-    );
+    )
 
     startTransition(async () => {
       const result = await updateProjectTeamRole(projectId, projectTeamId, {
         role: newRole,
-      });
+      })
       if (!result.success) {
-        setTeams(prev);
+        setTeams(prev)
         toast({
           title: "Failed to update team role",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
-      toast({ title: "Team role updated" });
-      router.refresh();
-    });
+      toast({ title: "Team role updated" })
+      router.refresh()
+    })
   }
 
   async function handleConfirmDetachTeam() {
-    if (!teamToDetach) return;
-    const target = teamToDetach;
-    setTeamToDetach(null);
+    if (!teamToDetach) return
+    const target = teamToDetach
+    setTeamToDetach(null)
 
-    const prev = teams;
+    const prev = teams
     setTeams((curr) =>
       curr.filter((t) => t.projectTeamId !== target.projectTeamId),
-    );
+    )
 
     startTransition(async () => {
       const result = await detachTeamFromProject(
         projectId,
         target.projectTeamId,
-      );
+      )
       if (!result.success) {
-        setTeams(prev);
+        setTeams(prev)
         toast({
           title: "Failed to detach team",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
-      toast({ title: "Team detached from project" });
-      router.refresh();
-    });
+      toast({ title: "Team detached from project" })
+      router.refresh()
+    })
   }
 
   // Safety effect to fix pointer-events freeze on dialog close
@@ -259,9 +259,9 @@ export function ProjectTeamView({
       teamToDetach === null &&
       inspectingTeam === null
     ) {
-      document.body.style.pointerEvents = "";
+      document.body.style.pointerEvents = ""
     }
-  }, [memberToRemove, teamToDetach, inspectingTeam]);
+  }, [memberToRemove, teamToDetach, inspectingTeam])
 
   return (
     <div className="w-full space-y-5 sm:space-y-6 pb-12 px-2 sm:px-0">
@@ -327,8 +327,8 @@ export function ProjectTeamView({
       {activeTab === "individuals" && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {individuals.map((ind) => {
-            const isOwnerRow = ind.id === "owner" || ind.role === "owner";
-            const avatarKey = ind.userId || ind.email || ind.name;
+            const isOwnerRow = ind.id === "owner" || ind.role === "owner"
+            const avatarKey = ind.userId || ind.email || ind.name
 
             return (
               <div
@@ -422,7 +422,7 @@ export function ProjectTeamView({
                   </span>
                 </div>
               </div>
-            );
+            )
           })}
         </div>
       )}
@@ -668,5 +668,5 @@ export function ProjectTeamView({
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
+  )
 }

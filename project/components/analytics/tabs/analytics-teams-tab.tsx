@@ -1,22 +1,22 @@
-"use client";
+"use client"
 
-import { Layers, ArrowUpDown } from "lucide-react";
-import { getInitials } from "@/lib/utils/avatar";
+import { ArrowUpDown, Layers } from "lucide-react"
+import { getInitials } from "@/lib/utils/avatar"
 
 export type TeamBreakdownRow = {
-  teamId: string;
-  teamName: string;
-  memberCount: number;
-  completedCount: number;
-  activeDays: number;
-  avgResolutionDays: number | null;
-};
+  teamId: string
+  teamName: string
+  memberCount: number
+  completedCount: number
+  activeDays: number
+  avgResolutionDays: number | null
+}
 
 type TeamSortField =
   | "completedCount"
   | "activeDays"
   | "avgResolutionDays"
-  | "memberCount";
+  | "memberCount"
 
 export function AnalyticsTeamsTab({
   loading,
@@ -25,11 +25,11 @@ export function AnalyticsTeamsTab({
   teamSortField,
   onSort,
 }: {
-  loading: boolean;
-  error: string | null;
-  teamsList: TeamBreakdownRow[];
-  teamSortField: TeamSortField;
-  onSort: (field: TeamSortField) => void;
+  loading: boolean
+  error: string | null
+  teamsList: TeamBreakdownRow[]
+  teamSortField: TeamSortField
+  onSort: (field: TeamSortField) => void
 }) {
   return (
     <div
@@ -160,5 +160,5 @@ export function AnalyticsTeamsTab({
         </div>
       )}
     </div>
-  );
+  )
 }

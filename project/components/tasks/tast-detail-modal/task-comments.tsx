@@ -1,47 +1,47 @@
 // components/tasks/tast-detail-modal/task-comments.tsx
-"use client";
+"use client"
 
-import { useEffect, useState, useTransition } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs"
 import {
+  AtSign,
   Bold,
   Italic,
-  Strikethrough,
   Link as LinkIcon,
   List,
   ListOrdered,
-  AtSign,
   Smile,
-} from "lucide-react";
+  Strikethrough,
+} from "lucide-react"
+import { useEffect, useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
 import {
   createComment,
-  getCommentsByTask,
   deleteComment,
+  getCommentsByTask,
   updateComment,
-} from "@/lib/actions/comments";
-import { getCurrentUserId } from "@/lib/actions/currentUser";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
+} from "@/lib/actions/comments"
+import { getCurrentUserId } from "@/lib/actions/currentUser"
+import { getRealtimeClientId } from "@/lib/realtime/client"
 import {
   CommentRow,
   CommentRowSkeleton,
   type CommentWithAuthor,
-} from "./task-comments/comment-row";
-import { TaskCommentsModal } from "./task-comments/task-comments-modal";
-import { getRealtimeClientId } from "@/lib/realtime/client";
+} from "./task-comments/comment-row"
+import { TaskCommentsModal } from "./task-comments/task-comments-modal"
 
 type TaskCommentsProps = {
-  taskId: string;
-  refreshKey?: number;
-  previewCount?: number;
-  canEdit: boolean;
-  canContribute: boolean;
-  currentUserId?: string | null;
-  onCommentCountChanged?: (taskId: string, delta: number) => void;
-  onActivityChanged?: () => void;
-};
+  taskId: string
+  refreshKey?: number
+  previewCount?: number
+  canEdit: boolean
+  canContribute: boolean
+  currentUserId?: string | null
+  onCommentCountChanged?: (taskId: string, delta: number) => void
+  onActivityChanged?: () => void
+}
 
 export function TaskComments({
   taskId,
@@ -52,14 +52,14 @@ export function TaskComments({
   onCommentCountChanged,
   onActivityChanged,
 }: TaskCommentsProps) {
-  const { toast } = useToast();
-  const { user } = useUser();
-  const [comments, setComments] = useState<CommentWithAuthor[] | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [content, setContent] = useState("");
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isPending, startTransition] = useTransition();
-  const [showAllOpen, setShowAllOpen] = useState(false);
+  const { toast } = useToast()
+  const { user } = useUser()
+  const [comments, setComments] = useState<CommentWithAuthor[] | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [content, setContent] = useState("")
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [showAllOpen, setShowAllOpen] = useState(false)
 
   function refresh() {
     getCommentsByTask(taskId).then((result) => {
@@ -68,30 +68,30 @@ export function TaskComments({
           title: "Failed to load comments",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
-      setComments(result.data as CommentWithAuthor[]);
-    });
+      setComments(result.data as CommentWithAuthor[])
+    })
   }
 
   useEffect(() => {
     if (!propUserId) {
-      getCurrentUserId().then(setCurrentUserId);
+      getCurrentUserId().then(setCurrentUserId)
     } else {
-      setCurrentUserId(propUserId);
+      setCurrentUserId(propUserId)
     }
-  }, [taskId, propUserId]);
+  }, [taskId, propUserId])
 
   useEffect(() => {
-    refresh();
-  }, [taskId, refreshKey]);
+    refresh()
+  }, [taskId, refreshKey])
 
   function handlePost() {
-    if (!content.trim()) return;
+    if (!content.trim()) return
 
-    const tempId = `temp-${crypto.randomUUID()}`;
-    const submittedContent = content;
+    const tempId = `temp-${crypto.randomUUID()}`
+    const submittedContent = content
 
     const optimisticComment = {
       id: tempId,
@@ -106,73 +106,73 @@ export function TaskComments({
         imageUrl: user?.imageUrl,
         hasImage: !!user?.hasImage,
       },
-    } as CommentWithAuthor;
+    } as CommentWithAuthor
 
-    setContent("");
-    setIsExpanded(false);
-    setComments((prev) => [...(prev ?? []), optimisticComment]);
-    onCommentCountChanged?.(taskId, 1);
+    setContent("")
+    setIsExpanded(false)
+    setComments((prev) => [...(prev ?? []), optimisticComment])
+    onCommentCountChanged?.(taskId, 1)
 
     startTransition(async () => {
       const result = await createComment(
         { taskId, content: submittedContent },
         getRealtimeClientId(),
-      );
+      )
       if (!result.success) {
         toast({
           title: "Failed to post comment",
           description: result.fieldErrors ? "Check your input." : result.error,
           variant: "destructive",
-        });
-        setComments((prev) => (prev ?? []).filter((c) => c.id !== tempId));
-        onCommentCountChanged?.(taskId, -1);
-        setContent(submittedContent);
-        setIsExpanded(true);
-        return;
+        })
+        setComments((prev) => (prev ?? []).filter((c) => c.id !== tempId))
+        onCommentCountChanged?.(taskId, -1)
+        setContent(submittedContent)
+        setIsExpanded(true)
+        return
       }
-      refresh();
-      onActivityChanged?.();
-    });
+      refresh()
+      onActivityChanged?.()
+    })
   }
 
   function handleCancel() {
-    setContent("");
-    setIsExpanded(false);
+    setContent("")
+    setIsExpanded(false)
   }
 
   function handleDelete(id: string) {
     startTransition(async () => {
-      const result = await deleteComment(id, getRealtimeClientId());
+      const result = await deleteComment(id, getRealtimeClientId())
       if (!result.success) {
         toast({
           title: "Failed to delete comment",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
-      refresh();
-      onActivityChanged?.();
-      onCommentCountChanged?.(taskId, -1);
-    });
+      refresh()
+      onActivityChanged?.()
+      onCommentCountChanged?.(taskId, -1)
+    })
   }
 
   async function handleEdit(id: string, content: string): Promise<boolean> {
-    const result = await updateComment(id, content);
+    const result = await updateComment(id, content)
     if (!result.success) {
       toast({
         title: "Failed to update comment",
         description: result.error,
         variant: "destructive",
-      });
-      return false;
+      })
+      return false
     }
-    refresh();
-    return true;
+    refresh()
+    return true
   }
 
-  const preview = comments?.slice(-previewCount).reverse() ?? [];
-  const hasMore = (comments?.length ?? 0) > previewCount;
+  const preview = comments?.slice(-previewCount).reverse() ?? []
+  const hasMore = (comments?.length ?? 0) > previewCount
 
   return (
     <div className="flex flex-col h-full space-y-4">
@@ -335,7 +335,7 @@ export function TaskComments({
             onClick={() => setShowAllOpen(true)}
             className="shrink-0 text-xs text-primary hover:underline font-medium pt-2 text-left cursor-pointer"
           >
-            See all comments ({comments!.length})
+            See all comments ({comments?.length})
           </button>
         )}
       </div>
@@ -350,5 +350,5 @@ export function TaskComments({
         onOpenChange={setShowAllOpen}
       />
     </div>
-  );
+  )
 }

@@ -1,16 +1,16 @@
 // components/settings/notifications-tab.tsx
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Bell, ArrowLeft, ArrowRight } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { NotificationType } from "@/lib/db/schema";
-import { NOTIFICATION_TYPE_LABELS } from "@/lib/services/notification-preferences";
-import { updateNotificationPreferences } from "@/lib/actions/notification-preferences";
+import { ArrowLeft, ArrowRight, Bell } from "lucide-react"
+import { useState } from "react"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+import { updateNotificationPreferences } from "@/lib/actions/notification-preferences"
+import type { NotificationType } from "@/lib/db/schema"
+import { NOTIFICATION_TYPE_LABELS } from "@/lib/services/notification-preferences"
 
 interface NotificationsTabProps {
-  initialPreferences?: Record<NotificationType, boolean>;
+  initialPreferences?: Record<NotificationType, boolean>
 }
 
 const NOTIFICATION_DESCRIPTIONS: Record<NotificationType, string> = {
@@ -28,96 +28,96 @@ const NOTIFICATION_DESCRIPTIONS: Record<NotificationType, string> = {
   team_member_removed: "Alerts when a member is removed from your team.",
   team_attached_to_project:
     "Get notified when a team is attached to a project.",
-};
+}
 
 export function NotificationsTab({
   initialPreferences,
 }: NotificationsTabProps) {
   const notificationEntries = Object.keys(
     NOTIFICATION_TYPE_LABELS,
-  ) as NotificationType[];
+  ) as NotificationType[]
 
   const [preferences, setPreferences] = useState<
     Record<NotificationType, boolean>
   >(() => {
-    const defaults: Record<string, boolean> = {};
+    const defaults: Record<string, boolean> = {}
     for (const type of notificationEntries) {
-      defaults[type] = initialPreferences?.[type] ?? true;
+      defaults[type] = initialPreferences?.[type] ?? true
     }
-    return defaults as Record<NotificationType, boolean>;
-  });
+    return defaults as Record<NotificationType, boolean>
+  })
 
   const [isNotificationsOn, setIsNotificationsOn] = useState<boolean>(() => {
-    if (!initialPreferences) return true;
-    return Object.values(initialPreferences).some(Boolean);
-  });
+    if (!initialPreferences) return true
+    return Object.values(initialPreferences).some(Boolean)
+  })
 
-  const [isCustomizing, setIsCustomizing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
+  const [isCustomizing, setIsCustomizing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const { toast } = useToast()
 
   function handleLocalToggle(type: NotificationType, newValue: boolean) {
-    setPreferences((prev) => ({ ...prev, [type]: newValue }));
+    setPreferences((prev) => ({ ...prev, [type]: newValue }))
   }
 
   async function handleMasterToggle() {
-    const newValue = !isNotificationsOn;
-    setIsNotificationsOn(newValue);
+    const newValue = !isNotificationsOn
+    setIsNotificationsOn(newValue)
 
     const patch = notificationEntries.reduce(
       (acc, key) => {
-        acc[key] = newValue ? (preferences[key] ?? true) : false;
-        return acc;
+        acc[key] = newValue ? (preferences[key] ?? true) : false
+        return acc
       },
       {} as Record<NotificationType, boolean>,
-    );
+    )
 
     if (newValue) {
-      setPreferences(patch);
+      setPreferences(patch)
     }
 
     try {
-      const result = await updateNotificationPreferences(patch);
+      const result = await updateNotificationPreferences(patch)
       if (!result.success) {
         throw new Error(
           result.error || "Failed to update notification settings",
-        );
+        )
       }
       toast({
         title: "Preferences updated",
         description: newValue
           ? "Notifications enabled."
           : "All notifications disabled.",
-      });
+      })
     } catch {
       toast({
         title: "Error",
         description: "Failed to update preferences. Please try again.",
         variant: "destructive",
-      });
+      })
     }
   }
 
   async function handleSaveCustomizations() {
-    setIsSaving(true);
+    setIsSaving(true)
     try {
-      const result = await updateNotificationPreferences(preferences);
+      const result = await updateNotificationPreferences(preferences)
       if (!result.success) {
-        throw new Error(result.error || "Failed to save preferences");
+        throw new Error(result.error || "Failed to save preferences")
       }
       toast({
         title: "Preferences saved",
         description: "Your custom notification settings have been updated.",
-      });
-      setIsCustomizing(false);
+      })
+      setIsCustomizing(false)
     } catch {
       toast({
         title: "Error",
         description: "Failed to save preferences. Please try again.",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
   }
 
@@ -237,5 +237,5 @@ export function NotificationsTab({
         </div>
       )}
     </div>
-  );
+  )
 }

@@ -1,44 +1,44 @@
 // components/dashboard/assigned-tasks-card.tsx
-"use client";
+"use client"
 
-import Link from "next/link";
-import { CheckSquare, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, CheckSquare } from "lucide-react"
+import Link from "next/link"
 
 type AssignedTaskDTO = {
-  id: string;
-  title: string;
-  dueDate: string | null;
-  priority: string | null;
-  projectId: string;
-  projectName: string;
-  listId: string;
-};
+  id: string
+  title: string
+  dueDate: string | null
+  priority: string | null
+  projectId: string
+  projectName: string
+  listId: string
+}
 
 const priorityColors: Record<string, string> = {
   high: "bg-destructive/10 text-destructive border-destructive/20",
   medium:
     "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
   low: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-};
+}
 
 function getPriorityBadgeClass(priority: string | null | undefined): string {
   if (!priority)
-    return "bg-secondary text-secondary-foreground border-border/80";
-  const normalized = priority.toLowerCase();
+    return "bg-secondary text-secondary-foreground border-border/80"
+  const normalized = priority.toLowerCase()
   return (
     priorityColors[normalized] ||
     "bg-secondary text-secondary-foreground border-border/80"
-  );
+  )
 }
 
 export function AssignedTasksCard({
   assignedTasks,
 }: {
-  assignedTasks: AssignedTaskDTO[];
+  assignedTasks: AssignedTaskDTO[]
 }) {
-  const maxAssignedTasks = 4;
-  const displayedAssignedTasks = assignedTasks.slice(0, maxAssignedTasks);
-  const remainingAssignedCount = assignedTasks.length - maxAssignedTasks;
+  const maxAssignedTasks = 4
+  const displayedAssignedTasks = assignedTasks.slice(0, maxAssignedTasks)
+  const remainingAssignedCount = assignedTasks.length - maxAssignedTasks
 
   return (
     <div className="bg-card border border-border/80 rounded-3xl shadow-xs p-5 sm:p-6 flex flex-col justify-between h-full md:col-span-2 lg:col-span-1">
@@ -67,7 +67,7 @@ export function AssignedTasksCard({
         ) : (
           <div className="space-y-2.5">
             {displayedAssignedTasks.map((task) => {
-              const priorityClass = getPriorityBadgeClass(task.priority);
+              const priorityClass = getPriorityBadgeClass(task.priority)
               return (
                 <div
                   key={task.id}
@@ -104,7 +104,7 @@ export function AssignedTasksCard({
                     )}
                   </div>
                 </div>
-              );
+              )
             })}
 
             {remainingAssignedCount > 0 && (
@@ -129,5 +129,5 @@ export function AssignedTasksCard({
         </Link>
       </div>
     </div>
-  );
+  )
 }

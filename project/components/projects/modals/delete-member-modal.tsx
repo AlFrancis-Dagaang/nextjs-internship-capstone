@@ -1,21 +1,21 @@
 // components/projects/modals/delete-member-modal.tsx
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 
 type DeleteMemberModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  memberName: string;
-  isPending: boolean;
-};
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => void
+  memberName: string
+  isPending: boolean
+}
 
 export function DeleteMemberModal({
   isOpen,
@@ -65,5 +65,5 @@ export function DeleteMemberModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

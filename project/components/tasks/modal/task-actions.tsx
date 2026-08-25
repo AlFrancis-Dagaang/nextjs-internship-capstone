@@ -1,55 +1,55 @@
 // components/tasks/modal/task-actions.tsx
-"use client";
+"use client"
 
-import { useState, useEffect, useTransition } from "react";
 import {
-  MoreHorizontal,
-  ChevronLeft,
-  X,
-  ExternalLink,
-  Edit2,
   Archive,
+  Check,
+  ChevronLeft,
+  Edit2,
+  ExternalLink,
+  Loader2,
+  MoreHorizontal,
   Move,
+  Search,
   Trash2,
   UserPlus,
-  Search,
-  Check,
-  Loader2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+  X,
+} from "lucide-react"
+import { useEffect, useState, useTransition } from "react"
+import type { ListWithTasks } from "@/components/lists/board"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import type { Task } from "@/lib/db/schema";
-import { moveTaskToList, archiveTask } from "@/lib/actions/tasks";
+} from "@/components/ui/select"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useToast } from "@/hooks/use-toast"
+import { getAssignableUsers } from "@/lib/actions/project-member"
 import {
-  getTaskAssignees,
   assignUserToTask,
-} from "@/lib/actions/task-assignees";
-import { getAssignableUsers } from "@/lib/actions/project-member";
-import { ListWithTasks } from "@/components/lists/board";
-import { useBoardStore } from "@/stores/board-store";
-import { UserAvatar } from "@/components/ui/user-avatar";
+  getTaskAssignees,
+} from "@/lib/actions/task-assignees"
+import { archiveTask, moveTaskToList } from "@/lib/actions/tasks"
+import type { Task } from "@/lib/db/schema"
+import { useBoardStore } from "@/stores/board-store"
 
 type AssigneeUser = {
-  id: string;
-  name?: string;
-  email?: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-};
+  id: string
+  name?: string
+  email?: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+}
 
 export function TaskActions({
   taskId,
@@ -65,173 +65,171 @@ export function TaskActions({
   onDeleteClick,
   onMoved,
 }: {
-  taskId: string;
-  projectId: string;
-  currentListId: string;
-  allLists: ListWithTasks[];
-  canEdit: boolean;
-  canContribute: boolean;
-  onView: () => void;
-  onRename: () => void;
-  onArchive: () => void;
-  onDeleteClick: () => void;
-  onMoved?: (task: Task, affectedTasks: Task[]) => void;
+  taskId: string
+  projectId: string
+  currentListId: string
+  allLists: ListWithTasks[]
+  canEdit: boolean
+  canContribute: boolean
+  onView: () => void
+  onRename: () => void
+  onArchive: () => void
+  onDeleteClick: () => void
+  onMoved?: (task: Task, affectedTasks: Task[]) => void
   onAssigned?: (assignee: {
-    userId: string;
-    name?: string;
-    email?: string;
-    imageUrl?: string | null;
-    hasImage?: boolean | null;
-  }) => void;
+    userId: string
+    name?: string
+    email?: string
+    imageUrl?: string | null
+    hasImage?: boolean | null
+  }) => void
 }) {
-  const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
-  const [view, setView] = useState<"menu" | "move" | "assign">("menu");
-  const [targetListId, setTargetListId] = useState(currentListId);
-  const [position, setPosition] = useState("1");
-  const [isMoving, startMoveTransition] = useTransition();
+  const { toast } = useToast()
+  const [isOpen, setIsOpen] = useState(false)
+  const [view, setView] = useState<"menu" | "move" | "assign">("menu")
+  const [targetListId, setTargetListId] = useState(currentListId)
+  const [position, setPosition] = useState("1")
+  const [isMoving, startMoveTransition] = useTransition()
 
-  const [assignableUsers, setAssignableUsers] = useState<AssigneeUser[]>([]);
-  const [assignedUserIds, setAssignedUserIds] = useState<Set<string>>(
-    new Set(),
-  );
-  const [assignSearchQuery, setAssignSearchQuery] = useState("");
-  const [isLoadingAssignees, setIsLoadingAssignees] = useState(false);
-  const [, startAssignTransition] = useTransition();
+  const [assignableUsers, setAssignableUsers] = useState<AssigneeUser[]>([])
+  const [assignedUserIds, setAssignedUserIds] = useState<Set<string>>(new Set())
+  const [assignSearchQuery, setAssignSearchQuery] = useState("")
+  const [isLoadingAssignees, setIsLoadingAssignees] = useState(false)
+  const [, startAssignTransition] = useTransition()
 
-  const applyOptimisticMove = useBoardStore((s) => s.applyOptimisticMove);
-  const revertMoveSnapshot = useBoardStore((s) => s.revertMoveSnapshot);
-  const archiveTaskLocally = useBoardStore((s) => s.archiveTaskLocally);
-  const revertArchiveSnapshot = useBoardStore((s) => s.revertArchiveSnapshot);
+  const applyOptimisticMove = useBoardStore((s) => s.applyOptimisticMove)
+  const revertMoveSnapshot = useBoardStore((s) => s.revertMoveSnapshot)
+  const archiveTaskLocally = useBoardStore((s) => s.archiveTaskLocally)
+  const revertArchiveSnapshot = useBoardStore((s) => s.revertArchiveSnapshot)
 
   useEffect(() => {
     if (view === "move") {
-      setTargetListId(currentListId);
+      setTargetListId(currentListId)
 
-      const currentList = allLists.find((l) => l.id === currentListId);
+      const currentList = allLists.find((l) => l.id === currentListId)
       const sortedTasks = currentList
         ? [...currentList.tasks].sort((a, b) => a.position - b.position)
-        : [];
-      const currentIndex = sortedTasks.findIndex((t) => t.id === taskId);
+        : []
+      const currentIndex = sortedTasks.findIndex((t) => t.id === taskId)
 
-      setPosition(currentIndex >= 0 ? String(currentIndex + 1) : "1");
+      setPosition(currentIndex >= 0 ? String(currentIndex + 1) : "1")
     }
-  }, [view, currentListId, allLists, taskId]);
+  }, [view, currentListId, allLists, taskId])
 
   useEffect(() => {
     if (view === "assign") {
-      setAssignSearchQuery("");
-      setIsLoadingAssignees(true);
+      setAssignSearchQuery("")
+      setIsLoadingAssignees(true)
 
       async function loadAssignData() {
         try {
           const [assigneesRes, candidatesRes] = await Promise.all([
             getTaskAssignees(taskId),
             getAssignableUsers(projectId),
-          ]);
+          ])
 
           if (assigneesRes.success) {
-            setAssignedUserIds(new Set(assigneesRes.data.map((a) => a.userId)));
+            setAssignedUserIds(new Set(assigneesRes.data.map((a) => a.userId)))
           }
           if (candidatesRes.success) {
-            setAssignableUsers(candidatesRes.data);
+            setAssignableUsers(candidatesRes.data)
           }
         } catch (err) {
-          console.error("Failed to load assignee options:", err);
+          console.error("Failed to load assignee options:", err)
         } finally {
-          setIsLoadingAssignees(false);
+          setIsLoadingAssignees(false)
         }
       }
 
-      loadAssignData();
+      loadAssignData()
     }
-  }, [view, taskId, projectId]);
+  }, [view, taskId, projectId])
 
   const destTaskCount = (() => {
-    const destList = allLists.find((l) => l.id === targetListId);
-    if (!destList) return 0;
+    const destList = allLists.find((l) => l.id === targetListId)
+    if (!destList) return 0
     return targetListId === currentListId
       ? destList.tasks.filter((t) => t.id !== taskId).length
-      : destList.tasks.length;
-  })();
+      : destList.tasks.length
+  })()
 
   function handleMove() {
-    const zeroIndexedPosition = parseInt(position, 10) - 1;
+    const zeroIndexedPosition = parseInt(position, 10) - 1
     const snapshot = applyOptimisticMove(
       taskId,
       targetListId,
       zeroIndexedPosition,
-    );
-    setIsOpen(false);
-    setView("menu");
+    )
+    setIsOpen(false)
+    setView("menu")
 
     startMoveTransition(async () => {
       const result = await moveTaskToList(
         taskId,
         targetListId,
         zeroIndexedPosition,
-      );
+      )
       if (!result.success) {
-        revertMoveSnapshot(snapshot);
+        revertMoveSnapshot(snapshot)
         toast({
           title: "Failed to move task",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
-      toast({ title: "Task moved" });
-      onMoved?.(result.data.movedTask, result.data.affectedTasks);
-    });
+      toast({ title: "Task moved" })
+      onMoved?.(result.data.movedTask, result.data.affectedTasks)
+    })
   }
 
   function handleQuickAssign(user: AssigneeUser) {
-    if (assignedUserIds.has(user.id)) return;
+    if (assignedUserIds.has(user.id)) return
 
     startAssignTransition(async () => {
-      const result = await assignUserToTask(taskId, user.id);
+      const result = await assignUserToTask(taskId, user.id)
       if (!result.success) {
         toast({
           title: "Failed to assign user",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
 
-      setAssignedUserIds((prev) => new Set(prev).add(user.id));
+      setAssignedUserIds((prev) => new Set(prev).add(user.id))
       onAssigned?.({
         userId: user.id,
         name: user.name,
         email: user.email,
         imageUrl: user.imageUrl,
         hasImage: user.hasImage,
-      });
+      })
       toast({
         title: "Member assigned",
         description: "Successfully added member to task.",
-      });
-    });
+      })
+    })
   }
 
   const filteredAssignableUsers = assignableUsers.filter((u) => {
-    const q = assignSearchQuery.toLowerCase();
-    const nameMatch = u.name?.toLowerCase().includes(q) ?? false;
-    const emailMatch = u.email?.toLowerCase().includes(q) ?? false;
-    return nameMatch || emailMatch;
-  });
+    const q = assignSearchQuery.toLowerCase()
+    const nameMatch = u.name?.toLowerCase().includes(q) ?? false
+    const emailMatch = u.email?.toLowerCase().includes(q) ?? false
+    return nameMatch || emailMatch
+  })
 
   const positionOptions = Array.from({ length: destTaskCount + 1 }, (_, i) =>
     String(i + 1),
-  );
+  )
 
   return (
     <DropdownMenu
       open={isOpen}
       onOpenChange={(open) => {
-        setIsOpen(open);
+        setIsOpen(open)
         if (!open) {
-          setTimeout(() => setView("menu"), 150);
+          setTimeout(() => setView("menu"), 150)
         }
       }}
     >
@@ -251,9 +249,9 @@ export function TaskActions({
         className="w-56 bg-card text-card-foreground border-border/80 rounded-2xl shadow-xl p-2 space-y-1 text-left z-50"
         onClick={(e) => e.stopPropagation()}
         onInteractOutside={(e) => {
-          const target = e.target as Element;
+          const target = e.target as Element
           if (target.closest?.("[data-radix-popper-content-wrapper]")) {
-            e.preventDefault();
+            e.preventDefault()
           }
         }}
       >
@@ -271,8 +269,8 @@ export function TaskActions({
 
             <DropdownMenuItem
               onSelect={() => {
-                setIsOpen(false);
-                onView();
+                setIsOpen(false)
+                onView()
               }}
               className="cursor-pointer px-2.5 py-2 text-xs font-medium text-foreground focus:bg-accent focus:text-accent-foreground rounded-xl flex items-center space-x-2.5"
             >
@@ -287,8 +285,8 @@ export function TaskActions({
                 </div>
                 <DropdownMenuItem
                   onSelect={() => {
-                    setIsOpen(false);
-                    onRename();
+                    setIsOpen(false)
+                    onRename()
                   }}
                   className="cursor-pointer px-2.5 py-2 text-xs font-medium text-foreground focus:bg-accent focus:text-accent-foreground rounded-xl flex items-center space-x-2.5"
                 >
@@ -297,22 +295,22 @@ export function TaskActions({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={async () => {
-                    setIsOpen(false);
-                    const snapshot = archiveTaskLocally(taskId);
-                    const result = await archiveTask(taskId);
+                    setIsOpen(false)
+                    const snapshot = archiveTaskLocally(taskId)
+                    const result = await archiveTask(taskId)
                     if (result.success) {
                       toast({
                         title: "Task archived",
                         description: "Task has been successfully archived.",
-                      });
-                      onArchive();
+                      })
+                      onArchive()
                     } else {
-                      revertArchiveSnapshot(snapshot);
+                      revertArchiveSnapshot(snapshot)
                       toast({
                         title: "Failed to archive task",
                         description: result.error,
                         variant: "destructive",
-                      });
+                      })
                     }
                   }}
                   className="cursor-pointer px-2.5 py-2 text-xs font-medium text-foreground focus:bg-accent focus:text-accent-foreground rounded-xl flex items-center space-x-2.5"
@@ -322,8 +320,8 @@ export function TaskActions({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={(e) => {
-                    e.preventDefault();
-                    setView("assign");
+                    e.preventDefault()
+                    setView("assign")
                   }}
                   className="cursor-pointer px-2.5 py-2 text-xs font-medium text-foreground focus:bg-accent focus:text-accent-foreground rounded-xl flex items-center space-x-2.5"
                 >
@@ -343,8 +341,8 @@ export function TaskActions({
 
                 <DropdownMenuItem
                   onSelect={(e) => {
-                    e.preventDefault();
-                    setView("move");
+                    e.preventDefault()
+                    setView("move")
                   }}
                   className="cursor-pointer px-2.5 py-2 text-xs font-medium text-foreground focus:bg-accent focus:text-accent-foreground rounded-xl flex items-center space-x-2.5"
                 >
@@ -358,8 +356,8 @@ export function TaskActions({
               <div className="border-t border-border/60 pt-1 mt-1">
                 <DropdownMenuItem
                   onSelect={() => {
-                    setIsOpen(false);
-                    onDeleteClick();
+                    setIsOpen(false)
+                    onDeleteClick()
                   }}
                   className="cursor-pointer px-2.5 py-2 text-xs font-medium text-destructive focus:bg-destructive/10 rounded-xl flex items-center space-x-2.5"
                 >
@@ -492,8 +490,8 @@ export function TaskActions({
                   </div>
                 ) : (
                   filteredAssignableUsers.map((user) => {
-                    const isAlreadyAssigned = assignedUserIds.has(user.id);
-                    const displayName = user.name || user.email || "User";
+                    const isAlreadyAssigned = assignedUserIds.has(user.id)
+                    const displayName = user.name || user.email || "User"
 
                     return (
                       <div
@@ -523,7 +521,7 @@ export function TaskActions({
                           <Check size={13} className="text-primary shrink-0" />
                         )}
                       </div>
-                    );
+                    )
                   })
                 )}
               </div>
@@ -532,5 +530,5 @@ export function TaskActions({
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

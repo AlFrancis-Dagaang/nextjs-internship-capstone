@@ -1,62 +1,62 @@
 // components/projects/project-detail/project-info.tsx
-"use client";
+"use client"
 
-import { useState, useEffect, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import {
-  FileText,
+  ArrowUpRight,
   Calendar,
   Clock,
   Edit2,
+  FileText,
   Trash2,
-  ArrowUpRight,
-} from "lucide-react";
-import type { Project } from "@/lib/db/schema";
-import type { CalendarEventDTO } from "@/types";
-import { updateProject } from "@/lib/actions/projects";
-import { getProjectEvents } from "@/lib/actions/events";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { DeleteProjectModal } from "../modals/delete-project-modal";
-import { ProjectEventsModal } from "../modals/project-events-modal";
-import { EventFormModal } from "@/components/calendar/modals/event-form-modal";
+} from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState, useTransition } from "react"
+import { EventFormModal } from "@/components/calendar/modals/event-form-modal"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
+import { getProjectEvents } from "@/lib/actions/events"
+import { updateProject } from "@/lib/actions/projects"
+import type { Project } from "@/lib/db/schema"
+import type { CalendarEventDTO } from "@/types"
+import { DeleteProjectModal } from "../modals/delete-project-modal"
+import { ProjectEventsModal } from "../modals/project-events-modal"
 
 type ProjectInfoProps = {
-  project: Project;
-  isOwner: boolean;
-  canManage: boolean;
-  currentUserId?: string;
-  onProjectChanged?: (project: Project) => void;
-  onProjectDeleted?: () => void;
-};
+  project: Project
+  isOwner: boolean
+  canManage: boolean
+  currentUserId?: string
+  onProjectChanged?: (project: Project) => void
+  onProjectDeleted?: () => void
+}
 
 function toDateInputValue(d: Date | string | null | undefined): string {
-  if (!d) return "";
-  const date = typeof d === "string" ? new Date(d) : d;
-  return date.toISOString().split("T")[0];
+  if (!d) return ""
+  const date = typeof d === "string" ? new Date(d) : d
+  return date.toISOString().split("T")[0]
 }
 
 function formatEventDateTime(startAt: string, endAt: string) {
   try {
-    const start = new Date(startAt);
-    const end = new Date(endAt);
+    const start = new Date(startAt)
+    const end = new Date(endAt)
     const dateStr = start.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-    });
+    })
     const startTimeStr = start.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
-    });
+    })
     const endTimeStr = end.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
-    });
-    return `${dateStr}, ${startTimeStr} – ${endTimeStr}`;
+    })
+    return `${dateStr}, ${startTimeStr} – ${endTimeStr}`
   } catch {
-    return `${startAt} – ${endAt}`;
+    return `${startAt} – ${endAt}`
   }
 }
 
@@ -68,46 +68,46 @@ export function ProjectInfo({
   onProjectChanged,
   onProjectDeleted,
 }: ProjectInfoProps) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isPending, startTransition] = useTransition()
 
   // Description editing state
-  const [isEditingDesc, setIsEditingDesc] = useState(false);
-  const [description, setDescription] = useState(project.description ?? "");
+  const [isEditingDesc, setIsEditingDesc] = useState(false)
+  const [description, setDescription] = useState(project.description ?? "")
 
   // Sync local state if the project prop changes from outside / store updates
   useEffect(() => {
     if (!isEditingDesc) {
-      setDescription(project.description ?? "");
+      setDescription(project.description ?? "")
     }
-  }, [project.description, isEditingDesc]);
+  }, [project.description, isEditingDesc])
 
   // Due date state
-  const [dueDate, setDueDate] = useState(toDateInputValue(project.dueDate));
+  const [dueDate, setDueDate] = useState(toDateInputValue(project.dueDate))
 
   // Sync local due date if project prop updates externally
   useEffect(() => {
-    setDueDate(toDateInputValue(project.dueDate));
-  }, [project.dueDate]);
+    setDueDate(toDateInputValue(project.dueDate))
+  }, [project.dueDate])
 
   // Delete modal state
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   // Events state
-  const [events, setEvents] = useState<CalendarEventDTO[]>([]);
-  const [isEventsLoading, setIsEventsLoading] = useState(true);
+  const [events, setEvents] = useState<CalendarEventDTO[]>([])
+  const [isEventsLoading, setIsEventsLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<
     CalendarEventDTO | undefined
-  >(undefined);
-  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
-  const [isAllEventsModalOpen, setIsAllEventsModalOpen] = useState(false);
+  >(undefined)
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false)
+  const [isAllEventsModalOpen, setIsAllEventsModalOpen] = useState(false)
 
   useEffect(() => {
-    let isMounted = true;
+    let isMounted = true
     async function loadEvents() {
-      setIsEventsLoading(true);
-      const res = await getProjectEvents(project.id);
+      setIsEventsLoading(true)
+      const res = await getProjectEvents(project.id)
       if (isMounted) {
         if (res.success && res.data) {
           const formattedEvents: CalendarEventDTO[] = res.data.map((event) => ({
@@ -120,92 +120,92 @@ export function ProjectInfo({
               event.endAt instanceof Date
                 ? event.endAt.toISOString()
                 : event.endAt,
-          }));
-          setEvents(formattedEvents);
+          }))
+          setEvents(formattedEvents)
         }
-        setIsEventsLoading(false);
+        setIsEventsLoading(false)
       }
     }
-    loadEvents();
+    loadEvents()
     return () => {
-      isMounted = false;
-    };
-  }, [project.id]);
+      isMounted = false
+    }
+  }, [project.id])
 
   function handleEventClick(event: CalendarEventDTO) {
-    setSelectedEvent(event);
-    setIsEventModalOpen(true);
+    setSelectedEvent(event)
+    setIsEventModalOpen(true)
   }
 
   function handleSaveDescription() {
-    const submittedDesc = description;
-    setIsEditingDesc(false);
+    const submittedDesc = description
+    setIsEditingDesc(false)
 
     // Optimistic update locally
     const updated = {
       ...project,
       description: submittedDesc || null,
       updatedAt: new Date(),
-    };
-    onProjectChanged?.(updated);
+    }
+    onProjectChanged?.(updated)
 
     startTransition(async () => {
       const result = await updateProject(project.id, {
         description: submittedDesc || undefined,
-      });
+      })
 
       if (!result.success) {
         toast({
           title: "Failed to update description",
           description: result.error,
           variant: "destructive",
-        });
-        setDescription(project.description ?? "");
-        setIsEditingDesc(true);
-        onProjectChanged?.(project); // Rollback
-        return;
+        })
+        setDescription(project.description ?? "")
+        setIsEditingDesc(true)
+        onProjectChanged?.(project) // Rollback
+        return
       }
 
-      toast({ title: "Project description updated" });
-      onProjectChanged?.(result.data);
-    });
+      toast({ title: "Project description updated" })
+      onProjectChanged?.(result.data)
+    })
   }
 
   function handleDateChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const newDate = e.target.value;
-    setDueDate(newDate);
-    const parsedDate = newDate ? new Date(newDate) : null;
+    const newDate = e.target.value
+    setDueDate(newDate)
+    const parsedDate = newDate ? new Date(newDate) : null
 
     // Optimistic update locally
     const updated = {
       ...project,
       dueDate: parsedDate,
       updatedAt: new Date(),
-    };
-    onProjectChanged?.(updated);
+    }
+    onProjectChanged?.(updated)
 
     startTransition(async () => {
       const result = await updateProject(project.id, {
         dueDate: parsedDate || undefined,
-      });
+      })
 
       if (!result.success) {
         toast({
           title: "Failed to update due date",
           description: result.error,
           variant: "destructive",
-        });
-        setDueDate(toDateInputValue(project.dueDate));
-        onProjectChanged?.(project); // Rollback
-        return;
+        })
+        setDueDate(toDateInputValue(project.dueDate))
+        onProjectChanged?.(project) // Rollback
+        return
       }
 
-      toast({ title: "Project due date updated" });
-      onProjectChanged?.(result.data);
-    });
+      toast({ title: "Project due date updated" })
+      onProjectChanged?.(result.data)
+    })
   }
 
-  const displayedEvents = events.slice(0, 2);
+  const displayedEvents = events.slice(0, 2)
 
   return (
     <>
@@ -245,8 +245,8 @@ export function ProjectInfo({
                     size="sm"
                     className="h-7 text-xs border-border bg-card text-foreground hover:bg-muted font-medium rounded-xl cursor-pointer"
                     onClick={() => {
-                      setDescription(project.description ?? "");
-                      setIsEditingDesc(false);
+                      setDescription(project.description ?? "")
+                      setIsEditingDesc(false)
                     }}
                     disabled={isPending}
                     type="button"
@@ -393,9 +393,9 @@ export function ProjectInfo({
         isOpen={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onSuccess={() => {
-          onProjectDeleted?.();
-          router.push("/projects");
-          router.refresh();
+          onProjectDeleted?.()
+          router.push("/projects")
+          router.refresh()
         }}
         projectId={project.id}
         projectName={project.name}
@@ -411,12 +411,12 @@ export function ProjectInfo({
       <EventFormModal
         open={isEventModalOpen}
         onOpenChange={(open) => {
-          setIsEventModalOpen(open);
-          if (!open) setSelectedEvent(undefined);
+          setIsEventModalOpen(open)
+          if (!open) setSelectedEvent(undefined)
         }}
         entity={selectedEvent}
         currentUserId={currentUserId ?? ""}
       />
     </>
-  );
+  )
 }

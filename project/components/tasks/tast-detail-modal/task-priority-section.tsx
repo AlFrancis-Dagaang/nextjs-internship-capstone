@@ -1,55 +1,55 @@
-"use client";
+"use client"
 
-import { useTransition, useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
+import { useEffect, useState, useTransition } from "react"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { updateTask } from "@/lib/actions/tasks";
-import { useToast } from "@/hooks/use-toast";
-import type { Task } from "@/lib/db/schema";
-import { useBoardStore } from "@/stores/board-store";
+} from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { updateTask } from "@/lib/actions/tasks"
+import type { Task } from "@/lib/db/schema"
+import { useBoardStore } from "@/stores/board-store"
 
 export function TaskPrioritySection({
   task,
   onChanged,
   canEdit,
 }: {
-  task: Task;
-  onChanged?: (task: Task) => void;
-  canEdit: boolean;
+  task: Task
+  onChanged?: (task: Task) => void
+  canEdit: boolean
 }) {
-  const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
-  const [priority, setPriority] = useState(task.priority ?? "");
-  const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
+  const { toast } = useToast()
+  const [isPending, startTransition] = useTransition()
+  const [priority, setPriority] = useState(task.priority ?? "")
+  const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal)
 
   useEffect(() => {
-    setPriority(task.priority ?? "");
-  }, [task.priority]);
+    setPriority(task.priority ?? "")
+  }, [task.priority])
 
   function handlePriorityChange(newPriority: string) {
-    setPriority(newPriority);
-    updateTaskLocal({ ...task, priority: newPriority as Task["priority"] });
+    setPriority(newPriority)
+    updateTaskLocal({ ...task, priority: newPriority as Task["priority"] })
 
     startTransition(async () => {
-      const result = await updateTask(task.id, { priority: newPriority });
+      const result = await updateTask(task.id, { priority: newPriority })
       if (!result.success) {
         toast({
           title: "Failed to update priority",
           description: result.error,
           variant: "destructive",
-        });
-        setPriority(task.priority ?? "");
-        updateTaskLocal(task);
-        return;
+        })
+        setPriority(task.priority ?? "")
+        updateTaskLocal(task)
+        return
       }
-      onChanged?.(result.data);
-    });
+      onChanged?.(result.data)
+    })
   }
 
   return (
@@ -87,5 +87,5 @@ export function TaskPrioritySection({
         </SelectContent>
       </Select>
     </div>
-  );
+  )
 }

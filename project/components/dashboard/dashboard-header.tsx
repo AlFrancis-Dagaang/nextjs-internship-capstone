@@ -1,8 +1,8 @@
 // components/dashboard/dashboard-header.tsx
-"use client";
+"use client"
 
-import { FolderGit2, CheckSquare, Clock, FolderKanban } from "lucide-react";
-import { PageHeader } from "@/components/layout/page-header";
+import { CheckSquare, Clock, FolderKanban } from "lucide-react"
+import { PageHeader } from "@/components/layout/page-header"
 
 export function DashboardHeader({
   userName,
@@ -10,10 +10,10 @@ export function DashboardHeader({
   taskCount,
   upcomingCount,
 }: {
-  userName: string;
-  projectCount: number;
-  taskCount: number;
-  upcomingCount: number;
+  userName: string
+  projectCount: number
+  taskCount: number
+  upcomingCount: number
 }) {
   return (
     <PageHeader
@@ -53,5 +53,5 @@ export function DashboardHeader({
         </div>
       </div>
     </PageHeader>
-  );
+  )
 }

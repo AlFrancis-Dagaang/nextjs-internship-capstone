@@ -51,5 +51,5 @@ export default function SettingsLoading() {
         </div>
       </div>
     </div>
-  );
+  )
 }

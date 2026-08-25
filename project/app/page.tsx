@@ -1,18 +1,18 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { LandingHeader } from "@/components/landing/header";
-import { LandingHero } from "@/components/landing/hero";
-import { LandingFeatures } from "@/components/landing/features-section";
-import { LandingAbout } from "@/components/landing/about-section";
-import { LandingFAQ } from "@/components/landing/faq-section";
-import { LandingCtaBanner } from "@/components/landing/cta-banner";
-import { LandingFooter } from "@/components/landing/footer";
+import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
+import { LandingAbout } from "@/components/landing/about-section"
+import { LandingCtaBanner } from "@/components/landing/cta-banner"
+import { LandingFAQ } from "@/components/landing/faq-section"
+import { LandingFeatures } from "@/components/landing/features-section"
+import { LandingFooter } from "@/components/landing/footer"
+import { LandingHeader } from "@/components/landing/header"
+import { LandingHero } from "@/components/landing/hero"
 
 export default async function LandingPage() {
-  const { userId } = await auth();
+  const { userId } = await auth()
 
   if (userId) {
-    redirect("/dashboard");
+    redirect("/dashboard")
   }
 
   return (
@@ -27,5 +27,5 @@ export default async function LandingPage() {
       </main>
       <LandingFooter />
     </div>
-  );
+  )
 }

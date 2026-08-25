@@ -1,88 +1,88 @@
 // components/team/modals/team-modal.tsx
-"use client";
+"use client"
 
-import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { WorkspaceTeam } from "@/lib/services/team";
-import { createTeam, updateTeam } from "@/lib/actions/team";
-import { useTeamStore } from "@/stores/team-store";
+import { Users2 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Users2 } from "lucide-react";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+import { createTeam, updateTeam } from "@/lib/actions/team"
+import type { WorkspaceTeam } from "@/lib/services/team"
+import { useTeamStore } from "@/stores/team-store"
 
 type TeamModalProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  team?: WorkspaceTeam | null;
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  team?: WorkspaceTeam | null
+}
 
 export function TeamModal({ open, onOpenChange, team }: TeamModalProps) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [, startTransition] = useTransition();
-  const [name, setName] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const { toast } = useToast()
+  const [, startTransition] = useTransition()
+  const [name, setName] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
-  const isEdit = !!team;
+  const isEdit = !!team
 
   useEffect(() => {
     if (open) {
-      setName(team?.name ?? "");
-      setError(null);
+      setName(team?.name ?? "")
+      setError(null)
     }
-  }, [open, team]);
+  }, [open, team])
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmedName = name.trim();
-    if (!trimmedName) return;
+    e.preventDefault()
+    const trimmedName = name.trim()
+    if (!trimmedName) return
 
     // 1. Close the modal INSTANTLY for a snappy UI experience
-    onOpenChange(false);
+    onOpenChange(false)
 
     startTransition(async () => {
-      let res;
+      let res: { success: boolean; data?: any; error?: string } | undefined
       if (isEdit && team) {
-        res = await updateTeam(team.id, { name: trimmedName });
+        res = await updateTeam(team.id, { name: trimmedName })
       } else {
-        res = await createTeam({ name: trimmedName });
+        res = await createTeam({ name: trimmedName })
       }
 
-      if (res.success && res.data) {
+      if (res?.success && res.data) {
         toast({
           title: isEdit
             ? "Team updated successfully"
             : "Team created successfully",
-        });
+        })
 
         if (!isEdit) {
           const newTeam: WorkspaceTeam = {
             ...(res.data as unknown as WorkspaceTeam),
             memberCount: 0,
-          };
-          useTeamStore.getState().triggerTeamCreated(newTeam);
+          }
+          useTeamStore.getState().triggerTeamCreated(newTeam)
         }
 
-        router.refresh();
+        router.refresh()
       } else {
-        // Safe check or fallback since `res` is guaranteed to be the failure case here
-        const errorMessage = !res.success ? res.error : "Failed to save team";
+        const errorMessage =
+          res && !res.success ? res.error : "Failed to save team"
         toast({
           title: "Error",
           description: errorMessage,
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   return (
@@ -145,5 +145,5 @@ export function TeamModal({ open, onOpenChange, team }: TeamModalProps) {
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

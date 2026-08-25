@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { SignUp } from "@clerk/nextjs";
-import { Layers } from "lucide-react";
+import { SignUp } from "@clerk/nextjs"
+import { Layers } from "lucide-react"
+import Link from "next/link"
 
 export default function SignUpPage() {
   return (
@@ -95,5 +95,5 @@ export default function SignUpPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

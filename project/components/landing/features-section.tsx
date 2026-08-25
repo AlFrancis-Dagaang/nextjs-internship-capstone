@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "next/image"
 
 export function LandingFeatures() {
   const features = [
@@ -20,7 +20,7 @@ export function LandingFeatures() {
       desc: "Industry-leading security measures to keep your data safe and secure.",
       image: "/images/landing/dashboard-light.png",
     },
-  ];
+  ]
 
   return (
     <section
@@ -69,5 +69,5 @@ export function LandingFeatures() {
         ))}
       </div>
     </section>
-  );
+  )
 }

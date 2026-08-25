@@ -1,29 +1,26 @@
 // components/projects/list-column.tsx
-"use client";
+"use client"
 
-import { useMemo, useState, useTransition } from "react";
-import { useDroppable } from "@dnd-kit/core";
+import { useDroppable } from "@dnd-kit/core"
 import {
   SortableContext,
+  useSortable,
   verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { TaskCard } from "@/components/tasks/task-card";
-import { CreateTaskModal } from "@/components/tasks/modal/create-tasks-modal";
-import { updateList, deleteList } from "@/lib/actions/lists";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { ListActions } from "./modal/list-actions";
-import { DeleteListDialog } from "./modal/delete-list-dialog";
-import type { List, Task } from "@/lib/db/schema";
-import type { ListWithTasks } from "./board";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { useUiStore } from "@/stores/ui-store";
-import {
-  taskMatchesFilters,
-  isFilteringActive,
-} from "@/lib/utils/task-filters";
-import { getRealtimeClientId } from "@/lib/realtime/client";
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+import { useMemo, useState, useTransition } from "react"
+import { CreateTaskModal } from "@/components/tasks/modal/create-tasks-modal"
+import { TaskCard } from "@/components/tasks/task-card"
+import { Input } from "@/components/ui/input"
+import { useToast } from "@/hooks/use-toast"
+import { deleteList, updateList } from "@/lib/actions/lists"
+import type { List, Task } from "@/lib/db/schema"
+import { getRealtimeClientId } from "@/lib/realtime/client"
+import { isFilteringActive, taskMatchesFilters } from "@/lib/utils/task-filters"
+import { useUiStore } from "@/stores/ui-store"
+import type { ListWithTasks } from "./board"
+import { DeleteListDialog } from "./modal/delete-list-dialog"
+import { ListActions } from "./modal/list-actions"
 
 export function ListColumn({
   list,
@@ -43,41 +40,41 @@ export function ListColumn({
   onTaskRestoreNeeded,
   onTaskMoved,
 }: {
-  list: ListWithTasks;
-  totalLists: number;
-  allLists: ListWithTasks[];
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-  currentUserId: string;
+  list: ListWithTasks
+  totalLists: number
+  allLists: ListWithTasks[]
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer"
+  currentUserId: string
 
-  onRenamed?: (updated: List) => void;
-  onDeleted?: (listId: string) => void;
-  onMoved?: (updatedLists: List[]) => void;
-  onTaskCreated?: (listId: string, task: Task) => void;
-  onTaskCreateConfirmed?: (tempId: string, realTask: Task) => void;
-  onTaskUpdated?: (task: Task) => void;
-  onTaskDeleted?: (listId: string, taskId: string) => void;
-  onTaskArchived?: (listId: string, taskId: string) => void;
-  onTaskRestoreNeeded?: (task: Task) => void;
-  onTaskMoved?: (task: Task, affectedTasks: Task[]) => void;
-  onOpenTask: (taskId: string) => void;
+  onRenamed?: (updated: List) => void
+  onDeleted?: (listId: string) => void
+  onMoved?: (updatedLists: List[]) => void
+  onTaskCreated?: (listId: string, task: Task) => void
+  onTaskCreateConfirmed?: (tempId: string, realTask: Task) => void
+  onTaskUpdated?: (task: Task) => void
+  onTaskDeleted?: (listId: string, taskId: string) => void
+  onTaskArchived?: (listId: string, taskId: string) => void
+  onTaskRestoreNeeded?: (task: Task) => void
+  onTaskMoved?: (task: Task, affectedTasks: Task[]) => void
+  onOpenTask: (taskId: string) => void
 }) {
-  const { toast } = useToast();
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [name, setName] = useState(list.name);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-  const canEdit = role !== "viewer" && role !== "contributor";
-  const canContribute = role !== "viewer";
-  const searchQuery = useUiStore((s) => s.searchQuery);
-  const filterCompleted = useUiStore((s) => s.filterCompleted);
-  const filterPriority = useUiStore((s) => s.filterPriority);
-  const filterDueDate = useUiStore((s) => s.filterDueDate);
-  const filterAssignedToMe = useUiStore((s) => s.filterAssignedToMe);
-  const filterAssigneeId = useUiStore((s) => s.filterAssigneeId);
+  const { toast } = useToast()
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [name, setName] = useState(list.name)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const canEdit = role !== "viewer" && role !== "contributor"
+  const canContribute = role !== "viewer"
+  const searchQuery = useUiStore((s) => s.searchQuery)
+  const filterCompleted = useUiStore((s) => s.filterCompleted)
+  const filterPriority = useUiStore((s) => s.filterPriority)
+  const filterDueDate = useUiStore((s) => s.filterDueDate)
+  const filterAssignedToMe = useUiStore((s) => s.filterAssignedToMe)
+  const filterAssigneeId = useUiStore((s) => s.filterAssigneeId)
 
-  const selectionMode = useUiStore((s) => s.selectionMode);
-  const selectedTaskIds = useUiStore((s) => s.selectedTaskIds);
-  const toggleTaskSelected = useUiStore((s) => s.toggleTaskSelected);
+  const selectionMode = useUiStore((s) => s.selectionMode)
+  const selectedTaskIds = useUiStore((s) => s.selectedTaskIds)
+  const toggleTaskSelected = useUiStore((s) => s.toggleTaskSelected)
 
   const filters = useMemo(
     () => ({
@@ -96,8 +93,8 @@ export function ListColumn({
       filterAssignedToMe,
       filterAssigneeId,
     ],
-  );
-  const filtering = isFilteringActive(filters);
+  )
+  const filtering = isFilteringActive(filters)
 
   const visibleTasks = useMemo(
     () =>
@@ -105,26 +102,26 @@ export function ListColumn({
         taskMatchesFilters(task, filters, currentUserId),
       ),
     [list.tasks, filters, currentUserId],
-  );
+  )
 
   const sortableTaskIds = useMemo(
     () => visibleTasks.map((t) => t.id),
     [visibleTasks],
-  );
+  )
 
   const droppableData = useMemo(
     () => ({ type: "list-dropzone" as const, listId: list.id }),
     [list.id],
-  );
+  )
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: list.id,
     data: droppableData,
-  });
+  })
 
   const sortableData = useMemo(
     () => ({ type: "list" as const, listId: list.id }),
     [list.id],
-  );
+  )
   const {
     attributes: listDragAttributes,
     listeners: listDragListeners,
@@ -136,56 +133,56 @@ export function ListColumn({
     id: `list-sort-${list.id}`,
     disabled: !canEdit,
     data: sortableData,
-  });
+  })
 
   const listDragStyle = {
     transform: CSS.Transform.toString(listTransform),
     transition: listTransition,
-  };
+  }
 
   function handleRenameSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
     if (name.trim() === "" || name === list.name) {
-      setIsRenaming(false);
-      setName(list.name);
-      return;
+      setIsRenaming(false)
+      setName(list.name)
+      return
     }
     startTransition(async () => {
-      const result = await updateList(list.id, { name }, getRealtimeClientId());
+      const result = await updateList(list.id, { name }, getRealtimeClientId())
       if (!result.success) {
         toast({
           title: "Failed to rename list",
           description: result.error,
           variant: "destructive",
-        });
-        setName(list.name);
-        setIsRenaming(false);
-        return;
+        })
+        setName(list.name)
+        setIsRenaming(false)
+        return
       }
-      toast({ title: "List renamed", description: result.data?.name });
-      setIsRenaming(false);
-      onRenamed?.(result.data);
-    });
+      toast({ title: "List renamed", description: result.data?.name })
+      setIsRenaming(false)
+      onRenamed?.(result.data)
+    })
   }
 
   function handleDelete() {
     startTransition(async () => {
-      const result = await deleteList(list.id, getRealtimeClientId());
+      const result = await deleteList(list.id, getRealtimeClientId())
       if (result.success) {
         toast({
           title: "List deleted",
           description: `"${list.name}" was deleted.`,
-        });
-        setIsDeleteOpen(false);
-        onDeleted?.(list.id);
+        })
+        setIsDeleteOpen(false)
+        onDeleted?.(list.id)
       } else {
         toast({
           title: "Failed to delete list",
           description: result.error,
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   return (
@@ -206,7 +203,7 @@ export function ListColumn({
           className="flex items-center justify-between pb-3 px-1.5 shrink-0"
           onPointerDown={(e) => {
             if ((e.target as HTMLElement).closest("button, input, form")) {
-              e.stopPropagation();
+              e.stopPropagation()
             }
           }}
         >
@@ -241,8 +238,8 @@ export function ListColumn({
               currentPosition={list.position}
               totalLists={totalLists}
               onRename={() => {
-                setName(list.name);
-                setIsRenaming(true);
+                setName(list.name)
+                setIsRenaming(true)
               }}
               onDelete={() => setIsDeleteOpen(true)}
               onMoved={onMoved}
@@ -312,5 +309,5 @@ export function ListColumn({
         isPending={isPending}
       />
     </>
-  );
+  )
 }

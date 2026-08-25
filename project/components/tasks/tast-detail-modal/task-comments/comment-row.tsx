@@ -1,33 +1,33 @@
 // components/tasks/tast-detail-modal/comment-row.tsx
-"use client";
+"use client"
 
-import { useState } from "react";
-import type { Comment, User } from "@/lib/db/schema";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { UserAvatar } from "@/components/ui/user-avatar";
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import type { Comment, User } from "@/lib/db/schema"
 
 export type CommentWithAuthor = Comment & {
   author: User & {
-    imageUrl?: string | null;
-    image_url?: string | null;
-    hasImage?: boolean | null;
-    has_image?: boolean | null;
-  };
-};
+    imageUrl?: string | null
+    image_url?: string | null
+    hasImage?: boolean | null
+    has_image?: boolean | null
+  }
+}
 
 export function formatRelativeTime(d: Date | string) {
-  const date = typeof d === "string" ? new Date(d) : d;
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const date = typeof d === "string" ? new Date(d) : d
+  const now = new Date()
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
 
-  if (diffInSeconds < 60) return "just now";
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-  const diffInDays = Math.floor(diffInHours / 24);
-  return `${diffInDays}d ago`;
+  if (diffInSeconds < 60) return "just now"
+  const diffInMinutes = Math.floor(diffInSeconds / 60)
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+  const diffInHours = Math.floor(diffInMinutes / 60)
+  if (diffInHours < 24) return `${diffInHours}h ago`
+  const diffInDays = Math.floor(diffInHours / 24)
+  return `${diffInDays}d ago`
 }
 
 export function CommentRow({
@@ -37,43 +37,42 @@ export function CommentRow({
   onDelete,
   onEdit,
 }: {
-  comment: CommentWithAuthor;
-  currentUserId: string | null;
-  isPending: boolean;
-  onDelete: (id: string) => void;
-  onEdit: (id: string, content: string) => Promise<boolean>;
+  comment: CommentWithAuthor
+  currentUserId: string | null
+  isPending: boolean
+  onDelete: (id: string) => void
+  onEdit: (id: string, content: string) => Promise<boolean>
 }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState(comment.content);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false)
+  const [draft, setDraft] = useState(comment.content)
+  const [isSaving, setIsSaving] = useState(false)
 
   async function handleSave() {
     if (!draft.trim() || draft === comment.content) {
-      setIsEditing(false);
-      setDraft(comment.content);
-      return;
+      setIsEditing(false)
+      setDraft(comment.content)
+      return
     }
-    setIsSaving(true);
-    const ok = await onEdit(comment.id, draft);
-    setIsSaving(false);
-    if (ok) setIsEditing(false);
+    setIsSaving(true)
+    const ok = await onEdit(comment.id, draft)
+    setIsSaving(false)
+    if (ok) setIsEditing(false)
   }
 
   function handleCancel() {
-    setDraft(comment.content);
-    setIsEditing(false);
+    setDraft(comment.content)
+    setIsEditing(false)
   }
 
-  const authorName = comment.author?.name || comment.author?.email || "User";
-  const stableUserId =
-    comment.author?.id || comment.author?.email || comment.id;
+  const authorName = comment.author?.name || comment.author?.email || "User"
+  const stableUserId = comment.author?.id || comment.author?.email || comment.id
 
   const authorImageUrl =
-    comment.author?.imageUrl || comment.author?.image_url || null;
+    comment.author?.imageUrl || comment.author?.image_url || null
   const authorHasImage =
     comment.author?.hasImage ??
     comment.author?.has_image ??
-    Boolean(authorImageUrl);
+    Boolean(authorImageUrl)
 
   return (
     <li className="flex gap-3">
@@ -153,7 +152,7 @@ export function CommentRow({
         )}
       </div>
     </li>
-  );
+  )
 }
 
 export function CommentRowSkeleton() {
@@ -173,5 +172,5 @@ export function CommentRowSkeleton() {
         <div className="h-12 w-full rounded-2xl bg-muted border border-border/80" />
       </div>
     </li>
-  );
+  )
 }

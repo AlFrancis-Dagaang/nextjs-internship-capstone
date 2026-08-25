@@ -1,41 +1,41 @@
 // components/tasks/modal/assign-task-modal.tsx
-"use client";
+"use client"
 
-import { useState, useTransition, useEffect } from "react";
-import { X, Search, Loader2, UserMinus } from "lucide-react";
+import { Loader2, Search, UserMinus, X } from "lucide-react"
+import { useEffect, useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useToast } from "@/hooks/use-toast"
+import { getAssignableUsers } from "@/lib/actions/project-member"
 import {
   assignUserToTask,
   unassignUserFromTask,
-} from "@/lib/actions/task-assignees";
-import { getAssignableUsers } from "@/lib/actions/project-member";
-import { UserAvatar } from "@/components/ui/user-avatar";
+} from "@/lib/actions/task-assignees"
 
 type AssigneeUser = {
-  id: string;
-  name?: string;
-  email?: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-};
+  id: string
+  name?: string
+  email?: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+}
 
 type AssignTaskModalProps = {
-  taskId: string;
-  projectId: string;
-  currentAssignees: AssigneeUser[];
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
-};
+  taskId: string
+  projectId: string
+  currentAssignees: AssigneeUser[]
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSuccess: () => void
+}
 
 export function AssignTaskModal({
   taskId,
@@ -45,82 +45,78 @@ export function AssignTaskModal({
   onOpenChange,
   onSuccess,
 }: AssignTaskModalProps) {
-  const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(
-    new Set(),
-  );
-  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast()
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set())
+  const [isPending, startTransition] = useTransition()
 
-  const [assignableUsers, setAssignableUsers] = useState<AssigneeUser[]>([]);
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [assignableUsers, setAssignableUsers] = useState<AssigneeUser[]>([])
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false)
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return
 
-    let cancelled = false;
-    setSearchQuery("");
-    setSelectedUserIds(new Set(currentAssignees.map((u) => u.id)));
-    setIsLoadingUsers(true);
+    let cancelled = false
+    setSearchQuery("")
+    setSelectedUserIds(new Set(currentAssignees.map((u) => u.id)))
+    setIsLoadingUsers(true)
 
     getAssignableUsers(projectId).then((result) => {
-      if (cancelled) return;
-      setIsLoadingUsers(false);
+      if (cancelled) return
+      setIsLoadingUsers(false)
       if (result.success) {
-        setAssignableUsers(result.data);
+        setAssignableUsers(result.data)
       } else {
         toast({
           title: "Failed to load members",
           description: result.error,
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
 
     return () => {
-      cancelled = true;
-    };
-  }, [open, projectId, currentAssignees, toast]);
+      cancelled = true
+    }
+  }, [open, projectId, currentAssignees, toast])
 
-  const originalIds = new Set(currentAssignees.map((u) => u.id));
+  const originalIds = new Set(currentAssignees.map((u) => u.id))
 
   const currentlyAssignedUsers = assignableUsers.filter((u) =>
     selectedUserIds.has(u.id),
-  );
+  )
   const availableUsers = assignableUsers.filter(
     (u) => !selectedUserIds.has(u.id),
-  );
+  )
 
   const filteredAvailableUsers = availableUsers.filter((u) => {
-    const q = searchQuery.toLowerCase();
-    const nameMatch = u.name?.toLowerCase().includes(q) ?? false;
-    const emailMatch = u.email?.toLowerCase().includes(q) ?? false;
-    return nameMatch || emailMatch;
-  });
+    const q = searchQuery.toLowerCase()
+    const nameMatch = u.name?.toLowerCase().includes(q) ?? false
+    const emailMatch = u.email?.toLowerCase().includes(q) ?? false
+    return nameMatch || emailMatch
+  })
 
   function handleToggleUser(userId: string) {
     setSelectedUserIds((prev) => {
-      const next = new Set(prev);
+      const next = new Set(prev)
       if (next.has(userId)) {
-        next.delete(userId);
+        next.delete(userId)
       } else {
-        next.add(userId);
+        next.add(userId)
       }
-      return next;
-    });
+      return next
+    })
   }
 
   function handleSave() {
-    const finalIds = selectedUserIds;
+    const finalIds = selectedUserIds
 
-    const toAssign = Array.from(finalIds).filter((id) => !originalIds.has(id));
-    const toUnassign = Array.from(originalIds).filter(
-      (id) => !finalIds.has(id),
-    );
+    const toAssign = Array.from(finalIds).filter((id) => !originalIds.has(id))
+    const toUnassign = Array.from(originalIds).filter((id) => !finalIds.has(id))
 
     if (toAssign.length === 0 && toUnassign.length === 0) {
-      onOpenChange(false);
-      return;
+      onOpenChange(false)
+      return
     }
 
     startTransition(async () => {
@@ -130,37 +126,37 @@ export function AssignTaskModal({
           res,
           action: "assign",
         })),
-      );
+      )
       const unassignPromises = toUnassign.map((userId) =>
         unassignUserFromTask(taskId, userId).then((res) => ({
           userId,
           res,
           action: "unassign",
         })),
-      );
+      )
 
       const results = await Promise.all([
         ...assignPromises,
         ...unassignPromises,
-      ]);
-      const failures = results.filter((r) => !r.res.success);
+      ])
+      const failures = results.filter((r) => !r.res.success)
 
       if (failures.length > 0) {
         toast({
           title: "Some changes failed",
           description: `${failures.length} operation(s) could not be completed.`,
           variant: "destructive",
-        });
+        })
       } else {
         toast({
           title: "Assignees updated",
           description: "Successfully updated task assignees.",
-        });
+        })
       }
 
-      onSuccess();
-      onOpenChange(false);
-    });
+      onSuccess()
+      onOpenChange(false)
+    })
   }
 
   return (
@@ -195,7 +191,7 @@ export function AssignTaskModal({
                   </label>
                   <div className="divide-y divide-border/60 border border-border/80 rounded-xl overflow-hidden bg-muted/30">
                     {currentlyAssignedUsers.map((user) => {
-                      const displayName = user.name || user.email || "U";
+                      const displayName = user.name || user.email || "U"
                       return (
                         <div
                           key={user.id}
@@ -231,7 +227,7 @@ export function AssignTaskModal({
                             Remove
                           </Button>
                         </div>
-                      );
+                      )
                     })}
                   </div>
                 </div>
@@ -263,8 +259,8 @@ export function AssignTaskModal({
                     </div>
                   ) : (
                     filteredAvailableUsers.map((user) => {
-                      const isChecked = selectedUserIds.has(user.id);
-                      const displayName = user.name || user.email || "U";
+                      const isChecked = selectedUserIds.has(user.id)
+                      const displayName = user.name || user.email || "U"
 
                       return (
                         <div
@@ -298,7 +294,7 @@ export function AssignTaskModal({
                             className="rounded-md"
                           />
                         </div>
-                      );
+                      )
                     })
                   )}
                 </div>
@@ -333,5 +329,5 @@ export function AssignTaskModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

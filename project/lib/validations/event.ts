@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod"
 
 export const eventCreateSchema = z
   .object({
@@ -11,7 +11,7 @@ export const eventCreateSchema = z
   .refine((data) => data.endAt >= data.startAt, {
     message: "End time must be on or after start time",
     path: ["endAt"],
-  });
+  })
 
 export const eventUpdateSchema = z
   .object({
@@ -24,7 +24,7 @@ export const eventUpdateSchema = z
   .refine(
     (data) => !data.startAt || !data.endAt || data.endAt >= data.startAt,
     { message: "End time must be on or after start time", path: ["endAt"] },
-  );
+  )
 
-export type EventCreateInput = z.infer<typeof eventCreateSchema>;
-export type EventUpdateInput = z.infer<typeof eventUpdateSchema>;
+export type EventCreateInput = z.infer<typeof eventCreateSchema>
+export type EventUpdateInput = z.infer<typeof eventUpdateSchema>

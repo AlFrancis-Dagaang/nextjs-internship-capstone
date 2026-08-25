@@ -1,21 +1,21 @@
-import { queries } from "@/lib/db";
-import type { NotificationType } from "@/lib/db/schema";
-import { publishNotification } from "@/lib/realtime/server";
-import { isNotificationEnabled } from "@/lib/services/notification-preferences";
+import { queries } from "@/lib/db"
+import type { NotificationType } from "@/lib/db/schema"
+import { publishNotification } from "@/lib/realtime/server"
+import { isNotificationEnabled } from "@/lib/services/notification-preferences"
 
 export async function createNotification(params: {
-  userId: string;
-  type: NotificationType;
-  message: string;
-  projectId?: string;
-  taskId?: string;
-  actorId?: string;
+  userId: string
+  type: NotificationType
+  message: string
+  projectId?: string
+  taskId?: string
+  actorId?: string
 }) {
-  if (params.actorId && params.actorId === params.userId) return;
+  if (params.actorId && params.actorId === params.userId) return
 
-  const recipient = await queries.users.getById(params.userId);
+  const recipient = await queries.users.getById(params.userId)
   if (!isNotificationEnabled(recipient?.notificationPreferences, params.type)) {
-    return;
+    return
   }
 
   const notification = await queries.notifications.create({
@@ -25,7 +25,7 @@ export async function createNotification(params: {
     projectId: params.projectId ?? null,
     taskId: params.taskId ?? null,
     actorId: params.actorId ?? null,
-  });
+  })
 
   if (params.projectId) {
     await publishNotification(params.userId, {
@@ -36,21 +36,21 @@ export async function createNotification(params: {
       taskId: notification.taskId,
       isRead: notification.isRead,
       createdAt: notification.createdAt.toISOString(),
-    });
+    })
   }
 }
 
 // Fan-out to every assignee of a task, skipping one excluded user
 // (typically the actor who triggered the event).
 export async function notifyTaskAssignees(params: {
-  taskId: string;
-  projectId: string;
-  type: NotificationType;
-  message: string;
-  actorId?: string;
-  excludeUserId?: string;
+  taskId: string
+  projectId: string
+  type: NotificationType
+  message: string
+  actorId?: string
+  excludeUserId?: string
 }) {
-  const assignees = await queries.taskAssignees.getByTask(params.taskId);
+  const assignees = await queries.taskAssignees.getByTask(params.taskId)
   await Promise.all(
     assignees
       .filter((a) => a.userId !== params.excludeUserId)
@@ -64,7 +64,7 @@ export async function notifyTaskAssignees(params: {
           actorId: params.actorId,
         }),
       ),
-  );
+  )
 }
 // Fan-out to every member of a project (via project_members) PLUS the
 // owner (who has no project_members row — #29 keeps ownership as the
@@ -74,20 +74,20 @@ export async function notifyTaskAssignees(params: {
 // the actor is always a project member/owner by definition here (they
 // had to pass assertProjectEditAccess to create the event).
 export async function notifyProjectMembers(params: {
-  projectId: string;
-  type: NotificationType;
-  message: string;
-  actorId: string;
+  projectId: string
+  type: NotificationType
+  message: string
+  actorId: string
 }) {
-  const project = await queries.projects.getById(params.projectId);
-  if (!project) return;
+  const project = await queries.projects.getById(params.projectId)
+  if (!project) return
 
-  const members = await queries.projectMembers.getByProject(params.projectId);
+  const members = await queries.projectMembers.getByProject(params.projectId)
 
   const recipientIds = new Set([
     project.ownerId,
     ...members.map((m) => m.userId),
-  ]);
+  ])
 
   await Promise.all(
     Array.from(recipientIds).map((userId) =>
@@ -99,5 +99,5 @@ export async function notifyProjectMembers(params: {
         actorId: params.actorId,
       }),
     ),
-  );
+  )
 }

@@ -1,72 +1,72 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useRef, useTransition } from "react";
-import { X, UserPlus, Loader2 } from "lucide-react";
-import {
-  searchUsersForInvite,
-  addProjectMember,
-} from "@/lib/actions/project-member";
+import { Loader2, UserPlus, X } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useRef, useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+} from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import {
+  addProjectMember,
+  searchUsersForInvite,
+} from "@/lib/actions/project-member"
 
 type SearchUser = {
-  id: string;
-  email: string;
-  name: string;
-  status: "available" | "member" | "owner";
-  role?: "owner" | "admin" | "editor" | "contributor" | "viewer";
-};
+  id: string
+  email: string
+  name: string
+  status: "available" | "member" | "owner"
+  role?: "owner" | "admin" | "editor" | "contributor" | "viewer"
+}
 
 type AddIndividualModalProps = {
-  projectId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
+  projectId: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
 
 export function AddIndividualModal({
   projectId,
   open,
   onOpenChange,
 }: AddIndividualModalProps) {
-  const { toast } = useToast();
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
+  const { toast } = useToast()
+  const router = useRouter()
+  const [query, setQuery] = useState("")
+  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null)
   const [role, setRole] = useState<
     "admin" | "editor" | "contributor" | "viewer"
-  >("viewer");
-  const [isPending, startTransition] = useTransition();
+  >("viewer")
+  const [isPending, startTransition] = useTransition()
 
-  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
-  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchRequestIdRef = useRef(0);
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([])
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const searchRequestIdRef = useRef(0)
 
   useEffect(() => {
     if (open) {
-      setQuery("");
-      setSelectedUser(null);
-      setRole("viewer");
-      setSearchResults([]);
-      setShowDropdown(false);
+      setQuery("")
+      setSelectedUser(null)
+      setRole("viewer")
+      setSearchResults([])
+      setShowDropdown(false)
     }
-  }, [open]);
+  }, [open])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -74,79 +74,79 @@ export function AddIndividualModal({
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
-        setShowDropdown(false);
+        setShowDropdown(false)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   useEffect(() => {
-    const trimmed = query.trim();
+    const trimmed = query.trim()
     if (trimmed.length < 2) {
-      setSearchResults([]);
-      setShowDropdown(false);
-      setIsLoadingSearch(false);
-      return;
+      setSearchResults([])
+      setShowDropdown(false)
+      setIsLoadingSearch(false)
+      return
     }
 
-    setIsLoadingSearch(true);
-    setShowDropdown(true);
-    const currentRequestId = ++searchRequestIdRef.current;
+    setIsLoadingSearch(true)
+    setShowDropdown(true)
+    const currentRequestId = ++searchRequestIdRef.current
 
     const timer = setTimeout(async () => {
       try {
-        const result = await searchUsersForInvite(projectId, trimmed);
-        if (currentRequestId !== searchRequestIdRef.current) return;
+        const result = await searchUsersForInvite(projectId, trimmed)
+        if (currentRequestId !== searchRequestIdRef.current) return
 
         if (result.success) {
-          setSearchResults(result.data.slice(0, 8));
+          setSearchResults(result.data.slice(0, 8))
         } else {
-          setSearchResults([]);
+          setSearchResults([])
         }
-      } catch (err) {
+      } catch (_err) {
         if (currentRequestId === searchRequestIdRef.current) {
-          setSearchResults([]);
+          setSearchResults([])
         }
       } finally {
         if (currentRequestId === searchRequestIdRef.current) {
-          setIsLoadingSearch(false);
+          setIsLoadingSearch(false)
         }
       }
-    }, 300);
+    }, 300)
 
-    return () => clearTimeout(timer);
-  }, [query, projectId]);
+    return () => clearTimeout(timer)
+  }, [query, projectId])
 
   async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedUser) return;
+    e.preventDefault()
+    if (!selectedUser) return
 
-    const targetEmail = selectedUser.email;
-    const assignedRole = role;
+    const targetEmail = selectedUser.email
+    const assignedRole = role
 
     startTransition(async () => {
       const result = await addProjectMember(projectId, {
         email: targetEmail,
         role: assignedRole,
-      });
+      })
 
       if (!result.success) {
         toast({
           title: "Failed to add member",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
 
       toast({
         title: "Member added successfully",
         description: `${targetEmail} added as ${assignedRole}.`,
-      });
-      onOpenChange(false);
-      router.refresh();
-    });
+      })
+      onOpenChange(false)
+      router.refresh()
+    })
   }
 
   return (
@@ -175,13 +175,13 @@ export function AddIndividualModal({
               placeholder="Search by name or email..."
               value={selectedUser ? selectedUser.email : query}
               onChange={(e) => {
-                setSelectedUser(null);
-                setQuery(e.target.value);
-                setShowDropdown(true);
+                setSelectedUser(null)
+                setQuery(e.target.value)
+                setShowDropdown(true)
               }}
               onFocus={() => {
                 if (!selectedUser && query.trim().length >= 2)
-                  setShowDropdown(true);
+                  setShowDropdown(true)
               }}
               disabled={isPending}
               className="h-9 text-xs bg-muted border-input text-foreground rounded-lg w-full focus-visible:ring-1"
@@ -204,14 +204,14 @@ export function AddIndividualModal({
                 ) : (
                   <div className="max-h-[200px] overflow-y-auto divide-y divide-border">
                     {searchResults.map((user) => {
-                      const isSelectable = user.status === "available";
+                      const isSelectable = user.status === "available"
                       return (
                         <div
                           key={user.id}
                           onClick={() => {
-                            if (!isSelectable) return;
-                            setSelectedUser(user);
-                            setShowDropdown(false);
+                            if (!isSelectable) return
+                            setSelectedUser(user)
+                            setShowDropdown(false)
                           }}
                           className={`px-3 py-2.5 flex items-center justify-between transition-colors ${
                             isSelectable
@@ -233,7 +233,7 @@ export function AddIndividualModal({
                             </span>
                           )}
                         </div>
-                      );
+                      )
                     })}
                   </div>
                 )}
@@ -293,5 +293,5 @@ export function AddIndividualModal({
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

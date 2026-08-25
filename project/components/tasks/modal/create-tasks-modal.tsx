@@ -1,25 +1,25 @@
 // components/tasks/modal/create-tasks-modal.tsx
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import { createTask, updateTask } from "@/lib/actions/tasks";
-import type { Task } from "@/lib/db/schema";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
-import { getRealtimeClientId } from "@/lib/realtime/client";
+import { Plus } from "lucide-react"
+import { useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { useToast } from "@/hooks/use-toast"
+import { createTask, updateTask } from "@/lib/actions/tasks"
+import type { Task } from "@/lib/db/schema"
+import { getRealtimeClientId } from "@/lib/realtime/client"
 
 type CreateTaskModalProps = {
-  listId: string;
-  onCreated?: (task: Task) => void;
-  onConfirmed?: (tempId: string, realTask: Task) => void;
-  onFailed?: (tempId: string) => void;
-  task?: Task;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  trigger?: React.ReactNode;
-};
+  listId: string
+  onCreated?: (task: Task) => void
+  onConfirmed?: (tempId: string, realTask: Task) => void
+  onFailed?: (tempId: string) => void
+  task?: Task
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  trigger?: React.ReactNode
+}
 
 export function CreateTaskModal({
   listId,
@@ -28,54 +28,54 @@ export function CreateTaskModal({
   onFailed,
   task,
 }: CreateTaskModalProps) {
-  const isEdit = Boolean(task);
-  const { toast } = useToast();
+  const isEdit = Boolean(task)
+  const { toast } = useToast()
 
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [title, setTitle] = useState(task?.title ?? "");
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [title, setTitle] = useState(task?.title ?? "")
   const [fieldErrors, setFieldErrors] = useState<
     Record<string, string[]> | undefined
-  >(undefined);
-  const [genericError, setGenericError] = useState<string | undefined>();
-  const [isPending, startTransition] = useTransition();
+  >(undefined)
+  const [genericError, setGenericError] = useState<string | undefined>()
+  const [isPending, startTransition] = useTransition()
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title.trim()) return;
+    e.preventDefault()
+    if (!title.trim()) return
 
-    const submittedTitle = title;
-    setGenericError(undefined);
+    const submittedTitle = title
+    setGenericError(undefined)
 
     if (isEdit && task) {
-      setIsExpanded(false);
-      onCreated?.({ ...task, title: submittedTitle });
+      setIsExpanded(false)
+      onCreated?.({ ...task, title: submittedTitle })
 
       startTransition(async () => {
         const result = await updateTask(
           task.id,
           { title: submittedTitle },
           getRealtimeClientId(),
-        );
+        )
         if (!result.success) {
-          if (result.fieldErrors) setFieldErrors(result.fieldErrors);
-          else setGenericError(result.error);
+          if (result.fieldErrors) setFieldErrors(result.fieldErrors)
+          else setGenericError(result.error)
           toast({
             title: "Failed to update task",
             description: result.error,
             variant: "destructive",
-          });
-          onCreated?.(task);
-          return;
+          })
+          onCreated?.(task)
+          return
         }
-        toast({ title: "Task updated", description: submittedTitle });
-        setTitle("");
-        setFieldErrors(undefined);
-        onCreated?.(result.data);
-      });
-      return;
+        toast({ title: "Task updated", description: submittedTitle })
+        setTitle("")
+        setFieldErrors(undefined)
+        onCreated?.(result.data)
+      })
+      return
     }
 
-    const tempId = `temp-${crypto.randomUUID()}`;
+    const tempId = `temp-${crypto.randomUUID()}`
     const optimisticTask = {
       id: tempId,
       title: submittedTitle,
@@ -87,38 +87,38 @@ export function CreateTaskModal({
       position: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as Task;
+    } as Task
 
-    setTitle("");
-    setFieldErrors(undefined);
-    setIsExpanded(false);
-    onCreated?.(optimisticTask);
+    setTitle("")
+    setFieldErrors(undefined)
+    setIsExpanded(false)
+    onCreated?.(optimisticTask)
 
     startTransition(async () => {
       const result = await createTask(
         { title: submittedTitle, listId },
         getRealtimeClientId(),
-      );
+      )
       if (!result.success) {
-        setIsExpanded(true);
-        setTitle(submittedTitle);
+        setIsExpanded(true)
+        setTitle(submittedTitle)
         if (result.fieldErrors) {
-          setFieldErrors(result.fieldErrors);
+          setFieldErrors(result.fieldErrors)
         } else {
-          setGenericError(result.error);
+          setGenericError(result.error)
         }
         toast({
           title: "Failed to create task",
           description: result.error,
           variant: "destructive",
-        });
-        onFailed?.(tempId);
-        return;
+        })
+        onFailed?.(tempId)
+        return
       }
 
-      toast({ title: "Task created", description: submittedTitle });
-      onConfirmed?.(tempId, result.data);
-    });
+      toast({ title: "Task created", description: submittedTitle })
+      onConfirmed?.(tempId, result.data)
+    })
   }
 
   if (!isExpanded && !isEdit) {
@@ -130,7 +130,7 @@ export function CreateTaskModal({
         <Plus size={15} className="text-muted-foreground" />
         <span>Add a task</span>
       </button>
-    );
+    )
   }
 
   return (
@@ -174,10 +174,10 @@ export function CreateTaskModal({
           variant="outline"
           size="sm"
           onClick={() => {
-            setIsExpanded(false);
-            setTitle("");
-            setFieldErrors(undefined);
-            setGenericError(undefined);
+            setIsExpanded(false)
+            setTitle("")
+            setFieldErrors(undefined)
+            setGenericError(undefined)
           }}
           className="h-8 text-xs font-medium border-border bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-xl shadow-2xs cursor-pointer"
         >
@@ -185,5 +185,5 @@ export function CreateTaskModal({
         </Button>
       </div>
     </form>
-  );
+  )
 }

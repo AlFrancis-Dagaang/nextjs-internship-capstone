@@ -1,41 +1,41 @@
-"use client";
+"use client"
 
+import { Calendar } from "lucide-react"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Calendar } from "lucide-react";
-import type { CalendarEventDTO } from "@/types";
+} from "@/components/ui/dialog"
+import type { CalendarEventDTO } from "@/types"
 
 interface ProjectEventsModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  events: CalendarEventDTO[];
-  onSelectEvent: (event: CalendarEventDTO) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  events: CalendarEventDTO[]
+  onSelectEvent: (event: CalendarEventDTO) => void
 }
 
 function formatEventDateTime(startAt: string, endAt: string) {
   try {
-    const start = new Date(startAt);
-    const end = new Date(endAt);
+    const start = new Date(startAt)
+    const end = new Date(endAt)
     const dateStr = start.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
-    });
+    })
     const startTimeStr = start.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
-    });
+    })
     const endTimeStr = end.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
-    });
-    return `${dateStr} • ${startTimeStr} – ${endTimeStr}`;
+    })
+    return `${dateStr} • ${startTimeStr} – ${endTimeStr}`
   } catch {
-    return `${startAt} – ${endAt}`;
+    return `${startAt} – ${endAt}`
   }
 }
 
@@ -72,8 +72,8 @@ export function ProjectEventsModal({
               <div
                 key={event.id}
                 onClick={() => {
-                  onOpenChange(false);
-                  onSelectEvent(event);
+                  onOpenChange(false)
+                  onSelectEvent(event)
                 }}
                 className="group flex items-center justify-between p-3.5 rounded-xl bg-card border border-border/80 hover:border-primary/50 hover:bg-muted/40 cursor-pointer transition-all shadow-2xs"
               >
@@ -94,5 +94,5 @@ export function ProjectEventsModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

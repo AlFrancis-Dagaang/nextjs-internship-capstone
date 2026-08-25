@@ -1,124 +1,124 @@
 // components/analytics/analytics-view.tsx
-"use client";
+"use client"
 
-import { useState, useEffect, useMemo } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   Calendar as CalendarIcon,
-  UserCheck,
-  LayoutDashboard,
   Layers,
-} from "lucide-react";
+  LayoutDashboard,
+  UserCheck,
+} from "lucide-react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useMemo, useState } from "react"
+import {
+  DrillDownPanel,
+  type DrillDownRequest,
+} from "@/components/analytics/drill-down-panel"
+import { PageHeader } from "@/components/layout/page-header"
+import { Button } from "@/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/layout/page-header";
-import {
-  DrillDownPanel,
-  DrillDownRequest,
-} from "@/components/analytics/drill-down-panel";
-import { getMemberBreakdown, getTeamBreakdown } from "@/lib/actions/analytics";
-import { AnalyticsOverviewTab } from "./tabs/analytics-overview-tab";
+} from "@/components/ui/select"
+import { getMemberBreakdown, getTeamBreakdown } from "@/lib/actions/analytics"
 import {
   AnalyticsMembersTab,
-  MemberRow,
-  TeamAverage,
-} from "./tabs/analytics-members-tab";
+  type MemberRow,
+  type TeamAverage,
+} from "./tabs/analytics-members-tab"
+import { AnalyticsOverviewTab } from "./tabs/analytics-overview-tab"
 import {
   AnalyticsTeamsTab,
-  TeamBreakdownRow,
-} from "./tabs/analytics-teams-tab";
+  type TeamBreakdownRow,
+} from "./tabs/analytics-teams-tab"
 
 type MetricWithDelta = {
-  value: number | null;
-  deltaPercent: number | null;
-};
-
-type AnalyticsData = {
-  velocity: MetricWithDelta;
-  teamEfficiency: MetricWithDelta & { label: string };
-  activeUsers: MetricWithDelta;
-  avgTaskDays: MetricWithDelta;
-  projectProgress: {
-    projectId: string;
-    projectName: string;
-    percent: number;
-  }[];
-  teamActivity: { day: string; count: number }[];
-  availableProjects: { id: string; name: string }[];
-  appliedFilters: {
-    startDate: string;
-    endDate: string;
-    projectId: string | null;
-  };
-};
-
-interface AnalyticsViewProps {
-  data: AnalyticsData;
+  value: number | null
+  deltaPercent: number | null
 }
 
-type SortField = "completedCount" | "activeDays" | "avgResolutionDays";
-type SortOrder = "asc" | "desc";
+type AnalyticsData = {
+  velocity: MetricWithDelta
+  teamEfficiency: MetricWithDelta & { label: string }
+  activeUsers: MetricWithDelta
+  avgTaskDays: MetricWithDelta
+  projectProgress: {
+    projectId: string
+    projectName: string
+    percent: number
+  }[]
+  teamActivity: { day: string; count: number }[]
+  availableProjects: { id: string; name: string }[]
+  appliedFilters: {
+    startDate: string
+    endDate: string
+    projectId: string | null
+  }
+}
+
+interface AnalyticsViewProps {
+  data: AnalyticsData
+}
+
+type SortField = "completedCount" | "activeDays" | "avgResolutionDays"
+type SortOrder = "asc" | "desc"
 type TeamSortField =
   | "completedCount"
   | "activeDays"
   | "avgResolutionDays"
-  | "memberCount";
+  | "memberCount"
 
 export function AnalyticsView({ data }: AnalyticsViewProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
 
   const [activeTab, setActiveTab] = useState<"overview" | "members" | "teams">(
     "overview",
-  );
+  )
 
-  const [drillDownOpen, setDrillDownOpen] = useState(false);
+  const [drillDownOpen, setDrillDownOpen] = useState(false)
   const [drillDownRequest, setDrillDownRequest] =
-    useState<DrillDownRequest | null>(null);
+    useState<DrillDownRequest | null>(null)
 
-  const [membersLoading, setMembersLoading] = useState(false);
-  const [membersError, setMembersError] = useState<string | null>(null);
-  const [membersList, setMembersList] = useState<MemberRow[]>([]);
-  const [teamAverage, setTeamAverage] = useState<TeamAverage | null>(null);
+  const [membersLoading, setMembersLoading] = useState(false)
+  const [membersError, setMembersError] = useState<string | null>(null)
+  const [membersList, setMembersList] = useState<MemberRow[]>([])
+  const [teamAverage, setTeamAverage] = useState<TeamAverage | null>(null)
 
-  const [teamsLoading, setTeamsLoading] = useState(false);
-  const [teamsError, setTeamsError] = useState<string | null>(null);
-  const [teamsList, setTeamsList] = useState<TeamBreakdownRow[]>([]);
+  const [teamsLoading, setTeamsLoading] = useState(false)
+  const [teamsError, setTeamsError] = useState<string | null>(null)
+  const [teamsList, setTeamsList] = useState<TeamBreakdownRow[]>([])
 
-  const [sortField, setSortField] = useState<SortField>("completedCount");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [sortField, setSortField] = useState<SortField>("completedCount")
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
 
   const [teamSortField, setTeamSortField] =
-    useState<TeamSortField>("completedCount");
-  const [teamSortOrder, setTeamSortOrder] = useState<SortOrder>("desc");
+    useState<TeamSortField>("completedCount")
+  const [teamSortOrder, setTeamSortOrder] = useState<SortOrder>("desc")
 
   const handleOpenDrillDown = (req: DrillDownRequest) => {
-    setDrillDownRequest(req);
-    setDrillDownOpen(true);
-  };
+    setDrillDownRequest(req)
+    setDrillDownOpen(true)
+  }
 
   useEffect(() => {
-    if (activeTab !== "members") return;
+    if (activeTab !== "members") return
 
-    let isMounted = true;
-    setMembersLoading(true);
-    setMembersError(null);
+    let isMounted = true
+    setMembersLoading(true)
+    setMembersError(null)
 
-    const startD = new Date(data.appliedFilters.startDate);
-    const endD = new Date(data.appliedFilters.endDate);
-    const projId = data.appliedFilters.projectId || undefined;
+    const startD = new Date(data.appliedFilters.startDate)
+    const endD = new Date(data.appliedFilters.endDate)
+    const projId = data.appliedFilters.projectId || undefined
 
     async function fetchMembers() {
       try {
@@ -126,41 +126,39 @@ export function AnalyticsView({ data }: AnalyticsViewProps) {
           startDate: startD,
           endDate: endD,
           projectId: projId,
-        });
-        if (!isMounted) return;
+        })
+        if (!isMounted) return
         if (res.success) {
-          setMembersList(res.data.members);
-          setTeamAverage(res.data.teamAverage);
+          setMembersList(res.data.members)
+          setTeamAverage(res.data.teamAverage)
         } else {
-          setMembersError(res.error);
+          setMembersError(res.error)
         }
       } catch (err: any) {
-        if (!isMounted) return;
-        setMembersError(
-          err?.message || "Failed to load team members breakdown",
-        );
+        if (!isMounted) return
+        setMembersError(err?.message || "Failed to load team members breakdown")
       } finally {
-        if (isMounted) setMembersLoading(false);
+        if (isMounted) setMembersLoading(false)
       }
     }
 
-    fetchMembers();
+    fetchMembers()
 
     return () => {
-      isMounted = false;
-    };
-  }, [activeTab, data.appliedFilters]);
+      isMounted = false
+    }
+  }, [activeTab, data.appliedFilters])
 
   useEffect(() => {
-    if (activeTab !== "teams") return;
+    if (activeTab !== "teams") return
 
-    let isMounted = true;
-    setTeamsLoading(true);
-    setTeamsError(null);
+    let isMounted = true
+    setTeamsLoading(true)
+    setTeamsError(null)
 
-    const startD = new Date(data.appliedFilters.startDate);
-    const endD = new Date(data.appliedFilters.endDate);
-    const projId = data.appliedFilters.projectId || undefined;
+    const startD = new Date(data.appliedFilters.startDate)
+    const endD = new Date(data.appliedFilters.endDate)
+    const projId = data.appliedFilters.projectId || undefined
 
     async function fetchTeams() {
       try {
@@ -168,168 +166,168 @@ export function AnalyticsView({ data }: AnalyticsViewProps) {
           startDate: startD,
           endDate: endD,
           projectId: projId,
-        });
-        if (!isMounted) return;
+        })
+        if (!isMounted) return
         if (res.success) {
-          setTeamsList(res.data.teams);
+          setTeamsList(res.data.teams)
         } else {
-          setTeamsError(res.error);
+          setTeamsError(res.error)
         }
       } catch (err: any) {
-        if (!isMounted) return;
-        setTeamsError(err?.message || "Failed to load teams breakdown");
+        if (!isMounted) return
+        setTeamsError(err?.message || "Failed to load teams breakdown")
       } finally {
-        if (isMounted) setTeamsLoading(false);
+        if (isMounted) setTeamsLoading(false)
       }
     }
 
-    fetchTeams();
+    fetchTeams()
 
     return () => {
-      isMounted = false;
-    };
-  }, [activeTab, data.appliedFilters]);
+      isMounted = false
+    }
+  }, [activeTab, data.appliedFilters])
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
     } else {
-      setSortField(field);
-      setSortOrder("desc");
+      setSortField(field)
+      setSortOrder("desc")
     }
-  };
+  }
 
   const handleTeamSort = (field: TeamSortField) => {
     if (teamSortField === field) {
-      setTeamSortOrder(teamSortOrder === "asc" ? "desc" : "asc");
+      setTeamSortOrder(teamSortOrder === "asc" ? "desc" : "asc")
     } else {
-      setTeamSortField(field);
-      setTeamSortOrder("desc");
+      setTeamSortField(field)
+      setTeamSortOrder("desc")
     }
-  };
+  }
 
   const sortedMembers = useMemo(() => {
     return [...membersList].sort((a, b) => {
-      let valA: any = a[sortField];
-      let valB: any = b[sortField];
+      let valA: any = a[sortField]
+      let valB: any = b[sortField]
 
-      if (valA === null) valA = -1;
-      if (valB === null) valB = -1;
+      if (valA === null) valA = -1
+      if (valB === null) valB = -1
 
-      if (valA < valB) return sortOrder === "asc" ? -1 : 1;
-      if (valA > valB) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [membersList, sortField, sortOrder]);
+      if (valA < valB) return sortOrder === "asc" ? -1 : 1
+      if (valA > valB) return sortOrder === "asc" ? 1 : -1
+      return 0
+    })
+  }, [membersList, sortField, sortOrder])
 
   const sortedTeams = useMemo(() => {
     return [...teamsList].sort((a, b) => {
-      let valA: any = a[teamSortField];
-      let valB: any = b[teamSortField];
+      let valA: any = a[teamSortField]
+      let valB: any = b[teamSortField]
 
-      if (valA === null) valA = -1;
-      if (valB === null) valB = -1;
+      if (valA === null) valA = -1
+      if (valB === null) valB = -1
 
-      if (valA < valB) return teamSortOrder === "asc" ? -1 : 1;
-      if (valA > valB) return teamSortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [teamsList, teamSortField, teamSortOrder]);
+      if (valA < valB) return teamSortOrder === "asc" ? -1 : 1
+      if (valA > valB) return teamSortOrder === "asc" ? 1 : -1
+      return 0
+    })
+  }, [teamsList, teamSortField, teamSortOrder])
 
   const updateFilters = (newFilters: {
-    startDate?: string;
-    endDate?: string;
-    projectId?: string | null;
+    startDate?: string
+    endDate?: string
+    projectId?: string | null
   }) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams.toString())
 
     const startDate =
       newFilters.startDate !== undefined
         ? newFilters.startDate
-        : data.appliedFilters.startDate;
+        : data.appliedFilters.startDate
     const endDate =
       newFilters.endDate !== undefined
         ? newFilters.endDate
-        : data.appliedFilters.endDate;
+        : data.appliedFilters.endDate
     const projectId =
       newFilters.projectId !== undefined
         ? newFilters.projectId
-        : data.appliedFilters.projectId;
+        : data.appliedFilters.projectId
 
-    if (startDate) params.set("startDate", startDate);
-    else params.delete("startDate");
+    if (startDate) params.set("startDate", startDate)
+    else params.delete("startDate")
 
-    if (endDate) params.set("endDate", endDate);
-    else params.delete("endDate");
+    if (endDate) params.set("endDate", endDate)
+    else params.delete("endDate")
 
-    if (projectId) params.set("projectId", projectId);
-    else params.delete("projectId");
+    if (projectId) params.set("projectId", projectId)
+    else params.delete("projectId")
 
-    const query = params.toString();
-    router.push(query ? `${pathname}?${query}` : pathname);
-  };
+    const query = params.toString()
+    router.push(query ? `${pathname}?${query}` : pathname)
+  }
 
   const formatDate = (dateStr: string) => {
     try {
-      const [year, month, day] = dateStr.split("-").map(Number);
-      if (!year || !month || !day) return dateStr;
+      const [year, month, day] = dateStr.split("-").map(Number)
+      if (!year || !month || !day) return dateStr
       return new Date(year, month - 1, day).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
-      });
+      })
     } catch {
-      return dateStr;
+      return dateStr
     }
-  };
+  }
 
   const formatDisplayDate = (dateStr: string) => {
     try {
-      const [year, month, day] = dateStr.split("-").map(Number);
-      if (!year || !month || !day) return dateStr;
+      const [year, month, day] = dateStr.split("-").map(Number)
+      if (!year || !month || !day) return dateStr
       return new Date(year, month - 1, day).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
-      });
+      })
     } catch {
-      return dateStr;
+      return dateStr
     }
-  };
+  }
 
   function getDynamicInsight(analyticsData: AnalyticsData): string {
-    const vel = analyticsData.velocity.value ?? 0;
-    const velDelta = analyticsData.velocity.deltaPercent;
-    const users = analyticsData.activeUsers.value ?? 0;
-    const avgDays = analyticsData.avgTaskDays.value;
-    const efficiency = analyticsData.teamEfficiency.value ?? 0;
+    const vel = analyticsData.velocity.value ?? 0
+    const velDelta = analyticsData.velocity.deltaPercent
+    const users = analyticsData.activeUsers.value ?? 0
+    const avgDays = analyticsData.avgTaskDays.value
+    const efficiency = analyticsData.teamEfficiency.value ?? 0
 
     if (velDelta !== null && velDelta >= 10) {
-      return `Great momentum! Team velocity is up +${velDelta}% this period with ${vel} tasks completed.`;
+      return `Great momentum! Team velocity is up +${velDelta}% this period with ${vel} tasks completed.`
     }
     if (velDelta !== null && velDelta <= -10) {
-      return `Velocity is down ${velDelta}% compared to the prior period. Check for blocking items.`;
+      return `Velocity is down ${velDelta}% compared to the prior period. Check for blocking items.`
     }
     if (avgDays !== null && avgDays > 5) {
-      return `Tasks are taking an average of ${avgDays} days to complete. Consider breaking down larger tasks.`;
+      return `Tasks are taking an average of ${avgDays} days to complete. Consider breaking down larger tasks.`
     }
     if (efficiency >= 80) {
-      return `High completion rate at ${efficiency}% across accessible projects with ${users} active contributors.`;
+      return `High completion rate at ${efficiency}% across accessible projects with ${users} active contributors.`
     }
     if (vel > 0) {
-      return `Steady progress with ${vel} completed tasks and ${users} active members contributing this period.`;
+      return `Steady progress with ${vel} completed tasks and ${users} active members contributing this period.`
     }
-    return "No completed tasks recorded in this date range. Try expanding your filter window.";
+    return "No completed tasks recorded in this date range. Try expanding your filter window."
   }
 
   const handleViewFullReport = () => {
-    setActiveTab("members");
+    setActiveTab("members")
     setTimeout(() => {
-      const element = document.getElementById("team-members-section");
+      const element = document.getElementById("team-members-section")
       if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
+        element.scrollIntoView({ behavior: "smooth", block: "start" })
       }
-    }, 100);
-  };
+    }, 100)
+  }
 
   return (
     <div className="w-full space-y-6 pb-12 px-2 sm:px-0">
@@ -505,5 +503,5 @@ export function AnalyticsView({ data }: AnalyticsViewProps) {
         teamEfficiencyData={data.projectProgress}
       />
     </div>
-  );
+  )
 }

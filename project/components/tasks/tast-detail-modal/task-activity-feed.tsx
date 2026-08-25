@@ -1,63 +1,63 @@
 // components/tasks/tast-detail-modal/task-activity-feed.tsx
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { getTaskActivity } from "@/lib/actions/taskActivity";
-import type { TaskActivity, User } from "@/lib/db/schema";
+import { useEffect, useState } from "react"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { getTaskActivity } from "@/lib/actions/taskActivity"
+import type { TaskActivity, User } from "@/lib/db/schema"
 import {
-  formatRelativeTime,
   formatActivityLabel,
-} from "@/lib/services/task-activity-helpers";
-import { TaskActivityModal } from "./task-activity-modal";
-import { UserAvatar } from "@/components/ui/user-avatar";
+  formatRelativeTime,
+} from "@/lib/services/task-activity-helpers"
+import { TaskActivityModal } from "./task-activity-modal"
 
 export type ActivityWithActor = TaskActivity & {
-  actor?: Pick<User, "id" | "name" | "imageUrl" | "hasImage">;
-};
+  actor?: Pick<User, "id" | "name" | "imageUrl" | "hasImage">
+}
 
 type TaskActivityFeedProps = {
-  taskId: string;
-  refreshKey?: number;
-  previewCount?: number;
-};
+  taskId: string
+  refreshKey?: number
+  previewCount?: number
+}
 
 export function TaskActivityFeed({
   taskId,
   refreshKey,
   previewCount = 3,
 }: TaskActivityFeedProps) {
-  const [activity, setActivity] = useState<ActivityWithActor[] | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showAllOpen, setShowAllOpen] = useState(false);
+  const [activity, setActivity] = useState<ActivityWithActor[] | null>(null)
+  const [hasMore, setHasMore] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showAllOpen, setShowAllOpen] = useState(false)
 
   useEffect(() => {
-    let cancelled = false;
-    setActivity(null);
-    setError(null);
+    let cancelled = false
+    setActivity(null)
+    setError(null)
 
     getTaskActivity(taskId, previewCount + 1).then((result) => {
-      if (cancelled) return;
+      if (cancelled) return
       if (!result.success) {
-        setError(result.error);
-        return;
+        setError(result.error)
+        return
       }
-      const data = result.data as ActivityWithActor[];
-      setHasMore(data.length > previewCount);
-      setActivity(data.slice(0, previewCount));
-    });
+      const data = result.data as ActivityWithActor[]
+      setHasMore(data.length > previewCount)
+      setActivity(data.slice(0, previewCount))
+    })
 
     return () => {
-      cancelled = true;
-    };
-  }, [taskId, refreshKey, previewCount]);
+      cancelled = true
+    }
+  }, [taskId, refreshKey, previewCount])
 
   if (error) {
     return (
       <p className="text-destructive text-xs">
         Failed to load activity: {error}
       </p>
-    );
+    )
   }
 
   if (activity === null) {
@@ -73,7 +73,7 @@ export function TaskActivityFeed({
           </li>
         ))}
       </ul>
-    );
+    )
   }
 
   if (activity.length === 0) {
@@ -81,15 +81,15 @@ export function TaskActivityFeed({
       <div className="h-16 flex items-center">
         <p className="text-muted-foreground text-xs">No activity yet.</p>
       </div>
-    );
+    )
   }
 
   return (
     <>
       <ul className="space-y-4">
         {activity.map((entry) => {
-          const actorName = entry.actor?.name ?? "Unknown user";
-          const actorId = entry.actor?.id ?? actorName;
+          const actorName = entry.actor?.name ?? "Unknown user"
+          const actorId = entry.actor?.id ?? actorName
           return (
             <li key={entry.id} className="flex items-start gap-3">
               <UserAvatar
@@ -111,7 +111,7 @@ export function TaskActivityFeed({
                 </span>
               </div>
             </li>
-          );
+          )
         })}
       </ul>
 
@@ -130,5 +130,5 @@ export function TaskActivityFeed({
         onOpenChange={setShowAllOpen}
       />
     </>
-  );
+  )
 }

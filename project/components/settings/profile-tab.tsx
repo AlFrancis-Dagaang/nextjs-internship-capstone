@@ -1,87 +1,87 @@
 // components/settings/profile-tab.tsx
-"use client";
+"use client"
 
-import { useState, useEffect, useTransition, useRef } from "react";
-import { useUser } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, Camera, User as UserIcon } from "lucide-react";
-import { UserAvatar } from "@/components/ui/user-avatar";
+import { useUser } from "@clerk/nextjs"
+import { Camera, Loader2, User as UserIcon } from "lucide-react"
+import { useEffect, useRef, useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useToast } from "@/hooks/use-toast"
 
 type UserSchema = {
-  id: string;
-  clerkId: string;
-  email: string;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+  id: string
+  clerkId: string
+  email: string
+  name: string
+  createdAt: Date
+  updatedAt: Date
+}
 
 export function ProfileTab({ dbUser }: { dbUser: UserSchema }) {
-  const { isLoaded, user } = useUser();
-  const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
+  const { isLoaded, user } = useUser()
+  const { toast } = useToast()
+  const [isPending, startTransition] = useTransition()
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (user) {
-      setFirstName(user.firstName ?? "");
-      setLastName(user.lastName ?? "");
+      setFirstName(user.firstName ?? "")
+      setLastName(user.lastName ?? "")
     }
-  }, [user]);
+  }, [user])
 
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center py-16 bg-card border border-border/80 rounded-3xl shadow-xs">
         <Loader2 className="animate-spin text-primary" size={24} />
       </div>
-    );
+    )
   }
 
   async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+    const file = e.target.files?.[0]
+    if (!file || !user) return
 
-    setUploadingImage(true);
+    setUploadingImage(true)
     try {
-      await user.setProfileImage({ file });
-      await user.reload();
+      await user.setProfileImage({ file })
+      await user.reload()
       toast({
         title: "Profile picture updated",
         description: "Your new avatar has been uploaded successfully.",
-      });
+      })
     } catch (err: any) {
       toast({
         title: "Failed to upload image",
         description:
           err?.errors?.[0]?.message || err?.message || "Something went wrong.",
         variant: "destructive",
-      });
+      })
     } finally {
-      setUploadingImage(false);
+      setUploadingImage(false)
     }
   }
 
   function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!user) return;
+    e.preventDefault()
+    if (!user) return
 
     startTransition(async () => {
       try {
         await user.update({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-        });
+        })
         toast({
           title: "Profile updated",
           description: "Your name has been updated successfully.",
-        });
+        })
       } catch (err: any) {
         toast({
           title: "Failed to update profile",
@@ -90,9 +90,9 @@ export function ProfileTab({ dbUser }: { dbUser: UserSchema }) {
             err?.message ||
             "Something went wrong.",
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   return (
@@ -205,5 +205,5 @@ export function ProfileTab({ dbUser }: { dbUser: UserSchema }) {
         </div>
       </form>
     </div>
-  );
+  )
 }

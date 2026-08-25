@@ -1,56 +1,56 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import { Plus } from "lucide-react";
-import { createList } from "@/lib/actions/lists";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { List } from "@/lib/db/schema";
-import { getRealtimeClientId } from "@/lib/realtime/client";
+import { Plus } from "lucide-react"
+import { useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { useToast } from "@/hooks/use-toast"
+import { createList } from "@/lib/actions/lists"
+import type { List } from "@/lib/db/schema"
+import { getRealtimeClientId } from "@/lib/realtime/client"
 
 export function AddListForm({
   projectId,
   onCreated,
 }: {
-  projectId: string;
-  onCreated?: (list: List) => void;
+  projectId: string
+  onCreated?: (list: List) => void
 }) {
-  const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [name, setName] = useState("");
+  const { toast } = useToast()
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [name, setName] = useState("")
   const [fieldErrors, setFieldErrors] = useState<
     Record<string, string[]> | undefined
-  >(undefined);
-  const [isPending, startTransition] = useTransition();
+  >(undefined)
+  const [isPending, startTransition] = useTransition()
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
+    e.preventDefault()
+    if (!name.trim()) return
 
     startTransition(async () => {
       const result = await createList(
         { projectId, name },
         getRealtimeClientId(),
-      );
+      )
       if (!result.success) {
-        setFieldErrors(result.fieldErrors);
+        setFieldErrors(result.fieldErrors)
         toast({
           title: "Failed to create list",
           description: result.fieldErrors
             ? "Please check the highlighted fields."
             : result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
 
-      toast({ title: "List created", description: name });
-      setName("");
-      setFieldErrors(undefined);
-      setIsExpanded(false);
-      onCreated?.(result.data);
-    });
+      toast({ title: "List created", description: name })
+      setName("")
+      setFieldErrors(undefined)
+      setIsExpanded(false)
+      onCreated?.(result.data)
+    })
   }
 
   if (!isExpanded) {
@@ -62,7 +62,7 @@ export function AddListForm({
         <Plus size={16} />
         <span>Add another list</span>
       </button>
-    );
+    )
   }
 
   return (
@@ -94,9 +94,9 @@ export function AddListForm({
           variant="outline"
           size="sm"
           onClick={() => {
-            setIsExpanded(false);
-            setName("");
-            setFieldErrors(undefined);
+            setIsExpanded(false)
+            setName("")
+            setFieldErrors(undefined)
           }}
           className="bg-card border-input text-card-foreground hover:bg-accent"
         >
@@ -104,5 +104,5 @@ export function AddListForm({
         </Button>
       </div>
     </form>
-  );
+  )
 }

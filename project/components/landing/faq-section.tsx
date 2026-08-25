@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react"
+import { useState } from "react"
 
 export function LandingFAQ() {
   const faqs = [
@@ -21,9 +21,9 @@ export function LandingFAQ() {
       q: "Can I customize workflows to match our unique processes?",
       a: "Yes! You can completely tailor your Kanban board lists, status columns, automated task rules, and access permission tiers to match your team's exact workflow.",
     },
-  ];
+  ]
 
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [openIdx, setOpenIdx] = useState<number | null>(null)
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14 border-t border-border/60 animate-fade-up">
@@ -40,7 +40,7 @@ export function LandingFAQ() {
 
         <div className="lg:col-span-7 space-y-2.5">
           {faqs.map((faq, idx) => {
-            const isOpen = openIdx === idx;
+            const isOpen = openIdx === idx
             return (
               <div
                 key={idx}
@@ -64,10 +64,10 @@ export function LandingFAQ() {
                   </div>
                 )}
               </div>
-            );
+            )
           })}
         </div>
       </div>
     </section>
-  );
+  )
 }

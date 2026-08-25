@@ -1,7 +1,7 @@
-import { and, eq, inArray } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
-import { db } from "../client";
-import { projectTeams, teams } from "../schema";
+import type { InferInsertModel } from "drizzle-orm"
+import { and, eq, inArray } from "drizzle-orm"
+import { db } from "../client"
+import { projectTeams, teams } from "../schema"
 
 export const projectTeamsQueries = {
   getByProjectAndTeam: async (projectId: string, teamId: string) => {
@@ -10,7 +10,7 @@ export const projectTeamsQueries = {
         eq(projectTeams.projectId, projectId),
         eq(projectTeams.teamId, teamId),
       ),
-    });
+    })
   },
   getByProject: async (projectId: string) => {
     return db
@@ -24,7 +24,7 @@ export const projectTeamsQueries = {
       })
       .from(projectTeams)
       .innerJoin(teams, eq(projectTeams.teamId, teams.id))
-      .where(eq(projectTeams.projectId, projectId));
+      .where(eq(projectTeams.projectId, projectId))
   },
 
   /**
@@ -40,7 +40,7 @@ export const projectTeamsQueries = {
         projectId: projectTeams.projectId,
       })
       .from(projectTeams)
-      .where(eq(projectTeams.teamId, teamId));
+      .where(eq(projectTeams.teamId, teamId))
   },
 
   /**
@@ -50,7 +50,7 @@ export const projectTeamsQueries = {
    * winner itself, so the ranking logic lives in one place.
    */
   getRolesForProjectAndTeams: async (projectId: string, teamIds: string[]) => {
-    if (teamIds.length === 0) return [];
+    if (teamIds.length === 0) return []
     return db
       .select({ role: projectTeams.role })
       .from(projectTeams)
@@ -59,22 +59,22 @@ export const projectTeamsQueries = {
           eq(projectTeams.projectId, projectId),
           inArray(projectTeams.teamId, teamIds),
         ),
-      );
+      )
   },
 
   create: async (data: InferInsertModel<typeof projectTeams>) => {
-    const [pt] = await db.insert(projectTeams).values(data).returning();
-    return pt;
+    const [pt] = await db.insert(projectTeams).values(data).returning()
+    return pt
   },
   updateRole: async (id: string, role: "editor" | "contributor" | "viewer") => {
     const [pt] = await db
       .update(projectTeams)
       .set({ role })
       .where(eq(projectTeams.id, id))
-      .returning();
-    return pt;
+      .returning()
+    return pt
   },
   remove: async (id: string) => {
-    await db.delete(projectTeams).where(eq(projectTeams.id, id));
+    await db.delete(projectTeams).where(eq(projectTeams.id, id))
   },
-};
+}

@@ -1,25 +1,25 @@
-"use client";
+"use client"
 
 type AvgTaskTimeDrillDownData = {
   tasks: {
-    taskId: string;
-    title: string;
-    projectName: string;
-    durationDays: number;
-  }[];
-};
+    taskId: string
+    title: string
+    projectName: string
+    durationDays: number
+  }[]
+}
 
 export function AvgTaskTimeDrillDown({
   data,
 }: {
-  data: AvgTaskTimeDrillDownData;
+  data: AvgTaskTimeDrillDownData
 }) {
   if (data.tasks.length === 0) {
     return (
       <p className="text-xs text-muted-foreground italic">
         No task duration data available.
       </p>
-    );
+    )
   }
 
   return (
@@ -43,5 +43,5 @@ export function AvgTaskTimeDrillDown({
           </div>
         ))}
     </div>
-  );
+  )
 }

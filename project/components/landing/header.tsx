@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Layers } from "lucide-react";
+import { Layers } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export function LandingHeader() {
   return (
@@ -51,5 +51,5 @@ export function LandingHeader() {
         </div>
       </div>
     </header>
-  );
+  )
 }

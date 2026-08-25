@@ -1,21 +1,21 @@
 // components/analytics/drill-down-panel.tsx
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
+import { CheckCircle2, Clock } from "lucide-react"
+import { useEffect, useState } from "react"
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from "@/components/ui/sheet"
 import {
-  getProjectDrillDown,
-  getDayActivityDrillDown,
-  getVelocityDrillDown,
   getActiveUsersDrillDown,
   getAvgTaskTimeDrillDown,
-} from "@/lib/actions/analytics";
-import { CheckCircle2, Clock, Calendar, ArrowRight } from "lucide-react";
+  getDayActivityDrillDown,
+  getProjectDrillDown,
+  getVelocityDrillDown,
+} from "@/lib/actions/analytics"
 
 export type DrillDownRequest =
   | { kind: "project"; projectId: string }
@@ -23,20 +23,20 @@ export type DrillDownRequest =
   | { kind: "velocity" }
   | { kind: "activeUsers" }
   | { kind: "avgTaskTime" }
-  | { kind: "teamEfficiency" };
+  | { kind: "teamEfficiency" }
 
 interface DrillDownPanelProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  request: DrillDownRequest | null;
-  startDate: string;
-  endDate: string;
-  projectId: string | null;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  request: DrillDownRequest | null
+  startDate: string
+  endDate: string
+  projectId: string | null
   teamEfficiencyData?: {
-    projectId: string;
-    projectName: string;
-    percent: number;
-  }[];
+    projectId: string
+    projectName: string
+    percent: number
+  }[]
 }
 
 export function DrillDownPanel({
@@ -48,163 +48,163 @@ export function DrillDownPanel({
   projectId,
   teamEfficiencyData = [],
 }: DrillDownPanelProps) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const [projectData, setProjectData] = useState<{
-    projectName: string;
+    projectName: string
     open: {
-      id: string;
-      title: string;
-      priority: string | null;
-      dueDate: string | null;
-    }[];
+      id: string
+      title: string
+      priority: string | null
+      dueDate: string | null
+    }[]
     completed: {
-      id: string;
-      title: string;
-      priority: string | null;
-      dueDate: string | null;
-    }[];
-  } | null>(null);
+      id: string
+      title: string
+      priority: string | null
+      dueDate: string | null
+    }[]
+  } | null>(null)
 
   const [dayData, setDayData] = useState<{
-    day: string;
+    day: string
     entries: {
-      id: string;
-      action: string;
-      actorName: string;
-      taskTitle: string;
-      projectName: string;
-      createdAt: string;
-    }[];
-  } | null>(null);
+      id: string
+      action: string
+      actorName: string
+      taskTitle: string
+      projectName: string
+      createdAt: string
+    }[]
+  } | null>(null)
 
   const [velocityData, setVelocityData] = useState<{
     entries: {
-      id: string;
-      taskTitle: string;
-      projectName: string;
-      actorName: string;
-      createdAt: string;
-    }[];
-  } | null>(null);
+      id: string
+      taskTitle: string
+      projectName: string
+      actorName: string
+      createdAt: string
+    }[]
+  } | null>(null)
 
   const [activeUsersData, setActiveUsersData] = useState<{
-    members: { actorId: string; name: string; actionCount: number }[];
-  } | null>(null);
+    members: { actorId: string; name: string; actionCount: number }[]
+  } | null>(null)
 
   const [avgTaskTimeData, setAvgTaskTimeData] = useState<{
     tasks: {
-      taskId: string;
-      title: string;
-      projectName: string;
-      durationDays: number;
-    }[];
-  } | null>(null);
+      taskId: string
+      title: string
+      projectName: string
+      durationDays: number
+    }[]
+  } | null>(null)
 
   useEffect(() => {
-    if (!open || !request) return;
+    if (!open || !request) return
 
-    let isMounted = true;
-    setLoading(true);
-    setError(null);
+    let isMounted = true
+    setLoading(true)
+    setError(null)
 
-    const startD = new Date(startDate);
-    const endD = new Date(endDate);
-    const projIdParam = projectId || undefined;
+    const startD = new Date(startDate)
+    const endD = new Date(endDate)
+    const projIdParam = projectId || undefined
 
     async function fetchData() {
       try {
         if (request?.kind === "project") {
-          const res = await getProjectDrillDown(request.projectId);
-          if (!isMounted) return;
+          const res = await getProjectDrillDown(request.projectId)
+          if (!isMounted) return
           if (res.success) {
-            setProjectData(res.data);
+            setProjectData(res.data)
           } else {
-            setError(res.error);
+            setError(res.error)
           }
         } else if (request?.kind === "day") {
           const res = await getDayActivityDrillDown({
             day: request.day,
             projectId: projIdParam,
-          });
-          if (!isMounted) return;
+          })
+          if (!isMounted) return
           if (res.success) {
-            setDayData(res.data);
+            setDayData(res.data)
           } else {
-            setError(res.error);
+            setError(res.error)
           }
         } else if (request?.kind === "velocity") {
           const res = await getVelocityDrillDown({
             startDate: startD,
             endDate: endD,
             projectId: projIdParam,
-          });
-          if (!isMounted) return;
+          })
+          if (!isMounted) return
           if (res.success) {
-            setVelocityData(res.data);
+            setVelocityData(res.data)
           } else {
-            setError(res.error);
+            setError(res.error)
           }
         } else if (request?.kind === "activeUsers") {
           const res = await getActiveUsersDrillDown({
             startDate: startD,
             endDate: endD,
             projectId: projIdParam,
-          });
-          if (!isMounted) return;
+          })
+          if (!isMounted) return
           if (res.success) {
-            setActiveUsersData(res.data);
+            setActiveUsersData(res.data)
           } else {
-            setError(res.error);
+            setError(res.error)
           }
         } else if (request?.kind === "avgTaskTime") {
           const res = await getAvgTaskTimeDrillDown({
             startDate: startD,
             endDate: endD,
             projectId: projIdParam,
-          });
-          if (!isMounted) return;
+          })
+          if (!isMounted) return
           if (res.success) {
-            setAvgTaskTimeData(res.data);
+            setAvgTaskTimeData(res.data)
           } else {
-            setError(res.error);
+            setError(res.error)
           }
         }
       } catch (err: any) {
-        if (!isMounted) return;
-        setError(err?.message || "Failed to load drill-down data");
+        if (!isMounted) return
+        setError(err?.message || "Failed to load drill-down data")
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) setLoading(false)
       }
     }
 
-    fetchData();
+    fetchData()
 
     return () => {
-      isMounted = false;
-    };
-  }, [open, request, startDate, endDate, projectId]);
+      isMounted = false
+    }
+  }, [open, request, startDate, endDate, projectId])
 
   const getTitle = () => {
-    if (!request) return "Drill-Down Details";
+    if (!request) return "Drill-Down Details"
     switch (request.kind) {
       case "project":
         return projectData
           ? `Project: ${projectData.projectName}`
-          : "Project Details";
+          : "Project Details"
       case "day":
-        return `Activity on ${request.day}`;
+        return `Activity on ${request.day}`
       case "velocity":
-        return "Completed Tasks (Velocity)";
+        return "Completed Tasks (Velocity)"
       case "activeUsers":
-        return "Active Users Breakdown";
+        return "Active Users Breakdown"
       case "avgTaskTime":
-        return "Task Duration Breakdown";
+        return "Task Duration Breakdown"
       case "teamEfficiency":
-        return "Team Efficiency by Project";
+        return "Team Efficiency by Project"
     }
-  };
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -454,5 +454,5 @@ export function DrillDownPanel({
         )}
       </SheetContent>
     </Sheet>
-  );
+  )
 }

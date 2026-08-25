@@ -1,49 +1,49 @@
 // components/dashboard/upcoming-deadlines-card.tsx
-"use client";
+"use client"
 
-import Link from "next/link";
-import { Calendar, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Calendar } from "lucide-react"
+import Link from "next/link"
 
 type UpcomingItemDTO = {
-  id: string;
-  type: "task" | "event";
-  title: string;
-  date: string;
-  projectId: string | null;
-  projectName: string | null;
-  priority?: string | null;
-};
+  id: string
+  type: "task" | "event"
+  title: string
+  date: string
+  projectId: string | null
+  projectName: string | null
+  priority?: string | null
+}
 
 function formatRelativeDate(isoString: string): string {
   try {
-    const target = new Date(isoString);
-    const now = new Date();
-    const diffTime = target.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const target = new Date(isoString)
+    const now = new Date()
+    const diffTime = target.getTime() - now.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Tomorrow";
-    if (diffDays > 1 && diffDays <= 7) return `in ${diffDays} days`;
-    if (diffDays === -1) return "Yesterday";
-    if (diffDays < -1) return `${Math.abs(diffDays)} days ago`;
+    if (diffDays === 0) return "Today"
+    if (diffDays === 1) return "Tomorrow"
+    if (diffDays > 1 && diffDays <= 7) return `in ${diffDays} days`
+    if (diffDays === -1) return "Yesterday"
+    if (diffDays < -1) return `${Math.abs(diffDays)} days ago`
 
     return target.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-    });
+    })
   } catch {
-    return isoString;
+    return isoString
   }
 }
 
 export function UpcomingDeadlinesCard({
   upcoming,
 }: {
-  upcoming: UpcomingItemDTO[];
+  upcoming: UpcomingItemDTO[]
 }) {
-  const maxUpcoming = 4;
-  const displayedUpcoming = upcoming.slice(0, maxUpcoming);
-  const remainingUpcomingCount = upcoming.length - maxUpcoming;
+  const maxUpcoming = 4
+  const displayedUpcoming = upcoming.slice(0, maxUpcoming)
+  const remainingUpcomingCount = upcoming.length - maxUpcoming
 
   return (
     <div className="bg-card border border-border/80 rounded-3xl shadow-xs p-5 sm:p-6 flex flex-col justify-between h-full">
@@ -72,7 +72,7 @@ export function UpcomingDeadlinesCard({
         ) : (
           <div className="space-y-2.5">
             {displayedUpcoming.map((item) => {
-              const relativeDate = formatRelativeDate(item.date);
+              const relativeDate = formatRelativeDate(item.date)
               return (
                 <div
                   key={item.id}
@@ -116,7 +116,7 @@ export function UpcomingDeadlinesCard({
                     </span>
                   </div>
                 </div>
-              );
+              )
             })}
 
             {remainingUpcomingCount > 0 && (
@@ -141,5 +141,5 @@ export function UpcomingDeadlinesCard({
         </Link>
       </div>
     </div>
-  );
+  )
 }

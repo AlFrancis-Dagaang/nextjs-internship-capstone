@@ -1,60 +1,55 @@
-"use server";
+"use server"
 
-import { queries } from "@/lib/db";
-import { commentCreateSchema } from "@/lib/validations";
-import { getAuthedUserOrError } from "@/lib/services/auth";
+import { revalidatePath } from "next/cache"
+import { queries } from "@/lib/db"
+import type { Comment } from "@/lib/db/schema"
+import { publishBoardEvent } from "@/lib/realtime/server"
+import { logTaskActivity } from "@/lib/services/activity"
+import { getAuthedUserOrError } from "@/lib/services/auth"
+import { notifyTaskAssignees } from "@/lib/services/notifications"
 import {
   assertTaskContributeAccess,
-  assertTaskEditAccess,
   assertTaskViewAccess,
-} from "@/lib/services/ownership";
-import { logTaskActivity } from "@/lib/services/activity";
-import type { Comment } from "@/lib/db/schema";
-import { revalidatePath } from "next/cache";
-import { notifyTaskAssignees } from "@/lib/services/notifications";
-import { publishBoardEvent } from "@/lib/realtime/server";
+} from "@/lib/services/ownership"
+import { commentCreateSchema } from "@/lib/validations"
 
 type ActionResult<T> =
   | { success: true; data: T }
-  | { success: false; error: string; fieldErrors?: Record<string, string[]> };
+  | { success: false; error: string; fieldErrors?: Record<string, string[]> }
 
 export async function createComment(
   input: unknown,
   originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.comments.create>>>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const parsed = commentCreateSchema.safeParse(input);
+  const parsed = commentCreateSchema.safeParse(input)
   if (!parsed.success) {
     return {
       success: false,
       error: "Invalid input",
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    }
   }
 
   const access = await assertTaskContributeAccess(
     parsed.data.taskId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
   const comment = await queries.comments.create({
     content: parsed.data.content,
     taskId: parsed.data.taskId,
     authorId: authResult.user.id,
-  });
+  })
 
-  await logTaskActivity(
-    parsed.data.taskId,
-    authResult.user.id,
-    "comment_added",
-  );
+  await logTaskActivity(parsed.data.taskId, authResult.user.id, "comment_added")
   await notifyTaskAssignees({
     taskId: parsed.data.taskId,
     projectId: access.project.id,
@@ -62,7 +57,7 @@ export async function createComment(
     message: "New comment on a task you're assigned to",
     actorId: authResult.user.id,
     excludeUserId: authResult.user.id,
-  });
+  })
 
   await publishBoardEvent(
     access.project.id,
@@ -72,10 +67,10 @@ export async function createComment(
       delta: 1,
     },
     originClientId,
-  );
-  revalidatePath(`/projects/${access.project.id}`);
+  )
+  revalidatePath(`/projects/${access.project.id}`)
 
-  return { success: true, data: comment };
+  return { success: true, data: comment }
 }
 
 export async function getCommentsByTask(
@@ -83,32 +78,32 @@ export async function getCommentsByTask(
 ): Promise<
   ActionResult<Awaited<ReturnType<typeof queries.comments.getByTask>>>
 > {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const access = await assertTaskViewAccess(taskId, authResult.user.id);
+  const access = await assertTaskViewAccess(taskId, authResult.user.id)
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
-  const comments = await queries.comments.getByTask(taskId);
-  return { success: true, data: comments };
+  const comments = await queries.comments.getByTask(taskId)
+  return { success: true, data: comments }
 }
 
 export async function deleteComment(
   id: string,
   originClientId?: string,
 ): Promise<ActionResult<null>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const existingComment = await queries.comments.getById(id);
+  const existingComment = await queries.comments.getById(id)
   if (!existingComment) {
-    return { success: false, error: "Not found" };
+    return { success: false, error: "Not found" }
   }
 
   // Delete-own-only: deliberately NOT an edit-access check. Comments can
@@ -118,21 +113,21 @@ export async function deleteComment(
   const access = await assertTaskViewAccess(
     existingComment.taskId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
   if (existingComment.authorId !== authResult.user.id) {
-    return { success: false, error: "Forbidden" };
+    return { success: false, error: "Forbidden" }
   }
 
-  await queries.comments.delete(id);
+  await queries.comments.delete(id)
   await logTaskActivity(
     existingComment.taskId,
     authResult.user.id,
     "comment_deleted",
-  );
+  )
   await publishBoardEvent(
     access.project.id,
     {
@@ -141,45 +136,45 @@ export async function deleteComment(
       delta: -1,
     },
     originClientId,
-  );
-  revalidatePath(`/projects/${access.project.id}`);
+  )
+  revalidatePath(`/projects/${access.project.id}`)
 
-  return { success: true, data: null };
+  return { success: true, data: null }
 }
 
 export async function updateComment(
   id: string,
   content: string,
 ): Promise<ActionResult<Comment>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const existingComment = await queries.comments.getById(id);
+  const existingComment = await queries.comments.getById(id)
   if (!existingComment) {
-    return { success: false, error: "Not found" };
+    return { success: false, error: "Not found" }
   }
 
   const access = await assertTaskViewAccess(
     existingComment.taskId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
   if (existingComment.authorId !== authResult.user.id) {
-    return { success: false, error: "Forbidden" };
+    return { success: false, error: "Forbidden" }
   }
 
   if (!content.trim()) {
-    return { success: false, error: "Comment cannot be empty" };
+    return { success: false, error: "Comment cannot be empty" }
   }
 
-  const updated = await queries.comments.update(id, { content });
+  const updated = await queries.comments.update(id, { content })
 
-  revalidatePath(`/projects/${access.project.id}`);
+  revalidatePath(`/projects/${access.project.id}`)
 
-  return { success: true, data: updated };
+  return { success: true, data: updated }
 }

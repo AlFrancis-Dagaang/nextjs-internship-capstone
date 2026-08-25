@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export function LandingCtaBanner() {
   return (
@@ -28,5 +28,5 @@ export function LandingCtaBanner() {
         </div>
       </div>
     </section>
-  );
+  )
 }

@@ -1,12 +1,11 @@
-import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { TaskActions } from "@/components/tasks/modal/task-actions";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import type React from "react"
+import { TaskActions } from "@/components/tasks/modal/task-actions"
+import { getAssignableUsers } from "@/lib/actions/project-member"
 import {
   assignUserToTask,
   unassignUserFromTask,
-  getTaskAssignees,
-} from "@/lib/actions/task-assignees";
-import { getAssignableUsers } from "@/lib/actions/project-member";
+} from "@/lib/actions/task-assignees"
 
 // Mock server actions with instantaneous resolutions
 jest.mock("@/lib/actions/task-assignees", () => ({
@@ -17,7 +16,7 @@ jest.mock("@/lib/actions/task-assignees", () => ({
   unassignUserFromTask: jest
     .fn()
     .mockResolvedValue({ success: true, data: {} }),
-}));
+}))
 
 jest.mock("@/lib/actions/project-member", () => ({
   getAssignableUsers: jest.fn().mockResolvedValue({
@@ -27,7 +26,7 @@ jest.mock("@/lib/actions/project-member", () => ({
       { id: "user-2", name: "Bob Jones", email: "bob@example.com" },
     ],
   }),
-}));
+}))
 
 jest.mock("@/lib/actions/tasks", () => ({
   deleteTask: jest.fn(),
@@ -35,7 +34,7 @@ jest.mock("@/lib/actions/tasks", () => ({
   toggleTaskComplete: jest.fn(),
   archiveTask: jest.fn(),
   moveTaskToList: jest.fn(),
-}));
+}))
 
 jest.mock("@/stores/board-store", () => ({
   useBoardStore: (selector: any) =>
@@ -45,13 +44,13 @@ jest.mock("@/stores/board-store", () => ({
       archiveTaskLocally: jest.fn(),
       revertArchiveSnapshot: jest.fn(),
     }),
-}));
+}))
 
 jest.mock("@/hooks/use-toast", () => ({
   useToast: () => ({
     toast: jest.fn(),
   }),
-}));
+}))
 
 // Mock DropdownMenu to render inline
 jest.mock("@/components/ui/dropdown-menu", () => ({
@@ -69,20 +68,20 @@ jest.mock("@/components/ui/dropdown-menu", () => ({
     onClick,
     onSelect,
   }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    onSelect?: (e: any) => void;
+    children: React.ReactNode
+    onClick?: () => void
+    onSelect?: (e: any) => void
   }) => (
     <div
       onClick={(e) => {
-        onClick?.();
-        onSelect?.(e);
+        onClick?.()
+        onSelect?.(e)
       }}
     >
       {children}
     </div>
   ),
-}));
+}))
 
 describe("Multi-Assignee Integration Flow", () => {
   const mockLists = [
@@ -95,11 +94,11 @@ describe("Multi-Assignee Integration Flow", () => {
       updatedAt: new Date(),
       tasks: [],
     },
-  ];
+  ]
 
   beforeEach(() => {
-    jest.clearAllMocks();
-  });
+    jest.clearAllMocks()
+  })
 
   it("TaskActions quick-assign panel: calls assignUserToTask with correct arguments", async () => {
     render(
@@ -115,35 +114,35 @@ describe("Multi-Assignee Integration Flow", () => {
         onArchive={jest.fn()}
         onDeleteClick={jest.fn()}
       />,
-    );
+    )
 
     // Click "Assign member" menu entry
-    const assignMenuItem = screen.getByText("Assign member");
-    fireEvent.click(assignMenuItem);
+    const assignMenuItem = screen.getByText("Assign member")
+    fireEvent.click(assignMenuItem)
 
     // Wait for assignable users list to appear
     await waitFor(() => {
-      expect(getAssignableUsers).toHaveBeenCalledWith("proj-1");
-      expect(screen.getByText("Alice Smith")).toBeInTheDocument();
-    });
+      expect(getAssignableUsers).toHaveBeenCalledWith("proj-1")
+      expect(screen.getByText("Alice Smith")).toBeInTheDocument()
+    })
 
     // Quick-assign user
-    const userRow = screen.getByText("Alice Smith");
-    fireEvent.click(userRow);
+    const userRow = screen.getByText("Alice Smith")
+    fireEvent.click(userRow)
 
     // Confirm underlying action was called with exact args
     await waitFor(() => {
-      expect(assignUserToTask).toHaveBeenCalledWith("task-1", "user-1");
-    });
-  });
+      expect(assignUserToTask).toHaveBeenCalledWith("task-1", "user-1")
+    })
+  })
 
   it("Confirms assignment action handles execution cleanly without hanging", async () => {
-    const result = await assignUserToTask("task-1", "user-1");
-    expect(result.success).toBe(true);
-    expect(assignUserToTask).toHaveBeenCalledWith("task-1", "user-1");
+    const result = await assignUserToTask("task-1", "user-1")
+    expect(result.success).toBe(true)
+    expect(assignUserToTask).toHaveBeenCalledWith("task-1", "user-1")
 
-    const unassignResult = await unassignUserFromTask("task-1", "user-2");
-    expect(unassignResult.success).toBe(true);
-    expect(unassignUserFromTask).toHaveBeenCalledWith("task-1", "user-2");
-  });
-});
+    const unassignResult = await unassignUserFromTask("task-1", "user-2")
+    expect(unassignResult.success).toBe(true)
+    expect(unassignUserFromTask).toHaveBeenCalledWith("task-1", "user-2")
+  })
+})

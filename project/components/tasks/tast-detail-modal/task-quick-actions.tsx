@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { Archive, Trash2, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import type { Task } from "@/lib/db/schema";
-import { restoreTask } from "@/lib/actions/tasks";
-import { useToast } from "@/hooks/use-toast";
-import { useBoardStore } from "@/stores/board-store";
-import { useTransition } from "react";
+import { Archive, RefreshCw, Trash2 } from "lucide-react"
+import { useTransition } from "react"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+import { restoreTask } from "@/lib/actions/tasks"
+import type { Task } from "@/lib/db/schema"
+import { useBoardStore } from "@/stores/board-store"
 
 export function TaskQuickActions({
   task,
@@ -18,44 +18,44 @@ export function TaskQuickActions({
   onRestored,
   onOpenChange,
 }: {
-  task: Task;
-  onArchive?: () => void;
-  onDeleteClick?: () => void;
-  canEdit: boolean;
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-  onRestored?: () => void;
-  onOpenChange?: (open: boolean) => void;
+  task: Task
+  onArchive?: () => void
+  onDeleteClick?: () => void
+  canEdit: boolean
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer"
+  onRestored?: () => void
+  onOpenChange?: (open: boolean) => void
 }) {
-  const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
-  const insertTaskAt = useBoardStore((s) => s.insertTaskAt);
+  const { toast } = useToast()
+  const [isPending, startTransition] = useTransition()
+  const insertTaskAt = useBoardStore((s) => s.insertTaskAt)
 
-  if (role === "viewer" || role === "contributor") return null;
+  if (role === "viewer" || role === "contributor") return null
 
   const handleRestore = () => {
     startTransition(async () => {
-      const res = await restoreTask(task.id);
+      const res = await restoreTask(task.id)
       if (res.success) {
         toast({
           title: "Task restored",
           description: `"${task.title}" has been restored.`,
-        });
-        insertTaskAt(task.listId, res.data, res.data.position);
-        onRestored?.();
+        })
+        insertTaskAt(task.listId, res.data, res.data.position)
+        onRestored?.()
       } else {
         toast({
           title: "Failed to restore task",
           description: res.error,
           variant: "destructive",
-        });
+        })
       }
-    });
-  };
+    })
+  }
 
   const handleArchiveClick = () => {
-    onArchive?.();
-    onOpenChange?.(false);
-  };
+    onArchive?.()
+    onOpenChange?.(false)
+  }
 
   return (
     <div className="space-y-2">
@@ -122,5 +122,5 @@ export function TaskQuickActions({
         )}
       </div>
     </div>
-  );
+  )
 }

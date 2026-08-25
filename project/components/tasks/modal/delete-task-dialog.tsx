@@ -1,15 +1,15 @@
 // components/tasks/modal/delete-task-dialog.tsx
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@/components/ui/dialog"
 
 export function DeleteTaskDialog({
   isOpen,
@@ -18,17 +18,17 @@ export function DeleteTaskDialog({
   taskTitle,
   isPending,
 }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  taskTitle: string;
-  isPending: boolean;
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => void
+  taskTitle: string
+  isPending: boolean
 }) {
-  const [confirmed, setConfirmed] = useState(false);
+  const [confirmed, setConfirmed] = useState(false)
 
   useEffect(() => {
-    if (isOpen) setConfirmed(false);
-  }, [isOpen]);
+    if (isOpen) setConfirmed(false)
+  }, [isOpen])
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -92,5 +92,5 @@ export function DeleteTaskDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -39,5 +39,5 @@ export function LandingAbout() {
         </div>
       </div>
     </section>
-  );
+  )
 }

@@ -1,33 +1,33 @@
-import { and, eq, or, ilike } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
-import { db } from "../client";
-import { teams, teamMembers, users } from "../schema";
+import type { InferInsertModel } from "drizzle-orm"
+import { and, eq, ilike, or } from "drizzle-orm"
+import { db } from "../client"
+import { teamMembers, teams, users } from "../schema"
 
 export const teamsQueries = {
   getById: async (id: string) => {
-    return db.query.teams.findFirst({ where: eq(teams.id, id) });
+    return db.query.teams.findFirst({ where: eq(teams.id, id) })
   },
   getAll: async () => {
-    return db.query.teams.findMany();
+    return db.query.teams.findMany()
   },
   create: async (data: InferInsertModel<typeof teams>) => {
-    const [team] = await db.insert(teams).values(data).returning();
-    return team;
+    const [team] = await db.insert(teams).values(data).returning()
+    return team
   },
   update: async (id: string, data: Partial<InferInsertModel<typeof teams>>) => {
     const [team] = await db
       .update(teams)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(teams.id, id))
-      .returning();
-    return team;
+      .returning()
+    return team
   },
   remove: async (id: string) => {
-    await db.delete(teams).where(eq(teams.id, id));
+    await db.delete(teams).where(eq(teams.id, id))
   },
 
   getByCreator: async (userId: string) => {
-    return db.query.teams.findMany({ where: eq(teams.createdBy, userId) });
+    return db.query.teams.findMany({ where: eq(teams.createdBy, userId) })
   },
   getForUser: async (userId: string) => {
     return db
@@ -40,7 +40,7 @@ export const teamsQueries = {
       .from(teams)
       .leftJoin(teamMembers, eq(teamMembers.teamId, teams.id))
       .where(or(eq(teams.createdBy, userId), eq(teamMembers.userId, userId)))
-      .groupBy(teams.id); // Prevents duplicate rows if you are both creator and member
+      .groupBy(teams.id) // Prevents duplicate rows if you are both creator and member
   },
 
   // team_members — folded in here rather than a separate query file,
@@ -60,7 +60,7 @@ export const teamsQueries = {
       })
       .from(teamMembers)
       .innerJoin(users, eq(teamMembers.userId, users.id))
-      .where(eq(teamMembers.teamId, teamId));
+      .where(eq(teamMembers.teamId, teamId))
   },
 
   /**
@@ -72,23 +72,23 @@ export const teamsQueries = {
     const rows = await db
       .select({ teamId: teamMembers.teamId })
       .from(teamMembers)
-      .where(eq(teamMembers.userId, userId));
-    return rows.map((r) => r.teamId);
+      .where(eq(teamMembers.userId, userId))
+    return rows.map((r) => r.teamId)
   },
 
   addMember: async (teamId: string, userId: string) => {
     const [member] = await db
       .insert(teamMembers)
       .values({ teamId, userId })
-      .returning();
-    return member;
+      .returning()
+    return member
   },
   removeMember: async (teamId: string, userId: string) => {
     await db
       .delete(teamMembers)
       .where(
         and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)),
-      );
+      )
   },
   searchByName: async (query: string) => {
     return db
@@ -99,6 +99,6 @@ export const teamsQueries = {
       })
       .from(teams)
       .where(ilike(teams.name, `%${query}%`))
-      .limit(10);
+      .limit(10)
   },
-};
+}

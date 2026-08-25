@@ -1,48 +1,48 @@
 // components/dashboard/dashboard-view.tsx
-"use client";
+"use client"
 
-import { DashboardHeader } from "./dashboard-header";
-import { UpcomingDeadlinesCard } from "./upcoming-deadlines-card";
-import { ActiveProjectsCard } from "./active-projects-card";
-import { AssignedTasksCard } from "./assigned-tasks-card";
-import { DashboardBanners } from "./dashboard-banners";
+import { ActiveProjectsCard } from "./active-projects-card"
+import { AssignedTasksCard } from "./assigned-tasks-card"
+import { DashboardBanners } from "./dashboard-banners"
+import { DashboardHeader } from "./dashboard-header"
+import { UpcomingDeadlinesCard } from "./upcoming-deadlines-card"
 
 type UpcomingItemDTO = {
-  id: string;
-  type: "task" | "event";
-  title: string;
-  date: string;
-  projectId: string | null;
-  projectName: string | null;
-  priority?: string | null;
-};
+  id: string
+  type: "task" | "event"
+  title: string
+  date: string
+  projectId: string | null
+  projectName: string | null
+  priority?: string | null
+}
 
 type ActiveProjectDTO = {
-  id: string;
-  name: string;
-  completed: number;
-  total: number;
-  completionLabel: string;
-  completionPercent: number;
-  dueDate: string | null;
-};
+  id: string
+  name: string
+  completed: number
+  total: number
+  completionLabel: string
+  completionPercent: number
+  dueDate: string | null
+}
 
 type AssignedTaskDTO = {
-  id: string;
-  title: string;
-  dueDate: string | null;
-  priority: string | null;
-  projectId: string;
-  projectName: string;
-  listId: string;
-};
+  id: string
+  title: string
+  dueDate: string | null
+  priority: string | null
+  projectId: string
+  projectName: string
+  listId: string
+}
 
 type DashboardViewProps = {
-  userName: string;
-  upcoming: UpcomingItemDTO[];
-  activeProjects: ActiveProjectDTO[];
-  assignedTasks: AssignedTaskDTO[];
-};
+  userName: string
+  upcoming: UpcomingItemDTO[]
+  activeProjects: ActiveProjectDTO[]
+  assignedTasks: AssignedTaskDTO[]
+}
 
 export function DashboardView({
   userName,
@@ -70,5 +70,5 @@ export function DashboardView({
       {/* Bottom Stacked Banners */}
       <DashboardBanners taskCount={assignedTasks.length} />
     </div>
-  );
+  )
 }

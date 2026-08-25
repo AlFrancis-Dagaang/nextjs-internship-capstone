@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { Layers } from "lucide-react";
+import { Layers } from "lucide-react"
+import Link from "next/link"
 
 export function LandingFooter() {
   return (
@@ -28,5 +28,5 @@ export function LandingFooter() {
         </div>
       </div>
     </footer>
-  );
+  )
 }

@@ -1,65 +1,65 @@
-"use client";
+"use client"
 
-import { useState, useTransition, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { WorkspaceTeam } from "@/lib/services/team";
 import {
-  addTeamMember,
-  removeTeamMember,
-  getTeamMembers,
-  searchUsersForTeamInvite,
-} from "@/lib/actions/team";
+  Crown,
+  Edit2,
+  FolderKanban,
+  Loader2,
+  Mail,
+  Search,
+  UserPlus,
+  X,
+} from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useRef, useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useToast } from "@/hooks/use-toast"
 import {
-  UserPlus,
-  Loader2,
-  Search,
-  Crown,
-  X,
-  Mail,
-  FolderKanban,
-  Edit2,
-} from "lucide-react";
-import { UserAvatar } from "@/components/ui/user-avatar";
+  addTeamMember,
+  getTeamMembers,
+  removeTeamMember,
+  searchUsersForTeamInvite,
+} from "@/lib/actions/team"
+import type { WorkspaceTeam } from "@/lib/services/team"
 
 type MemberInfo = {
-  userId: string;
-  name: string;
-  email: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-};
+  userId: string
+  name: string
+  email: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+}
 
 type SearchUser = {
-  id: string;
-  email: string;
-  name: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-  status: "available" | "member" | "creator";
-};
+  id: string
+  email: string
+  name: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+  status: "available" | "member" | "creator"
+}
 
 type ManageMembersModalProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  team: WorkspaceTeam;
-  currentUserId: string;
-  onMembersChanged?: (members: MemberInfo[]) => void;
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  team: WorkspaceTeam
+  currentUserId: string
+  onMembersChanged?: (members: MemberInfo[]) => void
+}
 
 function mapMemberInfo(member: any): MemberInfo {
   const imageUrl =
-    member.userImageUrl ?? member.imageUrl ?? member.image ?? null;
+    member.userImageUrl ?? member.imageUrl ?? member.image ?? null
 
   return {
     userId: member.userId ?? member.id,
@@ -67,22 +67,22 @@ function mapMemberInfo(member: any): MemberInfo {
     email: member.userEmail ?? member.email ?? "",
     imageUrl,
     hasImage: member.userHasImage ?? member.hasImage ?? !!imageUrl,
-  };
+  }
 }
 
 function mapSearchUser(user: any, creatorId: string): SearchUser {
-  const id = user.id ?? user.userId;
-  const email = user.email ?? user.userEmail ?? "";
-  const name = user.name ?? user.userName ?? "";
+  const id = user.id ?? user.userId
+  const email = user.email ?? user.userEmail ?? ""
+  const name = user.name ?? user.userName ?? ""
 
-  const imageUrl = user.imageUrl ?? user.userImageUrl ?? user.image ?? null;
+  const imageUrl = user.imageUrl ?? user.userImageUrl ?? user.image ?? null
 
-  let status: SearchUser["status"] = "available";
+  let status: SearchUser["status"] = "available"
 
   if (id === creatorId) {
-    status = "creator";
+    status = "creator"
   } else if (user.status === "member") {
-    status = "member";
+    status = "member"
   }
 
   return {
@@ -92,7 +92,7 @@ function mapSearchUser(user: any, creatorId: string): SearchUser {
     imageUrl,
     hasImage: user.hasImage ?? user.userHasImage ?? !!imageUrl,
     status,
-  };
+  }
 }
 
 export function ManageMembersModal({
@@ -102,60 +102,60 @@ export function ManageMembersModal({
   currentUserId,
   onMembersChanged,
 }: ManageMembersModalProps) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter()
+  const { toast } = useToast()
+  const [isPending, startTransition] = useTransition()
 
-  const isOwner = team.createdBy === currentUserId;
+  const isOwner = team.createdBy === currentUserId
 
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [query, setQuery] = useState("");
-  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
-  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
-  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchRequestIdRef = useRef(0);
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [query, setQuery] = useState("")
+  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null)
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([])
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const searchRequestIdRef = useRef(0)
 
-  const [filterQuery, setFilterQuery] = useState("");
-  const [members, setMembers] = useState<MemberInfo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [filterQuery, setFilterQuery] = useState("")
+  const [members, setMembers] = useState<MemberInfo[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null)
 
   function updateMembers(nextMembers: MemberInfo[]) {
-    setMembers(nextMembers);
-    onMembersChanged?.(nextMembers);
+    setMembers(nextMembers)
+    onMembersChanged?.(nextMembers)
   }
   useEffect(() => {
     if (!open) {
-      setShowAddForm(false);
-      setQuery("");
-      setSelectedUser(null);
-      setSearchResults([]);
-      setShowDropdown(false);
-      setFilterQuery("");
-      setEditingMemberId(null);
-      return;
+      setShowAddForm(false)
+      setQuery("")
+      setSelectedUser(null)
+      setSearchResults([])
+      setShowDropdown(false)
+      setFilterQuery("")
+      setEditingMemberId(null)
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     getTeamMembers(team.id)
       .then((res) => {
         if (res.success && res.data) {
-          const mapped = (res.data as any[]).map(mapMemberInfo);
-          setMembers(mapped);
+          const mapped = (res.data as any[]).map(mapMemberInfo)
+          setMembers(mapped)
         } else {
-          setMembers([]);
+          setMembers([])
         }
       })
       .catch(() => {
-        setMembers([]);
+        setMembers([])
       })
       .finally(() => {
-        setLoading(false);
-      });
-  }, [open, team.id]);
+        setLoading(false)
+      })
+  }, [open, team.id])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -163,91 +163,91 @@ export function ManageMembersModal({
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
-        setShowDropdown(false);
+        setShowDropdown(false)
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside)
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
   useEffect(() => {
     if (!isOwner) {
-      setSearchResults([]);
-      setIsLoadingSearch(false);
-      return;
+      setSearchResults([])
+      setIsLoadingSearch(false)
+      return
     }
 
-    const trimmed = query.trim();
+    const trimmed = query.trim()
 
     if (trimmed.length < 2) {
-      setSearchResults([]);
-      setShowDropdown(false);
-      setIsLoadingSearch(false);
-      return;
+      setSearchResults([])
+      setShowDropdown(false)
+      setIsLoadingSearch(false)
+      return
     }
 
-    setIsLoadingSearch(true);
-    setShowDropdown(true);
+    setIsLoadingSearch(true)
+    setShowDropdown(true)
 
-    const currentRequestId = ++searchRequestIdRef.current;
+    const currentRequestId = ++searchRequestIdRef.current
 
     const timer = setTimeout(async () => {
       try {
-        const res = await searchUsersForTeamInvite(team.id, trimmed);
+        const res = await searchUsersForTeamInvite(team.id, trimmed)
 
         if (currentRequestId !== searchRequestIdRef.current) {
-          return;
+          return
         }
 
         if (res.success && res.data) {
           const mappedResults = (res.data as any[])
             .map((user) => mapSearchUser(user, team.createdBy))
-            .slice(0, 8);
+            .slice(0, 8)
 
-          setSearchResults(mappedResults);
+          setSearchResults(mappedResults)
         } else {
-          setSearchResults([]);
+          setSearchResults([])
         }
       } catch {
         if (currentRequestId === searchRequestIdRef.current) {
-          setSearchResults([]);
+          setSearchResults([])
         }
       } finally {
         if (currentRequestId === searchRequestIdRef.current) {
-          setIsLoadingSearch(false);
+          setIsLoadingSearch(false)
         }
       }
-    }, 300);
+    }, 300)
 
-    return () => clearTimeout(timer);
-  }, [query, team.id, team.createdBy, isOwner]);
+    return () => clearTimeout(timer)
+  }, [query, team.id, team.createdBy, isOwner])
 
   function handleAddMember(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!selectedUser || !isOwner) {
-      return;
+      return
     }
 
-    const targetUser = selectedUser;
+    const targetUser = selectedUser
 
     startTransition(async () => {
       const res = await addTeamMember(team.id, {
         email: targetUser.email,
-      });
+      })
 
       if (!res.success) {
         toast({
           title: "Failed to add member",
           description: res.error,
           variant: "destructive",
-        });
+        })
 
-        return;
+        return
       }
 
       const newMemberInfo: MemberInfo = {
@@ -256,60 +256,60 @@ export function ManageMembersModal({
         email: targetUser.email,
         imageUrl: targetUser.imageUrl ?? null,
         hasImage: targetUser.hasImage ?? !!targetUser.imageUrl,
-      };
+      }
 
-      setQuery("");
-      setSelectedUser(null);
-      setShowAddForm(false);
-      setShowDropdown(false);
+      setQuery("")
+      setSelectedUser(null)
+      setShowAddForm(false)
+      setShowDropdown(false)
 
-      updateMembers([...members, newMemberInfo]);
+      updateMembers([...members, newMemberInfo])
 
       toast({
         title: "Member added to team",
-      });
+      })
 
-      router.refresh();
-    });
+      router.refresh()
+    })
   }
 
   function handleRemoveMember(userId: string) {
     if (!isOwner) {
-      return;
+      return
     }
 
     startTransition(async () => {
-      const res = await removeTeamMember(team.id, userId);
+      const res = await removeTeamMember(team.id, userId)
 
       if (!res.success) {
         toast({
           title: "Failed to remove member",
           description: res.error,
           variant: "destructive",
-        });
+        })
 
-        return;
+        return
       }
 
-      const nextMembers = members.filter((member) => member.userId !== userId);
+      const nextMembers = members.filter((member) => member.userId !== userId)
 
-      updateMembers(nextMembers);
+      updateMembers(nextMembers)
 
-      setEditingMemberId(null);
+      setEditingMemberId(null)
 
       toast({
         title: "Member removed from team",
-      });
+      })
 
-      router.refresh();
-    });
+      router.refresh()
+    })
   }
 
   const filteredMembers = members.filter(
     (member) =>
       member.name.toLowerCase().includes(filterQuery.toLowerCase()) ||
       member.email.toLowerCase().includes(filterQuery.toLowerCase()),
-  );
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -369,10 +369,10 @@ export function ManageMembersModal({
                     <button
                       type="button"
                       onClick={() => {
-                        setShowAddForm(false);
-                        setQuery("");
-                        setSelectedUser(null);
-                        setShowDropdown(false);
+                        setShowAddForm(false)
+                        setQuery("")
+                        setSelectedUser(null)
+                        setShowDropdown(false)
                       }}
                       className="text-muted-foreground hover:text-foreground p-0.5 rounded-md cursor-pointer"
                     >
@@ -386,13 +386,13 @@ export function ManageMembersModal({
                         placeholder="Search by name or email..."
                         value={selectedUser ? selectedUser.email : query}
                         onChange={(e) => {
-                          setSelectedUser(null);
-                          setQuery(e.target.value);
-                          setShowDropdown(true);
+                          setSelectedUser(null)
+                          setQuery(e.target.value)
+                          setShowDropdown(true)
                         }}
                         onFocus={() => {
                           if (!selectedUser && query.trim().length >= 2) {
-                            setShowDropdown(true);
+                            setShowDropdown(true)
                           }
                         }}
                         disabled={isPending}
@@ -419,18 +419,18 @@ export function ManageMembersModal({
                               <div className="max-h-[160px] overflow-y-auto divide-y divide-border">
                                 {searchResults.map((user) => {
                                   const isSelectable =
-                                    user.status === "available";
+                                    user.status === "available"
 
                                   return (
                                     <div
                                       key={user.id}
                                       onClick={() => {
                                         if (!isSelectable) {
-                                          return;
+                                          return
                                         }
 
-                                        setSelectedUser(user);
-                                        setShowDropdown(false);
+                                        setSelectedUser(user)
+                                        setShowDropdown(false)
                                       }}
                                       className={`px-3 py-2 flex items-center justify-between transition-colors ${
                                         isSelectable
@@ -460,7 +460,7 @@ export function ManageMembersModal({
                                         </span>
                                       )}
                                     </div>
-                                  );
+                                  )
                                 })}
                               </div>
                             )}
@@ -537,15 +537,15 @@ export function ManageMembersModal({
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-1">
                 {filteredMembers.map((member) => {
-                  const stableKey = member.userId || member.email;
+                  const stableKey = member.userId || member.email
 
-                  const isCreator = team.createdBy === member.userId;
+                  const isCreator = team.createdBy === member.userId
 
-                  const displayName = member.name || member.email || "User";
+                  const displayName = member.name || member.email || "User"
 
-                  const isEditing = editingMemberId === member.userId;
+                  const isEditing = editingMemberId === member.userId
 
-                  const resolvedImage = member.imageUrl ?? null;
+                  const resolvedImage = member.imageUrl ?? null
 
                   return (
                     <div
@@ -630,7 +630,7 @@ export function ManageMembersModal({
                         )}
                       </div>
                     </div>
-                  );
+                  )
                 })}
               </div>
             )}
@@ -638,5 +638,5 @@ export function ManageMembersModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

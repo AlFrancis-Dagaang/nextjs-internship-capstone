@@ -1,25 +1,30 @@
 // app/layout.tsx
-import type { Metadata } from "next";
-import type React from "react";
-import "./globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/toaster";
+import type { Metadata } from "next"
+import type React from "react"
+import "./globals.css"
+import { ClerkProvider } from "@clerk/nextjs"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: "GenZpace",
   description: "Manage your projects efficiently with GenZpace.",
-};
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Inline script to prevent theme flash on refresh */}
+        <title>GenZpace</title>
+        <meta
+          name="description"
+          content="Manage your projects efficiently with GenZpace."
+        />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -69,5 +74,5 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }

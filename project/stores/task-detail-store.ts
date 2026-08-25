@@ -1,19 +1,19 @@
 // stores/task-detail-store.ts
-import { create } from "zustand";
-import type { TaskWithCommentCount } from "@/components/lists/board";
+import { create } from "zustand"
+import type { TaskWithCommentCount } from "@/components/lists/board"
 
 interface TaskDetailState {
-  isOpen: boolean;
-  task: TaskWithCommentCount | null;
-  projectId: string | null;
-  activeTab: "details" | "sidebar";
-  activityRefreshKey: number;
+  isOpen: boolean
+  task: TaskWithCommentCount | null
+  projectId: string | null
+  activeTab: "details" | "sidebar"
+  activityRefreshKey: number
 
-  openModal: (task: TaskWithCommentCount, projectId: string) => void;
-  closeModal: () => void;
-  setActiveTab: (tab: "details" | "sidebar") => void;
-  bumpActivity: () => void;
-  updateTaskLocal: (updated: TaskWithCommentCount) => void;
+  openModal: (task: TaskWithCommentCount, projectId: string) => void
+  closeModal: () => void
+  setActiveTab: (tab: "details" | "sidebar") => void
+  bumpActivity: () => void
+  updateTaskLocal: (updated: TaskWithCommentCount) => void
 }
 
 export const useTaskDetailStore = create<TaskDetailState>((set) => ({
@@ -48,4 +48,4 @@ export const useTaskDetailStore = create<TaskDetailState>((set) => ({
     set((state) => ({
       task: state.task ? { ...state.task, ...updated } : null,
     })),
-}));
+}))

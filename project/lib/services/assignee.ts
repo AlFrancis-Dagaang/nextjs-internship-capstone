@@ -14,13 +14,13 @@ export function resolveAssigneeId(
   projectOwnerId: string,
 ): { ok: true; assigneeId: string | null } | { ok: false; error: string } {
   if (assignToMe) {
-    return { ok: true, assigneeId: projectOwnerId };
+    return { ok: true, assigneeId: projectOwnerId }
   }
   if (requestedAssigneeId == null) {
-    return { ok: true, assigneeId: null };
+    return { ok: true, assigneeId: null }
   }
   if (requestedAssigneeId !== projectOwnerId) {
-    return { ok: false, error: "Invalid assignee" };
+    return { ok: false, error: "Invalid assignee" }
   }
-  return { ok: true, assigneeId: requestedAssigneeId };
+  return { ok: true, assigneeId: requestedAssigneeId }
 }

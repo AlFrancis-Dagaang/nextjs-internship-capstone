@@ -1,67 +1,67 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
 import {
+  AtSign,
   Bold,
+  Edit2,
   Italic,
-  Strikethrough,
   Link as LinkIcon,
   List,
   ListOrdered,
-  AtSign,
   Smile,
-  Edit2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { updateTask } from "@/lib/actions/tasks";
-import { useToast } from "@/hooks/use-toast";
-import type { Task } from "@/lib/db/schema";
-import { useBoardStore } from "@/stores/board-store";
+  Strikethrough,
+} from "lucide-react"
+import { useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
+import { updateTask } from "@/lib/actions/tasks"
+import type { Task } from "@/lib/db/schema"
+import { useBoardStore } from "@/stores/board-store"
 
 export function TaskDescription({
   task,
   canEdit,
   onChanged,
 }: {
-  task: Task;
-  canEdit: boolean;
-  onChanged?: (task: Task) => void;
+  task: Task
+  canEdit: boolean
+  onChanged?: (task: Task) => void
 }) {
-  const { toast } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
-  const [description, setDescription] = useState(task.description ?? "");
-  const [isPending, startTransition] = useTransition();
-  const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
+  const { toast } = useToast()
+  const [isEditing, setIsEditing] = useState(false)
+  const [description, setDescription] = useState(task.description ?? "")
+  const [isPending, startTransition] = useTransition()
+  const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal)
 
   function handleSave() {
-    const submittedDescription = description;
-    setIsEditing(false);
-    updateTaskLocal({ ...task, description: submittedDescription || null });
+    const submittedDescription = description
+    setIsEditing(false)
+    updateTaskLocal({ ...task, description: submittedDescription || null })
 
     startTransition(async () => {
       const result = await updateTask(task.id, {
         description: submittedDescription || undefined,
-      });
+      })
 
       if (!result.success) {
         toast({
           title: "Failed to update description",
           description: result.error,
           variant: "destructive",
-        });
-        updateTaskLocal(task);
-        setIsEditing(true);
-        return;
+        })
+        updateTaskLocal(task)
+        setIsEditing(true)
+        return
       }
 
-      onChanged?.(result.data);
-    });
+      onChanged?.(result.data)
+    })
   }
 
   function handleCancel() {
-    setDescription(task.description ?? "");
-    setIsEditing(false);
+    setDescription(task.description ?? "")
+    setIsEditing(false)
   }
 
   return (
@@ -209,5 +209,5 @@ export function TaskDescription({
         </div>
       )}
     </div>
-  );
+  )
 }

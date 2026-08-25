@@ -1,19 +1,19 @@
 // components/sidebar.tsx
-"use client";
+"use client"
 
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Calendar,
+  CheckSquare,
   FolderOpen,
   Home,
   Settings,
   Users,
   X,
-  CheckSquare,
-} from "lucide-react";
+} from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -27,12 +27,12 @@ const navigation = [
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Settings", href: "/settings", icon: Settings },
-];
+]
 
 interface SidebarProps {
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
-  isCollapsed: boolean;
+  sidebarOpen: boolean
+  setSidebarOpen: (open: boolean) => void
+  isCollapsed: boolean
 }
 
 export function Sidebar({
@@ -40,7 +40,7 @@ export function Sidebar({
   setSidebarOpen,
   isCollapsed,
 }: SidebarProps) {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
   return (
     <>
@@ -98,8 +98,8 @@ export function Sidebar({
         <nav className="flex-1 mt-5 px-3 overflow-y-auto overflow-x-hidden">
           <ul className="space-y-1.5 flex flex-col items-stretch">
             {navigation.map((item) => {
-              const current = pathname === item.href;
-              const Icon = item.icon;
+              const current = pathname === item.href
+              const Icon = item.icon
               return (
                 <li key={item.name} className="w-full">
                   <Link
@@ -132,11 +132,11 @@ export function Sidebar({
                     </span>
                   </Link>
                 </li>
-              );
+              )
             })}
           </ul>
         </nav>
       </aside>
     </>
-  );
+  )
 }

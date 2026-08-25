@@ -1,44 +1,44 @@
-"use client";
+"use client"
 
-import { useState, useTransition, useEffect, useRef } from "react";
 import {
-  MoreHorizontal,
-  ExternalLink,
-  Edit2,
-  Trash2,
   ChevronLeft,
-  X,
-  UserPlus,
+  Edit2,
+  ExternalLink,
   Loader2,
-} from "lucide-react";
-import type { WorkspaceTeam } from "@/lib/services/team";
-import { addTeamMember, searchUsersForTeamInvite } from "@/lib/actions/team";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
+  MoreHorizontal,
+  Trash2,
+  UserPlus,
+  X,
+} from "lucide-react"
+import { useEffect, useRef, useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { DeleteTeamModal } from "./modals/delete-team-modal";
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { useToast } from "@/hooks/use-toast"
+import { addTeamMember, searchUsersForTeamInvite } from "@/lib/actions/team"
+import type { WorkspaceTeam } from "@/lib/services/team"
+import { DeleteTeamModal } from "./modals/delete-team-modal"
 
 type MemberInfo = {
-  userId: string;
-  name: string;
-  email: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-};
+  userId: string
+  name: string
+  email: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+}
 
 type SearchUser = {
-  id: string;
-  email: string;
-  name: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-};
+  id: string
+  email: string
+  name: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+}
 
 export function TeamCardActions({
   team,
@@ -47,45 +47,45 @@ export function TeamCardActions({
   onRename,
   onMemberAdded,
 }: {
-  team: WorkspaceTeam;
-  onDeleted: (teamId: string) => void;
-  onViewMembers: () => void;
-  onRename: () => void;
-  onMemberAdded: (member: MemberInfo) => void;
+  team: WorkspaceTeam
+  onDeleted: (teamId: string) => void
+  onViewMembers: () => void
+  onRename: () => void
+  onMemberAdded: (member: MemberInfo) => void
 }) {
-  const { toast } = useToast();
+  const { toast } = useToast()
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [view, setView] = useState<"menu" | "invite">("menu");
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
+  const [view, setView] = useState<"menu" | "invite">("menu")
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 
-  const [query, setQuery] = useState("");
-  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
+  const [query, setQuery] = useState("")
+  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null)
 
-  const [isPending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition()
 
-  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([])
 
-  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false)
 
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false)
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchRequestIdRef = useRef(0);
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const searchRequestIdRef = useRef(0)
 
   useEffect(() => {
     if (!isOpen) {
       const timer = setTimeout(() => {
-        setView("menu");
-        setQuery("");
-        setSelectedUser(null);
-        setSearchResults([]);
-        setShowDropdown(false);
-      }, 150);
+        setView("menu")
+        setQuery("")
+        setSelectedUser(null)
+        setSearchResults([])
+        setShowDropdown(false)
+      }, 150)
 
-      return () => clearTimeout(timer);
+      return () => clearTimeout(timer)
     }
-  }, [isOpen]);
+  }, [isOpen])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -93,47 +93,47 @@ export function TeamCardActions({
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
-        setShowDropdown(false);
+        setShowDropdown(false)
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside)
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
   useEffect(() => {
-    const trimmed = query.trim();
+    const trimmed = query.trim()
 
     if (trimmed.length < 2) {
-      setSearchResults([]);
-      setShowDropdown(false);
-      setIsLoadingSearch(false);
-      return;
+      setSearchResults([])
+      setShowDropdown(false)
+      setIsLoadingSearch(false)
+      return
     }
 
-    setIsLoadingSearch(true);
-    setShowDropdown(true);
+    setIsLoadingSearch(true)
+    setShowDropdown(true)
 
-    const currentRequestId = ++searchRequestIdRef.current;
+    const currentRequestId = ++searchRequestIdRef.current
 
     const timer = setTimeout(async () => {
       try {
-        const res = await searchUsersForTeamInvite(team.id, trimmed);
+        const res = await searchUsersForTeamInvite(team.id, trimmed)
 
         if (currentRequestId !== searchRequestIdRef.current) {
-          return;
+          return
         }
 
         if (res.success && res.data) {
           const mapped: SearchUser[] = (res.data as any[])
             .map((user) => {
-              const id = user.id ?? user.userId;
+              const id = user.id ?? user.userId
 
               const imageUrl =
-                user.imageUrl ?? user.userImageUrl ?? user.image ?? null;
+                user.imageUrl ?? user.userImageUrl ?? user.image ?? null
 
               return {
                 id,
@@ -141,50 +141,50 @@ export function TeamCardActions({
                 name: user.name ?? user.userName ?? "",
                 imageUrl,
                 hasImage: user.hasImage ?? user.userHasImage ?? !!imageUrl,
-              };
+              }
             })
-            .slice(0, 8);
+            .slice(0, 8)
 
-          setSearchResults(mapped);
+          setSearchResults(mapped)
         } else {
-          setSearchResults([]);
+          setSearchResults([])
         }
       } catch {
         if (currentRequestId === searchRequestIdRef.current) {
-          setSearchResults([]);
+          setSearchResults([])
         }
       } finally {
         if (currentRequestId === searchRequestIdRef.current) {
-          setIsLoadingSearch(false);
+          setIsLoadingSearch(false)
         }
       }
-    }, 300);
+    }, 300)
 
-    return () => clearTimeout(timer);
-  }, [query, team.id]);
+    return () => clearTimeout(timer)
+  }, [query, team.id])
 
   function handleAddMember(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!selectedUser) {
-      return;
+      return
     }
 
-    const targetUser = selectedUser;
+    const targetUser = selectedUser
 
     startTransition(async () => {
       const result = await addTeamMember(team.id, {
         email: targetUser.email,
-      });
+      })
 
       if (!result.success) {
         toast({
           title: "Failed to add member",
           description: result.error,
           variant: "destructive",
-        });
+        })
 
-        return;
+        return
       }
 
       const newMember: MemberInfo = {
@@ -193,17 +193,17 @@ export function TeamCardActions({
         email: targetUser.email,
         imageUrl: targetUser.imageUrl ?? null,
         hasImage: targetUser.hasImage ?? !!targetUser.imageUrl,
-      };
+      }
 
-      onMemberAdded(newMember);
+      onMemberAdded(newMember)
 
       toast({
         title: "Member added successfully",
         description: `${targetUser.email} added to team "${team.name}".`,
-      });
+      })
 
-      setIsOpen(false);
-    });
+      setIsOpen(false)
+    })
   }
 
   return (
@@ -225,10 +225,10 @@ export function TeamCardActions({
           className="w-72 bg-card border border-border rounded-xl shadow-2xl p-2 space-y-1 text-left z-50"
           onClick={(e) => e.stopPropagation()}
           onInteractOutside={(e) => {
-            const target = e.target as Element;
+            const target = e.target as Element
 
             if (target.closest?.("[data-radix-popper-content-wrapper]")) {
-              e.preventDefault();
+              e.preventDefault()
             }
           }}
         >
@@ -247,8 +247,8 @@ export function TeamCardActions({
 
               <DropdownMenuItem
                 onSelect={() => {
-                  setIsOpen(false);
-                  onViewMembers();
+                  setIsOpen(false)
+                  onViewMembers()
                 }}
                 className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-muted rounded-lg flex items-center space-x-2.5"
               >
@@ -258,8 +258,8 @@ export function TeamCardActions({
 
               <DropdownMenuItem
                 onSelect={(e) => {
-                  e.preventDefault();
-                  setView("invite");
+                  e.preventDefault()
+                  setView("invite")
                 }}
                 className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-muted rounded-lg flex items-center space-x-2.5"
               >
@@ -270,8 +270,8 @@ export function TeamCardActions({
               <div className="pt-1.5 pb-1 border-t border-border mt-1">
                 <DropdownMenuItem
                   onSelect={() => {
-                    setIsOpen(false);
-                    onRename();
+                    setIsOpen(false)
+                    onRename()
                   }}
                   className="cursor-pointer px-2.5 py-2 text-sm text-foreground focus:bg-muted rounded-lg flex items-center space-x-2.5"
                 >
@@ -283,9 +283,9 @@ export function TeamCardActions({
               <div className="border-t border-border pt-1 mt-1">
                 <DropdownMenuItem
                   onSelect={(e) => {
-                    e.preventDefault();
-                    setIsOpen(false);
-                    setIsDeleteModalOpen(true);
+                    e.preventDefault()
+                    setIsOpen(false)
+                    setIsDeleteModalOpen(true)
                   }}
                   className="cursor-pointer px-2.5 py-2 text-sm text-destructive focus:bg-destructive/10 rounded-lg flex items-center space-x-2.5"
                 >
@@ -326,13 +326,13 @@ export function TeamCardActions({
                     placeholder="Search by name or email..."
                     value={selectedUser ? selectedUser.email : query}
                     onChange={(e) => {
-                      setSelectedUser(null);
-                      setQuery(e.target.value);
-                      setShowDropdown(true);
+                      setSelectedUser(null)
+                      setQuery(e.target.value)
+                      setShowDropdown(true)
                     }}
                     onFocus={() => {
                       if (!selectedUser && query.trim().length >= 2) {
-                        setShowDropdown(true);
+                        setShowDropdown(true)
                       }
                     }}
                     disabled={isPending}
@@ -361,8 +361,8 @@ export function TeamCardActions({
                               <div
                                 key={user.id}
                                 onClick={() => {
-                                  setSelectedUser(user);
-                                  setShowDropdown(false);
+                                  setSelectedUser(user)
+                                  setShowDropdown(false)
                                 }}
                                 className="px-2.5 py-2 flex items-center justify-between transition-colors hover:bg-muted cursor-pointer"
                               >
@@ -405,5 +405,5 @@ export function TeamCardActions({
         teamName={team.name}
       />
     </>
-  );
+  )
 }

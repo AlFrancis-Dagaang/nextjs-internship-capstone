@@ -1,55 +1,55 @@
 // components/settings/security-tab.tsx
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import { useUser, useReverification } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useReverification, useUser } from "@clerk/nextjs"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertCircle,
+  CheckCircle2,
+  KeyRound,
+  Loader2,
+  Lock,
+  Mail,
+  MoreHorizontal,
+  ShieldAlert,
+} from "lucide-react"
+import { useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
+} from "@/components/ui/dialog"
 import {
-  Loader2,
-  Mail,
-  KeyRound,
-  MoreHorizontal,
-  CheckCircle2,
-  ShieldAlert,
-  Lock,
-  AlertCircle,
-} from "lucide-react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
 
 export function SecurityTab() {
-  const { isLoaded, user } = useUser();
-  const { toast } = useToast();
+  const { isLoaded, user } = useUser()
+  const { toast } = useToast()
 
-  const [isEmailPending, startEmailTransition] = useTransition();
-  const [isPasswordPending, startPasswordTransition] = useTransition();
+  const [isEmailPending, startEmailTransition] = useTransition()
+  const [isPasswordPending, startPasswordTransition] = useTransition()
 
-  const [newEmail, setNewEmail] = useState("");
-  const [pendingEmailObj, setPendingEmailObj] = useState<any | null>(null);
-  const [verificationCode, setVerificationCode] = useState("");
+  const [newEmail, setNewEmail] = useState("")
+  const [pendingEmailObj, setPendingEmailObj] = useState<any | null>(null)
+  const [verificationCode, setVerificationCode] = useState("")
 
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [passwordError, setPasswordError] = useState<string | null>(null)
 
   const updatePasswordWithReverification = useReverification(
     async (args: { currentPassword?: string; newPassword: string }) => {
       if (!user) {
-        throw new Error("User not loaded");
+        throw new Error("User not loaded")
       }
 
       return user.updatePassword({
@@ -57,43 +57,43 @@ export function SecurityTab() {
           ? { currentPassword: args.currentPassword }
           : {}),
         newPassword: args.newPassword,
-      });
+      })
     },
-  );
+  )
 
   if (!isLoaded || !user) {
     return (
       <div className="flex items-center justify-center py-16 bg-card border border-border/80 rounded-3xl shadow-xs">
         <Loader2 className="animate-spin text-primary" size={24} />
       </div>
-    );
+    )
   }
 
-  const emailAddresses = user.emailAddresses || [];
-  const primaryEmailId = user.primaryEmailAddressId;
+  const emailAddresses = user.emailAddresses || []
+  const primaryEmailId = user.primaryEmailAddressId
 
   function handleAddEmail(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (!newEmail.trim() || !user) return;
+    if (!newEmail.trim() || !user) return
 
     startEmailTransition(async () => {
       try {
         const emailRes = await user.createEmailAddress({
           email: newEmail.trim(),
-        });
+        })
 
         if (emailRes) {
           await emailRes.prepareVerification({
             strategy: "email_code",
-          });
+          })
 
-          setPendingEmailObj(emailRes);
+          setPendingEmailObj(emailRes)
 
           toast({
             title: "Verification code sent",
             description: `Please check ${newEmail} for your 6-digit verification code.`,
-          });
+          })
         }
       } catch (err: any) {
         toast({
@@ -103,32 +103,32 @@ export function SecurityTab() {
             err?.message ||
             "Could not add email address.",
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   function handleVerifyEmailCode(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (!verificationCode.trim() || !pendingEmailObj || !user) return;
+    if (!verificationCode.trim() || !pendingEmailObj || !user) return
 
     startEmailTransition(async () => {
       try {
         await pendingEmailObj.attemptVerification({
           code: verificationCode.trim(),
-        });
+        })
 
-        await user.reload();
+        await user.reload()
 
         toast({
           title: "Email verified",
           description: "Successfully added and verified new email address.",
-        });
+        })
 
-        setPendingEmailObj(null);
-        setNewEmail("");
-        setVerificationCode("");
+        setPendingEmailObj(null)
+        setNewEmail("")
+        setVerificationCode("")
       } catch (err: any) {
         toast({
           title: "Verification failed",
@@ -137,27 +137,27 @@ export function SecurityTab() {
             err?.message ||
             "Invalid verification code.",
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   function handleMakePrimary(emailId: string) {
-    if (!user) return;
+    if (!user) return
 
     startEmailTransition(async () => {
       try {
         await user.update({
           primaryEmailAddressId: emailId,
-        });
+        })
 
-        await user.reload();
+        await user.reload()
 
         toast({
           title: "Primary email updated",
           description:
             "Your primary email address has been changed successfully.",
-        });
+        })
       } catch (err: any) {
         toast({
           title: "Failed to update primary email",
@@ -166,24 +166,24 @@ export function SecurityTab() {
             err?.message ||
             "Could not set primary email.",
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   function handleRemoveEmail(emailObj: any) {
-    if (!user) return;
+    if (!user) return
 
     startEmailTransition(async () => {
       try {
-        await emailObj.destroy();
+        await emailObj.destroy()
 
-        await user.reload();
+        await user.reload()
 
         toast({
           title: "Email removed",
           description: "The email address has been removed from your account.",
-        });
+        })
       } catch (err: any) {
         toast({
           title: "Failed to remove email",
@@ -192,9 +192,9 @@ export function SecurityTab() {
             err?.message ||
             "Could not remove email.",
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   function handleResendVerification(emailObj: any) {
@@ -202,39 +202,39 @@ export function SecurityTab() {
       try {
         await emailObj.prepareVerification({
           strategy: "email_code",
-        });
+        })
 
-        setPendingEmailObj(emailObj);
+        setPendingEmailObj(emailObj)
 
         toast({
           title: "Verification code sent",
           description: `A new code has been sent to ${emailObj.emailAddress}.`,
-        });
+        })
       } catch (err: any) {
         toast({
           title: "Failed to send code",
           description:
             err?.errors?.[0]?.message || err?.message || "Could not send code.",
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   function handleUpdatePassword(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (!user || !newPassword.trim()) return;
+    if (!user || !newPassword.trim()) return
 
-    setPasswordError(null);
+    setPasswordError(null)
 
     startPasswordTransition(async () => {
       try {
-        const hadPassword = user.passwordEnabled;
+        const hadPassword = user.passwordEnabled
 
         if (hadPassword && !currentPassword.trim()) {
-          setPasswordError("Please enter your current password.");
-          return;
+          setPasswordError("Please enter your current password.")
+          return
         }
 
         await updatePasswordWithReverification({
@@ -244,37 +244,37 @@ export function SecurityTab() {
               }
             : {}),
           newPassword: newPassword.trim(),
-        });
+        })
 
-        await user.reload();
+        await user.reload()
 
         toast({
           title: hadPassword ? "Password updated" : "Password created",
           description: hadPassword
             ? "Your password has been changed successfully."
             : "Your password has been created successfully.",
-        });
+        })
 
-        setCurrentPassword("");
-        setNewPassword("");
-        setPasswordError(null);
-        setPasswordModalOpen(false);
+        setCurrentPassword("")
+        setNewPassword("")
+        setPasswordError(null)
+        setPasswordModalOpen(false)
       } catch (err: any) {
         if (
           err?.code === "reverification_cancelled" ||
           err?.message?.toLowerCase().includes("cancelled")
         ) {
-          return;
+          return
         }
 
         const errorMsg =
           err?.errors?.[0]?.message ||
           err?.message ||
-          "Could not update password.";
+          "Could not update password."
 
-        setPasswordError(errorMsg);
+        setPasswordError(errorMsg)
       }
-    });
+    })
   }
 
   return (
@@ -297,8 +297,8 @@ export function SecurityTab() {
 
         <div className="divide-y divide-border/60 border border-border/80 rounded-2xl overflow-hidden bg-muted/30">
           {emailAddresses.map((emailObj) => {
-            const isPrimary = emailObj.id === primaryEmailId;
-            const isVerified = emailObj.verification?.status === "verified";
+            const isPrimary = emailObj.id === primaryEmailId
+            const isVerified = emailObj.verification?.status === "verified"
 
             return (
               <div
@@ -380,7 +380,7 @@ export function SecurityTab() {
                   </DropdownMenu>
                 </div>
               </div>
-            );
+            )
           })}
         </div>
 
@@ -479,10 +479,10 @@ export function SecurityTab() {
             >
               <DropdownMenuItem
                 onClick={() => {
-                  setPasswordError(null);
-                  setCurrentPassword("");
-                  setNewPassword("");
-                  setPasswordModalOpen(true);
+                  setPasswordError(null)
+                  setCurrentPassword("")
+                  setNewPassword("")
+                  setPasswordModalOpen(true)
                 }}
                 className="cursor-pointer px-2.5 py-2 rounded-lg focus:bg-accent focus:text-accent-foreground font-medium"
               >
@@ -497,12 +497,12 @@ export function SecurityTab() {
       <Dialog
         open={passwordModalOpen}
         onOpenChange={(open) => {
-          setPasswordModalOpen(open);
+          setPasswordModalOpen(open)
 
           if (!open) {
-            setPasswordError(null);
-            setCurrentPassword("");
-            setNewPassword("");
+            setPasswordError(null)
+            setCurrentPassword("")
+            setNewPassword("")
           }
         }}
       >
@@ -531,8 +531,8 @@ export function SecurityTab() {
                   type="password"
                   value={currentPassword}
                   onChange={(e) => {
-                    setCurrentPassword(e.target.value);
-                    if (passwordError) setPasswordError(null);
+                    setCurrentPassword(e.target.value)
+                    if (passwordError) setPasswordError(null)
                   }}
                   className="h-10 text-xs bg-muted border-border rounded-xl shadow-2xs"
                   autoComplete="current-password"
@@ -549,8 +549,8 @@ export function SecurityTab() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => {
-                  setNewPassword(e.target.value);
-                  if (passwordError) setPasswordError(null);
+                  setNewPassword(e.target.value)
+                  if (passwordError) setPasswordError(null)
                 }}
                 className="h-10 text-xs bg-muted border-border rounded-xl shadow-2xs"
                 autoComplete="new-password"
@@ -582,5 +582,5 @@ export function SecurityTab() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }
