@@ -1,19 +1,46 @@
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { ProjectTeamView } from "@/components/projects/project-team/project-team-view"
-import { requireAuthedDbUser } from "@/lib/services/auth"
-import { getProjectTeam } from "@/lib/services/team"
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ProjectTeamView } from "@/components/projects/project-team/project-team-view";
+import { requireAuthedDbUser } from "@/lib/services/auth";
+import { getProjectTeam } from "@/lib/services/team";
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type PageProps = {
-  params: Promise<{ id: string }>
-}
+  params: Promise<{ id: string }>;
+};
 
 export default async function ProjectTeamPage({ params }: PageProps) {
-  const { id } = await params
-  const user = await requireAuthedDbUser()
-  const result = await getProjectTeam(id, user.id)
+  const { id } = await params;
 
+  // 1. Guard against malformed UUID formats before touching the database
+  if (!UUID_REGEX.test(id)) {
+    notFound();
+  }
+
+  const user = await requireAuthedDbUser();
+
+  // 2. Wrap the database query in a try/catch to gracefully handle bad queries
+  let result;
+  try {
+    result = await getProjectTeam(id, user.id);
+  } catch {
+    notFound();
+  }
+
+  // 3. If the project doesn't exist or isn't found, trigger a clean 404
   if ("error" in result) {
+    // If it's a true "not found" style issue, invoke notFound()
+    if (
+      result.error?.toLowerCase().includes("not found") ||
+      result.error?.toLowerCase().includes("forbidden")
+    ) {
+      notFound();
+    }
+
+    // Otherwise render the fallback error card for other permissions issues
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4 p-6 text-center">
         <div className="w-12 h-12 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center font-bold">
@@ -21,7 +48,7 @@ export default async function ProjectTeamPage({ params }: PageProps) {
         </div>
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-foreground">
-            Access Forbidden or Not Found
+            Access Forbidden
           </h2>
           <p className="text-xs text-muted-foreground max-w-sm">
             {result.error ||
@@ -35,11 +62,11 @@ export default async function ProjectTeamPage({ params }: PageProps) {
           <ArrowLeft size={14} /> Back to Project
         </Link>
       </div>
-    )
+    );
   }
 
   const formattedRole =
-    result.role.charAt(0).toUpperCase() + result.role.slice(1)
+    result.role.charAt(0).toUpperCase() + result.role.slice(1);
 
   return (
     <div className="w-full space-y-6">
@@ -77,5 +104,5 @@ export default async function ProjectTeamPage({ params }: PageProps) {
         canManage={result.canManage}
       />
     </div>
-  )
+  );
 }
