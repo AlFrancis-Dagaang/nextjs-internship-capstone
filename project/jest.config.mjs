@@ -11,6 +11,7 @@ const config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
+  modulePathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/e2e/'],
 }
 
 export default createJestConfig(config)

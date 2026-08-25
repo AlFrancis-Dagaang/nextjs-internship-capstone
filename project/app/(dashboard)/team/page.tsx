@@ -20,8 +20,17 @@ export default async function TeamPage() {
   // Pre-fetch project memberships and attached teams to accurately map project IDs per member
   const enhancedMembers = await Promise.all(
     hub.workspaceMembers.map(async (member) => {
-      const assignedTasks =
+      const rawAssignedTasks =
         await taskAssigneesQueries.getAssignedToUserAcrossProjects(member.id);
+
+      // Map raw rows to match the lighter DTO shape expected by TeamHub
+      const assignedTasks = rawAssignedTasks.map((t) => ({
+        taskId: t.id,
+        title: t.title,
+        projectId: t.projectId,
+        projectName: t.projectName,
+        isCompleted: t.isCompleted,
+      }));
 
       const memberProjectIds = new Set<string>();
 
