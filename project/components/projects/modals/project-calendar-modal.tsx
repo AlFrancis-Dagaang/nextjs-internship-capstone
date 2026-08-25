@@ -1,72 +1,72 @@
-"use client"
+"use client";
 
-import { AlertCircle, Calendar, Clock } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useEffect, useState, useTransition } from "react"
-import { EventFormModal } from "@/components/calendar/modals/event-form-modal"
+import { AlertCircle, Calendar, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { EventFormModal } from "@/components/calendar/modals/event-form-modal";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { getProjectEvents } from "@/lib/actions/events"
-import type { CalendarEventDTO, CalendarTaskDTO } from "@/types"
+} from "@/components/ui/dialog";
+import { getProjectEvents } from "@/lib/actions/events";
+import type { CalendarEventDTO, CalendarTaskDTO } from "@/types";
 
 interface ProjectCalendarModalProps {
-  projectId: string
-  projectName: string
-  upcomingTasks: CalendarTaskDTO[]
-  currentUserId: string
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  projectId: string;
+  projectName: string;
+  upcomingTasks: CalendarTaskDTO[];
+  currentUserId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 function formatReadableDate(dateStr: string) {
   try {
-    if (!dateStr) return ""
-    const cleanDateStr = dateStr.split("T")[0]
-    const [year, month, day] = cleanDateStr.split("-").map(Number)
+    if (!dateStr) return "";
+    const cleanDateStr = dateStr.split("T")[0];
+    const [year, month, day] = cleanDateStr.split("-").map(Number);
     if (!year || !month || !day) {
-      const d = new Date(dateStr)
-      if (Number.isNaN(d.getTime())) return dateStr
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return dateStr;
       return d.toLocaleDateString("en-US", {
         month: "long",
         day: "numeric",
         year: "numeric",
-      })
+      });
     }
-    const date = new Date(year, month - 1, day)
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
       year: "numeric",
-    })
+    });
   } catch {
-    return dateStr
+    return dateStr;
   }
 }
 
 function formatEventDateTime(startAt: string, endAt: string) {
   try {
-    const start = new Date(startAt)
-    const end = new Date(endAt)
+    const start = new Date(startAt);
+    const end = new Date(endAt);
     const dateStr = start.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
-    })
+    });
     const startTimeStr = start.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
-    })
+    });
     const endTimeStr = end.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
-    })
-    return `${dateStr}, ${startTimeStr} – ${endTimeStr}`
+    });
+    return `${dateStr}, ${startTimeStr} – ${endTimeStr}`;
   } catch {
-    return `${startAt} – ${endAt}`
+    return `${startAt} – ${endAt}`;
   }
 }
 
@@ -78,27 +78,27 @@ export function ProjectCalendarModal({
   open,
   onOpenChange,
 }: ProjectCalendarModalProps) {
-  const router = useRouter()
+  const router = useRouter();
 
-  const [events, setEvents] = useState<CalendarEventDTO[]>([])
-  const [isEventsLoading, startEventsTransition] = useTransition()
+  const [events, setEvents] = useState<CalendarEventDTO[]>([]);
+  const [isEventsLoading, startEventsTransition] = useTransition();
   const [selectedEvent, setSelectedEvent] = useState<
     CalendarEventDTO | undefined
-  >()
-  const [isEventFormOpen, setIsEventFormOpen] = useState(false)
+  >();
+  const [isEventFormOpen, setIsEventFormOpen] = useState(false);
 
   // Toggle state between "tasks" and "events"
-  const [activeTab, setActiveTab] = useState<"tasks" | "events">("tasks")
+  const [activeTab, setActiveTab] = useState<"tasks" | "events">("tasks");
 
   // Filter state for task deadlines ("upcoming" | "overdue" | "all")
   const [deadlineFilter, setDeadlineFilter] = useState<
     "upcoming" | "overdue" | "all"
-  >("upcoming")
+  >("upcoming");
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
     startEventsTransition(async () => {
-      const res = await getProjectEvents(projectId)
+      const res = await getProjectEvents(projectId);
       if (res.success) {
         setEvents(
           res.data.map((e) => ({
@@ -114,34 +114,34 @@ export function ProjectCalendarModal({
             projectId: e.projectId,
             creatorId: e.creatorId,
           })),
-        )
+        );
       }
-    })
-  }, [open, projectId])
+    });
+  }, [open, projectId]);
 
-  const todayStr = new Date().toISOString().split("T")[0]
+  const todayStr = new Date().toISOString().split("T")[0];
 
   // Filter tasks based on deadline filter and completion status
   const filteredTasks = upcomingTasks.filter((task) => {
-    if (!task.dueDate) return false
+    if (!task.dueDate) return false;
 
-    const taskDateOnly = task.dueDate.split("T")[0]
-    const isOverdue = taskDateOnly < todayStr && !task.isCompleted
-    const isUpcoming = taskDateOnly >= todayStr && !task.isCompleted
+    const taskDateOnly = task.dueDate.split("T")[0];
+    const isOverdue = taskDateOnly < todayStr && !task.isCompleted;
+    const isUpcoming = taskDateOnly >= todayStr && !task.isCompleted;
 
-    if (deadlineFilter === "upcoming") return isUpcoming
-    if (deadlineFilter === "overdue") return isOverdue
-    return true // "all"
-  })
+    if (deadlineFilter === "upcoming") return isUpcoming;
+    if (deadlineFilter === "overdue") return isOverdue;
+    return true; // "all"
+  });
 
   function handleTaskClick(taskId: string) {
-    onOpenChange(false)
-    router.push(`/projects/${projectId}?openTask=${taskId}`)
+    onOpenChange(false);
+    router.push(`/projects/${projectId}?openTask=${taskId}`);
   }
 
   function handleEventClick(event: CalendarEventDTO) {
-    setSelectedEvent(event)
-    setIsEventFormOpen(true)
+    setSelectedEvent(event);
+    setIsEventFormOpen(true);
   }
 
   return (
@@ -270,13 +270,13 @@ export function ProjectCalendarModal({
                             ? "bg-destructive/15 text-destructive border-destructive/30"
                             : task.priority === "medium"
                               ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                              : "bg-muted text-muted-foreground border-border"
+                              : "bg-muted text-muted-foreground border-border";
 
                         const taskDateOnly = task.dueDate
                           ? task.dueDate.split("T")[0]
-                          : ""
+                          : "";
                         const isOverdue =
-                          taskDateOnly < todayStr && !task.isCompleted
+                          taskDateOnly < todayStr && !task.isCompleted;
 
                         return (
                           <div
@@ -319,7 +319,7 @@ export function ProjectCalendarModal({
                               )}
                             </div>
                           </div>
-                        )
+                        );
                       })
                     )}
                   </div>
@@ -374,12 +374,12 @@ export function ProjectCalendarModal({
       <EventFormModal
         open={isEventFormOpen}
         onOpenChange={(open) => {
-          setIsEventFormOpen(open)
-          if (!open) setSelectedEvent(undefined)
+          setIsEventFormOpen(open);
+          if (!open) setSelectedEvent(undefined);
         }}
         entity={selectedEvent}
         currentUserId={currentUserId}
       />
     </>
-  )
+  );
 }

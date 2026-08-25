@@ -1,46 +1,46 @@
-"use client"
+"use client";
 
-import { FileText, Sidebar, X } from "lucide-react"
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { useCallback, useEffect, useTransition } from "react"
+import { FileText, Sidebar, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useTransition } from "react";
 import type {
   ListWithTasks,
   TaskWithCommentCount,
-} from "@/components/lists/board"
-import { TaskDescription } from "@/components/tasks/tast-detail-modal/task-description"
-import { TaskHeader } from "@/components/tasks/tast-detail-modal/task-header"
-import { TaskSidebar } from "@/components/tasks/tast-detail-modal/task-sidebar"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { useToast } from "@/hooks/use-toast"
-import { archiveTask } from "@/lib/actions/tasks"
-import type { Task } from "@/lib/db/schema"
-import { useBoardStore } from "@/stores/board-store"
-import { useTaskDetailStore } from "@/stores/task-detail-store"
-import { TaskComments } from "../tast-detail-modal/task-comments"
+} from "@/components/lists/board";
+import { TaskDescription } from "@/components/tasks/tast-detail-modal/task-description";
+import { TaskHeader } from "@/components/tasks/tast-detail-modal/task-header";
+import { TaskSidebar } from "@/components/tasks/tast-detail-modal/task-sidebar";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { archiveTask } from "@/lib/actions/tasks";
+import type { Task } from "@/lib/db/schema";
+import { useBoardStore } from "@/stores/board-store";
+import { useTaskDetailStore } from "@/stores/task-detail-store";
+import { TaskComments } from "../tast-detail-modal/task-comments";
 
 type TaskWithMetadata = TaskWithCommentCount & {
-  projectId?: string
-  projectName?: string
-}
+  projectId?: string;
+  projectName?: string;
+};
 
 type TaskDetailModalProps = {
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer"
-  currentUserId: string
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
+  currentUserId: string;
   assignableUsers: {
-    id: string
-    name?: string
-    email?: string
-    imageUrl?: string | null
-    hasImage?: boolean | null
-  }[]
-  allLists: ListWithTasks[]
-  onRestored?: () => void
-  onChanged?: (task: TaskWithCommentCount) => void
-  onMoved?: (task: Task, affectedTasks: Task[]) => void
-  onDeleteClick?: () => void
-  onCommentCountChanged?: (taskId: string, delta: number) => void
-}
+    id: string;
+    name?: string;
+    email?: string;
+    imageUrl?: string | null;
+    hasImage?: boolean | null;
+  }[];
+  allLists: ListWithTasks[];
+  onRestored?: () => void;
+  onChanged?: (task: TaskWithCommentCount) => void;
+  onMoved?: (task: Task, affectedTasks: Task[]) => void;
+  onDeleteClick?: () => void;
+  onCommentCountChanged?: (taskId: string, delta: number) => void;
+};
 
 export function TaskDetailModal({
   role,
@@ -53,71 +53,71 @@ export function TaskDetailModal({
   onDeleteClick,
   onCommentCountChanged,
 }: TaskDetailModalProps) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const { toast } = useToast()
-  const [, _startTransition] = useTransition()
+  const router = useRouter();
+  const pathname = usePathname();
+  const { toast } = useToast();
+  const [, _startTransition] = useTransition();
 
-  const archiveTaskLocally = useBoardStore((s) => s.archiveTaskLocally)
-  const revertArchiveSnapshot = useBoardStore((s) => s.revertArchiveSnapshot)
+  const archiveTaskLocally = useBoardStore((s) => s.archiveTaskLocally);
+  const revertArchiveSnapshot = useBoardStore((s) => s.revertArchiveSnapshot);
 
-  const isOpen = useTaskDetailStore((s) => s.isOpen)
-  const task = useTaskDetailStore((s) => s.task) as TaskWithMetadata | null
-  const storeProjectId = useTaskDetailStore((s) => s.projectId)
-  const closeModal = useTaskDetailStore((s) => s.closeModal)
-  const activeTab = useTaskDetailStore((s) => s.activeTab)
-  const setActiveTab = useTaskDetailStore((s) => s.setActiveTab)
-  const bumpActivity = useTaskDetailStore((s) => s.bumpActivity)
-  const updateTaskLocal = useTaskDetailStore((s) => s.updateTaskLocal)
+  const isOpen = useTaskDetailStore((s) => s.isOpen);
+  const task = useTaskDetailStore((s) => s.task) as TaskWithMetadata | null;
+  const storeProjectId = useTaskDetailStore((s) => s.projectId);
+  const closeModal = useTaskDetailStore((s) => s.closeModal);
+  const activeTab = useTaskDetailStore((s) => s.activeTab);
+  const setActiveTab = useTaskDetailStore((s) => s.setActiveTab);
+  const bumpActivity = useTaskDetailStore((s) => s.bumpActivity);
+  const updateTaskLocal = useTaskDetailStore((s) => s.updateTaskLocal);
 
-  const activeProjectId = task?.projectId ?? storeProjectId
+  const activeProjectId = task?.projectId ?? storeProjectId;
 
   const handleModalClose = useCallback(() => {
-    closeModal()
-    router.replace(pathname, { scroll: false })
-  }, [closeModal, router, pathname])
+    closeModal();
+    router.replace(pathname, { scroll: false });
+  }, [closeModal, router, pathname]);
 
   useEffect(() => {
     if (task) {
-      bumpActivity()
+      bumpActivity();
     }
-  }, [task, bumpActivity])
+  }, [task, bumpActivity]);
 
-  if (!task || !activeProjectId) return null
+  if (!task || !activeProjectId) return null;
 
-  const isArchived = Boolean(task.isArchived)
-  const canEdit = role !== "viewer" && role !== "contributor" && !isArchived
-  const canContribute = role !== "viewer"
+  const isArchived = Boolean(task.isArchived);
+  const canEdit = role !== "viewer" && role !== "contributor" && !isArchived;
+  const canContribute = role !== "viewer";
 
   const handleChanged = (updated: any) => {
-    updateTaskLocal(updated)
-    onChanged?.(updated)
-    bumpActivity()
-  }
+    updateTaskLocal(updated);
+    onChanged?.(updated);
+    bumpActivity();
+  };
 
   const handleMoved = (movedTask: any, affectedTasks: any[]) => {
-    onMoved?.(movedTask, affectedTasks)
-    bumpActivity()
-  }
+    onMoved?.(movedTask, affectedTasks);
+    bumpActivity();
+  };
 
   const handleArchive = async () => {
-    handleModalClose()
-    const snapshot = archiveTaskLocally(task.id)
-    const res = await archiveTask(task.id)
+    handleModalClose();
+    const snapshot = archiveTaskLocally(task.id);
+    const res = await archiveTask(task.id);
     if (res.success) {
       toast({
         title: "Task archived",
         description: `"${task.title}" was archived.`,
-      })
+      });
     } else {
-      revertArchiveSnapshot(snapshot)
+      revertArchiveSnapshot(snapshot);
       toast({
         title: "Failed to archive task",
         description: res.error,
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleModalClose()}>
@@ -145,8 +145,8 @@ export function TaskDetailModal({
           <button
             type="button"
             onClick={(e) => {
-              e.stopPropagation()
-              handleModalClose()
+              e.stopPropagation();
+              handleModalClose();
             }}
             className="relative z-50 mt-1 p-1.5 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer shrink-0"
             aria-label="Close modal"
@@ -270,5 +270,5 @@ export function TaskDetailModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
