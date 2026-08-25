@@ -72,5 +72,5 @@ export default function MyTasksLoading() {
         </div>
       </div>
     </div>
-  );
+  )
 }

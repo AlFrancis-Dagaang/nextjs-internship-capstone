@@ -1,65 +1,40 @@
-"use client";
+"use client"
 
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useTransition,
-  useCallback,
-} from "react";
-import Link from "next/link";
 import {
   ArrowLeft,
-  Search,
-  Filter,
-  X,
-  MoreVertical,
-  Archive,
-  UserPlus,
-  ListChecks,
-  ChevronDown,
-  FolderInput,
-  Trash2,
   Calendar,
-  Users2,
+  ChevronDown,
   Clock,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Filter,
+  FolderInput,
+  ListChecks,
+  MoreVertical,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react"
+import Link from "next/link"
+import { useCallback, useEffect, useRef, useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import type { Project } from "@/lib/db/schema";
-import { InviteMemberModal } from "./modals/invite-member-modal";
-import { useProjectStore, type Member } from "@/stores/project-store";
-import { useUiStore } from "@/stores/ui-store";
-import { useBoardStore } from "@/stores/board-store";
-import { ArchivedTasksModal } from "../tasks/modal/archived-tasks-modal";
-import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
-import { moveTaskToList, deleteTask } from "@/lib/actions/tasks";
-import { useToast } from "@/hooks/use-toast";
-import { useRealtimeProject } from "@/hooks/use-realtime-project";
-import type { ProjectRealtimeEvent } from "@/lib/realtime/server";
-import { CalendarTaskDTO } from "@/types";
-import { ProjectCalendarModal } from "./modals/project-calendar-modal";
-import { UserAvatar } from "@/components/ui/user-avatar";
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useRealtimeProject } from "@/hooks/use-realtime-project"
+import { useToast } from "@/hooks/use-toast"
+import { deleteTask, moveTaskToList } from "@/lib/actions/tasks"
+import type { Project } from "@/lib/db/schema"
+import type { ProjectRealtimeEvent } from "@/lib/realtime/server"
+import { useBoardStore } from "@/stores/board-store"
+import { type Member, useProjectStore } from "@/stores/project-store"
+import { useUiStore } from "@/stores/ui-store"
+import type { CalendarTaskDTO } from "@/types"
+import { ProjectCalendarModal } from "./modals/project-calendar-modal"
 
 export function ProjectHeader({
   project,
@@ -76,116 +51,116 @@ export function ProjectHeader({
   dueDate,
   isMyTasksPage = false,
 }: {
-  project: Project;
-  initialMembers: Member[];
-  isOwner: boolean;
-  canManage: boolean;
-  ownerName?: string;
-  ownerEmail?: string;
-  ownerImageUrl?: string | null;
-  ownerHasImage?: boolean | null;
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-  currentUserId: string;
-  upcomingTasks: CalendarTaskDTO[];
-  dueDate?: Date | string | null;
-  isMyTasksPage?: boolean;
+  project: Project
+  initialMembers: Member[]
+  isOwner: boolean
+  canManage: boolean
+  ownerName?: string
+  ownerEmail?: string
+  ownerImageUrl?: string | null
+  ownerHasImage?: boolean | null
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer"
+  currentUserId: string
+  upcomingTasks: CalendarTaskDTO[]
+  dueDate?: Date | string | null
+  isMyTasksPage?: boolean
 }) {
-  const { toast } = useToast();
-  const canEdit = !isMyTasksPage && role !== "viewer" && role !== "contributor";
+  const { toast } = useToast()
+  const canEdit = !isMyTasksPage && role !== "viewer" && role !== "contributor"
   const membersState = useProjectStore(
     (s) => s.membersMap[project.id] ?? initialMembers,
-  );
-  const setProjectMembers = useProjectStore((s) => s.setProjectMembers);
-  const addMember = useProjectStore((s) => s.addMember);
-  const replaceOptimisticMember = useProjectStore(
+  )
+  const setProjectMembers = useProjectStore((s) => s.setProjectMembers)
+  const addMember = useProjectStore((s) => s.addMember)
+  const _replaceOptimisticMember = useProjectStore(
     (s) => s.replaceOptimisticMember,
-  );
-  const removeMember = useProjectStore((s) => s.removeMember);
+  )
+  const removeMember = useProjectStore((s) => s.removeMember)
 
   useEffect(() => {
     if (!isMyTasksPage) {
-      setProjectMembers(project.id, initialMembers);
+      setProjectMembers(project.id, initialMembers)
     }
-  }, [project.id, initialMembers, setProjectMembers, isMyTasksPage]);
+  }, [project.id, initialMembers, setProjectMembers, isMyTasksPage])
 
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
-  const [actionsDropdownOpen, setActionsDropdownOpen] = useState(false);
-  const [bulkActionsDropdownOpen, setBulkActionsDropdownOpen] = useState(false);
+  const [_inviteOpen, setInviteOpen] = useState(false)
+  const [filterDropdownOpen, setFilterDropdownOpen] = useState(false)
+  const [actionsDropdownOpen, setActionsDropdownOpen] = useState(false)
+  const [bulkActionsDropdownOpen, setBulkActionsDropdownOpen] = useState(false)
 
-  const [mobileFilterModalOpen, setMobileFilterModalOpen] = useState(false);
-  const [mobileActionsModalOpen, setMobileActionsModalOpen] = useState(false);
-  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [_mobileFilterModalOpen, setMobileFilterModalOpen] = useState(false)
+  const [_mobileActionsModalOpen, setMobileActionsModalOpen] = useState(false)
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false)
 
-  const searchQuery = useUiStore((s) => s.searchQuery);
-  const setSearchQuery = useUiStore((s) => s.setSearchQuery);
-  const filterCompleted = useUiStore((s) => s.filterCompleted);
-  const setFilterCompleted = useUiStore((s) => s.setFilterCompleted);
-  const filterPriority = useUiStore((s) => s.filterPriority);
-  const setFilterPriority = useUiStore((s) => s.setFilterPriority);
-  const filterDueDate = useUiStore((s) => s.filterDueDate);
-  const setFilterDueDate = useUiStore((s) => s.setFilterDueDate);
-  const filterAssignedToMe = useUiStore((s) => s.filterAssignedToMe);
-  const setFilterAssignedToMe = useUiStore((s) => s.setFilterAssignedToMe);
-  const filterAssigneeId = useUiStore((s) => s.filterAssigneeId);
-  const setFilterAssigneeId = useUiStore((s) => s.setFilterAssigneeId);
-  const clearAllFilters = useUiStore((s) => s.clearAllFilters);
+  const searchQuery = useUiStore((s) => s.searchQuery)
+  const setSearchQuery = useUiStore((s) => s.setSearchQuery)
+  const filterCompleted = useUiStore((s) => s.filterCompleted)
+  const setFilterCompleted = useUiStore((s) => s.setFilterCompleted)
+  const filterPriority = useUiStore((s) => s.filterPriority)
+  const setFilterPriority = useUiStore((s) => s.setFilterPriority)
+  const filterDueDate = useUiStore((s) => s.filterDueDate)
+  const setFilterDueDate = useUiStore((s) => s.setFilterDueDate)
+  const filterAssignedToMe = useUiStore((s) => s.filterAssignedToMe)
+  const setFilterAssignedToMe = useUiStore((s) => s.setFilterAssignedToMe)
+  const filterAssigneeId = useUiStore((s) => s.filterAssigneeId)
+  const setFilterAssigneeId = useUiStore((s) => s.setFilterAssigneeId)
+  const clearAllFilters = useUiStore((s) => s.clearAllFilters)
 
-  const selectionMode = useUiStore((s) => s.selectionMode);
-  const selectedTaskIds = useUiStore((s) => s.selectedTaskIds);
-  const enterSelectionMode = useUiStore((s) => s.enterSelectionMode);
-  const exitSelectionMode = useUiStore((s) => s.exitSelectionMode);
-  const clearSelection = useUiStore((s) => s.clearSelection);
-  const bulkDeleteRequestToken = useUiStore((s) => s.bulkDeleteRequestToken);
+  const selectionMode = useUiStore((s) => s.selectionMode)
+  const selectedTaskIds = useUiStore((s) => s.selectedTaskIds)
+  const enterSelectionMode = useUiStore((s) => s.enterSelectionMode)
+  const exitSelectionMode = useUiStore((s) => s.exitSelectionMode)
+  const clearSelection = useUiStore((s) => s.clearSelection)
+  const bulkDeleteRequestToken = useUiStore((s) => s.bulkDeleteRequestToken)
 
-  const lists = useBoardStore((s) => s.lists);
-  const removeTask = useBoardStore((s) => s.removeTask);
-  const reconcileTaskMoved = useBoardStore((s) => s.reconcileTaskMoved);
+  const lists = useBoardStore((s) => s.lists)
+  const removeTask = useBoardStore((s) => s.removeTask)
+  const reconcileTaskMoved = useBoardStore((s) => s.reconcileTaskMoved)
 
   const isFilterActive =
     filterCompleted !== "all" ||
     filterPriority !== "all" ||
     filterDueDate !== "all" ||
     filterAssignedToMe ||
-    filterAssigneeId !== null;
+    filterAssigneeId !== null
 
-  const isFilteringActive = searchQuery.trim() !== "" || isFilterActive;
+  const isFilteringActive = searchQuery.trim() !== "" || isFilterActive
 
   useEffect(() => {
     if (isFilteringActive && selectionMode) {
-      exitSelectionMode();
+      exitSelectionMode()
     }
-  }, [isFilteringActive, selectionMode, exitSelectionMode]);
+  }, [isFilteringActive, selectionMode, exitSelectionMode])
 
-  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
-  const [isBulkPending, startBulkTransition] = useTransition();
-  const prevBulkDeleteToken = useRef(bulkDeleteRequestToken);
+  const [_bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false)
+  const [isBulkPending, startBulkTransition] = useTransition()
+  const prevBulkDeleteToken = useRef(bulkDeleteRequestToken)
 
   useEffect(() => {
     if (
       bulkDeleteRequestToken !== prevBulkDeleteToken.current &&
       selectedTaskIds.length > 0
     ) {
-      setBulkDeleteConfirmOpen(true);
+      setBulkDeleteConfirmOpen(true)
     }
-    prevBulkDeleteToken.current = bulkDeleteRequestToken;
-  }, [bulkDeleteRequestToken, selectedTaskIds.length]);
+    prevBulkDeleteToken.current = bulkDeleteRequestToken
+  }, [bulkDeleteRequestToken, selectedTaskIds.length])
 
   function handleBulkMove(targetListId: string) {
-    if (selectedTaskIds.length === 0) return;
-    setBulkActionsDropdownOpen(false);
+    if (selectedTaskIds.length === 0) return
+    setBulkActionsDropdownOpen(false)
     startBulkTransition(async () => {
       const results = await Promise.all(
         selectedTaskIds.map((taskId) => moveTaskToList(taskId, targetListId)),
-      );
-      let succeeded = 0;
+      )
+      let succeeded = 0
       results.forEach((res) => {
         if (res.success) {
-          succeeded++;
-          reconcileTaskMoved(res.data.movedTask, res.data.affectedTasks);
+          succeeded++
+          reconcileTaskMoved(res.data.movedTask, res.data.affectedTasks)
         }
-      });
-      const failed = results.length - succeeded;
+      })
+      const failed = results.length - succeeded
 
       toast(
         failed === 0
@@ -194,23 +169,25 @@ export function ProjectHeader({
               title: `${succeeded} moved, ${failed} failed`,
               variant: "destructive",
             },
-      );
+      )
 
-      clearSelection();
-      exitSelectionMode();
-    });
+      clearSelection()
+      exitSelectionMode()
+    })
   }
 
-  function handleBulkDelete() {
-    if (selectedTaskIds.length === 0) return;
-    const idsToDelete = selectedTaskIds;
+  function _handleBulkDelete() {
+    if (selectedTaskIds.length === 0) return
+    const idsToDelete = selectedTaskIds
 
-    const taskListMap = new Map<string, string>();
-    lists.forEach((l) =>
-      l.tasks.forEach((t) => {
-        if (idsToDelete.includes(t.id)) taskListMap.set(t.id, l.id);
-      }),
-    );
+    const taskListMap = new Map<string, string>()
+    for (const l of lists) {
+      for (const t of l.tasks) {
+        if (idsToDelete.includes(t.id)) {
+          taskListMap.set(t.id, l.id)
+        }
+      }
+    }
 
     startBulkTransition(async () => {
       const results = await Promise.all(
@@ -218,17 +195,17 @@ export function ProjectHeader({
           taskId,
           result: await deleteTask(taskId),
         })),
-      );
+      )
 
-      let succeeded = 0;
+      let succeeded = 0
       results.forEach(({ taskId, result }) => {
         if (result.success) {
-          succeeded++;
-          const listId = taskListMap.get(taskId);
-          if (listId) removeTask(listId, taskId);
+          succeeded++
+          const listId = taskListMap.get(taskId)
+          if (listId) removeTask(listId, taskId)
         }
-      });
-      const failed = results.length - succeeded;
+      })
+      const failed = results.length - succeeded
 
       toast(
         failed === 0
@@ -237,12 +214,12 @@ export function ProjectHeader({
               title: `${succeeded} deleted, ${failed} failed`,
               variant: "destructive",
             },
-      );
+      )
 
-      setBulkDeleteConfirmOpen(false);
-      clearSelection();
-      exitSelectionMode();
-    });
+      setBulkDeleteConfirmOpen(false)
+      clearSelection()
+      exitSelectionMode()
+    })
   }
 
   const allMembersList = isMyTasksPage
@@ -266,14 +243,14 @@ export function ProjectHeader({
           hasImage: m.hasImage,
           role: m.role,
         })),
-      ];
+      ]
 
-  const visibleMembers = allMembersList.slice(0, 3);
-  const extraCount = allMembersList.length > 3 ? allMembersList.length - 3 : 0;
+  const visibleMembers = allMembersList.slice(0, 3)
+  const extraCount = allMembersList.length > 3 ? allMembersList.length - 3 : 0
 
-  const openArchiveModal = useUiStore((s) => s.openArchiveModal);
-  const archiveModalOpen = useUiStore((s) => s.archiveModalOpen);
-  const closeArchiveModal = useUiStore((s) => s.closeArchiveModal);
+  const openArchiveModal = useUiStore((s) => s.openArchiveModal)
+  const _archiveModalOpen = useUiStore((s) => s.archiveModalOpen)
+  const _closeArchiveModal = useUiStore((s) => s.closeArchiveModal)
 
   const allProjectUsers = isMyTasksPage
     ? []
@@ -288,18 +265,18 @@ export function ProjectHeader({
           name: m.name,
           email: m.email,
         })),
-      ];
+      ]
 
-  const [liveProject, setLiveProject] = useState(project);
+  const [liveProject, setLiveProject] = useState(project)
   useEffect(() => {
-    setLiveProject(project);
-  }, [project]);
+    setLiveProject(project)
+  }, [project])
 
   const handleProjectEvent = useCallback(
     (event: ProjectRealtimeEvent) => {
-      if (isMyTasksPage) return;
+      if (isMyTasksPage) return
       if (event.type === "project_updated") {
-        setLiveProject(event.project);
+        setLiveProject(event.project)
       } else if (event.type === "member_added") {
         addMember(project.id, {
           id: event.member.memberId,
@@ -307,20 +284,18 @@ export function ProjectHeader({
           email: event.member.email,
           name: event.member.name,
           role: event.member.role as any,
-        });
+        })
       } else if (event.type === "member_removed") {
-        removeMember(project.id, event.memberId);
+        removeMember(project.id, event.memberId)
       }
     },
     [project.id, addMember, removeMember, isMyTasksPage],
-  );
-  if (!isMyTasksPage) {
-    useRealtimeProject(project.id, handleProjectEvent);
-  }
+  )
+  useRealtimeProject(isMyTasksPage ? "" : project.id, handleProjectEvent)
 
   const formattedRoleLabel = isMyTasksPage
     ? "Viewer"
-    : role.charAt(0).toUpperCase() + role.slice(1);
+    : role.charAt(0).toUpperCase() + role.slice(1)
 
   const formattedDueDate = dueDate
     ? new Date(dueDate).toLocaleDateString(undefined, {
@@ -328,7 +303,7 @@ export function ProjectHeader({
         day: "numeric",
         year: "numeric",
       })
-    : null;
+    : null
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-card/70 backdrop-blur-md p-4 sm:p-5 border border-border/80 rounded-3xl shadow-xs m-0">
@@ -443,8 +418,8 @@ export function ProjectHeader({
 
                 <DropdownMenuItem
                   onSelect={() => {
-                    setBulkActionsDropdownOpen(false);
-                    setBulkDeleteConfirmOpen(true);
+                    setBulkActionsDropdownOpen(false)
+                    setBulkDeleteConfirmOpen(true)
                   }}
                   className="cursor-pointer px-2.5 py-2 text-xs text-destructive focus:bg-destructive/10 rounded-xl flex items-center space-x-2"
                 >
@@ -458,8 +433,8 @@ export function ProjectHeader({
               variant="ghost"
               size="sm"
               onClick={() => {
-                clearSelection();
-                exitSelectionMode();
+                clearSelection()
+                exitSelectionMode()
               }}
               className="h-9 text-xs text-muted-foreground hover:text-foreground rounded-xl cursor-pointer"
             >
@@ -596,9 +571,9 @@ export function ProjectHeader({
                       ? "Owner"
                       : m.role === "editor"
                         ? "Editor"
-                        : "Viewer";
+                        : "Viewer"
 
-                  const displayName = m.name || m.email || "User";
+                  const displayName = m.name || m.email || "User"
 
                   return (
                     <DropdownMenu key={m.id}>
@@ -642,7 +617,7 @@ export function ProjectHeader({
                         </div>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  );
+                  )
                 })}
               </div>
 
@@ -665,13 +640,13 @@ export function ProjectHeader({
         onOpenChange={setCalendarModalOpen}
       />
     </div>
-  );
+  )
 }
 
-function FilterContent(props: any) {
-  return null; // Retained from existing codebase filters component structure
+function FilterContent(_props: any) {
+  return null // Retained from existing codebase filters component structure
 }
 
-function ActionsContent(props: any) {
-  return null; // Retained from existing codebase actions component structure
+function ActionsContent(_props: any) {
+  return null // Retained from existing codebase actions component structure
 }

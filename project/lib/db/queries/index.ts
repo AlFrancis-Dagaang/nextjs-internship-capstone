@@ -1,16 +1,16 @@
-import { usersQueries } from "./users";
-import { projectsQueries } from "./projects";
-import { listsQueries } from "./lists";
-import { tasksQueries } from "./tasks";
-import { taskActivityQueries } from "./task-activity";
-import { commentsQueries } from "./comments";
-import { projectMembersQueries } from "./project-members";
-import { taskAssigneesQueries } from "./task-assignees";
-import { notificationsQueries } from "./notifications";
-import { eventsQueries } from "./events";
-import { analyticsQueries } from "./analytics";
-import { teamsQueries } from "./teams";
-import { projectTeamsQueries } from "./project-teams";
+import { analyticsQueries } from "./analytics"
+import { commentsQueries } from "./comments"
+import { eventsQueries } from "./events"
+import { listsQueries } from "./lists"
+import { notificationsQueries } from "./notifications"
+import { projectMembersQueries } from "./project-members"
+import { projectTeamsQueries } from "./project-teams"
+import { projectsQueries } from "./projects"
+import { taskActivityQueries } from "./task-activity"
+import { taskAssigneesQueries } from "./task-assignees"
+import { tasksQueries } from "./tasks"
+import { teamsQueries } from "./teams"
+import { usersQueries } from "./users"
 
 export const queries = {
   users: usersQueries,
@@ -26,4 +26,4 @@ export const queries = {
   analytics: analyticsQueries,
   teams: teamsQueries,
   projectTeams: projectTeamsQueries,
-};
+}

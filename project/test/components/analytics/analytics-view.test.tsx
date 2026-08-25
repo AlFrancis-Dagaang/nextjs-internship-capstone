@@ -1,6 +1,6 @@
-import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { AnalyticsView } from "@/components/analytics/analytics-view";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import type React from "react"
+import { AnalyticsView } from "@/components/analytics/analytics-view"
 
 // Mock server actions to prevent module resolution/Neon issues
 jest.mock("@/lib/actions/analytics", () => ({
@@ -39,10 +39,10 @@ jest.mock("@/lib/actions/analytics", () => ({
       ],
     },
   }),
-}));
+}))
 
 // Mock next/navigation
-const mockPush = jest.fn();
+const mockPush = jest.fn()
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
@@ -50,64 +50,64 @@ jest.mock("next/navigation", () => ({
   useSearchParams: () =>
     new URLSearchParams("startDate=2026-06-01&endDate=2026-06-30"),
   usePathname: () => "/analytics",
-}));
+}))
 
 // Mock child sub-components to isolate AnalyticsView structure
 jest.mock("@/components/analytics/tabs/analytics-overview-tab", () => ({
   AnalyticsOverviewTab: () => (
     <div data-testid="overview-tab-content">Overview Tab Content</div>
   ),
-}));
+}))
 
 jest.mock("@/components/analytics/tabs/analytics-members-tab", () => ({
   AnalyticsMembersTab: ({
     loading,
     membersList,
   }: {
-    loading: boolean;
-    membersList: any[];
+    loading: boolean
+    membersList: any[]
   }) => (
     <div data-testid="members-tab-content">
       {loading ? "Loading members..." : `Members count: ${membersList.length}`}
     </div>
   ),
-}));
+}))
 
 jest.mock("@/components/analytics/tabs/analytics-teams-tab", () => ({
   AnalyticsTeamsTab: ({
     loading,
     teamsList,
   }: {
-    loading: boolean;
-    teamsList: any[];
+    loading: boolean
+    teamsList: any[]
   }) => (
     <div data-testid="teams-tab-content">
       {loading ? "Loading teams..." : `Teams count: ${teamsList.length}`}
     </div>
   ),
-}));
+}))
 
 jest.mock("@/components/analytics/drill-down-panel", () => ({
   DrillDownPanel: ({ open }: { open: boolean }) =>
     open ? (
       <div data-testid="drill-down-panel">DrillDown Panel Open</div>
     ) : null,
-}));
+}))
 
 jest.mock("@/components/layout/page-header", () => ({
   PageHeader: ({
     title,
     children,
   }: {
-    title: string;
-    children: React.ReactNode;
+    title: string
+    children: React.ReactNode
   }) => (
     <div data-testid="page-header">
       <h1>{title}</h1>
       {children}
     </div>
   ),
-}));
+}))
 
 describe("AnalyticsView", () => {
   const mockAnalyticsData = {
@@ -125,40 +125,40 @@ describe("AnalyticsView", () => {
       endDate: "2026-06-30",
       projectId: null,
     },
-  };
+  }
 
   it("renders the analytics dashboard header and overview tab by default", () => {
-    render(<AnalyticsView data={mockAnalyticsData as any} />);
+    render(<AnalyticsView data={mockAnalyticsData as any} />)
 
-    expect(screen.getByText("Analytics Dashboard")).toBeInTheDocument();
-    expect(screen.getByTestId("overview-tab-content")).toBeInTheDocument();
-  });
+    expect(screen.getByText("Analytics Dashboard")).toBeInTheDocument()
+    expect(screen.getByTestId("overview-tab-content")).toBeInTheDocument()
+  })
 
   it("switches to Team Members tab and fetches member breakdown", async () => {
-    render(<AnalyticsView data={mockAnalyticsData as any} />);
+    render(<AnalyticsView data={mockAnalyticsData as any} />)
 
     const membersTabButton = screen.getByRole("button", {
       name: /Team Members/i,
-    });
-    fireEvent.click(membersTabButton);
+    })
+    fireEvent.click(membersTabButton)
 
-    expect(screen.getByTestId("members-tab-content")).toBeInTheDocument();
+    expect(screen.getByTestId("members-tab-content")).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(screen.getByText("Members count: 1")).toBeInTheDocument();
-    });
-  });
+      expect(screen.getByText("Members count: 1")).toBeInTheDocument()
+    })
+  })
 
   it("switches to Teams tab and fetches team breakdown", async () => {
-    render(<AnalyticsView data={mockAnalyticsData as any} />);
+    render(<AnalyticsView data={mockAnalyticsData as any} />)
 
-    const teamsTabButton = screen.getByRole("button", { name: /^Teams$/i });
-    fireEvent.click(teamsTabButton);
+    const teamsTabButton = screen.getByRole("button", { name: /^Teams$/i })
+    fireEvent.click(teamsTabButton)
 
-    expect(screen.getByTestId("teams-tab-content")).toBeInTheDocument();
+    expect(screen.getByTestId("teams-tab-content")).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(screen.getByText("Teams count: 1")).toBeInTheDocument();
-    });
-  });
-});
+      expect(screen.getByText("Teams count: 1")).toBeInTheDocument()
+    })
+  })
+})

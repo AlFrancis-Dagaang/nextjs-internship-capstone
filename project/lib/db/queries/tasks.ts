@@ -1,7 +1,7 @@
-import { asc, eq, and, sql, inArray, isNotNull, exists, or } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
-import { db } from "../client";
-import { lists, tasks, comments, projectMembers, projects } from "../schema";
+import type { InferInsertModel } from "drizzle-orm"
+import { and, asc, eq, exists, inArray, isNotNull, or, sql } from "drizzle-orm"
+import { db } from "../client"
+import { comments, lists, projectMembers, projects, tasks } from "../schema"
 
 export const tasksQueries = {
   getByProject: async (projectId: string) => {
@@ -10,13 +10,13 @@ export const tasksQueries = {
       with: {
         tasks: { where: eq(tasks.isArchived, false) },
       },
-    });
+    })
 
-    const allTasks = listsWithTasks.flatMap((list) => list.tasks);
-    const taskIds = allTasks.map((t) => t.id);
+    const allTasks = listsWithTasks.flatMap((list) => list.tasks)
+    const taskIds = allTasks.map((t) => t.id)
 
     if (taskIds.length === 0) {
-      return allTasks;
+      return allTasks
     }
 
     const commentCounts = await db
@@ -26,21 +26,21 @@ export const tasksQueries = {
       })
       .from(comments)
       .where(inArray(comments.taskId, taskIds))
-      .groupBy(comments.taskId);
+      .groupBy(comments.taskId)
 
-    const countMap = new Map(commentCounts.map((c) => [c.taskId, c.count]));
+    const countMap = new Map(commentCounts.map((c) => [c.taskId, c.count]))
 
     return allTasks.map((task) => ({
       ...task,
       commentCount: countMap.get(task.id) ?? 0,
-    }));
+    }))
   },
   getByList: async (listId: string) => {
     return db
       .select()
       .from(tasks)
       .where(and(eq(tasks.listId, listId), eq(tasks.isArchived, false)))
-      .orderBy(asc(tasks.position));
+      .orderBy(asc(tasks.position))
   },
   // New — powers the archive modal. Project-scoped (not per-list), per
   // your confirmation that archived tasks show as one global list for
@@ -53,15 +53,15 @@ export const tasksQueries = {
       with: {
         tasks: { where: eq(tasks.isArchived, true) },
       },
-    });
+    })
 
     const archivedTasks = listsWithArchivedTasks
       .flatMap((list) => list.tasks)
-      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
 
-    const taskIds = archivedTasks.map((t) => t.id);
+    const taskIds = archivedTasks.map((t) => t.id)
     if (taskIds.length === 0) {
-      return archivedTasks;
+      return archivedTasks
     }
 
     const commentCounts = await db
@@ -71,32 +71,32 @@ export const tasksQueries = {
       })
       .from(comments)
       .where(inArray(comments.taskId, taskIds))
-      .groupBy(comments.taskId);
+      .groupBy(comments.taskId)
 
-    const countMap = new Map(commentCounts.map((c) => [c.taskId, c.count]));
+    const countMap = new Map(commentCounts.map((c) => [c.taskId, c.count]))
 
     return archivedTasks.map((task) => ({
       ...task,
       commentCount: countMap.get(task.id) ?? 0,
-    }));
+    }))
   },
   getById: async (id: string) => {
-    return db.query.tasks.findFirst({ where: eq(tasks.id, id) });
+    return db.query.tasks.findFirst({ where: eq(tasks.id, id) })
   },
   create: async (data: InferInsertModel<typeof tasks>) => {
-    const [task] = await db.insert(tasks).values(data).returning();
-    return task;
+    const [task] = await db.insert(tasks).values(data).returning()
+    return task
   },
   update: async (id: string, data: Partial<InferInsertModel<typeof tasks>>) => {
     const [task] = await db
       .update(tasks)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(tasks.id, id))
-      .returning();
-    return task;
+      .returning()
+    return task
   },
   delete: async (id: string) => {
-    await db.delete(tasks).where(eq(tasks.id, id));
+    await db.delete(tasks).where(eq(tasks.id, id))
   },
   // Added #73 — tasks with a dueDate across every project the user can
   // access (owned or member-of), for the Calendar page. Reimplements
@@ -137,11 +137,11 @@ export const tasksQueries = {
             ),
           ),
         ),
-      );
+      )
   },
 
   getCompletionStatsByProject: async (projectIds: string[]) => {
-    if (projectIds.length === 0) return [];
+    if (projectIds.length === 0) return []
 
     return db
       .select({
@@ -154,6 +154,6 @@ export const tasksQueries = {
       .where(
         and(inArray(lists.projectId, projectIds), eq(tasks.isArchived, false)),
       )
-      .groupBy(lists.projectId);
+      .groupBy(lists.projectId)
   },
-};
+}

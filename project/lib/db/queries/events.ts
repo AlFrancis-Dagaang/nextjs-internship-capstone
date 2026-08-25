@@ -1,11 +1,11 @@
-import { eq, or, and, exists, isNull, asc } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
-import { db } from "../client";
-import { events, projects, projectMembers } from "../schema";
+import type { InferInsertModel } from "drizzle-orm"
+import { and, asc, eq, exists, isNull, or } from "drizzle-orm"
+import { db } from "../client"
+import { events, projectMembers, projects } from "../schema"
 
 export const eventsQueries = {
   getById: async (id: string) => {
-    return db.query.events.findFirst({ where: eq(events.id, id) });
+    return db.query.events.findFirst({ where: eq(events.id, id) })
   },
   // Personal events the user created, plus events tied to a project
   // they own or are a member of — mirrors getByOwnerOrMember exactly
@@ -41,11 +41,11 @@ export const eventsQueries = {
               ),
           ),
         ),
-      );
+      )
   },
   create: async (data: InferInsertModel<typeof events>) => {
-    const [event] = await db.insert(events).values(data).returning();
-    return event;
+    const [event] = await db.insert(events).values(data).returning()
+    return event
   },
   update: async (
     id: string,
@@ -55,11 +55,11 @@ export const eventsQueries = {
       .update(events)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(events.id, id))
-      .returning();
-    return event;
+      .returning()
+    return event
   },
   delete: async (id: string) => {
-    await db.delete(events).where(eq(events.id, id));
+    await db.delete(events).where(eq(events.id, id))
   },
   // Added #80 — events scoped to one project, for the project-detail
   // modal's events section. Ordered soonest-first.
@@ -67,6 +67,6 @@ export const eventsQueries = {
     return db.query.events.findMany({
       where: eq(events.projectId, projectId),
       orderBy: asc(events.startAt),
-    });
+    })
   },
-};
+}

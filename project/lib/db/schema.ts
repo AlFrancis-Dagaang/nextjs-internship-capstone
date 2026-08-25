@@ -1,15 +1,15 @@
-import { relations, sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm"
 import {
+  boolean,
+  index,
+  integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
-  integer,
-  uuid,
-  jsonb,
   unique,
-  index,
-  boolean,
-} from "drizzle-orm/pg-core";
+  uuid,
+} from "drizzle-orm/pg-core"
 
 // Near the top of lib/db/schema.ts, before either table definition
 export const NOTIFICATION_TYPES = [
@@ -26,9 +26,9 @@ export const NOTIFICATION_TYPES = [
   "team_member_added",
   "team_member_removed",
   "team_attached_to_project",
-] as const;
+] as const
 
-export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number]
 
 // ---------- Tables ----------
 
@@ -45,7 +45,7 @@ export const users = pgTable("users", {
     .$type<Partial<Record<NotificationType, boolean>>>()
     .notNull()
     .default(sql`'{}'::jsonb`),
-});
+})
 
 export const projects = pgTable("projects", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -57,7 +57,7 @@ export const projects = pgTable("projects", {
   dueDate: timestamp("due_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+})
 
 export const lists = pgTable("lists", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -68,7 +68,7 @@ export const lists = pgTable("lists", {
   position: integer("position").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+})
 
 export const tasks = pgTable("tasks", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -85,7 +85,7 @@ export const tasks = pgTable("tasks", {
   isCompleted: boolean("is_completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+})
 
 export const taskActivity = pgTable(
   "task_activity",
@@ -124,7 +124,7 @@ export const taskActivity = pgTable(
       table.createdAt,
     ),
   }),
-);
+)
 
 export const taskAssignees = pgTable(
   "task_assignees",
@@ -141,7 +141,7 @@ export const taskAssignees = pgTable(
   (table) => ({
     uniqueAssignment: unique().on(table.taskId, table.userId),
   }),
-);
+)
 
 export const comments = pgTable("comments", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -154,7 +154,7 @@ export const comments = pgTable("comments", {
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+})
 
 export const projectMembers = pgTable(
   "project_members",
@@ -174,7 +174,7 @@ export const projectMembers = pgTable(
   (table) => ({
     uniqueMembership: unique().on(table.projectId, table.userId),
   }),
-);
+)
 
 export const teams = pgTable("teams", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -184,7 +184,7 @@ export const teams = pgTable("teams", {
     .references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+})
 
 export const teamMembers = pgTable(
   "team_members",
@@ -201,7 +201,7 @@ export const teamMembers = pgTable(
   (table) => ({
     uniqueMembership: unique().on(table.teamId, table.userId),
   }),
-);
+)
 
 export const projectTeams = pgTable(
   "project_teams",
@@ -223,7 +223,7 @@ export const projectTeams = pgTable(
   (table) => ({
     uniqueProjectTeam: unique().on(table.projectId, table.teamId),
   }),
-);
+)
 
 export const notifications = pgTable(
   "notifications",
@@ -250,7 +250,7 @@ export const notifications = pgTable(
       table.createdAt,
     ),
   }),
-);
+)
 
 export const events = pgTable("events", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -266,7 +266,7 @@ export const events = pgTable("events", {
   }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+})
 
 // ---------- Relations ----------
 
@@ -275,7 +275,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   assignedTasks: many(tasks),
   comments: many(comments),
   projectMemberships: many(projectMembers),
-}));
+}))
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
   owner: one(users, {
@@ -284,7 +284,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   }),
   lists: many(lists),
   members: many(projectMembers),
-}));
+}))
 
 export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
   project: one(projects, {
@@ -295,18 +295,18 @@ export const projectMembersRelations = relations(projectMembers, ({ one }) => ({
     fields: [projectMembers.userId],
     references: [users.id],
   }),
-}));
+}))
 
 export const teamsRelations = relations(teams, ({ one, many }) => ({
   creator: one(users, { fields: [teams.createdBy], references: [users.id] }),
   members: many(teamMembers),
   projectTeams: many(projectTeams),
-}));
+}))
 
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
   team: one(teams, { fields: [teamMembers.teamId], references: [teams.id] }),
   user: one(users, { fields: [teamMembers.userId], references: [users.id] }),
-}));
+}))
 
 export const projectTeamsRelations = relations(projectTeams, ({ one }) => ({
   project: one(projects, {
@@ -317,7 +317,7 @@ export const projectTeamsRelations = relations(projectTeams, ({ one }) => ({
     fields: [projectTeams.teamId],
     references: [teams.id],
   }),
-}));
+}))
 
 export const listsRelations = relations(lists, ({ one, many }) => ({
   project: one(projects, {
@@ -325,7 +325,7 @@ export const listsRelations = relations(lists, ({ one, many }) => ({
     references: [projects.id],
   }),
   tasks: many(tasks),
-}));
+}))
 
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
   list: one(lists, {
@@ -338,7 +338,7 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
   }),
   comments: many(comments),
   activity: many(taskActivity),
-}));
+}))
 
 export const taskActivityRelations = relations(taskActivity, ({ one }) => ({
   task: one(tasks, {
@@ -349,7 +349,7 @@ export const taskActivityRelations = relations(taskActivity, ({ one }) => ({
     fields: [taskActivity.actorId],
     references: [users.id],
   }),
-}));
+}))
 
 export const taskAssigneesRelations = relations(taskAssignees, ({ one }) => ({
   task: one(tasks, {
@@ -360,7 +360,7 @@ export const taskAssigneesRelations = relations(taskAssignees, ({ one }) => ({
     fields: [taskAssignees.userId],
     references: [users.id],
   }),
-}));
+}))
 
 export const commentsRelations = relations(comments, ({ one }) => ({
   task: one(tasks, {
@@ -371,7 +371,7 @@ export const commentsRelations = relations(comments, ({ one }) => ({
     fields: [comments.authorId],
     references: [users.id],
   }),
-}));
+}))
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, { fields: [notifications.userId], references: [users.id] }),
@@ -384,7 +384,7 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
     fields: [notifications.actorId],
     references: [users.id],
   }),
-}));
+}))
 
 export const eventsRelations = relations(events, ({ one }) => ({
   creator: one(users, { fields: [events.creatorId], references: [users.id] }),
@@ -392,35 +392,35 @@ export const eventsRelations = relations(events, ({ one }) => ({
     fields: [events.projectId],
     references: [projects.id],
   }),
-}));
+}))
 
 // ---------- Inferred types ----------
 
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-export type Project = typeof projects.$inferSelect;
-export type NewProject = typeof projects.$inferInsert;
-export type List = typeof lists.$inferSelect;
-export type NewList = typeof lists.$inferInsert;
-export type Task = typeof tasks.$inferSelect;
-export type NewTask = typeof tasks.$inferInsert;
-export type Comment = typeof comments.$inferSelect;
-export type NewComment = typeof comments.$inferInsert;
-export type TaskActivity = typeof taskActivity.$inferSelect;
-export type NewTaskActivity = typeof taskActivity.$inferInsert;
-export type ProjectMember = typeof projectMembers.$inferSelect;
-export type NewProjectMember = typeof projectMembers.$inferInsert;
-export type TaskAssignee = typeof taskAssignees.$inferSelect;
-export type NewTaskAssignee = typeof taskAssignees.$inferInsert;
-export type Notification = typeof notifications.$inferSelect;
-export type NewNotification = typeof notifications.$inferInsert;
-export type Event = typeof events.$inferSelect;
-export type NewEvent = typeof events.$inferInsert;
-export type Team = typeof teams.$inferSelect;
-export type NewTeam = typeof teams.$inferInsert;
-export type TeamMember = typeof teamMembers.$inferSelect;
-export type NewTeamMember = typeof teamMembers.$inferInsert;
-export type ProjectTeam = typeof projectTeams.$inferSelect;
-export type NewProjectTeam = typeof projectTeams.$inferInsert;
-export type ProjectMemberRole = ProjectMember["role"];
-export type ProjectTeamRole = ProjectTeam["role"];
+export type User = typeof users.$inferSelect
+export type NewUser = typeof users.$inferInsert
+export type Project = typeof projects.$inferSelect
+export type NewProject = typeof projects.$inferInsert
+export type List = typeof lists.$inferSelect
+export type NewList = typeof lists.$inferInsert
+export type Task = typeof tasks.$inferSelect
+export type NewTask = typeof tasks.$inferInsert
+export type Comment = typeof comments.$inferSelect
+export type NewComment = typeof comments.$inferInsert
+export type TaskActivity = typeof taskActivity.$inferSelect
+export type NewTaskActivity = typeof taskActivity.$inferInsert
+export type ProjectMember = typeof projectMembers.$inferSelect
+export type NewProjectMember = typeof projectMembers.$inferInsert
+export type TaskAssignee = typeof taskAssignees.$inferSelect
+export type NewTaskAssignee = typeof taskAssignees.$inferInsert
+export type Notification = typeof notifications.$inferSelect
+export type NewNotification = typeof notifications.$inferInsert
+export type Event = typeof events.$inferSelect
+export type NewEvent = typeof events.$inferInsert
+export type Team = typeof teams.$inferSelect
+export type NewTeam = typeof teams.$inferInsert
+export type TeamMember = typeof teamMembers.$inferSelect
+export type NewTeamMember = typeof teamMembers.$inferInsert
+export type ProjectTeam = typeof projectTeams.$inferSelect
+export type NewProjectTeam = typeof projectTeams.$inferInsert
+export type ProjectMemberRole = ProjectMember["role"]
+export type ProjectTeamRole = ProjectTeam["role"]

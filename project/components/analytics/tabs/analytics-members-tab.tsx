@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import { Users, ArrowUpDown } from "lucide-react";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { ArrowUpDown, Users } from "lucide-react"
+import { getAvatarColor, getInitials } from "@/lib/utils/avatar"
 
 export type MemberRow = {
-  userId: string;
-  name: string;
-  email: string;
-  completedCount: number;
-  activeDays: number;
-  avgResolutionDays: number | null;
-};
+  userId: string
+  name: string
+  email: string
+  completedCount: number
+  activeDays: number
+  avgResolutionDays: number | null
+}
 
 export type TeamAverage = {
-  completedCount: number;
-  activeDays: number;
-  avgResolutionDays: number | null;
-};
+  completedCount: number
+  activeDays: number
+  avgResolutionDays: number | null
+}
 
-type SortField = "completedCount" | "activeDays" | "avgResolutionDays";
+type SortField = "completedCount" | "activeDays" | "avgResolutionDays"
 
 export function AnalyticsMembersTab({
   loading,
@@ -28,12 +28,12 @@ export function AnalyticsMembersTab({
   sortField,
   onSort,
 }: {
-  loading: boolean;
-  error: string | null;
-  membersList: MemberRow[];
-  teamAverage: TeamAverage | null;
-  sortField: SortField;
-  onSort: (field: SortField) => void;
+  loading: boolean
+  error: string | null
+  membersList: MemberRow[]
+  teamAverage: TeamAverage | null
+  sortField: SortField
+  onSort: (field: SortField) => void
 }) {
   return (
     <div
@@ -127,7 +127,7 @@ export function AnalyticsMembersTab({
             </thead>
             <tbody className="divide-y divide-border/60">
               {membersList.map((member) => {
-                const stableKey = member.userId || member.email;
+                const stableKey = member.userId || member.email
                 return (
                   <tr
                     key={member.userId}
@@ -189,12 +189,12 @@ export function AnalyticsMembersTab({
                       )}
                     </td>
                   </tr>
-                );
+                )
               })}
             </tbody>
           </table>
         </div>
       )}
     </div>
-  );
+  )
 }

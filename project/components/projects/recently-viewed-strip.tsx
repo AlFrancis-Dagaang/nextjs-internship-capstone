@@ -1,61 +1,61 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Clock, ArrowUpRight } from "lucide-react";
-import type { Project } from "@/types";
-import {
-  getRecentlyViewedEntries,
-  RecentEntry,
-} from "@/hooks/use-track-project-view";
+import { ArrowUpRight, Clock } from "lucide-react"
+import Link from "next/link"
+import { useEffect, useState } from "react"
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel";
+} from "@/components/ui/carousel"
+import {
+  getRecentlyViewedEntries,
+  type RecentEntry,
+} from "@/hooks/use-track-project-view"
+import type { Project } from "@/types"
 
 type RecentlyViewedStripProps = {
-  projects: Project[];
-  currentUserId: string;
-};
+  projects: Project[]
+  currentUserId: string
+}
 
 function getRelativeTimeString(timestamp: number): string {
-  if (!timestamp) return "";
-  const now = Date.now();
-  const diffInSeconds = Math.floor((now - timestamp) / 1000);
+  if (!timestamp) return ""
+  const now = Date.now()
+  const diffInSeconds = Math.floor((now - timestamp) / 1000)
 
-  if (diffInSeconds < 60) return "Just now";
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 30) return `${diffInDays}d ago`;
-  const diffInMonths = Math.floor(diffInDays / 30);
-  return `${diffInMonths}mo ago`;
+  if (diffInSeconds < 60) return "Just now"
+  const diffInMinutes = Math.floor(diffInSeconds / 60)
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+  const diffInHours = Math.floor(diffInMinutes / 60)
+  if (diffInHours < 24) return `${diffInHours}h ago`
+  const diffInDays = Math.floor(diffInHours / 24)
+  if (diffInDays < 30) return `${diffInDays}d ago`
+  const diffInMonths = Math.floor(diffInDays / 30)
+  return `${diffInMonths}mo ago`
 }
 
 export function RecentlyViewedStrip({
   projects,
   currentUserId,
 }: RecentlyViewedStripProps) {
-  const [recentEntries, setRecentEntries] = useState<RecentEntry[]>([]);
+  const [recentEntries, setRecentEntries] = useState<RecentEntry[]>([])
 
   useEffect(() => {
-    setRecentEntries(getRecentlyViewedEntries());
-  }, []);
+    setRecentEntries(getRecentlyViewedEntries())
+  }, [])
 
   const recentProjects = recentEntries
     .map((entry) => {
-      const project = projects.find((p) => p.id === entry.projectId);
-      return project ? { ...project, viewedAt: entry.viewedAt } : null;
+      const project = projects.find((p) => p.id === entry.projectId)
+      return project ? { ...project, viewedAt: entry.viewedAt } : null
     })
     .filter((p): p is Project & { viewedAt: number } => p !== null)
-    .slice(0, 6);
+    .slice(0, 6)
 
-  if (recentProjects.length === 0) return null;
+  if (recentProjects.length === 0) return null
 
   return (
     <section className="space-y-4">
@@ -73,8 +73,8 @@ export function RecentlyViewedStrip({
       >
         <CarouselContent className="-ml-3 py-1">
           {recentProjects.map((project) => {
-            const isOwner = project.ownerId === currentUserId;
-            const timeAgo = getRelativeTimeString(project.viewedAt);
+            const isOwner = project.ownerId === currentUserId
+            const timeAgo = getRelativeTimeString(project.viewedAt)
 
             return (
               <CarouselItem key={project.id} className="pl-3 basis-auto">
@@ -119,7 +119,7 @@ export function RecentlyViewedStrip({
                   </div>
                 </Link>
               </CarouselItem>
-            );
+            )
           })}
         </CarouselContent>
 
@@ -127,5 +127,5 @@ export function RecentlyViewedStrip({
         <CarouselNext className="absolute -right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-card border-border/80 text-foreground hover:bg-secondary shadow-md rounded-xl" />
       </Carousel>
     </section>
-  );
+  )
 }

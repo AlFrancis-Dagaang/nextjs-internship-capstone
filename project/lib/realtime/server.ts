@@ -1,7 +1,7 @@
-import "server-only";
-import Pusher from "pusher";
-import type { Task, List, Project, ProjectMember } from "@/lib/db/schema";
-import type { TaskWithCommentCount } from "@/components/lists/board";
+import "server-only"
+import Pusher from "pusher"
+import type { TaskWithCommentCount } from "@/components/lists/board"
+import type { List, Project, Task } from "@/lib/db/schema"
 
 // Server-only Pusher client. Never import this from a Client Component.
 export const pusherServer = new Pusher({
@@ -10,7 +10,7 @@ export const pusherServer = new Pusher({
   secret: process.env.PUSHER_SECRET!,
   cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
   useTLS: true,
-});
+})
 
 // One discriminated union for all board mutations, mirroring the
 // ActionResult<T> convention already used across lib/actions/*.
@@ -32,10 +32,10 @@ export type BoardRealtimeEvent =
   // updateTask, so task_updated never fires for these. Publish the taskId
   // + listId (for the store lookup) + the resulting assignees array.
   | {
-      type: "task_assignees_updated";
-      taskId: string;
-      listId: string;
-      assignees: TaskWithCommentCount["assignees"];
+      type: "task_assignees_updated"
+      taskId: string
+      listId: string
+      assignees: TaskWithCommentCount["assignees"]
     }
   // NEW — comment add/delete changes the card's visible count but never
   // touches the tasks row, so it also never fires task_updated. Mirrors
@@ -44,15 +44,15 @@ export type BoardRealtimeEvent =
   | { type: "list_created"; list: List }
   | { type: "list_updated"; list: List }
   | { type: "list_moved"; lists: List[] }
-  | { type: "list_deleted"; listId: string };
+  | { type: "list_deleted"; listId: string }
 
 export type ProjectMemberInfo = {
-  memberId: string;
-  userId: string;
-  name?: string;
-  email?: string;
-  role: string;
-};
+  memberId: string
+  userId: string
+  name?: string
+  email?: string
+  role: string
+}
 
 // Separate discriminated union + separate Pusher event name ("project-event")
 // on the same project-{projectId} channel — deliberately not merged into
@@ -63,17 +63,17 @@ export type ProjectRealtimeEvent =
   | { type: "member_added"; member: ProjectMemberInfo }
   | { type: "member_removed"; memberId: string; userId: string }
   | {
-      type: "member_role_changed";
-      memberId: string;
-      userId: string;
-      role: string;
+      type: "member_role_changed"
+      memberId: string
+      userId: string
+      role: string
     }
   | {
-      type: "team_role_changed";
-      projectTeamId: string;
-      teamId: string;
-      role: string;
-    };
+      type: "team_role_changed"
+      projectTeamId: string
+      teamId: string
+      role: string
+    }
 
 export async function publishProjectEvent(
   projectId: string,
@@ -83,18 +83,18 @@ export async function publishProjectEvent(
   await pusherServer.trigger(`project-${projectId}`, "project-event", {
     ...event,
     originClientId,
-  });
+  })
 }
 
 export type NotificationRealtimePayload = {
-  id: string;
-  type: string;
-  message: string;
-  projectId: string;
-  taskId: string | null;
-  isRead: boolean;
-  createdAt: string;
-};
+  id: string
+  type: string
+  message: string
+  projectId: string
+  taskId: string | null
+  isRead: boolean
+  createdAt: string
+}
 
 /**
  * Publish a board mutation to every client subscribed to this project's
@@ -109,7 +109,7 @@ export async function publishBoardEvent(
   await pusherServer.trigger(`project-${projectId}`, "board-event", {
     ...event,
     originClientId,
-  });
+  })
 }
 
 /**
@@ -122,5 +122,5 @@ export async function publishNotification(
   userId: string,
   notification: NotificationRealtimePayload,
 ) {
-  await pusherServer.trigger(`user-${userId}`, "notification", notification);
+  await pusherServer.trigger(`user-${userId}`, "notification", notification)
 }

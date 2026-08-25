@@ -1,25 +1,16 @@
 // components/settings/teams-tab.tsx
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
 import {
-  createTeam,
-  updateTeam,
-  deleteTeam,
-  addTeamMember,
-  removeTeamMember,
-  getTeamMembers,
-  searchUsersForTeamInvite,
-} from "@/lib/actions/team";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ChevronDown,
+  ChevronUp,
+  Edit2,
+  Loader2,
+  Plus,
+  Trash2,
+  UserPlus,
+} from "lucide-react"
+import { useState, useTransition } from "react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,240 +20,247 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
 import {
-  Plus,
-  Trash2,
-  Edit2,
-  UserPlus,
-  Loader2,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
-import { getInitials } from "@/lib/utils/avatar";
-import { UserAvatar } from "@/components/ui/user-avatar";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useToast } from "@/hooks/use-toast"
+import {
+  addTeamMember,
+  createTeam,
+  deleteTeam,
+  getTeamMembers,
+  removeTeamMember,
+  searchUsersForTeamInvite,
+  updateTeam,
+} from "@/lib/actions/team"
+import { getInitials } from "@/lib/utils/avatar"
 
 type TeamForUser = {
-  id: string;
-  name: string;
-  createdBy: string;
-  createdAt: Date;
-};
+  id: string
+  name: string
+  createdBy: string
+  createdAt: Date
+}
 
 type TeamMember = {
-  id: string;
-  teamId: string;
-  userId: string;
-  createdAt: Date;
-  userName?: string;
-  userEmail?: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-};
+  id: string
+  teamId: string
+  userId: string
+  createdAt: Date
+  userName?: string
+  userEmail?: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+}
 
 export function TeamsTab({
   initialTeams,
   currentUserId,
 }: {
-  initialTeams: TeamForUser[];
-  currentUserId: string;
+  initialTeams: TeamForUser[]
+  currentUserId: string
 }) {
-  const { toast } = useToast();
-  const [teams, setTeams] = useState<TeamForUser[]>(initialTeams);
-  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast()
+  const [teams, setTeams] = useState<TeamForUser[]>(initialTeams)
+  const [isPending, startTransition] = useTransition()
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [newTeamName, setNewTeamName] = useState("");
+  const [createOpen, setCreateOpen] = useState(false)
+  const [newTeamName, setNewTeamName] = useState("")
 
-  const [renameTeam, setRenameTeam] = useState<TeamForUser | null>(null);
-  const [renameName, setRenameName] = useState("");
+  const [renameTeam, setRenameTeam] = useState<TeamForUser | null>(null)
+  const [renameName, setRenameName] = useState("")
 
-  const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
+  const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null)
 
-  const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
-  const [membersMap, setMembersMap] = useState<Record<string, TeamMember[]>>(
-    {},
-  );
-  const [loadingMembersId, setLoadingMembersId] = useState<string | null>(null);
+  const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null)
+  const [membersMap, setMembersMap] = useState<Record<string, TeamMember[]>>({})
+  const [loadingMembersId, setLoadingMembersId] = useState<string | null>(null)
 
-  const [inviteTeamId, setInviteTeamId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [inviteTeamId, setInviteTeamId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
 
   function handleCreateTeam(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newTeamName.trim()) return;
+    e.preventDefault()
+    if (!newTeamName.trim()) return
 
     startTransition(async () => {
-      const res = await createTeam({ name: newTeamName.trim() });
+      const res = await createTeam({ name: newTeamName.trim() })
       if (res.success) {
-        setTeams((prev) => [res.data, ...prev]);
-        setCreateOpen(false);
-        setNewTeamName("");
+        setTeams((prev) => [res.data, ...prev])
+        setCreateOpen(false)
+        setNewTeamName("")
         toast({
           title: "Team created",
           description: `Successfully created "${res.data.name}".`,
-        });
+        })
       } else {
         toast({
           title: "Failed to create team",
           description: res.error,
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   function handleRenameTeam(e: React.FormEvent) {
-    e.preventDefault();
-    if (!renameTeam || !renameName.trim()) return;
+    e.preventDefault()
+    if (!renameTeam || !renameName.trim()) return
 
     startTransition(async () => {
-      const res = await updateTeam(renameTeam.id, { name: renameName.trim() });
+      const res = await updateTeam(renameTeam.id, { name: renameName.trim() })
       if (res.success) {
         setTeams((prev) =>
           prev.map((t) => (t.id === renameTeam.id ? res.data : t)),
-        );
-        setRenameTeam(null);
+        )
+        setRenameTeam(null)
         toast({
           title: "Team renamed",
           description: "Team name updated successfully.",
-        });
+        })
       } else {
         toast({
           title: "Failed to update team",
           description: res.error,
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   function handleDeleteTeam(teamId: string) {
     startTransition(async () => {
-      const res = await deleteTeam(teamId);
+      const res = await deleteTeam(teamId)
       if (res.success) {
-        setTeams((prev) => prev.filter((t) => t.id !== teamId));
-        setDeleteTeamId(null);
+        setTeams((prev) => prev.filter((t) => t.id !== teamId))
+        setDeleteTeamId(null)
         toast({
           title: "Team deleted",
           description: "Team has been removed permanently.",
-        });
+        })
       } else {
         toast({
           title: "Failed to delete team",
           description: res.error,
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   async function toggleExpandTeam(teamId: string) {
     if (expandedTeamId === teamId) {
-      setExpandedTeamId(null);
-      return;
+      setExpandedTeamId(null)
+      return
     }
-    setExpandedTeamId(teamId);
+    setExpandedTeamId(teamId)
     if (!membersMap[teamId]) {
-      setLoadingMembersId(teamId);
-      const res = await getTeamMembers(teamId);
+      setLoadingMembersId(teamId)
+      const res = await getTeamMembers(teamId)
       if (res.success) {
         const mappedMembers = (res.data as any[]).map((m) => ({
           ...m,
           imageUrl: m.userImageUrl ?? m.imageUrl,
           hasImage: m.userHasImage ?? m.hasImage,
-        }));
+        }))
         setMembersMap(
           (prev): Record<string, TeamMember[]> => ({
             ...prev,
             [teamId]: mappedMembers,
           }),
-        );
+        )
       } else {
         toast({
           title: "Failed to load members",
           description: res.error,
           variant: "destructive",
-        });
+        })
       }
-      setLoadingMembersId(null);
+      setLoadingMembersId(null)
     }
   }
 
   async function handleSearchUsers(teamId: string, q: string) {
-    setSearchQuery(q);
+    setSearchQuery(q)
     if (!q.trim()) {
-      setSearchResults([]);
-      return;
+      setSearchResults([])
+      return
     }
-    setIsSearching(true);
-    const res = await searchUsersForTeamInvite(teamId, q.trim());
+    setIsSearching(true)
+    const res = await searchUsersForTeamInvite(teamId, q.trim())
     if (res.success) {
-      setSearchResults(res.data);
+      setSearchResults(res.data)
     }
-    setIsSearching(false);
+    setIsSearching(false)
   }
 
   function handleAddMember(teamId: string, email: string) {
     startTransition(async () => {
-      const res = await addTeamMember(teamId, { email });
+      const res = await addTeamMember(teamId, { email })
       if (res.success) {
-        const membersRes = await getTeamMembers(teamId);
+        const membersRes = await getTeamMembers(teamId)
         if (membersRes.success) {
           const mappedMembers = (membersRes.data as any[]).map((m) => ({
             ...m,
             imageUrl: m.userImageUrl ?? m.imageUrl,
             hasImage: m.userHasImage ?? m.hasImage,
-          }));
+          }))
           setMembersMap(
             (prev): Record<string, TeamMember[]> => ({
               ...prev,
               [teamId]: mappedMembers,
             }),
-          );
+          )
         }
         toast({
           title: "Member added",
           description: "Successfully added member to team.",
-        });
-        setInviteTeamId(null);
-        setSearchQuery("");
-        setSearchResults([]);
+        })
+        setInviteTeamId(null)
+        setSearchQuery("")
+        setSearchResults([])
       } else {
         toast({
           title: "Failed to add member",
           description: res.error,
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   function handleRemoveMember(teamId: string, userId: string) {
     startTransition(async () => {
-      const res = await removeTeamMember(teamId, userId);
+      const res = await removeTeamMember(teamId, userId)
       if (res.success) {
         setMembersMap(
           (prev): Record<string, TeamMember[]> => ({
             ...prev,
             [teamId]: (prev[teamId] || []).filter((m) => m.userId !== userId),
           }),
-        );
+        )
         toast({
           title: "Member removed",
           description: "Successfully removed member from team.",
-        });
+        })
       } else {
         toast({
           title: "Failed to remove member",
           description: res.error,
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   return (
@@ -297,9 +295,9 @@ export function TeamsTab({
       ) : (
         <div className="space-y-4">
           {teams.map((team) => {
-            const isOwner = team.createdBy === currentUserId;
-            const isExpanded = expandedTeamId === team.id;
-            const members = membersMap[team.id] || [];
+            const isOwner = team.createdBy === currentUserId
+            const isExpanded = expandedTeamId === team.id
+            const members = membersMap[team.id] || []
 
             return (
               <div
@@ -328,8 +326,8 @@ export function TeamsTab({
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            setRenameTeam(team);
-                            setRenameName(team.name);
+                            setRenameTeam(team)
+                            setRenameName(team.name)
                           }}
                           className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
                         >
@@ -395,8 +393,8 @@ export function TeamsTab({
                       <div className="divide-y divide-border/60 border border-border/80 rounded-xl bg-card overflow-hidden">
                         {members.map((m) => {
                           const displayName =
-                            m.userName || m.userEmail || "Member";
-                          const stableKey = m.userId || displayName;
+                            m.userName || m.userEmail || "Member"
+                          const stableKey = m.userId || displayName
 
                           return (
                             <div
@@ -429,14 +427,14 @@ export function TeamsTab({
                                 </Button>
                               )}
                             </div>
-                          );
+                          )
                         })}
                       </div>
                     )}
                   </div>
                 )}
               </div>
-            );
+            )
           })}
         </div>
       )}
@@ -558,7 +556,7 @@ export function TeamsTab({
                 </div>
               ) : (
                 searchResults.map((user) => {
-                  const isAvailable = user.status === "available";
+                  const isAvailable = user.status === "available"
                   return (
                     <div
                       key={user.id}
@@ -590,7 +588,7 @@ export function TeamsTab({
                         </span>
                       )}
                     </div>
-                  );
+                  )
                 })
               )}
             </div>
@@ -626,5 +624,5 @@ export function TeamsTab({
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
+  )
 }

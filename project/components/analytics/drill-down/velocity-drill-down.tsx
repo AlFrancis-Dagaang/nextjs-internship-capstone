@@ -1,14 +1,14 @@
-"use client";
+"use client"
 
 type VelocityDrillDownData = {
   entries: {
-    id: string;
-    taskTitle: string;
-    projectName: string;
-    actorName: string;
-    createdAt: string;
-  }[];
-};
+    id: string
+    taskTitle: string
+    projectName: string
+    actorName: string
+    createdAt: string
+  }[]
+}
 
 export function VelocityDrillDown({ data }: { data: VelocityDrillDownData }) {
   if (data.entries.length === 0) {
@@ -16,7 +16,7 @@ export function VelocityDrillDown({ data }: { data: VelocityDrillDownData }) {
       <p className="text-xs text-muted-foreground italic">
         No completed tasks in this period.
       </p>
-    );
+    )
   }
 
   return (
@@ -36,5 +36,5 @@ export function VelocityDrillDown({ data }: { data: VelocityDrillDownData }) {
         </div>
       ))}
     </div>
-  );
+  )
 }

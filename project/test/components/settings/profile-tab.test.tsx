@@ -1,6 +1,5 @@
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import { ProfileTab } from "@/components/settings/profile-tab";
+import { render, screen } from "@testing-library/react"
+import { ProfileTab } from "@/components/settings/profile-tab"
 
 jest.mock("@clerk/nextjs", () => ({
   useUser: () => ({
@@ -15,17 +14,17 @@ jest.mock("@clerk/nextjs", () => ({
       reload: jest.fn().mockResolvedValue({}),
     },
   }),
-}));
+}))
 
 jest.mock("@/components/ui/user-avatar", () => ({
   UserAvatar: () => <div data-testid="user-avatar" />,
-}));
+}))
 
 jest.mock("@/hooks/use-toast", () => ({
   useToast: () => ({
     toast: jest.fn(),
   }),
-}));
+}))
 
 describe("ProfileTab", () => {
   const mockDbUser = {
@@ -35,16 +34,16 @@ describe("ProfileTab", () => {
     name: "Al Francis Daga-ang",
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
+  }
 
   it("renders profile names and Clerk-hosted avatar", () => {
-    render(<ProfileTab dbUser={mockDbUser} />);
+    render(<ProfileTab dbUser={mockDbUser} />)
 
-    expect(screen.getByText("Profile Information")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Al Francis")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Daga-ang")).toBeInTheDocument();
+    expect(screen.getByText("Profile Information")).toBeInTheDocument()
+    expect(screen.getByDisplayValue("Al Francis")).toBeInTheDocument()
+    expect(screen.getByDisplayValue("Daga-ang")).toBeInTheDocument()
     expect(
       screen.getByDisplayValue("alfrancis@example.com"),
-    ).toBeInTheDocument();
-  });
-});
+    ).toBeInTheDocument()
+  })
+})

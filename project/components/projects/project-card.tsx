@@ -1,35 +1,35 @@
 // components/projects/project-card.tsx
-"use client";
+"use client"
 
-import { useState, useEffect, useRef } from "react";
-import { useProjectStore } from "@/stores/project-store";
-import Link from "next/link";
+import { ArrowUpRight, Calendar, CheckCircle2, Users, X } from "lucide-react"
+import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
+import { Input } from "@/components/ui/input"
+import { useInlineRename } from "@/hooks/use-inline-rename"
+import { updateProject } from "@/lib/actions/projects"
+import { useProjectStore } from "@/stores/project-store"
 import type {
-  Project,
-  ProjectMember,
   CompletionInfo,
   MemberRole,
-} from "@/types";
-import { updateProject } from "@/lib/actions/projects";
-import { ProjectListAction } from "./project-list-action";
-import { ProjectDetailModal } from "./modals/project-detail-modal";
-import { ProjectMemberStack } from "./project-member-stack";
-import { useInlineRename } from "@/hooks/use-inline-rename";
-import { Input } from "@/components/ui/input";
-import { Users, Calendar, ArrowUpRight, CheckCircle2, X } from "lucide-react";
-import { UserAvatar } from "../ui/user-avatar";
+  Project,
+  ProjectMember,
+} from "@/types"
+import { UserAvatar } from "../ui/user-avatar"
+import { ProjectDetailModal } from "./modals/project-detail-modal"
+import { ProjectListAction } from "./project-list-action"
+import { ProjectMemberStack } from "./project-member-stack"
 
 type ProjectCardProps = {
-  project: Project;
-  currentUserId: string;
-  initialMembers?: ProjectMember[];
-  ownerName?: string;
-  ownerEmail?: string;
-  ownerImageUrl?: string | null;
-  ownerHasImage?: boolean | null;
-  myRole?: MemberRole;
-  completion: CompletionInfo;
-};
+  project: Project
+  currentUserId: string
+  initialMembers?: ProjectMember[]
+  ownerName?: string
+  ownerEmail?: string
+  ownerImageUrl?: string | null
+  ownerHasImage?: boolean | null
+  myRole?: MemberRole
+  completion: CompletionInfo
+}
 
 export function ProjectCard({
   project,
@@ -42,28 +42,28 @@ export function ProjectCard({
   myRole,
   completion,
 }: ProjectCardProps) {
-  const updateProjectLocal = useProjectStore((s) => s.updateProjectLocal);
-  const removeProject = useProjectStore((s) => s.removeProject);
+  const updateProjectLocal = useProjectStore((s) => s.updateProjectLocal)
+  const removeProject = useProjectStore((s) => s.removeProject)
 
   const members = useProjectStore(
     (s) => s.membersMap[project.id] ?? initialMembers,
-  );
-  const setProjectMembers = useProjectStore((s) => s.setProjectMembers);
-  const addMember = useProjectStore((s) => s.addMember);
+  )
+  const setProjectMembers = useProjectStore((s) => s.setProjectMembers)
+  const addMember = useProjectStore((s) => s.addMember)
   const replaceOptimisticMember = useProjectStore(
     (s) => s.replaceOptimisticMember,
-  );
-  const updateMemberLocal = useProjectStore((s) => s.updateMemberLocal);
-  const removeMember = useProjectStore((s) => s.removeMember);
+  )
+  const updateMemberLocal = useProjectStore((s) => s.updateMemberLocal)
+  const removeMember = useProjectStore((s) => s.removeMember)
 
   useEffect(() => {
-    setProjectMembers(project.id, initialMembers);
+    setProjectMembers(project.id, initialMembers)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project.id]);
+  }, [project.id])
 
-  const isOwner = project.ownerId === currentUserId;
-  const canManage = isOwner || myRole === "admin";
-  const [detailOpen, setDetailOpen] = useState(false);
+  const isOwner = project.ownerId === currentUserId
+  const canManage = isOwner || myRole === "admin"
+  const [detailOpen, setDetailOpen] = useState(false)
 
   const {
     isRenaming,
@@ -79,29 +79,29 @@ export function ProjectCard({
     onOptimisticUpdate: (newName) =>
       updateProjectLocal({ ...project, name: newName }),
     onRollback: () => updateProjectLocal(project),
-  });
-  const ownerDisplayString = ownerName || ownerEmail || "Project Owner";
+  })
+  const ownerDisplayString = ownerName || ownerEmail || "Project Owner"
   const completionPercent =
     completion.total > 0
       ? Math.round((completion.completed / completion.total) * 100)
-      : 0;
+      : 0
 
   // Inside the component function:
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (isRenaming && inputRef.current) {
       // A tiny timeout guarantees the DOM node is fully painted before focusing
       const timer = setTimeout(() => {
-        inputRef.current?.focus();
+        inputRef.current?.focus()
         inputRef.current?.setSelectionRange(
           inputRef.current.value.length,
           inputRef.current.value.length,
-        );
-      }, 50);
-      return () => clearTimeout(timer);
+        )
+      }, 50)
+      return () => clearTimeout(timer)
     }
-  }, [isRenaming]);
+  }, [isRenaming])
   return (
     <>
       <div className="group relative bg-card backdrop-blur-xl rounded-3xl border border-border/85 hover:border-ring hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 p-5 flex flex-col justify-between space-y-4 shadow-xs">
@@ -129,7 +129,7 @@ export function ProjectCard({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Escape") handleCancel();
+                      if (e.key === "Escape") handleCancel()
                     }}
                     disabled={isRenamePending}
                     className="h-8 pl-2.5 pr-8 text-xs font-medium bg-card border border-border rounded-xl shadow-2xs focus-visible:ring-1 focus-visible:ring-ring text-foreground w-full"
@@ -137,8 +137,8 @@ export function ProjectCard({
                   <button
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation();
-                      handleCancel();
+                      e.stopPropagation()
+                      handleCancel()
                     }}
                     className="absolute right-2 text-muted-foreground hover:text-foreground hover:bg-muted transition-all p-1 rounded-lg flex items-center justify-center"
                     title="Cancel"
@@ -256,8 +256,8 @@ export function ProjectCard({
             canManage={canManage}
             onViewDetails={() => setDetailOpen(true)}
             onRename={() => {
-              setName(project.name);
-              setIsRenaming(true);
+              setName(project.name)
+              setIsRenaming(true)
             }}
             onDeleted={removeProject}
             onMemberAdded={addMember}
@@ -285,5 +285,5 @@ export function ProjectCard({
         onProjectUpdated={(updated) => updateProjectLocal(updated)}
       />
     </>
-  );
+  )
 }

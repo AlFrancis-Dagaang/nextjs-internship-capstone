@@ -1,7 +1,7 @@
-import { asc, eq } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
-import { db } from "../client";
-import { comments, users } from "../schema";
+import type { InferInsertModel } from "drizzle-orm"
+import { asc, eq } from "drizzle-orm"
+import { db } from "../client"
+import { comments, users } from "../schema"
 
 export const commentsQueries = {
   // Update your getByTask query in commentsQueries or your actions:
@@ -25,16 +25,16 @@ export const commentsQueries = {
       .from(comments)
       .leftJoin(users, eq(comments.authorId, users.id))
       .where(eq(comments.taskId, taskId))
-      .orderBy(asc(comments.createdAt));
+      .orderBy(asc(comments.createdAt))
 
-    return rows;
+    return rows
   },
   getById: async (id: string) => {
-    return db.query.comments.findFirst({ where: eq(comments.id, id) });
+    return db.query.comments.findFirst({ where: eq(comments.id, id) })
   },
   create: async (data: InferInsertModel<typeof comments>) => {
-    const [comment] = await db.insert(comments).values(data).returning();
-    return comment;
+    const [comment] = await db.insert(comments).values(data).returning()
+    return comment
   },
   update: async (
     id: string,
@@ -44,10 +44,10 @@ export const commentsQueries = {
       .update(comments)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(comments.id, id))
-      .returning();
-    return comment;
+      .returning()
+    return comment
   },
   delete: async (id: string) => {
-    await db.delete(comments).where(eq(comments.id, id));
+    await db.delete(comments).where(eq(comments.id, id))
   },
-};
+}

@@ -1,55 +1,55 @@
 // components/projects/board.tsx
-"use client";
+"use client"
 
-import { useEffect, useRef, useState, useTransition } from "react";
 import {
   type CollisionDetection,
   DndContext,
+  type DragEndEvent,
+  type DragOverEvent,
   DragOverlay,
+  type DragStartEvent,
+  type DropAnimation,
   PointerSensor,
   rectIntersection,
   useSensor,
   useSensors,
-  type DragStartEvent,
-  type DragOverEvent,
-  type DragEndEvent,
-  type DropAnimation,
-} from "@dnd-kit/core";
-import { ListColumn } from "./list-column";
-import { TaskCardView } from "@/components/tasks/task-card";
-import { AddListForm } from "./add-list-form";
-import type { List, Task } from "@/lib/db/schema";
-import { useToast } from "@/hooks/use-toast";
-import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal";
-import { deleteTask, moveTaskToList } from "@/lib/actions/tasks";
-import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog";
-import { useUiStore } from "@/stores/ui-store";
-import { useBoardStore } from "@/stores/board-store";
-import { useTaskDetailStore } from "@/stores/task-detail-store";
-import { useTrackProjectView } from "@/hooks/use-track-project-view";
-import { getAssignableUsers } from "@/lib/actions/project-member";
-import { moveList } from "@/lib/actions/lists";
+} from "@dnd-kit/core"
 import {
-  SortableContext,
   horizontalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { useSearchParams } from "next/navigation";
-import { useRealtimeBoard } from "@/hooks/use-realtime-board";
-import { getRealtimeClientId } from "@/lib/realtime/client";
+  SortableContext,
+} from "@dnd-kit/sortable"
+import { useSearchParams } from "next/navigation"
+import { useEffect, useRef, useState, useTransition } from "react"
+import { DeleteTaskDialog } from "@/components/tasks/modal/delete-task-dialog"
+import { TaskDetailModal } from "@/components/tasks/modal/task-detail-modal"
+import { TaskCardView } from "@/components/tasks/task-card"
+import { useRealtimeBoard } from "@/hooks/use-realtime-board"
+import { useToast } from "@/hooks/use-toast"
+import { useTrackProjectView } from "@/hooks/use-track-project-view"
+import { moveList } from "@/lib/actions/lists"
+import { getAssignableUsers } from "@/lib/actions/project-member"
+import { deleteTask, moveTaskToList } from "@/lib/actions/tasks"
+import type { List, Task } from "@/lib/db/schema"
+import { getRealtimeClientId } from "@/lib/realtime/client"
+import { useBoardStore } from "@/stores/board-store"
+import { useTaskDetailStore } from "@/stores/task-detail-store"
+import { useUiStore } from "@/stores/ui-store"
+import { AddListForm } from "./add-list-form"
+import { ListColumn } from "./list-column"
 
 export type TaskWithCommentCount = Task & {
-  commentCount?: number;
+  commentCount?: number
   assignees?: {
-    userId: string;
-    name?: string;
-    email?: string;
-    imageUrl?: string | null;
-    hasImage?: boolean | null;
-  }[];
-};
-export type ListWithTasks = List & { tasks: TaskWithCommentCount[] };
+    userId: string
+    name?: string
+    email?: string
+    imageUrl?: string | null
+    hasImage?: boolean | null
+  }[]
+}
+export type ListWithTasks = List & { tasks: TaskWithCommentCount[] }
 
-const dropAnimation: DropAnimation | null = null;
+const dropAnimation: DropAnimation | null = null
 
 export function Board({
   projectId,
@@ -57,115 +57,115 @@ export function Board({
   role,
   currentUserId,
 }: {
-  projectId: string;
-  initialLists: ListWithTasks[];
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-  currentUserId: string;
+  projectId: string
+  initialLists: ListWithTasks[]
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer"
+  currentUserId: string
 }) {
-  const { toast } = useToast();
-  useTrackProjectView(projectId);
-  useRealtimeBoard(projectId);
+  const { toast } = useToast()
+  useTrackProjectView(projectId)
+  useRealtimeBoard(projectId)
 
-  const lists = useBoardStore((s) => s.lists);
-  const activeTask = useBoardStore((s) => s.activeTask);
-  const setInitialLists = useBoardStore((s) => s.setInitialLists);
-  const addList = useBoardStore((s) => s.addList);
-  const renameList = useBoardStore((s) => s.renameList);
-  const removeList = useBoardStore((s) => s.removeList);
-  const reorderLists = useBoardStore((s) => s.reorderLists);
-  const addTask = useBoardStore((s) => s.addTask);
-  const insertTaskAt = useBoardStore((s) => s.insertTaskAt);
-  const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal);
-  const removeTask = useBoardStore((s) => s.removeTask);
-  const reconcileTaskMoved = useBoardStore((s) => s.reconcileTaskMoved);
-  const changeCommentCount = useBoardStore((s) => s.changeCommentCount);
-  const startDrag = useBoardStore((s) => s.startDrag);
-  const clearActiveTask = useBoardStore((s) => s.clearActiveTask);
-  const dragOverAction = useBoardStore((s) => s.dragOver);
-  const endDragAction = useBoardStore((s) => s.endDrag);
-  const revertToSnapshot = useBoardStore((s) => s.revertToSnapshot);
+  const lists = useBoardStore((s) => s.lists)
+  const activeTask = useBoardStore((s) => s.activeTask)
+  const setInitialLists = useBoardStore((s) => s.setInitialLists)
+  const addList = useBoardStore((s) => s.addList)
+  const renameList = useBoardStore((s) => s.renameList)
+  const removeList = useBoardStore((s) => s.removeList)
+  const reorderLists = useBoardStore((s) => s.reorderLists)
+  const addTask = useBoardStore((s) => s.addTask)
+  const insertTaskAt = useBoardStore((s) => s.insertTaskAt)
+  const updateTaskLocal = useBoardStore((s) => s.updateTaskLocal)
+  const removeTask = useBoardStore((s) => s.removeTask)
+  const reconcileTaskMoved = useBoardStore((s) => s.reconcileTaskMoved)
+  const changeCommentCount = useBoardStore((s) => s.changeCommentCount)
+  const startDrag = useBoardStore((s) => s.startDrag)
+  const clearActiveTask = useBoardStore((s) => s.clearActiveTask)
+  const dragOverAction = useBoardStore((s) => s.dragOver)
+  const endDragAction = useBoardStore((s) => s.endDrag)
+  const revertToSnapshot = useBoardStore((s) => s.revertToSnapshot)
 
-  const openModal = useTaskDetailStore((s) => s.openModal);
-  const closeModal = useTaskDetailStore((s) => s.closeModal);
-  const taskDetailOpen = useTaskDetailStore((s) => s.isOpen);
-  const currentOpenTask = useTaskDetailStore((s) => s.task);
+  const openModal = useTaskDetailStore((s) => s.openModal)
+  const closeModal = useTaskDetailStore((s) => s.closeModal)
+  const _taskDetailOpen = useTaskDetailStore((s) => s.isOpen)
+  const currentOpenTask = useTaskDetailStore((s) => s.task)
 
-  const deleteTaskOpen = useUiStore((s) => s.deleteTaskOpen);
-  const openDeleteTaskDialog = useUiStore((s) => s.openDeleteTaskDialog);
-  const closeDeleteTaskDialog = useUiStore((s) => s.closeDeleteTaskDialog);
+  const deleteTaskOpen = useUiStore((s) => s.deleteTaskOpen)
+  const openDeleteTaskDialog = useUiStore((s) => s.openDeleteTaskDialog)
+  const closeDeleteTaskDialog = useUiStore((s) => s.closeDeleteTaskDialog)
 
-  const selectionMode = useUiStore((s) => s.selectionMode);
-  const selectedTaskIds = useUiStore((s) => s.selectedTaskIds);
-  const exitSelectionMode = useUiStore((s) => s.exitSelectionMode);
-  const selectAllVisible = useUiStore((s) => s.selectAllVisible);
-  const requestBulkDelete = useUiStore((s) => s.requestBulkDelete);
+  const selectionMode = useUiStore((s) => s.selectionMode)
+  const selectedTaskIds = useUiStore((s) => s.selectedTaskIds)
+  const exitSelectionMode = useUiStore((s) => s.exitSelectionMode)
+  const selectAllVisible = useUiStore((s) => s.selectAllVisible)
+  const requestBulkDelete = useUiStore((s) => s.requestBulkDelete)
 
-  const [isDeletingTask, startDeleteTaskTransition] = useTransition();
-  const replaceOptimisticTask = useBoardStore((s) => s.replaceOptimisticTask);
+  const [isDeletingTask, startDeleteTaskTransition] = useTransition()
+  const replaceOptimisticTask = useBoardStore((s) => s.replaceOptimisticTask)
 
-  const activeListId = useBoardStore((s) => s.activeListId);
-  const startListDrag = useBoardStore((s) => s.startListDrag);
-  const clearActiveList = useBoardStore((s) => s.clearActiveList);
-  const dragListOver = useBoardStore((s) => s.dragListOver);
-  const endListDrag = useBoardStore((s) => s.endListDrag);
-  const revertListSnapshot = useBoardStore((s) => s.revertListSnapshot);
+  const activeListId = useBoardStore((s) => s.activeListId)
+  const startListDrag = useBoardStore((s) => s.startListDrag)
+  const clearActiveList = useBoardStore((s) => s.clearActiveList)
+  const dragListOver = useBoardStore((s) => s.dragListOver)
+  const endListDrag = useBoardStore((s) => s.endListDrag)
+  const revertListSnapshot = useBoardStore((s) => s.revertListSnapshot)
 
-  const searchParams = useSearchParams();
-  const openTaskParam = searchParams.get("openTask");
+  const searchParams = useSearchParams()
+  const openTaskParam = searchParams.get("openTask")
 
   useEffect(() => {
     if (openTaskParam && lists.length > 0) {
       const foundTask = lists
         .flatMap((l) => l.tasks)
-        .find((t) => t.id === openTaskParam);
+        .find((t) => t.id === openTaskParam)
       if (foundTask) {
-        openModal(foundTask, projectId);
+        openModal(foundTask, projectId)
       }
     }
-  }, [openTaskParam, lists, projectId, openModal]);
+  }, [openTaskParam, lists, projectId, openModal])
 
   const [assignableUsers, setAssignableUsers] = useState<
     { id: string; name?: string; email?: string }[]
-  >([]);
+  >([])
 
   useEffect(() => {
     getAssignableUsers(projectId).then((result) => {
-      if (result.success) setAssignableUsers(result.data);
-    });
-  }, [projectId]);
+      if (result.success) setAssignableUsers(result.data)
+    })
+  }, [projectId])
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      const target = e.target as HTMLElement;
+      const target = e.target as HTMLElement
       const isTyping =
         target.tagName === "INPUT" ||
         target.tagName === "TEXTAREA" ||
-        target.isContentEditable;
+        target.isContentEditable
 
       if (e.key === "Escape") {
-        if (selectionMode) exitSelectionMode();
-        return;
+        if (selectionMode) exitSelectionMode()
+        return
       }
 
-      if (!selectionMode || isTyping) return;
+      if (!selectionMode || isTyping) return
 
       if (e.key === "Delete" || e.key === "Backspace") {
         if (selectedTaskIds.length > 0) {
-          e.preventDefault();
-          requestBulkDelete();
+          e.preventDefault()
+          requestBulkDelete()
         }
-        return;
+        return
       }
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a") {
-        e.preventDefault();
-        const allTaskIds = lists.flatMap((l) => l.tasks.map((t) => t.id));
-        selectAllVisible(allTaskIds);
+        e.preventDefault()
+        const allTaskIds = lists.flatMap((l) => l.tasks.map((t) => t.id))
+        selectAllVisible(allTaskIds)
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
   }, [
     selectionMode,
     selectedTaskIds,
@@ -173,123 +173,120 @@ export function Board({
     exitSelectionMode,
     selectAllVisible,
     requestBulkDelete,
-  ]);
+  ])
 
   // Inside Board component:
-  const hasInitializedRef = useRef(false);
+  const hasInitializedRef = useRef(false)
 
   useEffect(() => {
     if (initialLists && !hasInitializedRef.current) {
-      setInitialLists(initialLists);
-      hasInitializedRef.current = true;
+      setInitialLists(initialLists)
+      hasInitializedRef.current = true
     }
-  }, [initialLists, setInitialLists]);
+  }, [initialLists, setInitialLists])
 
   // Reset initialization ref if project changes
   useEffect(() => {
-    hasInitializedRef.current = false;
-  }, [projectId]);
+    hasInitializedRef.current = false
+  }, [projectId])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
     }),
-  );
+  )
 
   function handleOpenTask(taskId: string) {
-    const found = lists.flatMap((l) => l.tasks).find((t) => t.id === taskId);
+    const found = lists.flatMap((l) => l.tasks).find((t) => t.id === taskId)
     if (found) {
-      openModal(found, projectId);
+      openModal(found, projectId)
     }
   }
 
   function handleTaskDeleted(listId: string, taskId: string) {
-    removeTask(listId, taskId);
-    if (currentOpenTask?.id === taskId) closeModal();
+    removeTask(listId, taskId)
+    if (currentOpenTask?.id === taskId) closeModal()
   }
 
   function handleConfirmDeleteTask() {
-    if (!currentOpenTask) return;
+    if (!currentOpenTask) return
     startDeleteTaskTransition(async () => {
-      const result = await deleteTask(
-        currentOpenTask.id,
-        getRealtimeClientId(),
-      );
+      const result = await deleteTask(currentOpenTask.id, getRealtimeClientId())
       if (result.success) {
         toast({
           title: "Task deleted",
           description: `"${currentOpenTask.title}" was deleted.`,
-        });
-        handleTaskDeleted(currentOpenTask.listId, currentOpenTask.id);
-        closeModal();
+        })
+        handleTaskDeleted(currentOpenTask.listId, currentOpenTask.id)
+        closeModal()
       } else {
         toast({
           title: "Failed to delete task",
           description: result.error,
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   function handleDragStart(event: DragStartEvent) {
-    const type = event.active.data.current?.type;
+    const type = event.active.data.current?.type
     if (type === "list") {
-      const listId = event.active.data.current?.listId as string;
-      startListDrag(listId);
+      const listId = event.active.data.current?.listId as string
+      startListDrag(listId)
     } else {
-      startDrag(event.active.id as string);
+      startDrag(event.active.id as string)
     }
   }
 
   function handleDragOver(event: DragOverEvent) {
-    const { active, over } = event;
-    if (!over) return;
+    const { active, over } = event
+    if (!over) return
     if (active.data.current?.type === "list") {
-      dragListOver(active.id as string, over.id as string);
+      dragListOver(active.id as string, over.id as string)
     } else {
-      dragOverAction(active.id as string, over.id as string);
+      dragOverAction(active.id as string, over.id as string)
     }
   }
 
   function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
+    const { active, over } = event
 
     if (active.data.current?.type === "list") {
-      clearActiveList();
+      clearActiveList()
       if (!over) {
-        revertListSnapshot();
-        return;
+        revertListSnapshot()
+        return
       }
-      const result = endListDrag(active.id as string, over.id as string);
-      if (!result) return;
+      const result = endListDrag(active.id as string, over.id as string)
+      if (!result) return
 
       moveList(result.listId, result.finalPosition).then((res) => {
         if (res.success) {
-          reorderLists(res.data);
+          reorderLists(res.data)
         } else {
-          revertListSnapshot();
+          revertListSnapshot()
           toast({
             title: "Failed to move list",
             description: res.error,
             variant: "destructive",
-          });
+          })
         }
-      });
-      return;
+      })
+      return
     }
 
-    clearActiveTask();
+    clearActiveTask()
     if (!over) {
-      revertToSnapshot();
-      return;
+      revertToSnapshot()
+      return
     }
 
-    const activeId = active.id as string;
-    const overId = over.id as string;
+    const activeId = active.id as string
+    const overId = over.id as string
 
-    const result = endDragAction(activeId, overId);
-    if (!result) return;
+    const result = endDragAction(activeId, overId)
+    if (!result) return
 
     moveTaskToList(
       activeId,
@@ -298,20 +295,20 @@ export function Board({
       getRealtimeClientId(),
     ).then((res) => {
       if (res.success) {
-        reconcileTaskMoved(res.data.movedTask, res.data.affectedTasks);
+        reconcileTaskMoved(res.data.movedTask, res.data.affectedTasks)
       } else {
-        revertToSnapshot();
+        revertToSnapshot()
         toast({
           title: "Failed to move task",
           description: res.error,
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   const customCollisionDetection: CollisionDetection = (args) => {
-    const isDraggingList = args.active.data.current?.type === "list";
+    const isDraggingList = args.active.data.current?.type === "list"
 
     if (isDraggingList) {
       return rectIntersection({
@@ -319,7 +316,7 @@ export function Board({
         droppableContainers: args.droppableContainers.filter(
           (container) => container.data.current?.type === "list",
         ),
-      });
+      })
     }
 
     const taskCardCollisions = rectIntersection({
@@ -327,10 +324,10 @@ export function Board({
       droppableContainers: args.droppableContainers.filter(
         (container) => container.data.current?.type === undefined,
       ),
-    });
+    })
 
     if (taskCardCollisions.length > 0) {
-      return taskCardCollisions;
+      return taskCardCollisions
     }
 
     return rectIntersection({
@@ -338,12 +335,12 @@ export function Board({
       droppableContainers: args.droppableContainers.filter(
         (container) => container.data.current?.type === "list-dropzone",
       ),
-    });
-  };
+    })
+  }
 
   function handleTaskArchived(listId: string, taskId: string) {
-    removeTask(listId, taskId);
-    if (currentOpenTask?.id === taskId) closeModal();
+    removeTask(listId, taskId)
+    if (currentOpenTask?.id === taskId) closeModal()
   }
 
   return (
@@ -405,8 +402,8 @@ export function Board({
             </div>
           ) : activeListId ? (
             (() => {
-              const draggedList = lists.find((l) => l.id === activeListId);
-              if (!draggedList) return null;
+              const draggedList = lists.find((l) => l.id === activeListId)
+              if (!draggedList) return null
               return (
                 <div className="w-80 rotate-1 rounded-3xl bg-card border border-border shadow-2xl p-4 opacity-95 flex flex-col max-h-[80vh] text-card-foreground">
                   <div className="flex items-center justify-between pb-3 px-1 shrink-0">
@@ -428,7 +425,7 @@ export function Board({
                     ))}
                   </div>
                 </div>
-              );
+              )
             })()
           ) : null}
         </DragOverlay>
@@ -456,5 +453,5 @@ export function Board({
         />
       )}
     </div>
-  );
+  )
 }

@@ -1,22 +1,22 @@
-"use client";
+"use client"
 
-import { CheckCircle2, Clock } from "lucide-react";
+import { CheckCircle2, Clock } from "lucide-react"
 
 type ProjectDrillDownData = {
-  projectName: string;
+  projectName: string
   open: {
-    id: string;
-    title: string;
-    priority: string | null;
-    dueDate: string | null;
-  }[];
+    id: string
+    title: string
+    priority: string | null
+    dueDate: string | null
+  }[]
   completed: {
-    id: string;
-    title: string;
-    priority: string | null;
-    dueDate: string | null;
-  }[];
-};
+    id: string
+    title: string
+    priority: string | null
+    dueDate: string | null
+  }[]
+}
 
 export function ProjectDrillDown({ data }: { data: ProjectDrillDownData }) {
   return (
@@ -89,5 +89,5 @@ export function ProjectDrillDown({ data }: { data: ProjectDrillDownData }) {
         )}
       </div>
     </div>
-  );
+  )
 }

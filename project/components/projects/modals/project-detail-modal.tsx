@@ -1,43 +1,43 @@
 // components/projects/modals/project-detail-modal.tsx
-"use client";
+"use client"
 
-import { useRef, useEffect, useState } from "react";
-import { X, Pencil, Info, Users } from "lucide-react";
-import type { Project } from "@/lib/db/schema";
+import { Info, Pencil, Users, X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { ProjectInfo } from "../project-detail/project-info";
-import { ProjectMembers } from "../project-detail/project-members";
-import { useInlineRename } from "@/hooks/use-inline-rename";
-import { updateProject } from "@/lib/actions/projects";
-import type { Member } from "@/stores/project-store";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { useInlineRename } from "@/hooks/use-inline-rename"
+import { updateProject } from "@/lib/actions/projects"
+import type { Project } from "@/lib/db/schema"
+import type { Member } from "@/stores/project-store"
+import { ProjectInfo } from "../project-detail/project-info"
+import { ProjectMembers } from "../project-detail/project-members"
 
 type ProjectDetailModalProps = {
-  project: Project;
-  members: Member[];
-  isOwner: boolean;
-  canManage: boolean;
-  ownerName?: string;
-  ownerEmail?: string;
-  ownerImageUrl?: string | null;
-  ownerHasImage?: boolean | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onMemberAdded: (projectId: string, member: Member) => void;
+  project: Project
+  members: Member[]
+  isOwner: boolean
+  canManage: boolean
+  ownerName?: string
+  ownerEmail?: string
+  ownerImageUrl?: string | null
+  ownerHasImage?: boolean | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onMemberAdded: (projectId: string, member: Member) => void
   onMemberAddConfirmed: (
     projectId: string,
     tempId: string,
     realMember: Member,
-  ) => void;
-  onMemberRoleChanged: (projectId: string, member: Member) => void;
-  onMemberRemoved: (projectId: string, memberId: string) => void;
-  onProjectUpdated?: (updatedProject: Project) => void;
-};
+  ) => void
+  onMemberRoleChanged: (projectId: string, member: Member) => void
+  onMemberRemoved: (projectId: string, memberId: string) => void
+  onProjectUpdated?: (updatedProject: Project) => void
+}
 
 export function ProjectDetailModal({
   project,
@@ -56,8 +56,8 @@ export function ProjectDetailModal({
   onMemberRemoved,
   onProjectUpdated,
 }: ProjectDetailModalProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<"info" | "members">("info");
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [activeTab, setActiveTab] = useState<"info" | "members">("info")
 
   const {
     isRenaming: isEditing,
@@ -70,39 +70,39 @@ export function ProjectDetailModal({
   } = useInlineRename({
     initialName: project.name,
     onSave: async (newName) => {
-      const result = await updateProject(project.id, { name: newName });
+      const result = await updateProject(project.id, { name: newName })
       if (result.success && result.data) {
-        onProjectUpdated?.(result.data);
+        onProjectUpdated?.(result.data)
       }
-      return result;
+      return result
     },
     onOptimisticUpdate: (newName) => {
-      const updated = { ...project, name: newName, updatedAt: new Date() };
-      onProjectUpdated?.(updated);
+      const updated = { ...project, name: newName, updatedAt: new Date() }
+      onProjectUpdated?.(updated)
     },
     onRollback: () => {
-      onProjectUpdated?.(project);
+      onProjectUpdated?.(project)
     },
-  });
+  })
 
   useEffect(() => {
     if (isEditing) {
       const timer = setTimeout(() => {
-        const input = inputRef.current;
+        const input = inputRef.current
         if (input) {
-          input.focus();
-          const length = input.value.length;
-          input.setSelectionRange(length, length);
+          input.focus()
+          const length = input.value.length
+          input.setSelectionRange(length, length)
         }
-      }, 50);
-      return () => clearTimeout(timer);
+      }, 50)
+      return () => clearTimeout(timer)
     }
-  }, [isEditing]);
+  }, [isEditing])
 
   // Reset tab selection when modal opens/closes
   useEffect(() => {
-    if (open) setActiveTab("info");
-  }, [open]);
+    if (open) setActiveTab("info")
+  }, [open])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -120,7 +120,7 @@ export function ProjectDetailModal({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Escape") handleCancel();
+                    if (e.key === "Escape") handleCancel()
                   }}
                   disabled={isPending}
                   className="w-full bg-card text-sm sm:text-base font-semibold tracking-tight border border-border focus:outline-none focus:ring-1 focus:ring-ring rounded-xl pl-2.5 pr-9 py-1 text-foreground shadow-2xs h-auto"
@@ -258,5 +258,5 @@ export function ProjectDetailModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,4 +1,4 @@
-import { queries } from "@/lib/db";
+import { queries } from "@/lib/db"
 
 type TaskActivityAction =
   | "created"
@@ -14,7 +14,7 @@ type TaskActivityAction =
   | "restored"
   | "deleted"
   | "completed"
-  | "reopened";
+  | "reopened"
 
 /**
  * Shared logging helper (resolves #62's open question in favor of a shared
@@ -31,8 +31,8 @@ export async function logTaskActivity(
   metadata?: Record<string, unknown>,
 ) {
   try {
-    await queries.taskActivity.create({ taskId, actorId, action, metadata });
+    await queries.taskActivity.create({ taskId, actorId, action, metadata })
   } catch (err) {
-    console.error("Failed to log task activity", { taskId, action, err });
+    console.error("Failed to log task activity", { taskId, action, err })
   }
 }

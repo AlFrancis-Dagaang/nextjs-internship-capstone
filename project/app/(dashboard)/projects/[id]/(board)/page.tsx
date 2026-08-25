@@ -1,28 +1,26 @@
 // app/projects/[id]/page.tsx
-import Link from "next/link";
-import { getProject } from "@/lib/actions/projects";
-import { getListsByProject } from "@/lib/actions/lists";
-import { getTasksByProject } from "@/lib/actions/tasks";
-import { getProjectMembers } from "@/lib/actions/project-member";
-import { queries } from "@/lib/db";
-import { toMemberList } from "@/lib/utils/utils";
-import { Board, type ListWithTasks } from "@/components/lists/board";
-import { ProjectHeader } from "@/components/projects/project-header";
-import type { Task } from "@/lib/db/schema";
-import { getAuthedUserOrError } from "@/lib/services/auth";
-import { assertProjectAccess } from "@/lib/services/ownership";
-import { toLocalDateKey } from "@/lib/utils/utils";
-import { CalendarTaskDTO } from "@/types";
-import { getEffectiveProjectMembers } from "@/lib/actions/project-member";
+import Link from "next/link"
+import { Board, type ListWithTasks } from "@/components/lists/board"
+import { ProjectHeader } from "@/components/projects/project-header"
+import { getListsByProject } from "@/lib/actions/lists"
+import { getEffectiveProjectMembers } from "@/lib/actions/project-member"
+import { getProject } from "@/lib/actions/projects"
+import { getTasksByProject } from "@/lib/actions/tasks"
+import { queries } from "@/lib/db"
+import type { Task } from "@/lib/db/schema"
+import { getAuthedUserOrError } from "@/lib/services/auth"
+import { assertProjectAccess } from "@/lib/services/ownership"
+import { toMemberList } from "@/lib/utils/utils"
+import type { CalendarTaskDTO } from "@/types"
 
 export default async function ProjectPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>
 }) {
-  const { id } = await params;
+  const { id } = await params
 
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
     return (
       <div className="p-6 space-y-2">
@@ -36,7 +34,7 @@ export default async function ProjectPage({
           Back to projects
         </Link>
       </div>
-    );
+    )
   }
 
   const [
@@ -53,7 +51,7 @@ export default async function ProjectPage({
     getEffectiveProjectMembers(id),
     assertProjectAccess(id, authResult.user.id),
     queries.taskAssignees.getByProject(id),
-  ]);
+  ])
 
   if (!projectResult.success) {
     return (
@@ -70,43 +68,43 @@ export default async function ProjectPage({
           Back to projects
         </Link>
       </div>
-    );
+    )
   }
 
-  const project = projectResult.data;
-  const lists = listsResult.success ? listsResult.data : [];
-  const allTasks = tasksResult.success ? tasksResult.data : [];
-  const members = membersResult.success ? toMemberList(membersResult.data) : [];
-  const owner = await queries.users.getById(project.ownerId);
-  const role = "error" in accessResult ? "viewer" : accessResult.role;
-  const canManage = role === "owner" || role === "admin";
-  const tasksByList = new Map<string, Task[]>();
+  const project = projectResult.data
+  const lists = listsResult.success ? listsResult.data : []
+  const allTasks = tasksResult.success ? tasksResult.data : []
+  const members = membersResult.success ? toMemberList(membersResult.data) : []
+  const owner = await queries.users.getById(project.ownerId)
+  const role = "error" in accessResult ? "viewer" : accessResult.role
+  const canManage = role === "owner" || role === "admin"
+  const tasksByList = new Map<string, Task[]>()
   for (const task of allTasks) {
-    const arr = tasksByList.get(task.listId) ?? [];
-    arr.push(task);
-    tasksByList.set(task.listId, arr);
+    const arr = tasksByList.get(task.listId) ?? []
+    arr.push(task)
+    tasksByList.set(task.listId, arr)
   }
 
   const assigneesByTask = new Map<
     string,
     {
-      userId: string;
-      name?: string;
-      email?: string;
-      imageUrl?: string | null;
-      hasImage?: boolean | null;
+      userId: string
+      name?: string
+      email?: string
+      imageUrl?: string | null
+      hasImage?: boolean | null
     }[]
-  >();
+  >()
   for (const row of assigneeRows) {
-    const arr = assigneesByTask.get(row.taskId) ?? [];
+    const arr = assigneesByTask.get(row.taskId) ?? []
     arr.push({
       userId: row.userId,
       name: row.userName,
       email: row.userEmail,
       imageUrl: row.userImageUrl,
       hasImage: row.userHasImage,
-    });
-    assigneesByTask.set(row.taskId, arr);
+    })
+    assigneesByTask.set(row.taskId, arr)
   }
 
   const listsWithTasks: ListWithTasks[] = lists.map((list) => ({
@@ -117,7 +115,7 @@ export default async function ProjectPage({
         ...task,
         assignees: assigneesByTask.get(task.id) ?? [],
       })),
-  }));
+  }))
 
   const upcomingTasks: CalendarTaskDTO[] = allTasks
     .filter((t): t is Task & { dueDate: Date } => t.dueDate !== null)
@@ -130,7 +128,7 @@ export default async function ProjectPage({
       projectName: project.name,
       isCompleted: t.isCompleted,
     }))
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
 
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden space-y-4">
@@ -161,5 +159,5 @@ export default async function ProjectPage({
         />
       </div>
     </div>
-  );
+  )
 }

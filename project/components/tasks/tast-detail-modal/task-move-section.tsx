@@ -1,20 +1,20 @@
-"use client";
+"use client"
 
-import { useState, useTransition, useEffect } from "react";
-import { Label } from "@/components/ui/label";
+import { useEffect, useState, useTransition } from "react"
+import type { ListWithTasks } from "@/components/lists/board"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { moveTaskToList } from "@/lib/actions/tasks";
-import type { Task } from "@/lib/db/schema";
-import type { ListWithTasks } from "@/components/lists/board";
-import { useBoardStore } from "@/stores/board-store";
+} from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { moveTaskToList } from "@/lib/actions/tasks"
+import type { Task } from "@/lib/db/schema"
+import { useBoardStore } from "@/stores/board-store"
 
 export function TaskMoveSection({
   task,
@@ -22,85 +22,85 @@ export function TaskMoveSection({
   canEdit,
   onMoved,
 }: {
-  task: Task;
-  allLists: ListWithTasks[];
-  onMoved?: (task: Task, affectedTasks: Task[]) => void;
-  canEdit: boolean;
+  task: Task
+  allLists: ListWithTasks[]
+  onMoved?: (task: Task, affectedTasks: Task[]) => void
+  canEdit: boolean
 }) {
-  const { toast } = useToast();
-  const [isMoving, startMoveTransition] = useTransition();
-  const applyOptimisticMove = useBoardStore((s) => s.applyOptimisticMove);
-  const revertMoveSnapshot = useBoardStore((s) => s.revertMoveSnapshot);
+  const { toast } = useToast()
+  const [isMoving, startMoveTransition] = useTransition()
+  const applyOptimisticMove = useBoardStore((s) => s.applyOptimisticMove)
+  const revertMoveSnapshot = useBoardStore((s) => s.revertMoveSnapshot)
 
   const currentIndexInCurrentList = (() => {
-    const currentList = allLists.find((l) => l.id === task.listId);
-    if (!currentList) return -1;
+    const currentList = allLists.find((l) => l.id === task.listId)
+    if (!currentList) return -1
     const sorted = [...currentList.tasks].sort(
       (a, b) => a.position - b.position,
-    );
-    return sorted.findIndex((t) => t.id === task.id);
-  })();
+    )
+    return sorted.findIndex((t) => t.id === task.id)
+  })()
 
-  const [targetListId, setTargetListId] = useState(task.listId);
+  const [targetListId, setTargetListId] = useState(task.listId)
   const [position, setPosition] = useState(
     currentIndexInCurrentList >= 0
       ? String(currentIndexInCurrentList + 1)
       : "1",
-  );
+  )
 
   const destTaskCount = (() => {
-    const destList = allLists.find((l) => l.id === targetListId);
-    if (!destList) return 0;
+    const destList = allLists.find((l) => l.id === targetListId)
+    if (!destList) return 0
     return targetListId === task.listId
       ? destList.tasks.filter((t) => t.id !== task.id).length
-      : destList.tasks.length;
-  })();
+      : destList.tasks.length
+  })()
 
   const positionOptions = Array.from({ length: destTaskCount + 1 }, (_, i) =>
     String(i + 1),
-  );
+  )
 
   useEffect(() => {
-    setTargetListId(task.listId);
+    setTargetListId(task.listId)
     setPosition(
       currentIndexInCurrentList >= 0
         ? String(currentIndexInCurrentList + 1)
         : "1",
-    );
+    )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task.listId, currentIndexInCurrentList]);
+  }, [task.listId, currentIndexInCurrentList])
 
   function handleMove() {
-    const zeroIndexedPosition = parseInt(position, 10) - 1;
+    const zeroIndexedPosition = parseInt(position, 10) - 1
     const snapshot = applyOptimisticMove(
       task.id,
       targetListId,
       zeroIndexedPosition,
-    );
+    )
 
     startMoveTransition(async () => {
       const result = await moveTaskToList(
         task.id,
         targetListId,
         zeroIndexedPosition,
-      );
+      )
       if (!result.success) {
-        revertMoveSnapshot(snapshot);
+        revertMoveSnapshot(snapshot)
         toast({
           title: "Failed to move task",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
-      toast({ title: "Task moved" });
-      onMoved?.(result.data.movedTask, result.data.affectedTasks);
-    });
+      toast({ title: "Task moved" })
+      onMoved?.(result.data.movedTask, result.data.affectedTasks)
+    })
   }
 
   const hasChanges =
     targetListId !== task.listId ||
-    parseInt(position, 10) - 1 !== currentIndexInCurrentList;
+    parseInt(position, 10) - 1 !== currentIndexInCurrentList
 
   return (
     <div className="space-y-3">
@@ -172,5 +172,5 @@ export function TaskMoveSection({
         </Button>
       )}
     </div>
-  );
+  )
 }

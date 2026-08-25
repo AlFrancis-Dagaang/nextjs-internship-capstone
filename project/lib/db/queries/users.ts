@@ -1,24 +1,24 @@
-import { eq, ilike, or } from "drizzle-orm";
-import { db } from "../client";
-import { NotificationType, users } from "../schema";
+import { eq, ilike, or } from "drizzle-orm"
+import { db } from "../client"
+import { type NotificationType, users } from "../schema"
 
 export const usersQueries = {
   getByClerkId: async (clerkId: string) => {
-    return db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
+    return db.query.users.findFirst({ where: eq(users.clerkId, clerkId) })
   },
   getByEmail: async (email: string) => {
-    return db.query.users.findFirst({ where: eq(users.email, email) });
+    return db.query.users.findFirst({ where: eq(users.email, email) })
   },
   upsert: async (data: {
-    clerkId: string;
-    email: string;
-    name: string;
-    imageUrl?: string | null;
-    hasImage?: boolean;
+    clerkId: string
+    email: string
+    name: string
+    imageUrl?: string | null
+    hasImage?: boolean
   }) => {
     const existing = await db.query.users.findFirst({
       where: eq(users.clerkId, data.clerkId),
-    });
+    })
     if (existing) {
       const [updated] = await db
         .update(users)
@@ -30,11 +30,11 @@ export const usersQueries = {
           updatedAt: new Date(),
         })
         .where(eq(users.clerkId, data.clerkId))
-        .returning();
-      return updated;
+        .returning()
+      return updated
     }
-    const [created] = await db.insert(users).values(data).returning();
-    return created;
+    const [created] = await db.insert(users).values(data).returning()
+    return created
   },
   searchByNameOrEmailPrefix: async (query: string, limit = 8) => {
     return db
@@ -48,10 +48,10 @@ export const usersQueries = {
       .where(
         or(ilike(users.name, `%${query}%`), ilike(users.email, `%${query}%`)),
       )
-      .limit(limit);
+      .limit(limit)
   },
   getById: async (id: string) => {
-    return db.query.users.findFirst({ where: eq(users.id, id) });
+    return db.query.users.findFirst({ where: eq(users.id, id) })
   },
   updateNotificationPreferences: async (
     userId: string,
@@ -59,13 +59,13 @@ export const usersQueries = {
   ) => {
     const existing = await db.query.users.findFirst({
       where: eq(users.id, userId),
-    });
-    const merged = { ...(existing?.notificationPreferences ?? {}), ...patch };
+    })
+    const merged = { ...(existing?.notificationPreferences ?? {}), ...patch }
     const [updated] = await db
       .update(users)
       .set({ notificationPreferences: merged, updatedAt: new Date() })
       .where(eq(users.id, userId))
-      .returning();
-    return updated;
+      .returning()
+    return updated
   },
-};
+}

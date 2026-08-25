@@ -95,5 +95,5 @@ export default function ProjectsLoading() {
         </div>
       </section>
     </div>
-  );
+  )
 }

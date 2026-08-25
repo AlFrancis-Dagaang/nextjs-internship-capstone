@@ -1,33 +1,32 @@
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import { Board } from "@/components/lists/board";
+import { render, screen } from "@testing-library/react"
+import { Board } from "@/components/lists/board"
 
 // Mock next/navigation for searchParams
 jest.mock("next/navigation", () => ({
   useSearchParams: () => ({
     get: () => null,
   }),
-}));
+}))
 
 // Mock server actions to avoid loading database/TextDecoder dependencies
 jest.mock("@/lib/actions/lists", () => ({
   updateList: jest.fn(),
   deleteList: jest.fn(),
   moveList: jest.fn(),
-}));
+}))
 
 jest.mock("@/lib/actions/tasks", () => ({
   deleteTask: jest.fn(),
   moveTaskToList: jest.fn(),
   updateTask: jest.fn(),
   toggleTaskComplete: jest.fn(),
-}));
+}))
 
 // Mock task filters utility so tasks are never filtered out in tests
 jest.mock("@/lib/utils/task-filters", () => ({
   taskMatchesFilters: () => true,
   isFilteringActive: () => false,
-}));
+}))
 
 // Mock TaskCard so it renders its title properly without hitting complex hook trees
 jest.mock("@/components/tasks/task-card", () => ({
@@ -37,23 +36,23 @@ jest.mock("@/components/tasks/task-card", () => ({
   TaskCardView: ({ task }: { task: { title: string } }) => (
     <div data-testid="task-card-view">{task.title}</div>
   ),
-}));
+}))
 
 // Mock child components of ListColumn that trigger server actions / DB files
 jest.mock("@/components/tasks/modal/create-tasks-modal", () => ({
   CreateTaskModal: () => <div data-testid="create-task-modal" />,
-}));
+}))
 
 jest.mock("@/components/lists/modal/list-actions", () => ({
   ListActions: () => <div data-testid="list-actions" />,
-}));
+}))
 
 jest.mock("@/components/lists/modal/delete-list-dialog", () => ({
   DeleteListDialog: () => <div data-testid="delete-list-dialog" />,
-}));
+}))
 
 // Track lists state dynamically so store updates and initial props sync up
-let currentLists: any[] = [];
+let currentLists: any[] = []
 
 jest.mock("@/stores/board-store", () => ({
   useBoardStore: (selector: any) => {
@@ -62,7 +61,7 @@ jest.mock("@/stores/board-store", () => ({
       activeTask: null,
       activeListId: null,
       setInitialLists: jest.fn((lists) => {
-        currentLists = lists;
+        currentLists = lists
       }),
       addList: jest.fn(),
       renameList: jest.fn(),
@@ -85,10 +84,10 @@ jest.mock("@/stores/board-store", () => ({
       endListDrag: jest.fn(),
       revertListSnapshot: jest.fn(),
       replaceOptimisticTask: jest.fn(),
-    };
-    return selector(state);
+    }
+    return selector(state)
   },
-}));
+}))
 
 jest.mock("@/stores/ui-store", () => ({
   useUiStore: (selector: any) => {
@@ -102,52 +101,52 @@ jest.mock("@/stores/ui-store", () => ({
       selectionMode: false,
       selectedTaskIds: [],
       deleteTaskOpen: false,
-    };
-    return selector(state);
+    }
+    return selector(state)
   },
-}));
+}))
 
 jest.mock("@/stores/task-detail-store", () => ({
   useTaskDetailStore: (selector: any) => {
     const state = {
       isOpen: false,
       task: null,
-    };
-    return selector(state);
+    }
+    return selector(state)
   },
-}));
+}))
 
 // Mock hooks and server actions to avoid network/database calls in test environment
 jest.mock("@/hooks/use-toast", () => ({
   useToast: () => ({
     toast: jest.fn(),
   }),
-}));
+}))
 
 jest.mock("@/hooks/use-track-project-view", () => ({
   useTrackProjectView: jest.fn(),
-}));
+}))
 
 jest.mock("@/hooks/use-realtime-board", () => ({
   useRealtimeBoard: jest.fn(),
-}));
+}))
 
 jest.mock("@/lib/actions/project-member", () => ({
   getAssignableUsers: async () => ({ success: true, data: [] }),
-}));
+}))
 
 // Mock other child components
 jest.mock("@/components/lists/add-list-form", () => ({
   AddListForm: () => <div data-testid="add-list-form" />,
-}));
+}))
 
 jest.mock("@/components/tasks/modal/task-detail-modal", () => ({
   TaskDetailModal: () => <div data-testid="task-detail-modal" />,
-}));
+}))
 
 jest.mock("@/components/tasks/modal/delete-task-dialog", () => ({
   DeleteTaskDialog: () => <div data-testid="delete-task-dialog" />,
-}));
+}))
 
 describe("Board Component", () => {
   const initialLists = [
@@ -177,11 +176,11 @@ describe("Board Component", () => {
         },
       ],
     },
-  ];
+  ]
 
   beforeEach(() => {
-    currentLists = initialLists;
-  });
+    currentLists = initialLists
+  })
 
   it("renders lists and tasks correctly based on provided props and store state", async () => {
     render(
@@ -191,12 +190,12 @@ describe("Board Component", () => {
         role="editor"
         currentUserId="user-1"
       />,
-    );
+    )
 
     // Verify column list name is rendered correctly
-    expect(screen.getByText("To Do")).toBeInTheDocument();
+    expect(screen.getByText("To Do")).toBeInTheDocument()
 
     // Verify task title is rendered correctly inside the column via mocked TaskCard asynchronously
-    expect(await screen.findByText("Task One")).toBeInTheDocument();
-  });
-});
+    expect(await screen.findByText("Task One")).toBeInTheDocument()
+  })
+})

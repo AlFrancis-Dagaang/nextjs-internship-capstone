@@ -1,20 +1,20 @@
-"use client";
+"use client"
 
 type ActiveUsersDrillDownData = {
-  members: { actorId: string; name: string; actionCount: number }[];
-};
+  members: { actorId: string; name: string; actionCount: number }[]
+}
 
 export function ActiveUsersDrillDown({
   data,
 }: {
-  data: ActiveUsersDrillDownData;
+  data: ActiveUsersDrillDownData
 }) {
   if (data.members.length === 0) {
     return (
       <p className="text-xs text-muted-foreground italic">
         No active users in this period.
       </p>
-    );
+    )
   }
 
   return (
@@ -35,5 +35,5 @@ export function ActiveUsersDrillDown({
           </div>
         ))}
     </div>
-  );
+  )
 }

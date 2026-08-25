@@ -1,14 +1,14 @@
-"use client";
+"use client"
 
-import { useMemo, useState } from "react";
+import { useMemo, useState } from "react"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { CommentRow, type CommentWithAuthor } from "./comment-row";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { CommentRow, type CommentWithAuthor } from "./comment-row"
 
 export function TaskCommentsModal({
   comments,
@@ -19,25 +19,25 @@ export function TaskCommentsModal({
   open,
   onOpenChange,
 }: {
-  comments: CommentWithAuthor[];
-  currentUserId: string | null;
-  isPending: boolean;
-  onDelete: (id: string) => void;
-  onEdit: (id: string, content: string) => Promise<boolean>;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  comments: CommentWithAuthor[]
+  currentUserId: string | null
+  isPending: boolean
+  onDelete: (id: string) => void
+  onEdit: (id: string, content: string) => Promise<boolean>
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
-  const [nameQuery, setNameQuery] = useState("");
+  const [nameQuery, setNameQuery] = useState("")
 
-  const orderedComments = useMemo(() => [...comments].reverse(), [comments]);
+  const orderedComments = useMemo(() => [...comments].reverse(), [comments])
 
   const filteredComments = useMemo(() => {
-    const q = nameQuery.trim().toLowerCase();
-    if (!q) return orderedComments;
+    const q = nameQuery.trim().toLowerCase()
+    if (!q) return orderedComments
     return orderedComments.filter((c) =>
       c.author.name.toLowerCase().includes(q),
-    );
-  }, [orderedComments, nameQuery]);
+    )
+  }, [orderedComments, nameQuery])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -79,5 +79,5 @@ export function TaskCommentsModal({
         )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }

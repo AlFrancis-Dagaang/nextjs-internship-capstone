@@ -1,17 +1,16 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { ProjectTeamView } from "@/components/projects/project-team/project-team-view";
+import { fireEvent, render, screen } from "@testing-library/react"
+import { ProjectTeamView } from "@/components/projects/project-team/project-team-view"
 
 // Mock server actions to prevent module loading errors
 jest.mock("@/lib/actions/project-member", () => ({
   updateMemberRole: jest.fn().mockResolvedValue({ success: true }),
   removeProjectMember: jest.fn().mockResolvedValue({ success: true }),
-}));
+}))
 
 jest.mock("@/lib/actions/project-team", () => ({
   updateProjectTeamRole: jest.fn().mockResolvedValue({ success: true }),
   detachTeamFromProject: jest.fn().mockResolvedValue({ success: true }),
-}));
+}))
 
 // Mock sub-components and modals
 jest.mock(
@@ -22,7 +21,7 @@ jest.mock(
         <div data-testid="add-individual-modal">Add Individual Modal</div>
       ) : null,
   }),
-);
+)
 
 jest.mock(
   "@/components/projects/project-team/modals/attach-team-modal",
@@ -32,25 +31,25 @@ jest.mock(
         <div data-testid="attach-team-modal">Attach Team Modal</div>
       ) : null,
   }),
-);
+)
 
 jest.mock("@/components/ui/user-avatar", () => ({
   UserAvatar: () => <div data-testid="user-avatar" />,
-}));
+}))
 
 // Mock next/navigation
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: jest.fn(),
   }),
-}));
+}))
 
 // Mock useToast hook
 jest.mock("@/hooks/use-toast", () => ({
   useToast: () => ({
     toast: jest.fn(),
   }),
-}));
+}))
 
 describe("ProjectTeamView", () => {
   const mockIndividuals = [
@@ -81,7 +80,7 @@ describe("ProjectTeamView", () => {
       activeTaskCount: 1,
       recentActivity: [],
     },
-  ];
+  ]
 
   const mockTeams = [
     {
@@ -97,7 +96,7 @@ describe("ProjectTeamView", () => {
         },
       ],
     },
-  ];
+  ]
 
   it("renders members tab and lists individuals correctly", () => {
     render(
@@ -107,12 +106,12 @@ describe("ProjectTeamView", () => {
         initialTeams={mockTeams}
         canManage={true}
       />,
-    );
+    )
 
-    expect(screen.getByText("Alice Smith")).toBeInTheDocument();
-    expect(screen.getByText("alice@example.com")).toBeInTheDocument();
-    expect(screen.getByText("Project Owner")).toBeInTheDocument();
-  });
+    expect(screen.getByText("Alice Smith")).toBeInTheDocument()
+    expect(screen.getByText("alice@example.com")).toBeInTheDocument()
+    expect(screen.getByText("Project Owner")).toBeInTheDocument()
+  })
 
   it("allows switching between Members and Teams tabs", async () => {
     render(
@@ -122,14 +121,14 @@ describe("ProjectTeamView", () => {
         initialTeams={mockTeams}
         canManage={true}
       />,
-    );
+    )
 
-    const teamsTabButton = screen.getByRole("button", { name: /Teams 1/i });
-    fireEvent.click(teamsTabButton);
+    const teamsTabButton = screen.getByRole("button", { name: /Teams 1/i })
+    fireEvent.click(teamsTabButton)
 
-    expect(screen.getByText("Engineering Team")).toBeInTheDocument();
-    expect(screen.getByText("1 members in this team")).toBeInTheDocument();
-  });
+    expect(screen.getByText("Engineering Team")).toBeInTheDocument()
+    expect(screen.getByText("1 members in this team")).toBeInTheDocument()
+  })
 
   it("gates management actions when canManage is false", () => {
     render(
@@ -139,12 +138,12 @@ describe("ProjectTeamView", () => {
         initialTeams={mockTeams}
         canManage={false}
       />,
-    );
+    )
 
     expect(
       screen.queryByRole("button", { name: /Add Member/i }),
-    ).not.toBeInTheDocument();
-  });
+    ).not.toBeInTheDocument()
+  })
 
   it("applies role-change UI guard hiding/disabling controls for team-derived or owner rows", () => {
     render(
@@ -154,11 +153,9 @@ describe("ProjectTeamView", () => {
         initialTeams={mockTeams}
         canManage={true}
       />,
-    );
+    )
 
-    const teamDerivedRowBadge = screen.getByTitle(
-      "Managed via team membership",
-    );
-    expect(teamDerivedRowBadge).toBeInTheDocument();
-  });
-});
+    const teamDerivedRowBadge = screen.getByTitle("Managed via team membership")
+    expect(teamDerivedRowBadge).toBeInTheDocument()
+  })
+})

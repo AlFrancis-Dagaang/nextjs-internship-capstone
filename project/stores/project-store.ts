@@ -1,36 +1,36 @@
 // stores/project-store.ts
-import { create } from "zustand";
-import type { Project } from "@/lib/db/schema";
+import { create } from "zustand"
+import type { Project } from "@/lib/db/schema"
 
 export type Member = {
-  id: string;
-  userId: string;
-  email?: string;
-  name?: string;
-  imageUrl?: string | null;
-  hasImage?: boolean;
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-};
+  id: string
+  userId: string
+  email?: string
+  name?: string
+  imageUrl?: string | null
+  hasImage?: boolean
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer"
+}
 
 interface ProjectState {
-  projects: Project[];
-  membersMap: Record<string, Member[]>;
-  addMember: (projectId: string, member: Member) => void;
+  projects: Project[]
+  membersMap: Record<string, Member[]>
+  addMember: (projectId: string, member: Member) => void
   replaceOptimisticMember: (
     projectId: string,
     tempId: string,
     realMember: Member,
-  ) => void;
-  updateMemberLocal: (projectId: string, member: Member) => void;
-  removeMember: (projectId: string, memberId: string) => void;
+  ) => void
+  updateMemberLocal: (projectId: string, member: Member) => void
+  removeMember: (projectId: string, memberId: string) => void
 
-  setInitialProjects: (projects: Project[]) => void;
-  setInitialMembersMap: (map: Record<string, Member[]>) => void;
-  addProject: (project: Project) => void;
-  updateProjectLocal: (project: Project) => void;
-  removeProject: (projectId: string) => void;
-  replaceOptimisticProject: (tempId: string, realProject: Project) => void;
-  setProjectMembers: (projectId: string, members: Member[]) => void;
+  setInitialProjects: (projects: Project[]) => void
+  setInitialMembersMap: (map: Record<string, Member[]>) => void
+  addProject: (project: Project) => void
+  updateProjectLocal: (project: Project) => void
+  removeProject: (projectId: string) => void
+  replaceOptimisticProject: (tempId: string, realProject: Project) => void
+  setProjectMembers: (projectId: string, members: Member[]) => void
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
@@ -99,4 +99,4 @@ export const useProjectStore = create<ProjectState>((set) => ({
         ),
       },
     })),
-}));
+}))

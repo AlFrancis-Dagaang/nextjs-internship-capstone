@@ -1,27 +1,27 @@
 // components/team/team-card.tsx
-"use client";
+"use client"
 
-import { useState, useEffect, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import type { WorkspaceTeam } from "@/lib/services/team";
-import { updateTeam, getTeamMembers } from "@/lib/actions/team";
-import { TeamCardActions } from "./team-card-actions";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Users, ArrowUpRight } from "lucide-react";
-import { UserAvatar } from "@/components/ui/user-avatar";
+import { ArrowUpRight, Users } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState, useTransition } from "react"
+import { Input } from "@/components/ui/input"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useToast } from "@/hooks/use-toast"
+import { getTeamMembers, updateTeam } from "@/lib/actions/team"
+import type { WorkspaceTeam } from "@/lib/services/team"
+import { TeamCardActions } from "./team-card-actions"
 
 type MemberInfo = {
-  userId: string;
-  name: string;
-  email: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-};
+  userId: string
+  name: string
+  email: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+}
 
 function mapMemberInfo(member: any): MemberInfo {
   const imageUrl =
-    member.userImageUrl ?? member.imageUrl ?? member.image ?? null;
+    member.userImageUrl ?? member.imageUrl ?? member.image ?? null
 
   return {
     userId: member.userId ?? member.id,
@@ -29,7 +29,7 @@ function mapMemberInfo(member: any): MemberInfo {
     email: member.userEmail ?? member.email ?? "",
     imageUrl,
     hasImage: member.userHasImage ?? member.hasImage ?? !!imageUrl,
-  };
+  }
 }
 
 export function TeamCard({
@@ -41,101 +41,101 @@ export function TeamCard({
   onManageMembers,
   onDeleted,
 }: {
-  team: WorkspaceTeam;
-  creatorName: string;
-  isOwner: boolean;
-  currentUserId: string;
-  initialMembers?: MemberInfo[];
-  onManageMembers: (team: WorkspaceTeam) => void;
-  onDeleted: (teamId: string) => void;
+  team: WorkspaceTeam
+  creatorName: string
+  isOwner: boolean
+  currentUserId: string
+  initialMembers?: MemberInfo[]
+  onManageMembers: (team: WorkspaceTeam) => void
+  onDeleted: (teamId: string) => void
 }) {
-  const router = useRouter();
-  const { toast } = useToast();
+  const router = useRouter()
+  const { toast } = useToast()
 
   // Single declaration using initialMembers as primary source of truth
-  const [members, setMembers] = useState<MemberInfo[]>(initialMembers);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [name, setName] = useState(team.name);
-  const [isRenamePending, startRenameTransition] = useTransition();
+  const [members, setMembers] = useState<MemberInfo[]>(initialMembers)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [name, setName] = useState(team.name)
+  const [isRenamePending, startRenameTransition] = useTransition()
 
   useEffect(() => {
-    setMembers(initialMembers);
-  }, [initialMembers]);
+    setMembers(initialMembers)
+  }, [initialMembers])
 
   useEffect(() => {
-    setName(team.name);
-  }, [team.name]);
+    setName(team.name)
+  }, [team.name])
 
   // Fetch team members locally on mount / team change
   useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
 
     getTeamMembers(team.id)
       .then((res) => {
-        if (cancelled) return;
+        if (cancelled) return
 
         if (res.success && res.data) {
-          const mapped = (res.data as any[]).map(mapMemberInfo);
-          setMembers(mapped);
+          const mapped = (res.data as any[]).map(mapMemberInfo)
+          setMembers(mapped)
         } else {
-          setMembers([]);
+          setMembers([])
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setMembers([]);
+          setMembers([])
         }
-      });
+      })
 
     return () => {
-      cancelled = true;
-    };
-  }, [team.id]);
+      cancelled = true
+    }
+  }, [team.id])
 
   function handleRenameSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!isOwner || !name.trim() || name === team.name) {
-      setIsRenaming(false);
-      setName(team.name);
-      return;
+      setIsRenaming(false)
+      setName(team.name)
+      return
     }
 
-    const submittedName = name.trim();
-    setIsRenaming(false);
+    const submittedName = name.trim()
+    setIsRenaming(false)
 
     startRenameTransition(async () => {
       const result = await updateTeam(team.id, {
         name: submittedName,
-      });
+      })
 
       if (!result.success) {
         toast({
           title: "Failed to rename team",
           description: result.error,
           variant: "destructive",
-        });
+        })
 
-        setName(team.name);
-        return;
+        setName(team.name)
+        return
       }
 
       toast({
         title: "Team updated",
         description: result.data?.name,
-      });
+      })
 
-      router.refresh();
-    });
+      router.refresh()
+    })
   }
 
   function handleAddNewMember(newMember: MemberInfo) {
     setMembers((prev) => {
       if (prev.some((member) => member.userId === newMember.userId)) {
-        return prev;
+        return prev
       }
-      return [...prev, newMember];
-    });
+      return [...prev, newMember]
+    })
   }
 
   return (
@@ -212,9 +212,9 @@ export function TeamCard({
           >
             <div className="flex items-center -space-x-1.5">
               {members.slice(0, 3).map((member) => {
-                const stableKey = member.userId || member.email;
-                const displayName = member.name || member.email || "User";
-                const resolvedImage = member.imageUrl ?? null;
+                const stableKey = member.userId || member.email
+                const displayName = member.name || member.email || "User"
+                const resolvedImage = member.imageUrl ?? null
 
                 return (
                   <UserAvatar
@@ -226,7 +226,7 @@ export function TeamCard({
                     className="w-7 h-7 text-[10px] border-2 border-white dark:border-card shadow-2xs"
                     title={displayName}
                   />
-                );
+                )
               })}
 
               {members.length > 3 && (
@@ -256,13 +256,13 @@ export function TeamCard({
             onDeleted={onDeleted}
             onViewMembers={() => onManageMembers(team)}
             onRename={() => {
-              setName(team.name);
-              setIsRenaming(true);
+              setName(team.name)
+              setIsRenaming(true)
             }}
             onMemberAdded={handleAddNewMember}
           />
         </div>
       )}
     </div>
-  );
+  )
 }

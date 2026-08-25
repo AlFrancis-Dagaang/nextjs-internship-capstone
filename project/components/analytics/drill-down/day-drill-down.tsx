@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
 type DayDrillDownData = {
-  day: string;
+  day: string
   entries: {
-    id: string;
-    action: string;
-    actorName: string;
-    taskTitle: string;
-    projectName: string;
-    createdAt: string;
-  }[];
-};
+    id: string
+    action: string
+    actorName: string
+    taskTitle: string
+    projectName: string
+    createdAt: string
+  }[]
+}
 
 export function DayDrillDown({ data }: { data: DayDrillDownData }) {
   if (data.entries.length === 0) {
@@ -18,7 +18,7 @@ export function DayDrillDown({ data }: { data: DayDrillDownData }) {
       <p className="text-xs text-muted-foreground italic">
         No activity recorded for this day.
       </p>
-    );
+    )
   }
 
   return (
@@ -51,5 +51,5 @@ export function DayDrillDown({ data }: { data: DayDrillDownData }) {
         </div>
       ))}
     </div>
-  );
+  )
 }

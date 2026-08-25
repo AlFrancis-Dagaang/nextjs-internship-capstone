@@ -49,5 +49,5 @@ export default function ProjectTeamLoading() {
         </div>
       </div>
     </div>
-  );
+  )
 }

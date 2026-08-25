@@ -1,30 +1,30 @@
-"use client";
+"use client"
 
-import { useState, useTransition, useCallback } from "react";
-import { moveTaskToList } from "@/lib/actions/tasks";
-import { getListsByProject } from "@/lib/actions/lists";
-import type { List, Task } from "@/lib/db/schema"; // <-- add Task import
-import { useToast } from "@/hooks/use-toast";
+import { useCallback, useState, useTransition } from "react"
+import { useToast } from "@/hooks/use-toast"
+import { getListsByProject } from "@/lib/actions/lists"
+import { moveTaskToList } from "@/lib/actions/tasks"
+import type { List, Task } from "@/lib/db/schema" // <-- add Task import
 
 export function useTaskLists(projectId: string) {
-  const [lists, setLists] = useState<List[]>([]);
-  const [isLoadingLists, startLoadTransition] = useTransition();
+  const [lists, setLists] = useState<List[]>([])
+  const [isLoadingLists, startLoadTransition] = useTransition()
 
   const loadLists = useCallback(() => {
     startLoadTransition(async () => {
-      const result = await getListsByProject(projectId);
+      const result = await getListsByProject(projectId)
       if (result.success) {
-        setLists(result.data);
+        setLists(result.data)
       }
-    });
-  }, [projectId]);
+    })
+  }, [projectId])
 
-  return { lists, loadLists, isLoadingLists };
+  return { lists, loadLists, isLoadingLists }
 }
 
 export function useMoveTask() {
-  const { toast } = useToast();
-  const [isMoving, startMoveTransition] = useTransition();
+  const { toast } = useToast()
+  const [isMoving, startMoveTransition] = useTransition()
 
   function moveTask(
     taskId: string,
@@ -32,19 +32,19 @@ export function useMoveTask() {
     onSuccess?: (task: Task) => void,
   ) {
     startMoveTransition(async () => {
-      const result = await moveTaskToList(taskId, newListId);
+      const result = await moveTaskToList(taskId, newListId)
       if (!result.success) {
         toast({
           title: "Failed to move task",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
-      toast({ title: "Task moved" });
-      onSuccess?.(result.data.movedTask);
-    });
+      toast({ title: "Task moved" })
+      onSuccess?.(result.data.movedTask)
+    })
   }
 
-  return { moveTask, isMoving };
+  return { moveTask, isMoving }
 }

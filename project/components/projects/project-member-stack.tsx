@@ -1,9 +1,9 @@
-import { UserAvatar } from "@/components/ui/user-avatar";
-import type { ProjectMember } from "@/types";
+import { UserAvatar } from "@/components/ui/user-avatar"
+import type { ProjectMember } from "@/types"
 
 type ProjectMemberStackProps = {
-  members: ProjectMember[];
-};
+  members: ProjectMember[]
+}
 
 export function ProjectMemberStack({ members }: ProjectMemberStackProps) {
   return (
@@ -28,5 +28,5 @@ export function ProjectMemberStack({ members }: ProjectMemberStackProps) {
         </div>
       )}
     </div>
-  );
+  )
 }

@@ -1,18 +1,18 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import { updateTask, toggleTaskComplete } from "@/lib/actions/tasks";
-import { useToast } from "@/hooks/use-toast";
-import type { Task } from "@/lib/db/schema";
-import { useBoardStore } from "@/stores/board-store";
-import { Check } from "lucide-react";
+import { Check } from "lucide-react"
+import { useState, useTransition } from "react"
+import { useToast } from "@/hooks/use-toast"
+import { toggleTaskComplete, updateTask } from "@/lib/actions/tasks"
+import type { Task } from "@/lib/db/schema"
+import { useBoardStore } from "@/stores/board-store"
 
 type TaskHeaderProps = {
-  task: Task;
-  canEdit: boolean;
-  canContribute: boolean;
-  onChanged?: (task: Task) => void;
-};
+  task: Task
+  canEdit: boolean
+  canContribute: boolean
+  onChanged?: (task: Task) => void
+}
 
 export function TaskHeader({
   task,
@@ -20,55 +20,55 @@ export function TaskHeader({
   canContribute,
   onChanged,
 }: TaskHeaderProps) {
-  const { toast } = useToast();
-  const [title, setTitle] = useState(task.title);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isPending, startTransition] = useTransition();
-  const [isTogglingComplete, startCompleteTransition] = useTransition();
+  const { toast } = useToast()
+  const [title, setTitle] = useState(task.title)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const [isTogglingComplete, startCompleteTransition] = useTransition()
 
   const toggleTaskCompleteLocally = useBoardStore(
     (s) => s.toggleTaskCompleteLocally,
-  );
-  const revertTaskComplete = useBoardStore((s) => s.revertTaskComplete);
+  )
+  const revertTaskComplete = useBoardStore((s) => s.revertTaskComplete)
 
   function handleSave() {
-    setIsEditing(false);
+    setIsEditing(false)
     if (title.trim() === task.title || title.trim() === "") {
-      setTitle(task.title);
-      return;
+      setTitle(task.title)
+      return
     }
 
     startTransition(async () => {
-      const result = await updateTask(task.id, { title });
+      const result = await updateTask(task.id, { title })
       if (!result.success) {
         toast({
           title: "Failed to update title",
           description: result.error,
           variant: "destructive",
-        });
-        setTitle(task.title);
-        return;
+        })
+        setTitle(task.title)
+        return
       }
-      onChanged?.(result.data);
-    });
+      onChanged?.(result.data)
+    })
   }
 
   function handleToggleComplete() {
-    const previousValue = toggleTaskCompleteLocally(task.id);
+    const previousValue = toggleTaskCompleteLocally(task.id)
 
     startCompleteTransition(async () => {
-      const result = await toggleTaskComplete(task.id);
+      const result = await toggleTaskComplete(task.id)
       if (result.success) {
-        onChanged?.(result.data);
+        onChanged?.(result.data)
       } else {
-        revertTaskComplete(task.id, previousValue);
+        revertTaskComplete(task.id, previousValue)
         toast({
           title: "Failed to update task",
           description: result.error,
           variant: "destructive",
-        });
+        })
       }
-    });
+    })
   }
 
   return (
@@ -99,7 +99,7 @@ export function TaskHeader({
               onChange={(e) => setTitle(e.target.value)}
               onBlur={handleSave}
               onKeyDown={(e) => {
-                if (e.key === "Enter") e.currentTarget.blur();
+                if (e.key === "Enter") e.currentTarget.blur()
               }}
               disabled={isPending}
               className="w-full bg-card text-base font-semibold tracking-tight border border-border focus:outline-none focus:ring-1 focus:ring-ring rounded-xl px-2.5 py-1 text-foreground shadow-2xs"
@@ -120,5 +120,5 @@ export function TaskHeader({
         </div>
       </div>
     </div>
-  );
+  )
 }

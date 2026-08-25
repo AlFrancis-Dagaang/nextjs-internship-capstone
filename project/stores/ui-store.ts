@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from "zustand"
 
 /**
  * #22 (pass 1) — UI-only state: which task's detail modal is open, and
@@ -8,46 +8,46 @@ import { create } from "zustand";
  * tangled with data mutations and their persistence/revert logic.
  */
 interface UiState {
-  openTaskId: string | null;
-  deleteTaskOpen: boolean;
-  archiveModalOpen: boolean; // Add this
+  openTaskId: string | null
+  deleteTaskOpen: boolean
+  archiveModalOpen: boolean // Add this
 
-  openTaskDetail: (taskId: string) => void;
-  closeTaskDetail: () => void;
+  openTaskDetail: (taskId: string) => void
+  closeTaskDetail: () => void
 
-  openDeleteTaskDialog: () => void;
-  closeDeleteTaskDialog: () => void;
+  openDeleteTaskDialog: () => void
+  closeDeleteTaskDialog: () => void
 
-  openArchiveModal: () => void; // Add this
-  closeArchiveModal: () => void; // Add this
+  openArchiveModal: () => void // Add this
+  closeArchiveModal: () => void // Add this
 
   // #70 item 5 — search & filtering. Pure client-side view state, no
   // server round-trip; board-store already holds every task locally.
-  searchQuery: string;
-  filterCompleted: "all" | "completed" | "incomplete";
-  filterPriority: "all" | "low" | "medium" | "high";
-  filterDueDate: "all" | "overdue" | "today" | "this_week" | "none";
-  filterAssignedToMe: boolean;
-  filterAssigneeId: string | null;
+  searchQuery: string
+  filterCompleted: "all" | "completed" | "incomplete"
+  filterPriority: "all" | "low" | "medium" | "high"
+  filterDueDate: "all" | "overdue" | "today" | "this_week" | "none"
+  filterAssignedToMe: boolean
+  filterAssigneeId: string | null
 
-  setSearchQuery: (query: string) => void;
-  setFilterCompleted: (value: UiState["filterCompleted"]) => void;
-  setFilterPriority: (value: UiState["filterPriority"]) => void;
-  setFilterDueDate: (value: UiState["filterDueDate"]) => void;
-  setFilterAssignedToMe: (value: boolean) => void;
-  setFilterAssigneeId: (value: string | null) => void;
-  clearAllFilters: () => void;
+  setSearchQuery: (query: string) => void
+  setFilterCompleted: (value: UiState["filterCompleted"]) => void
+  setFilterPriority: (value: UiState["filterPriority"]) => void
+  setFilterDueDate: (value: UiState["filterDueDate"]) => void
+  setFilterAssignedToMe: (value: boolean) => void
+  setFilterAssigneeId: (value: string | null) => void
+  clearAllFilters: () => void
 
-  selectionMode: boolean;
-  selectedTaskIds: string[];
-  bulkDeleteRequestToken: number;
-  requestBulkDelete: () => void;
+  selectionMode: boolean
+  selectedTaskIds: string[]
+  bulkDeleteRequestToken: number
+  requestBulkDelete: () => void
 
-  enterSelectionMode: () => void;
-  exitSelectionMode: () => void;
-  toggleTaskSelected: (taskId: string) => void;
-  selectAllVisible: (taskIds: string[]) => void;
-  clearSelection: () => void;
+  enterSelectionMode: () => void
+  exitSelectionMode: () => void
+  toggleTaskSelected: (taskId: string) => void
+  selectAllVisible: (taskIds: string[]) => void
+  clearSelection: () => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -105,4 +105,4 @@ export const useUiStore = create<UiState>((set) => ({
   bulkDeleteRequestToken: 0,
   requestBulkDelete: () =>
     set((s) => ({ bulkDeleteRequestToken: s.bulkDeleteRequestToken + 1 })),
-}));
+}))

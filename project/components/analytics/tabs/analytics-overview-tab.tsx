@@ -1,45 +1,45 @@
-"use client";
+"use client"
 
 import {
-  TrendingUp,
+  ArrowDownRight,
+  ArrowUpRight,
   BarChart3,
-  Users,
+  ChevronRight,
   Clock,
   Sparkles,
-  ArrowUpRight,
-  ArrowDownRight,
-  ChevronRight,
-} from "lucide-react";
+  TrendingUp,
+  Users,
+} from "lucide-react"
 import {
-  ResponsiveContainer,
-  BarChart,
   Bar,
-  LineChart,
+  BarChart,
+  CartesianGrid,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
-import type { DrillDownRequest } from "@/components/analytics/drill-down-panel";
+} from "recharts"
+import type { DrillDownRequest } from "@/components/analytics/drill-down-panel"
 
 type MetricWithDelta = {
-  value: number | null;
-  deltaPercent: number | null;
-};
+  value: number | null
+  deltaPercent: number | null
+}
 
 type AnalyticsOverviewData = {
-  velocity: MetricWithDelta;
-  teamEfficiency: MetricWithDelta & { label: string };
-  activeUsers: MetricWithDelta;
-  avgTaskDays: MetricWithDelta;
+  velocity: MetricWithDelta
+  teamEfficiency: MetricWithDelta & { label: string }
+  activeUsers: MetricWithDelta
+  avgTaskDays: MetricWithDelta
   projectProgress: {
-    projectId: string;
-    projectName: string;
-    percent: number;
-  }[];
-  teamActivity: { day: string; count: number }[];
-};
+    projectId: string
+    projectName: string
+    percent: number
+  }[]
+  teamActivity: { day: string; count: number }[]
+}
 
 export function AnalyticsOverviewTab({
   data,
@@ -48,15 +48,15 @@ export function AnalyticsOverviewTab({
   onViewFullReport,
   formatDate,
 }: {
-  data: AnalyticsOverviewData;
-  insightText: string;
-  onOpenDrillDown: (req: DrillDownRequest) => void;
-  onViewFullReport: () => void;
-  formatDate: (dateStr: string) => string;
+  data: AnalyticsOverviewData
+  insightText: string
+  onOpenDrillDown: (req: DrillDownRequest) => void
+  onViewFullReport: () => void
+  formatDate: (dateStr: string) => string
 }) {
   const renderDelta = (deltaPercent: number | null) => {
-    if (deltaPercent === null) return null;
-    const isPositive = deltaPercent >= 0;
+    if (deltaPercent === null) return null
+    const isPositive = deltaPercent >= 0
     return (
       <div
         className={`flex items-center gap-1 text-xs font-medium mt-1 ${
@@ -75,8 +75,8 @@ export function AnalyticsOverviewTab({
           period
         </span>
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -114,7 +114,7 @@ export function AnalyticsOverviewTab({
           onClick={() => onOpenDrillDown({ kind: "velocity" })}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ")
-              onOpenDrillDown({ kind: "velocity" });
+              onOpenDrillDown({ kind: "velocity" })
           }}
           className="p-4 sm:p-5 bg-card border border-border/80 rounded-2xl shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
         >
@@ -156,7 +156,7 @@ export function AnalyticsOverviewTab({
           onClick={() => onOpenDrillDown({ kind: "teamEfficiency" })}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ")
-              onOpenDrillDown({ kind: "teamEfficiency" });
+              onOpenDrillDown({ kind: "teamEfficiency" })
           }}
           className="p-4 sm:p-5 bg-card border border-border/80 rounded-2xl shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
         >
@@ -193,7 +193,7 @@ export function AnalyticsOverviewTab({
           onClick={() => onOpenDrillDown({ kind: "activeUsers" })}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ")
-              onOpenDrillDown({ kind: "activeUsers" });
+              onOpenDrillDown({ kind: "activeUsers" })
           }}
           className="p-4 sm:p-5 bg-card border border-border/80 rounded-2xl shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
         >
@@ -237,7 +237,7 @@ export function AnalyticsOverviewTab({
           onClick={() => onOpenDrillDown({ kind: "avgTaskTime" })}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ")
-              onOpenDrillDown({ kind: "avgTaskTime" });
+              onOpenDrillDown({ kind: "avgTaskTime" })
           }}
           className="p-4 sm:p-5 bg-card border border-border/80 rounded-2xl shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between"
         >
@@ -338,9 +338,9 @@ export function AnalyticsOverviewTab({
                     cursor="pointer"
                     onClick={(entry: any) => {
                       const projId =
-                        entry?.payload?.projectId || entry?.projectId;
+                        entry?.payload?.projectId || entry?.projectId
                       if (projId) {
-                        onOpenDrillDown({ kind: "project", projectId: projId });
+                        onOpenDrillDown({ kind: "project", projectId: projId })
                       }
                     }}
                   />
@@ -407,9 +407,9 @@ export function AnalyticsOverviewTab({
                   }}
                   activeDot={{ r: 6, cursor: "pointer" }}
                   onClick={(entry: any) => {
-                    const dayVal = entry?.payload?.day || entry?.day;
+                    const dayVal = entry?.payload?.day || entry?.day
                     if (dayVal) {
-                      onOpenDrillDown({ kind: "day", day: dayVal });
+                      onOpenDrillDown({ kind: "day", day: dayVal })
                     }
                   }}
                 />
@@ -419,5 +419,5 @@ export function AnalyticsOverviewTab({
         </div>
       </div>
     </div>
-  );
+  )
 }

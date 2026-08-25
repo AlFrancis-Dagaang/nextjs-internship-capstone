@@ -1,14 +1,14 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@/components/ui/dialog"
 
 export function DeleteListDialog({
   isOpen,
@@ -17,13 +17,13 @@ export function DeleteListDialog({
   listName,
   isPending,
 }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  listName: string;
-  isPending: boolean;
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => void
+  listName: string
+  isPending: boolean
 }) {
-  const [confirmed, setConfirmed] = useState(false);
+  const [confirmed, setConfirmed] = useState(false)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -71,5 +71,5 @@ export function DeleteListDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

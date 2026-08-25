@@ -1,41 +1,37 @@
-"use client";
+"use client"
 
-import { useState, useTransition } from "react";
-import Link from "next/link";
-import { Calendar, MessageSquare, Check } from "lucide-react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import type { Task } from "@/lib/db/schema";
-import {
-  deleteTask,
-  updateTask,
-  toggleTaskComplete,
-} from "@/lib/actions/tasks";
-import { useToast } from "@/hooks/use-toast";
-import { TaskActions } from "./modal/task-actions";
-import { DeleteTaskDialog } from "./modal/delete-task-dialog";
-import { Input } from "@/components/ui/input";
-import { useBoardStore } from "@/stores/board-store";
-import { UserAvatar } from "@/components/ui/user-avatar";
+import { useSortable } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+import { Calendar, Check, MessageSquare } from "lucide-react"
+import Link from "next/link"
+import { useState, useTransition } from "react"
+import { Input } from "@/components/ui/input"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useToast } from "@/hooks/use-toast"
+import { deleteTask, toggleTaskComplete, updateTask } from "@/lib/actions/tasks"
+import type { Task } from "@/lib/db/schema"
+import { useBoardStore } from "@/stores/board-store"
+import { DeleteTaskDialog } from "./modal/delete-task-dialog"
+import { TaskActions } from "./modal/task-actions"
 
 const priorityBarStyles: Record<string, string> = {
   low: "bg-blue-500",
   medium: "bg-amber-500",
   high: "bg-destructive",
-};
+}
 
 export type TaskWithCommentCount = Task & {
-  commentCount?: number;
-  projectId?: string;
-  projectName?: string;
+  commentCount?: number
+  projectId?: string
+  projectName?: string
   assignees?: {
-    userId: string;
-    name?: string;
-    email?: string;
-    imageUrl?: string | null;
-    hasImage?: boolean | null;
-  }[];
-};
+    userId: string
+    name?: string
+    email?: string
+    imageUrl?: string | null
+    hasImage?: boolean | null
+  }[]
+}
 
 export function TaskCardView({
   task,
@@ -48,20 +44,20 @@ export function TaskCardView({
   onToggleSelected,
   className = "",
 }: {
-  task: TaskWithCommentCount;
-  interactive?: boolean;
-  onToggleComplete?: () => void;
-  onOpenDetail?: () => void;
-  cornerActions?: React.ReactNode;
-  selectionMode?: boolean;
-  isSelected?: boolean;
-  onToggleSelected?: () => void;
-  className?: string;
+  task: TaskWithCommentCount
+  interactive?: boolean
+  onToggleComplete?: () => void
+  onOpenDetail?: () => void
+  cornerActions?: React.ReactNode
+  selectionMode?: boolean
+  isSelected?: boolean
+  onToggleSelected?: () => void
+  className?: string
 }) {
-  const assignees = task.assignees ?? [];
-  const visibleAssignees = assignees.slice(0, 3);
-  const extraCount = assignees.length > 3 ? assignees.length - 3 : 0;
-  const tooltipText = task.isCompleted ? "Mark incomplete" : "Mark completed";
+  const assignees = task.assignees ?? []
+  const visibleAssignees = assignees.slice(0, 3)
+  const extraCount = assignees.length > 3 ? assignees.length - 3 : 0
+  const tooltipText = task.isCompleted ? "Mark incomplete" : "Mark completed"
 
   return (
     <div
@@ -94,8 +90,8 @@ export function TaskCardView({
             <button
               type="button"
               onClick={(e) => {
-                e.stopPropagation();
-                onToggleSelected?.();
+                e.stopPropagation()
+                onToggleSelected?.()
               }}
               className={`w-4 h-4 rounded border shrink-0 transition-colors flex items-center justify-center ${
                 isSelected
@@ -112,8 +108,8 @@ export function TaskCardView({
               title={tooltipText}
               aria-label={tooltipText}
               onClick={(e) => {
-                e.stopPropagation();
-                onToggleComplete();
+                e.stopPropagation()
+                onToggleComplete()
               }}
               className={`w-4 h-4 rounded-full border shrink-0 transition-colors flex items-center justify-center ${
                 task.isCompleted
@@ -182,8 +178,8 @@ export function TaskCardView({
           <div className="flex items-center">
             <div className="flex -space-x-1.5">
               {visibleAssignees.map((a: any) => {
-                const displayName = a.name || a.email || "User";
-                const stableKey = a.userId || a.email || a.id;
+                const displayName = a.name || a.email || "User"
+                const stableKey = a.userId || a.email || a.id
 
                 return (
                   <UserAvatar
@@ -195,7 +191,7 @@ export function TaskCardView({
                     className="w-6 h-6 text-[9px]"
                     title={displayName}
                   />
-                );
+                )
               })}
             </div>
             {extraCount > 0 && (
@@ -207,7 +203,7 @@ export function TaskCardView({
         )}
       </div>
     </div>
-  );
+  )
 }
 
 export function TaskCard({
@@ -227,32 +223,32 @@ export function TaskCard({
   onMoved,
   onOpenDetail,
 }: {
-  task: TaskWithCommentCount;
-  projectId: string;
-  allLists: any[];
-  canEdit: boolean;
-  canContribute: boolean;
-  dragDisabled?: boolean;
-  selectionMode?: boolean;
-  isSelected?: boolean;
-  onToggleSelected?: () => void;
-  onUpdated?: (task: TaskWithCommentCount) => void;
-  onDeleted?: () => void;
-  onDeleteFailed?: (task: Task) => void;
-  onMoved?: (task: Task, affectedTasks: Task[]) => void;
-  onOpenDetail: () => void;
-  onArchived?: () => void;
+  task: TaskWithCommentCount
+  projectId: string
+  allLists: any[]
+  canEdit: boolean
+  canContribute: boolean
+  dragDisabled?: boolean
+  selectionMode?: boolean
+  isSelected?: boolean
+  onToggleSelected?: () => void
+  onUpdated?: (task: TaskWithCommentCount) => void
+  onDeleted?: () => void
+  onDeleteFailed?: (task: Task) => void
+  onMoved?: (task: Task, affectedTasks: Task[]) => void
+  onOpenDetail: () => void
+  onArchived?: () => void
 }) {
-  const { toast } = useToast();
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [title, setTitle] = useState(task.title);
-  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [title, setTitle] = useState(task.title)
+  const [isPending, startTransition] = useTransition()
 
   const toggleTaskCompleteLocally = useBoardStore(
     (state) => state.toggleTaskCompleteLocally,
-  );
-  const revertTaskComplete = useBoardStore((state) => state.revertTaskComplete);
+  )
+  const revertTaskComplete = useBoardStore((state) => state.revertTaskComplete)
 
   const {
     attributes,
@@ -261,83 +257,83 @@ export function TaskCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id, disabled: !canContribute || dragDisabled });
+  } = useSortable({ id: task.id, disabled: !canContribute || dragDisabled })
 
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
-  };
-  const isTemp = task.id.startsWith("temp-");
+  }
+  const isTemp = task.id.startsWith("temp-")
 
   function handleToggleComplete() {
-    const previousValue = toggleTaskCompleteLocally(task.id);
+    const previousValue = toggleTaskCompleteLocally(task.id)
 
     startTransition(async () => {
-      const result = await toggleTaskComplete(task.id);
+      const result = await toggleTaskComplete(task.id)
       if (!result.success) {
-        revertTaskComplete(task.id, previousValue);
+        revertTaskComplete(task.id, previousValue)
         toast({
           title: "Failed to update task",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
       onUpdated?.({
         ...(result.data as TaskWithCommentCount),
         assignees: task.assignees,
-      });
-    });
+      })
+    })
   }
 
   function handleRenameSubmit(e: React.FormEvent) {
-    e.preventDefault();
+    e.preventDefault()
     if (!title.trim() || title === task.title) {
-      setIsRenaming(false);
-      setTitle(task.title);
-      return;
+      setIsRenaming(false)
+      setTitle(task.title)
+      return
     }
-    const submittedTitle = title;
-    setIsRenaming(false);
-    onUpdated?.({ ...task, title: submittedTitle });
+    const submittedTitle = title
+    setIsRenaming(false)
+    onUpdated?.({ ...task, title: submittedTitle })
 
     startTransition(async () => {
-      const result = await updateTask(task.id, { title: submittedTitle });
+      const result = await updateTask(task.id, { title: submittedTitle })
       if (!result.success) {
         toast({
           title: "Failed to rename task",
           description: result.error,
           variant: "destructive",
-        });
-        setTitle(task.title);
-        onUpdated?.(task);
-        return;
+        })
+        setTitle(task.title)
+        onUpdated?.(task)
+        return
       }
-      toast({ title: "Task updated", description: result.data?.title });
-      onUpdated?.({ ...result.data, assignees: task.assignees });
-    });
+      toast({ title: "Task updated", description: result.data?.title })
+      onUpdated?.({ ...result.data, assignees: task.assignees })
+    })
   }
 
   function handleDelete() {
-    setDeleteOpen(false);
-    onDeleted?.();
+    setDeleteOpen(false)
+    onDeleted?.()
 
     startTransition(async () => {
-      const result = await deleteTask(task.id);
+      const result = await deleteTask(task.id)
       if (!result.success) {
         toast({
           title: "Failed to delete task",
           description: result.error,
           variant: "destructive",
-        });
-        onDeleteFailed?.(task);
+        })
+        onDeleteFailed?.(task)
       } else {
         toast({
           title: "Task deleted",
           description: `"${task.title}" was deleted.`,
-        });
+        })
       }
-    });
+    })
   }
 
   const cornerActions = (
@@ -350,23 +346,23 @@ export function TaskCard({
       canContribute={canContribute}
       onView={onOpenDetail}
       onRename={() => {
-        setTitle(task.title);
-        setIsRenaming(true);
+        setTitle(task.title)
+        setIsRenaming(true)
       }}
       onArchive={() => {
-        onArchived?.();
-        toast({ title: "Task archived", description: task.title });
+        onArchived?.()
+        toast({ title: "Task archived", description: task.title })
       }}
       onDeleteClick={() => setDeleteOpen(true)}
       onMoved={(movedTask, affectedTasks) =>
         onMoved?.(movedTask, affectedTasks)
       }
       onAssigned={(assignee) => {
-        const updatedAssignees = [...(task.assignees ?? []), assignee];
-        onUpdated?.({ ...task, assignees: updatedAssignees });
+        const updatedAssignees = [...(task.assignees ?? []), assignee]
+        onUpdated?.({ ...task, assignees: updatedAssignees })
       }}
     />
-  );
+  )
 
   return (
     <>
@@ -438,5 +434,5 @@ export function TaskCard({
         isPending={isPending}
       />
     </>
-  );
+  )
 }

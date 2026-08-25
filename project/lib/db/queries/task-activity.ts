@@ -1,7 +1,7 @@
-import { and, desc, eq, ilike, lt, or } from "drizzle-orm";
-import { db } from "../client";
-import { lists, taskActivity, tasks, users } from "../schema";
-import type { InferInsertModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm"
+import { and, desc, eq, ilike, lt, or } from "drizzle-orm"
+import { db } from "../client"
+import { lists, taskActivity, tasks, users } from "../schema"
 
 export const taskActivityQueries = {
   getByTask: async (taskId: string, limit?: number) => {
@@ -23,17 +23,17 @@ export const taskActivityQueries = {
       .from(taskActivity)
       .innerJoin(users, eq(taskActivity.actorId, users.id))
       .where(eq(taskActivity.taskId, taskId))
-      .orderBy(desc(taskActivity.createdAt));
+      .orderBy(desc(taskActivity.createdAt))
 
     if (limit) {
-      return query.limit(limit);
+      return query.limit(limit)
     }
 
-    return query;
+    return query
   },
   create: async (data: InferInsertModel<typeof taskActivity>) => {
-    const [entry] = await db.insert(taskActivity).values(data).returning();
-    return entry;
+    const [entry] = await db.insert(taskActivity).values(data).returning()
+    return entry
   },
   getByProjectAndActor: async (
     projectId: string,
@@ -57,24 +57,24 @@ export const taskActivityQueries = {
         and(eq(lists.projectId, projectId), eq(taskActivity.actorId, actorId)),
       )
       .orderBy(desc(taskActivity.createdAt))
-      .limit(limit);
+      .limit(limit)
   },
   getByTaskPaginated: async (
     taskId: string,
     options: {
-      limit: number;
-      cursor?: { createdAt: Date; id: string };
-      actorName?: string;
-      action?: string;
+      limit: number
+      cursor?: { createdAt: Date; id: string }
+      actorName?: string
+      action?: string
     },
   ) => {
-    const conditions = [eq(taskActivity.taskId, taskId)];
+    const conditions = [eq(taskActivity.taskId, taskId)]
 
     if (options.actorName) {
-      conditions.push(ilike(users.name, `%${options.actorName}%`));
+      conditions.push(ilike(users.name, `%${options.actorName}%`))
     }
     if (options.action) {
-      conditions.push(eq(taskActivity.action, options.action as any));
+      conditions.push(eq(taskActivity.action, options.action as any))
     }
     if (options.cursor) {
       conditions.push(
@@ -85,7 +85,7 @@ export const taskActivityQueries = {
             lt(taskActivity.id, options.cursor.id),
           ),
         )!,
-      );
+      )
     }
 
     return db
@@ -107,6 +107,6 @@ export const taskActivityQueries = {
       .innerJoin(users, eq(taskActivity.actorId, users.id))
       .where(and(...conditions))
       .orderBy(desc(taskActivity.createdAt), desc(taskActivity.id))
-      .limit(options.limit + 1);
+      .limit(options.limit + 1)
   },
-};
+}

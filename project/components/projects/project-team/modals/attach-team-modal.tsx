@@ -1,70 +1,70 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useRef, useTransition } from "react";
-import { X, UserPlus, Loader2 } from "lucide-react";
-import {
-  searchTeamsForProjectAttach,
-  attachTeamToProject,
-} from "@/lib/actions/project-team";
+import { Loader2, UserPlus, X } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useRef, useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+} from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import {
+  attachTeamToProject,
+  searchTeamsForProjectAttach,
+} from "@/lib/actions/project-team"
 
 type SearchTeam = {
-  id: string;
-  name: string;
-  status: "available" | "attached";
-};
+  id: string
+  name: string
+  status: "available" | "attached"
+}
 
 type AttachTeamModalProps = {
-  projectId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
+  projectId: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
 
 export function AttachTeamModal({
   projectId,
   open,
   onOpenChange,
 }: AttachTeamModalProps) {
-  const { toast } = useToast();
-  const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [selectedTeam, setSelectedTeam] = useState<SearchTeam | null>(null);
+  const { toast } = useToast()
+  const router = useRouter()
+  const [query, setQuery] = useState("")
+  const [selectedTeam, setSelectedTeam] = useState<SearchTeam | null>(null)
   const [role, setRole] = useState<"editor" | "contributor" | "viewer">(
     "viewer",
-  );
-  const [isPending, startTransition] = useTransition();
+  )
+  const [isPending, startTransition] = useTransition()
 
-  const [searchResults, setSearchResults] = useState<SearchTeam[]>([]);
-  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchRequestIdRef = useRef(0);
+  const [searchResults, setSearchResults] = useState<SearchTeam[]>([])
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const searchRequestIdRef = useRef(0)
 
   useEffect(() => {
     if (open) {
-      setQuery("");
-      setSelectedTeam(null);
-      setRole("viewer");
-      setSearchResults([]);
-      setShowDropdown(false);
+      setQuery("")
+      setSelectedTeam(null)
+      setRole("viewer")
+      setSearchResults([])
+      setShowDropdown(false)
     }
-  }, [open]);
+  }, [open])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -72,76 +72,76 @@ export function AttachTeamModal({
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
-        setShowDropdown(false);
+        setShowDropdown(false)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   useEffect(() => {
-    const trimmed = query.trim();
+    const trimmed = query.trim()
     if (trimmed.length < 1) {
-      setSearchResults([]);
-      setShowDropdown(false);
-      setIsLoadingSearch(false);
-      return;
+      setSearchResults([])
+      setShowDropdown(false)
+      setIsLoadingSearch(false)
+      return
     }
 
-    setIsLoadingSearch(true);
-    setShowDropdown(true);
-    const currentRequestId = ++searchRequestIdRef.current;
+    setIsLoadingSearch(true)
+    setShowDropdown(true)
+    const currentRequestId = ++searchRequestIdRef.current
 
     const timer = setTimeout(async () => {
       try {
-        const result = await searchTeamsForProjectAttach(projectId, trimmed);
-        if (currentRequestId !== searchRequestIdRef.current) return;
+        const result = await searchTeamsForProjectAttach(projectId, trimmed)
+        if (currentRequestId !== searchRequestIdRef.current) return
 
         if (result.success) {
-          setSearchResults(result.data.slice(0, 8));
+          setSearchResults(result.data.slice(0, 8))
         } else {
-          setSearchResults([]);
+          setSearchResults([])
         }
-      } catch (err) {
+      } catch (_err) {
         if (currentRequestId === searchRequestIdRef.current) {
-          setSearchResults([]);
+          setSearchResults([])
         }
       } finally {
         if (currentRequestId === searchRequestIdRef.current) {
-          setIsLoadingSearch(false);
+          setIsLoadingSearch(false)
         }
       }
-    }, 300);
+    }, 300)
 
-    return () => clearTimeout(timer);
-  }, [query, projectId]);
+    return () => clearTimeout(timer)
+  }, [query, projectId])
 
   async function handleAttach(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedTeam) return;
+    e.preventDefault()
+    if (!selectedTeam) return
 
-    const targetTeamId = selectedTeam.id;
-    const assignedRole = role;
+    const targetTeamId = selectedTeam.id
+    const assignedRole = role
 
     startTransition(async () => {
       const result = await attachTeamToProject(projectId, {
         teamId: targetTeamId,
         role: assignedRole,
-      });
+      })
 
       if (!result.success) {
         toast({
           title: "Failed to attach team",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
 
-      toast({ title: "Team attached successfully" });
-      onOpenChange(false);
-      router.refresh();
-    });
+      toast({ title: "Team attached successfully" })
+      onOpenChange(false)
+      router.refresh()
+    })
   }
 
   return (
@@ -170,13 +170,13 @@ export function AttachTeamModal({
               placeholder="Search team name..."
               value={selectedTeam ? selectedTeam.name : query}
               onChange={(e) => {
-                setSelectedTeam(null);
-                setQuery(e.target.value);
-                setShowDropdown(true);
+                setSelectedTeam(null)
+                setQuery(e.target.value)
+                setShowDropdown(true)
               }}
               onFocus={() => {
                 if (!selectedTeam && query.trim().length >= 1)
-                  setShowDropdown(true);
+                  setShowDropdown(true)
               }}
               disabled={isPending}
               className="h-9 text-xs bg-muted border-input text-foreground rounded-lg w-full focus-visible:ring-1"
@@ -199,14 +199,14 @@ export function AttachTeamModal({
                 ) : (
                   <div className="max-h-[200px] overflow-y-auto divide-y divide-border">
                     {searchResults.map((team) => {
-                      const isSelectable = team.status === "available";
+                      const isSelectable = team.status === "available"
                       return (
                         <div
                           key={team.id}
                           onClick={() => {
-                            if (!isSelectable) return;
-                            setSelectedTeam(team);
-                            setShowDropdown(false);
+                            if (!isSelectable) return
+                            setSelectedTeam(team)
+                            setShowDropdown(false)
                           }}
                           className={`px-3 py-2.5 flex items-center justify-between transition-colors ${
                             isSelectable
@@ -223,7 +223,7 @@ export function AttachTeamModal({
                             </span>
                           )}
                         </div>
-                      );
+                      )
                     })}
                   </div>
                 )}
@@ -280,5 +280,5 @@ export function AttachTeamModal({
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

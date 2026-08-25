@@ -1,20 +1,20 @@
-import { eq, or, exists, and, isNotNull } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
-import { db } from "../client";
-import { projects, projectMembers, projectTeams, teamMembers } from "../schema";
+import type { InferInsertModel } from "drizzle-orm"
+import { and, eq, exists, isNotNull, or } from "drizzle-orm"
+import { db } from "../client"
+import { projectMembers, projects, projectTeams, teamMembers } from "../schema"
 
 export const projectsQueries = {
   getAll: async () => {
-    return db.select().from(projects);
+    return db.select().from(projects)
   },
   getById: async (id: string) => {
     return db.query.projects.findFirst({
       where: eq(projects.id, id),
       with: { lists: { with: { tasks: true } } },
-    });
+    })
   },
   getByOwner: async (ownerId: string) => {
-    return db.select().from(projects).where(eq(projects.ownerId, ownerId));
+    return db.select().from(projects).where(eq(projects.ownerId, ownerId))
   },
   /**
    * Dashboard visibility fix (#29): owned projects + projects where the
@@ -65,11 +65,11 @@ export const projectsQueries = {
               ),
           ),
         ),
-      );
+      )
   },
   create: async (data: InferInsertModel<typeof projects>) => {
-    const [project] = await db.insert(projects).values(data).returning();
-    return project;
+    const [project] = await db.insert(projects).values(data).returning()
+    return project
   },
   update: async (
     id: string,
@@ -79,11 +79,11 @@ export const projectsQueries = {
       .update(projects)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(projects.id, id))
-      .returning();
-    return project;
+      .returning()
+    return project
   },
   delete: async (id: string) => {
-    await db.delete(projects).where(eq(projects.id, id));
+    await db.delete(projects).where(eq(projects.id, id))
   },
   // Added #79 — projects the user can attach an event to: owned, or
   // member with an "editor" role. Deliberately excludes viewer-role
@@ -114,7 +114,7 @@ export const projectsQueries = {
               ),
           ),
         ),
-      );
+      )
   },
   getWithDueDatesForUser: async (userId: string) => {
     return db
@@ -142,6 +142,6 @@ export const projectsQueries = {
             ),
           ),
         ),
-      );
+      )
   },
-};
+}

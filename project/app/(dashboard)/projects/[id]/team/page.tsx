@@ -1,17 +1,17 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { requireAuthedDbUser } from "@/lib/services/auth";
-import { getProjectTeam } from "@/lib/services/team";
-import { ProjectTeamView } from "@/components/projects/project-team/project-team-view";
+import { ArrowLeft } from "lucide-react"
+import Link from "next/link"
+import { ProjectTeamView } from "@/components/projects/project-team/project-team-view"
+import { requireAuthedDbUser } from "@/lib/services/auth"
+import { getProjectTeam } from "@/lib/services/team"
 
 type PageProps = {
-  params: Promise<{ id: string }>;
-};
+  params: Promise<{ id: string }>
+}
 
 export default async function ProjectTeamPage({ params }: PageProps) {
-  const { id } = await params;
-  const user = await requireAuthedDbUser();
-  const result = await getProjectTeam(id, user.id);
+  const { id } = await params
+  const user = await requireAuthedDbUser()
+  const result = await getProjectTeam(id, user.id)
 
   if ("error" in result) {
     return (
@@ -35,11 +35,11 @@ export default async function ProjectTeamPage({ params }: PageProps) {
           <ArrowLeft size={14} /> Back to Project
         </Link>
       </div>
-    );
+    )
   }
 
   const formattedRole =
-    result.role.charAt(0).toUpperCase() + result.role.slice(1);
+    result.role.charAt(0).toUpperCase() + result.role.slice(1)
 
   return (
     <div className="w-full space-y-6">
@@ -77,5 +77,5 @@ export default async function ProjectTeamPage({ params }: PageProps) {
         canManage={result.canManage}
       />
     </div>
-  );
+  )
 }

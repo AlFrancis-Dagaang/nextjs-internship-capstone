@@ -1,7 +1,7 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { queries } from "@/lib/db";
-import { syncUserFromClerkData } from "@/lib/services/users";
+import { auth, clerkClient } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
+import { queries } from "@/lib/db"
+import { syncUserFromClerkData } from "@/lib/services/users"
 
 /**
  * Return-based auth check for use inside Server Actions, which need to
@@ -15,27 +15,27 @@ import { syncUserFromClerkData } from "@/lib/services/users";
  * while the webhook is still in flight.
  */
 export async function getAuthedUserOrError() {
-  const { userId } = await auth();
-  if (!userId) return { error: "Unauthorized" } as const;
+  const { userId } = await auth()
+  if (!userId) return { error: "Unauthorized" } as const
 
-  let user = await queries.users.getByClerkId(userId);
+  let user = await queries.users.getByClerkId(userId)
 
   if (!user) {
-    const clerk = await clerkClient();
-    const clerkUser = await clerk.users.getUser(userId);
+    const clerk = await clerkClient()
+    const clerkUser = await clerk.users.getUser(userId)
 
     const primaryEmail =
       clerkUser.emailAddresses.find(
         (e) => e.id === clerkUser.primaryEmailAddressId,
-      )?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress;
+      )?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress
 
     if (!primaryEmail) {
-      return { error: "User record not found" } as const;
+      return { error: "User record not found" } as const
     }
 
     const name =
       [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
-      "Unknown";
+      "Unknown"
 
     user = await syncUserFromClerkData(
       userId,
@@ -43,10 +43,10 @@ export async function getAuthedUserOrError() {
       name,
       clerkUser.imageUrl,
       clerkUser.hasImage,
-    );
+    )
   }
 
-  return { user } as const;
+  return { user } as const
 }
 
 /**
@@ -55,11 +55,11 @@ export async function getAuthedUserOrError() {
  * lookup — so behavior is unchanged.
  */
 export async function requireAuthedUser() {
-  const { userId } = await auth();
+  const { userId } = await auth()
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in")
   }
-  return userId;
+  return userId
 }
 
 /**
@@ -68,11 +68,11 @@ export async function requireAuthedUser() {
  * self-heal fallback, so there's one implementation instead of two.
  */
 export async function requireAuthedDbUser() {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  const { userId } = await auth()
+  if (!userId) redirect("/sign-in")
 
-  const result = await getAuthedUserOrError();
-  if ("error" in result) redirect("/sign-in");
+  const result = await getAuthedUserOrError()
+  if ("error" in result) redirect("/sign-in")
 
-  return result.user;
+  return result.user
 }

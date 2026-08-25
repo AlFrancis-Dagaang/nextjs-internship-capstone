@@ -1,55 +1,55 @@
 // components/projects/modals/invite-member-modal.tsx
-"use client";
+"use client"
 
-import { useState, useEffect, useRef, useTransition } from "react";
-import { X, UserPlus, Loader2 } from "lucide-react";
-import type { Project } from "@/lib/db/schema";
-import {
-  searchUsersForInvite,
-  addProjectMember,
-} from "@/lib/actions/project-member";
+import { Loader2, UserPlus, X } from "lucide-react"
+import { useEffect, useRef, useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { UserAvatar } from "@/components/ui/user-avatar";
-import { useToast } from "@/hooks/use-toast";
-import { getRealtimeClientId } from "@/lib/realtime/client";
-import type { Member } from "@/stores/project-store";
+} from "@/components/ui/select"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useToast } from "@/hooks/use-toast"
+import {
+  addProjectMember,
+  searchUsersForInvite,
+} from "@/lib/actions/project-member"
+import type { Project } from "@/lib/db/schema"
+import { getRealtimeClientId } from "@/lib/realtime/client"
+import type { Member } from "@/stores/project-store"
 
 type SearchUser = {
-  id: string;
-  email: string;
-  name: string;
-  imageUrl?: string | null;
-  hasImage?: boolean | null;
-  status: "available" | "member" | "owner";
-  role?: "owner" | "admin" | "editor" | "contributor" | "viewer";
-};
+  id: string
+  email: string
+  name: string
+  imageUrl?: string | null
+  hasImage?: boolean | null
+  status: "available" | "member" | "owner"
+  role?: "owner" | "admin" | "editor" | "contributor" | "viewer"
+}
 
 type InviteMemberModalProps = {
-  project: Project;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onMemberAdded: (projectId: string, member: Member) => void;
+  project: Project
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onMemberAdded: (projectId: string, member: Member) => void
   onMemberAddConfirmed: (
     projectId: string,
     tempId: string,
     realMember: Member,
-  ) => void;
-  onMemberRemoved: (projectId: string, memberId: string) => void;
-};
+  ) => void
+  onMemberRemoved: (projectId: string, memberId: string) => void
+}
 
 export function InviteMemberModal({
   project,
@@ -59,29 +59,29 @@ export function InviteMemberModal({
   onMemberAddConfirmed,
   onMemberRemoved,
 }: InviteMemberModalProps) {
-  const { toast } = useToast();
-  const [query, setQuery] = useState("");
-  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
+  const { toast } = useToast()
+  const [query, setQuery] = useState("")
+  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null)
   const [role, setRole] = useState<
     "owner" | "admin" | "editor" | "contributor" | "viewer"
-  >("viewer");
-  const [isPending, startTransition] = useTransition();
+  >("viewer")
+  const [isPending, startTransition] = useTransition()
 
-  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
-  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchRequestIdRef = useRef(0);
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([])
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const searchRequestIdRef = useRef(0)
 
   useEffect(() => {
     if (open) {
-      setQuery("");
-      setSelectedUser(null);
-      setRole("viewer");
-      setSearchResults([]);
-      setShowDropdown(false);
+      setQuery("")
+      setSelectedUser(null)
+      setRole("viewer")
+      setSearchResults([])
+      setShowDropdown(false)
     }
-  }, [open]);
+  }, [open])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -89,59 +89,59 @@ export function InviteMemberModal({
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
-        setShowDropdown(false);
+        setShowDropdown(false)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   useEffect(() => {
-    const trimmed = query.trim();
+    const trimmed = query.trim()
     if (trimmed.length < 2) {
-      setSearchResults([]);
-      setShowDropdown(false);
-      setIsLoadingSearch(false);
-      return;
+      setSearchResults([])
+      setShowDropdown(false)
+      setIsLoadingSearch(false)
+      return
     }
 
-    setIsLoadingSearch(true);
-    setShowDropdown(true);
-    const currentRequestId = ++searchRequestIdRef.current;
+    setIsLoadingSearch(true)
+    setShowDropdown(true)
+    const currentRequestId = ++searchRequestIdRef.current
 
     const timer = setTimeout(async () => {
       try {
-        const result = await searchUsersForInvite(project.id, trimmed);
-        if (currentRequestId !== searchRequestIdRef.current) return;
+        const result = await searchUsersForInvite(project.id, trimmed)
+        if (currentRequestId !== searchRequestIdRef.current) return
 
         if (result.success) {
-          setSearchResults(result.data.slice(0, 8));
+          setSearchResults(result.data.slice(0, 8))
         } else {
-          setSearchResults([]);
+          setSearchResults([])
         }
       } catch (err) {
         if (currentRequestId === searchRequestIdRef.current) {
-          console.error("Failed to search users:", err);
-          setSearchResults([]);
+          console.error("Failed to search users:", err)
+          setSearchResults([])
         }
       } finally {
         if (currentRequestId === searchRequestIdRef.current) {
-          setIsLoadingSearch(false);
+          setIsLoadingSearch(false)
         }
       }
-    }, 300);
+    }, 300)
 
-    return () => clearTimeout(timer);
-  }, [query, project.id]);
+    return () => clearTimeout(timer)
+  }, [query, project.id])
 
   async function handleInvite(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedUser) return;
+    e.preventDefault()
+    if (!selectedUser) return
 
-    const targetEmail = selectedUser.email;
-    const targetName = selectedUser.name;
-    const assignedRole = role;
-    const tempId = `temp-${Date.now()}`;
+    const targetEmail = selectedUser.email
+    const targetName = selectedUser.name
+    const assignedRole = role
+    const tempId = `temp-${Date.now()}`
 
     const tempMember: Member = {
       id: tempId,
@@ -151,26 +151,26 @@ export function InviteMemberModal({
       role: assignedRole,
       imageUrl: selectedUser.imageUrl,
       hasImage: Boolean(selectedUser.imageUrl),
-    };
+    }
 
-    onMemberAdded(project.id, tempMember);
-    onOpenChange(false);
+    onMemberAdded(project.id, tempMember)
+    onOpenChange(false)
 
     startTransition(async () => {
       const result = await addProjectMember(
         project.id,
         { email: targetEmail, role: assignedRole },
         getRealtimeClientId(),
-      );
+      )
 
       if (!result.success) {
-        onMemberRemoved(project.id, tempId);
+        onMemberRemoved(project.id, tempId)
         toast({
           title: "Failed to add member",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
 
       onMemberAddConfirmed(project.id, tempId, {
@@ -181,13 +181,13 @@ export function InviteMemberModal({
         name: targetName,
         imageUrl: selectedUser.imageUrl,
         hasImage: Boolean(selectedUser.imageUrl),
-      });
+      })
 
       toast({
         title: "Member added successfully",
         description: `${targetEmail} added as ${assignedRole}.`,
-      });
-    });
+      })
+    })
   }
 
   return (
@@ -216,13 +216,13 @@ export function InviteMemberModal({
               placeholder="Search by name or email..."
               value={selectedUser ? selectedUser.email : query}
               onChange={(e) => {
-                setSelectedUser(null);
-                setQuery(e.target.value);
-                setShowDropdown(true);
+                setSelectedUser(null)
+                setQuery(e.target.value)
+                setShowDropdown(true)
               }}
               onFocus={() => {
                 if (!selectedUser && query.trim().length >= 2)
-                  setShowDropdown(true);
+                  setShowDropdown(true)
               }}
               disabled={isPending}
               className="h-9 text-xs bg-muted border-input text-foreground rounded-xl w-full focus-visible:ring-1"
@@ -245,14 +245,14 @@ export function InviteMemberModal({
                 ) : (
                   <div className="max-h-[200px] overflow-y-auto divide-y divide-border">
                     {searchResults.map((user) => {
-                      const isSelectable = user.status === "available";
+                      const isSelectable = user.status === "available"
                       return (
                         <div
                           key={user.id}
                           onClick={() => {
-                            if (!isSelectable) return;
-                            setSelectedUser(user);
-                            setShowDropdown(false);
+                            if (!isSelectable) return
+                            setSelectedUser(user)
+                            setShowDropdown(false)
                           }}
                           className={`px-3 py-2.5 flex items-center justify-between transition-colors ${
                             isSelectable
@@ -288,7 +288,7 @@ export function InviteMemberModal({
                             </span>
                           )}
                         </div>
-                      );
+                      )
                     })}
                   </div>
                 )}
@@ -348,5 +348,5 @@ export function InviteMemberModal({
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

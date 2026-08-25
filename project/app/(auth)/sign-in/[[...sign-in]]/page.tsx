@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { SignIn } from "@clerk/nextjs";
-import { Layers } from "lucide-react";
+import { SignIn } from "@clerk/nextjs"
+import { Layers } from "lucide-react"
+import Link from "next/link"
 
 export default function SignInPage() {
   return (
@@ -95,5 +95,5 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

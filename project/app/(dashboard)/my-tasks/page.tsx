@@ -1,19 +1,19 @@
-import Link from "next/link";
-import { queries } from "@/lib/db";
-import { getAuthedUserOrError } from "@/lib/services/auth";
-import { Board, type ListWithTasks } from "@/components/lists/board";
-import { ProjectHeader } from "@/components/projects/project-header";
-import type { CalendarTaskDTO } from "@/types";
+import Link from "next/link"
+import { Board, type ListWithTasks } from "@/components/lists/board"
+import { ProjectHeader } from "@/components/projects/project-header"
+import { queries } from "@/lib/db"
+import { getAuthedUserOrError } from "@/lib/services/auth"
+import type { CalendarTaskDTO } from "@/types"
 
 function toLocalDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}`
 }
 
 export default async function MyTasksPage() {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
     return (
       <div className="p-6 space-y-2">
@@ -27,85 +27,85 @@ export default async function MyTasksPage() {
           Back to projects
         </Link>
       </div>
-    );
+    )
   }
 
-  const userId = authResult.user.id;
+  const userId = authResult.user.id
 
   const assignedTaskRows =
-    await queries.taskAssignees.getAssignedToUserAcrossProjects(userId);
+    await queries.taskAssignees.getAssignedToUserAcrossProjects(userId)
 
   const taskIds: string[] = Array.from(
     new Set(assignedTaskRows.map((t: { id: string }) => t.id)),
-  );
+  )
   const assigneeRows =
-    taskIds.length > 0 ? await queries.taskAssignees.getByTaskIds(taskIds) : [];
+    taskIds.length > 0 ? await queries.taskAssignees.getByTaskIds(taskIds) : []
 
   const assigneesByTask = new Map<
     string,
     {
-      userId: string;
-      name?: string;
-      email?: string;
-      imageUrl?: string | null;
-      hasImage?: boolean | null;
+      userId: string
+      name?: string
+      email?: string
+      imageUrl?: string | null
+      hasImage?: boolean | null
     }[]
-  >();
+  >()
 
   for (const row of assigneeRows) {
-    const arr = assigneesByTask.get(row.taskId) ?? [];
+    const arr = assigneesByTask.get(row.taskId) ?? []
     arr.push({
       userId: row.userId,
       name: row.userName ?? undefined,
       email: row.userEmail ?? undefined,
       imageUrl: row.userImageUrl,
       hasImage: row.userHasImage,
-    });
-    assigneesByTask.set(row.taskId, arr);
+    })
+    assigneesByTask.set(row.taskId, arr)
   }
 
   const tasksWithMeta = assignedTaskRows.map((task: any) => ({
     ...task,
     commentCount: 0,
     assignees: assigneesByTask.get(task.id) ?? [],
-  }));
+  }))
 
-  const todayKey = toLocalDateKey(new Date());
+  const todayKey = toLocalDateKey(new Date())
 
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const endOfWeek = new Date(now);
-  endOfWeek.setDate(now.getDate() + (6 - dayOfWeek));
-  const endOfWeekKey = toLocalDateKey(endOfWeek);
+  const now = new Date()
+  const dayOfWeek = now.getDay()
+  const endOfWeek = new Date(now)
+  endOfWeek.setDate(now.getDate() + (6 - dayOfWeek))
+  const endOfWeekKey = toLocalDateKey(endOfWeek)
 
-  const overdueTasks: typeof tasksWithMeta = [];
-  const dueTodayTasks: typeof tasksWithMeta = [];
-  const dueThisWeekTasks: typeof tasksWithMeta = [];
-  const dueLaterTasks: typeof tasksWithMeta = [];
-  const noDueDateTasks: typeof tasksWithMeta = [];
-  const completedTasks: typeof tasksWithMeta = [];
+  const overdueTasks: typeof tasksWithMeta = []
+  const dueTodayTasks: typeof tasksWithMeta = []
+  const dueThisWeekTasks: typeof tasksWithMeta = []
+  const dueLaterTasks: typeof tasksWithMeta = []
+  const noDueDateTasks: typeof tasksWithMeta = []
+  const completedTasks: typeof tasksWithMeta = []
 
   for (const task of tasksWithMeta) {
     if (task.isCompleted) {
-      completedTasks.push(task);
-      continue;
+      completedTasks.push(task)
+      continue
     }
 
     if (!task.dueDate) {
-      noDueDateTasks.push(task);
-      continue;
+      noDueDateTasks.push(task)
+      continue
     }
 
-    const taskDateKey = toLocalDateKey(new Date(task.dueDate));
+    const taskDateKey = toLocalDateKey(new Date(task.dueDate))
 
     if (taskDateKey < todayKey) {
-      overdueTasks.push(task);
+      overdueTasks.push(task)
     } else if (taskDateKey === todayKey) {
-      dueTodayTasks.push(task);
+      dueTodayTasks.push(task)
     } else if (taskDateKey <= endOfWeekKey) {
-      dueThisWeekTasks.push(task);
+      dueThisWeekTasks.push(task)
     } else {
-      dueLaterTasks.push(task);
+      dueLaterTasks.push(task)
     }
   }
 
@@ -164,11 +164,9 @@ export default async function MyTasksPage() {
       updatedAt: new Date(),
       tasks: completedTasks,
     },
-  ];
+  ]
 
-  const sortedLists = [...lists].sort(
-    (a, b) => b.tasks.length - a.tasks.length,
-  );
+  const sortedLists = [...lists].sort((a, b) => b.tasks.length - a.tasks.length)
 
   const upcomingTasksForCalendar: CalendarTaskDTO[] = tasksWithMeta
     .filter((t: any): t is typeof t & { dueDate: Date } => t.dueDate !== null)
@@ -180,7 +178,7 @@ export default async function MyTasksPage() {
       projectId: t.projectId,
       projectName: t.projectName,
       isCompleted: t.isCompleted,
-    }));
+    }))
 
   const placeholderProject = {
     id: "my-tasks",
@@ -191,7 +189,7 @@ export default async function MyTasksPage() {
     updatedAt: new Date(),
     isArchived: false,
     dueDate: null,
-  };
+  }
 
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden space-y-4">
@@ -217,5 +215,5 @@ export default async function MyTasksPage() {
         />
       </div>
     </div>
-  );
+  )
 }

@@ -1,5 +1,3 @@
-import React from "react";
-
 export function GzLogo({ className = "w-10 h-10" }: { className?: string }) {
   return (
     <div
@@ -19,5 +17,5 @@ export function GzLogo({ className = "w-10 h-10" }: { className?: string }) {
         <path d="M42 46H86L54 78H88V84H36L68 52H42V46Z" fill="currentColor" />
       </svg>
     </div>
-  );
+  )
 }

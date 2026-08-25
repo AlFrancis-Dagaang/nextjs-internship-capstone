@@ -1,68 +1,67 @@
-"use server";
+"use server"
 
-import { queries } from "@/lib/db";
-import { taskCreateSchema, taskUpdateSchema } from "@/lib/validations";
-import { getAuthedUserOrError } from "@/lib/services/auth";
+import { revalidatePath } from "next/cache"
+import type { TaskWithCommentCount } from "@/components/lists/board"
+import { queries } from "@/lib/db"
+import { publishBoardEvent } from "@/lib/realtime/server"
+import { logTaskActivity } from "@/lib/services/activity"
+import { resolveAssigneeId } from "@/lib/services/assignee"
+import { getAuthedUserOrError } from "@/lib/services/auth"
+import { notifyTaskAssignees } from "@/lib/services/notifications"
 import {
+  assertListContributeAccess,
   assertListEditAccess,
   assertListViewAccess,
-  assertListContributeAccess,
   assertProjectViewAccess,
-} from "@/lib/services/ownership";
-import { resolveAssigneeId } from "@/lib/services/assignee";
-import { logTaskActivity } from "@/lib/services/activity";
-import { Task } from "../db/schema";
-import { revalidatePath } from "next/cache";
-import type { TaskWithCommentCount } from "@/components/lists/board";
-import { getTaskAssignees } from "./task-assignees";
-import { notifyTaskAssignees } from "@/lib/services/notifications";
-import { publishBoardEvent } from "@/lib/realtime/server";
+} from "@/lib/services/ownership"
+import { taskCreateSchema, taskUpdateSchema } from "@/lib/validations"
+import type { Task } from "../db/schema"
 
 type ActionResult<T> =
   | { success: true; data: T }
-  | { success: false; error: string; fieldErrors?: Record<string, string[]> };
+  | { success: false; error: string; fieldErrors?: Record<string, string[]> }
 
-type CreateTaskInput = { assignToMe?: boolean } & Record<string, unknown>;
+type CreateTaskInput = { assignToMe?: boolean } & Record<string, unknown>
 
 export async function createTask(
   rawInput: CreateTaskInput,
   originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.tasks.create>>>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const { assignToMe, ...rest } = rawInput;
-  const parsed = taskCreateSchema.safeParse(rest);
+  const { assignToMe, ...rest } = rawInput
+  const parsed = taskCreateSchema.safeParse(rest)
   if (!parsed.success) {
     return {
       success: false,
       error: "Invalid input",
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    }
   }
 
   const access = await assertListEditAccess(
     parsed.data.listId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
   const assigneeResult = resolveAssigneeId(
     parsed.data.assigneeId,
     assignToMe,
     access.project.ownerId,
-  );
+  )
   if (!assigneeResult.ok) {
-    return { success: false, error: assigneeResult.error };
+    return { success: false, error: assigneeResult.error }
   }
 
   // Position is always computed server-side, same as #16 — append-only.
-  const existingTasks = await queries.tasks.getByList(parsed.data.listId);
-  const position = existingTasks.length;
+  const existingTasks = await queries.tasks.getByList(parsed.data.listId)
+  const position = existingTasks.length
 
   const task = await queries.tasks.create({
     title: parsed.data.title,
@@ -72,11 +71,11 @@ export async function createTask(
     priority: parsed.data.priority,
     dueDate: parsed.data.dueDate,
     position,
-  });
+  })
 
-  await logTaskActivity(task.id, authResult.user.id, "created");
+  await logTaskActivity(task.id, authResult.user.id, "created")
 
-  revalidatePath(`/projects/${access.project.id}`);
+  revalidatePath(`/projects/${access.project.id}`)
 
   // #70 item 7 — a brand-new task can't have join-table assignees or
   // comments yet (this function only sets the legacy single assigneeId
@@ -86,66 +85,66 @@ export async function createTask(
     ...task,
     commentCount: 0,
     assignees: [],
-  };
+  }
   await publishBoardEvent(
     access.project.id,
     { type: "task_created", task: enrichedTask },
     originClientId,
-  );
+  )
 
-  return { success: true, data: task };
+  return { success: true, data: task }
 }
 
 export async function getTasksByList(
   listId: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.tasks.getByList>>>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const access = await assertListViewAccess(listId, authResult.user.id);
+  const access = await assertListViewAccess(listId, authResult.user.id)
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
-  const tasks = await queries.tasks.getByList(listId);
-  return { success: true, data: tasks };
+  const tasks = await queries.tasks.getByList(listId)
+  return { success: true, data: tasks }
 }
 
-type UpdateTaskInput = { assignToMe?: boolean } & Record<string, unknown>;
+type UpdateTaskInput = { assignToMe?: boolean } & Record<string, unknown>
 
 export async function updateTask(
   id: string,
   rawInput: UpdateTaskInput,
   originClientId?: string,
 ): Promise<ActionResult<Awaited<ReturnType<typeof queries.tasks.update>>>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const { assignToMe, ...rest } = rawInput;
-  const parsed = taskUpdateSchema.safeParse(rest);
+  const { assignToMe, ...rest } = rawInput
+  const parsed = taskUpdateSchema.safeParse(rest)
   if (!parsed.success) {
     return {
       success: false,
       error: "Invalid input",
       fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    }
   }
 
-  const existingTask = await queries.tasks.getById(id);
+  const existingTask = await queries.tasks.getById(id)
   if (!existingTask) {
-    return { success: false, error: "Not found" };
+    return { success: false, error: "Not found" }
   }
 
   const access = await assertListEditAccess(
     existingTask.listId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
   // `position` and `listId` are stripped even though taskUpdateSchema
@@ -156,100 +155,100 @@ export async function updateTask(
     listId: _ignoredListId,
     assigneeId: requestedAssigneeId,
     ...safeUpdate
-  } = parsed.data;
+  } = parsed.data
 
-  let finalAssigneeId = existingTask.assigneeId;
+  let finalAssigneeId = existingTask.assigneeId
   if (assignToMe !== undefined || requestedAssigneeId !== undefined) {
     const assigneeResult = resolveAssigneeId(
       requestedAssigneeId,
       assignToMe,
       access.project.ownerId,
-    );
+    )
     if (!assigneeResult.ok) {
-      return { success: false, error: assigneeResult.error };
+      return { success: false, error: assigneeResult.error }
     }
-    finalAssigneeId = assigneeResult.assigneeId;
+    finalAssigneeId = assigneeResult.assigneeId
   }
 
   const updated = await queries.tasks.update(id, {
     ...safeUpdate,
     assigneeId: finalAssigneeId,
-  });
+  })
 
-  const changedFields = Object.keys(safeUpdate);
+  const changedFields = Object.keys(safeUpdate)
 
   if (changedFields.includes("priority")) {
     await logTaskActivity(updated.id, authResult.user.id, "priority_changed", {
       from: existingTask.priority,
       to: updated.priority,
-    });
+    })
   } else if (changedFields.includes("dueDate")) {
     await logTaskActivity(updated.id, authResult.user.id, "due_date_changed", {
       from: existingTask.dueDate,
       to: updated.dueDate,
-    });
+    })
   } else if (changedFields.includes("description")) {
     await logTaskActivity(
       updated.id,
       authResult.user.id,
       "description_changed",
       {},
-    );
+    )
   } else if (finalAssigneeId !== existingTask.assigneeId) {
     await logTaskActivity(updated.id, authResult.user.id, "assignee_changed", {
       from: existingTask.assigneeId,
       to: finalAssigneeId,
-    });
+    })
   } else {
     await logTaskActivity(updated.id, authResult.user.id, "updated", {
       fields: changedFields,
-    });
+    })
   }
 
-  revalidatePath(`/projects/${access.project.id}`);
+  revalidatePath(`/projects/${access.project.id}`)
 
   await publishBoardEvent(
     access.project.id,
     { type: "task_updated", task: updated },
     originClientId,
-  );
+  )
 
-  return { success: true, data: updated };
+  return { success: true, data: updated }
 }
 
 export async function deleteTask(
   id: string,
   originClientId?: string,
 ): Promise<ActionResult<null>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const existingTask = await queries.tasks.getById(id);
+  const existingTask = await queries.tasks.getById(id)
   if (!existingTask) {
-    return { success: false, error: "Not found" };
+    return { success: false, error: "Not found" }
   }
 
   const access = await assertListEditAccess(
     existingTask.listId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
-  await queries.tasks.delete(id);
+  await queries.tasks.delete(id)
 
-  revalidatePath(`/projects/${access.project.id}`);
+  revalidatePath(`/projects/${access.project.id}`)
 
   await publishBoardEvent(
     access.project.id,
     { type: "task_deleted", taskId: id, listId: existingTask.listId },
     originClientId,
-  );
+  )
 
-  return { success: true, data: null };
+  return { success: true, data: null }
 }
 
 export async function moveTaskToList(
@@ -258,66 +257,66 @@ export async function moveTaskToList(
   newPosition?: number,
   originClientId?: string,
 ): Promise<ActionResult<{ movedTask: Task; affectedTasks: Task[] }>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const existingTask = await queries.tasks.getById(taskId);
+  const existingTask = await queries.tasks.getById(taskId)
   if (!existingTask) {
-    return { success: false, error: "Not found" };
+    return { success: false, error: "Not found" }
   }
 
   const sourceAccess = await assertListContributeAccess(
     existingTask.listId,
     authResult.user.id,
-  );
+  )
   if ("error" in sourceAccess) {
-    return { success: false, error: sourceAccess.error ?? "Unknown error" };
+    return { success: false, error: sourceAccess.error ?? "Unknown error" }
   }
 
   const destAccess = await assertListContributeAccess(
     newListId,
     authResult.user.id,
-  );
+  )
   if ("error" in destAccess) {
-    return { success: false, error: destAccess.error ?? "Unknown error" };
+    return { success: false, error: destAccess.error ?? "Unknown error" }
   }
 
   if (sourceAccess.list.projectId !== destAccess.list.projectId) {
     return {
       success: false,
       error: "Cannot move a task to a list in a different project",
-    };
+    }
   }
 
-  const destTasksAll = await queries.tasks.getByList(newListId);
-  const destTasks = destTasksAll.filter((t) => t.id !== taskId);
+  const destTasksAll = await queries.tasks.getByList(newListId)
+  const destTasks = destTasksAll.filter((t) => t.id !== taskId)
 
   const clampedPosition =
     newPosition !== undefined
       ? Math.max(0, Math.min(newPosition, destTasks.length))
-      : destTasks.length;
+      : destTasks.length
 
-  const reordered = [...destTasks];
-  reordered.splice(clampedPosition, 0, existingTask);
+  const reordered = [...destTasks]
+  reordered.splice(clampedPosition, 0, existingTask)
 
-  let updatedTask: Task | undefined;
+  let updatedTask: Task | undefined
   const updates = reordered.map(async (t, index) => {
     if (t.id === taskId) {
       updatedTask = await queries.tasks.update(taskId, {
         listId: newListId,
         position: index,
-      });
+      })
     } else if (t.position !== index) {
-      await queries.tasks.update(t.id, { position: index });
+      await queries.tasks.update(t.id, { position: index })
     }
-  });
+  })
 
-  await Promise.all(updates);
+  await Promise.all(updates)
 
-  const sourceListId = existingTask.listId;
-  const movedAcrossLists = sourceListId !== newListId;
+  const sourceListId = existingTask.listId
+  const movedAcrossLists = sourceListId !== newListId
 
   if (movedAcrossLists) {
     await logTaskActivity(taskId, authResult.user.id, "moved", {
@@ -325,13 +324,13 @@ export async function moveTaskToList(
       toListId: newListId,
       fromListName: sourceAccess.list.name,
       toListName: destAccess.list.name,
-    });
+    })
   } else if (existingTask.position !== updatedTask?.position) {
     await logTaskActivity(taskId, authResult.user.id, "moved", {
       fromPosition: existingTask.position,
       toPosition: updatedTask?.position,
       listName: destAccess.list.name,
-    });
+    })
   }
 
   await notifyTaskAssignees({
@@ -341,16 +340,16 @@ export async function moveTaskToList(
     message: `Task moved to "${destAccess.list.name}"`,
     actorId: authResult.user.id,
     excludeUserId: authResult.user.id,
-  });
+  })
 
   // Fetch the authoritative, fully up-to-date state for both affected
   // lists so the client can apply it directly with no local guessing.
-  const destTasksFinal = await queries.tasks.getByList(newListId);
+  const destTasksFinal = await queries.tasks.getByList(newListId)
   const sourceTasksFinal = movedAcrossLists
     ? await queries.tasks.getByList(sourceListId)
-    : [];
+    : []
 
-  revalidatePath(`/projects/${destAccess.list.projectId}`);
+  revalidatePath(`/projects/${destAccess.list.projectId}`)
 
   await publishBoardEvent(
     destAccess.list.projectId,
@@ -360,7 +359,7 @@ export async function moveTaskToList(
       affectedTasks: [...sourceTasksFinal, ...destTasksFinal],
     },
     originClientId,
-  );
+  )
 
   return {
     success: true,
@@ -368,7 +367,7 @@ export async function moveTaskToList(
       movedTask: updatedTask!,
       affectedTasks: [...sourceTasksFinal, ...destTasksFinal],
     },
-  };
+  }
 }
 
 export async function getTasksByProject(
@@ -376,44 +375,44 @@ export async function getTasksByProject(
 ): Promise<
   ActionResult<Awaited<ReturnType<typeof queries.tasks.getByProject>>>
 > {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const access = await assertProjectViewAccess(projectId, authResult.user.id);
+  const access = await assertProjectViewAccess(projectId, authResult.user.id)
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
-  const tasks = await queries.tasks.getByProject(projectId);
-  return { success: true, data: tasks };
+  const tasks = await queries.tasks.getByProject(projectId)
+  return { success: true, data: tasks }
 }
 
 export async function archiveTask(
   id: string,
   originClientId?: string,
 ): Promise<ActionResult<Task>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const existingTask = await queries.tasks.getById(id);
+  const existingTask = await queries.tasks.getById(id)
   if (!existingTask) {
-    return { success: false, error: "Not found" };
+    return { success: false, error: "Not found" }
   }
 
   const access = await assertListEditAccess(
     existingTask.listId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
-  const updated = await queries.tasks.update(id, { isArchived: true });
-  await logTaskActivity(id, authResult.user.id, "archived");
+  const updated = await queries.tasks.update(id, { isArchived: true })
+  await logTaskActivity(id, authResult.user.id, "archived")
 
   await notifyTaskAssignees({
     taskId: id,
@@ -422,38 +421,38 @@ export async function archiveTask(
     message: `Task "${existingTask.title}" was archived`,
     actorId: authResult.user.id,
     excludeUserId: authResult.user.id,
-  });
-  revalidatePath(`/projects/${access.project.id}`);
+  })
+  revalidatePath(`/projects/${access.project.id}`)
 
   await publishBoardEvent(
     access.project.id,
     { type: "task_archived", taskId: id },
     originClientId,
-  );
+  )
 
-  return { success: true, data: updated };
+  return { success: true, data: updated }
 }
 
 export async function restoreTask(
   id: string,
   originClientId?: string,
 ): Promise<ActionResult<TaskWithCommentCount>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const existingTask = await queries.tasks.getById(id);
+  const existingTask = await queries.tasks.getById(id)
   if (!existingTask) {
-    return { success: false, error: "Not found" };
+    return { success: false, error: "Not found" }
   }
 
   const access = await assertListEditAccess(
     existingTask.listId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
   // Bug fix: appending with `currentListTasks.length` collided with
@@ -462,70 +461,70 @@ export async function restoreTask(
   // reassign positions 0..n contiguously for the whole list — same
   // approach moveTaskToList already uses. Self-heals any pre-existing
   // gaps in this list as a side effect.
-  const currentListTasks = await queries.tasks.getByList(existingTask.listId);
-  const reordered = [...currentListTasks, existingTask];
+  const currentListTasks = await queries.tasks.getByList(existingTask.listId)
+  const reordered = [...currentListTasks, existingTask]
 
-  let updatedTask: Task | undefined;
+  let updatedTask: Task | undefined
   const updates = reordered.map(async (t, index) => {
     if (t.id === id) {
       updatedTask = await queries.tasks.update(id, {
         isArchived: false,
         position: index,
-      });
+      })
     } else if (t.position !== index) {
-      await queries.tasks.update(t.id, { position: index });
+      await queries.tasks.update(t.id, { position: index })
     }
-  });
+  })
 
-  await Promise.all(updates);
+  await Promise.all(updates)
 
-  await logTaskActivity(id, authResult.user.id, "restored");
-  revalidatePath(`/projects/${access.project.id}`);
+  await logTaskActivity(id, authResult.user.id, "restored")
+  revalidatePath(`/projects/${access.project.id}`)
 
   const [assigneeRows, commentRows] = await Promise.all([
     queries.taskAssignees.getByTask(id),
     queries.comments.getByTask(id),
-  ]);
+  ])
 
   const assignees = assigneeRows.map((row) => ({
     userId: row.userId,
     name: row.userName,
     email: row.userEmail,
-  }));
+  }))
 
   const enrichedTask: TaskWithCommentCount = {
     ...updatedTask!,
     commentCount: commentRows.length,
     assignees,
-  };
+  }
 
   await publishBoardEvent(
     access.project.id,
     { type: "task_restored", task: enrichedTask },
     originClientId,
-  );
+  )
 
   return {
     success: true,
     data: enrichedTask,
-  };
+  }
 }
 
 // inside your tasks action file (e.g., lib/actions/tasks.ts)
 export async function getArchivedTasksByProject(
   projectId: string,
 ): Promise<ActionResult<TaskWithCommentCount[]>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const access = await assertProjectViewAccess(projectId, authResult.user.id);
+  const access = await assertProjectViewAccess(projectId, authResult.user.id)
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
-  const archived = await queries.tasks.getArchivedByProject(projectId);
+  const archived = await queries.tasks.getArchivedByProject(projectId)
 
   // Fetch assignees and comment counts for each archived task concurrently
   const archivedWithDetails = await Promise.all(
@@ -533,7 +532,7 @@ export async function getArchivedTasksByProject(
       const [assigneeRows, commentRows] = await Promise.all([
         queries.taskAssignees.getByTask(task.id).catch(() => []),
         queries.comments.getByTask(task.id).catch(() => []),
-      ]);
+      ])
 
       const assignees = assigneeRows.map((row: any) => ({
         userId: row.userId,
@@ -541,51 +540,51 @@ export async function getArchivedTasksByProject(
         email: row.userEmail,
         imageUrl: row.userImageUrl,
         hasImage: row.userHasImage,
-      }));
+      }))
 
       return {
         ...task,
         commentCount: commentRows.length,
         assignees,
-      };
+      }
     }),
-  );
+  )
 
-  return { success: true, data: archivedWithDetails };
+  return { success: true, data: archivedWithDetails }
 }
 
 export async function toggleTaskComplete(
   id: string,
   originClientId?: string,
 ): Promise<ActionResult<Task>> {
-  const authResult = await getAuthedUserOrError();
+  const authResult = await getAuthedUserOrError()
   if ("error" in authResult) {
-    return { success: false, error: authResult.error ?? "Unknown error" };
+    return { success: false, error: authResult.error ?? "Unknown error" }
   }
 
-  const existingTask = await queries.tasks.getById(id);
+  const existingTask = await queries.tasks.getById(id)
   if (!existingTask) {
-    return { success: false, error: "Not found" };
+    return { success: false, error: "Not found" }
   }
 
   const access = await assertListContributeAccess(
     existingTask.listId,
     authResult.user.id,
-  );
+  )
   if ("error" in access) {
-    return { success: false, error: access.error ?? "Unknown error" };
+    return { success: false, error: access.error ?? "Unknown error" }
   }
 
-  const newValue = !existingTask.isCompleted;
-  const updated = await queries.tasks.update(id, { isCompleted: newValue });
+  const newValue = !existingTask.isCompleted
+  const updated = await queries.tasks.update(id, { isCompleted: newValue })
 
   await logTaskActivity(
     id,
     authResult.user.id,
     newValue ? "completed" : "reopened",
-  );
+  )
 
-  revalidatePath(`/projects/${access.project.id}`);
+  revalidatePath(`/projects/${access.project.id}`)
 
   // #70 item 7 — not in the original 5-category list, but isCompleted is
   // a plain task field, same shape as any other task_updated change, so
@@ -594,7 +593,7 @@ export async function toggleTaskComplete(
     access.project.id,
     { type: "task_updated", task: updated },
     originClientId,
-  );
+  )
 
-  return { success: true, data: updated };
+  return { success: true, data: updated }
 }

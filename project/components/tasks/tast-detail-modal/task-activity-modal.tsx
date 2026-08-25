@@ -1,110 +1,110 @@
 // components/tasks/tast-detail-modal/task-activity-modal.tsx
-"use client";
+"use client"
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2 } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { getTaskActivityPage } from "@/lib/actions/taskActivity";
+} from "@/components/ui/select"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { getTaskActivityPage } from "@/lib/actions/taskActivity"
 import {
-  formatRelativeTime,
-  formatActivityLabel,
-  groupActivityByDay,
   ACTION_LABELS,
-} from "@/lib/services/task-activity-helpers";
-import { UserAvatar } from "@/components/ui/user-avatar";
-import type { ActivityWithActor } from "./task-activity-feed";
+  formatActivityLabel,
+  formatRelativeTime,
+  groupActivityByDay,
+} from "@/lib/services/task-activity-helpers"
+import type { ActivityWithActor } from "./task-activity-feed"
 
-const PAGE_SIZE = 30;
+const PAGE_SIZE = 30
 
 export function TaskActivityModal({
   taskId,
   open,
   onOpenChange,
 }: {
-  taskId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  taskId: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
-  const [items, setItems] = useState<ActivityWithActor[]>([]);
+  const [items, setItems] = useState<ActivityWithActor[]>([])
   const [cursor, setCursor] = useState<{
-    createdAt: string;
-    id: string;
-  } | null>(null);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    createdAt: string
+    id: string
+  } | null>(null)
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const [nameInput, setNameInput] = useState("");
-  const [nameQuery, setNameQuery] = useState("");
-  const [actionFilter, setActionFilter] = useState("all");
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [nameInput, setNameInput] = useState("")
+  const [nameQuery, setNameQuery] = useState("")
+  const [actionFilter, setActionFilter] = useState("all")
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setNameQuery(nameInput.trim()), 300);
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setNameQuery(nameInput.trim()), 300)
     return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [nameInput]);
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [nameInput])
 
   async function loadPage(reset: boolean) {
     if (reset) {
-      setItems([]);
-      setCursor(null);
-      setHasLoadedOnce(false);
+      setItems([])
+      setCursor(null)
+      setHasLoadedOnce(false)
     }
-    setIsLoadingMore(true);
-    setError(null);
+    setIsLoadingMore(true)
+    setError(null)
 
     const result = await getTaskActivityPage(taskId, {
       limit: PAGE_SIZE,
       cursor: reset ? undefined : (cursor ?? undefined),
       actorName: nameQuery || undefined,
       action: actionFilter === "all" ? undefined : actionFilter,
-    });
+    })
 
-    setIsLoadingMore(false);
-    setHasLoadedOnce(true);
+    setIsLoadingMore(false)
+    setHasLoadedOnce(true)
 
     if (!result.success) {
-      setError(result.error);
-      return;
+      setError(result.error)
+      return
     }
 
     setItems((prev) =>
       reset ? result.data.items : [...prev, ...result.data.items],
-    );
-    setCursor(result.data.nextCursor);
+    )
+    setCursor(result.data.nextCursor)
   }
 
   useEffect(() => {
-    if (!open) return;
-    loadPage(true);
-  }, [open, taskId, nameQuery, actionFilter]);
+    if (!open) return
+    loadPage(true)
+  }, [open, taskId, nameQuery, actionFilter])
 
   useEffect(() => {
     if (!open) {
-      setNameInput("");
-      setNameQuery("");
-      setActionFilter("all");
+      setNameInput("")
+      setNameQuery("")
+      setActionFilter("all")
     }
-  }, [open]);
+  }, [open])
 
-  const groups = useMemo(() => groupActivityByDay(items), [items]);
+  const groups = useMemo(() => groupActivityByDay(items), [items])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -183,8 +183,8 @@ export function TaskActivityModal({
                 </div>
                 <ul className="space-y-4">
                   {group.entries.map((entry) => {
-                    const actorName = entry.actor?.name ?? "Unknown user";
-                    const actorId = entry.actor?.id ?? actorName;
+                    const actorName = entry.actor?.name ?? "Unknown user"
+                    const actorId = entry.actor?.id ?? actorName
                     return (
                       <li key={entry.id} className="flex items-start gap-3">
                         <UserAvatar
@@ -206,7 +206,7 @@ export function TaskActivityModal({
                           </span>
                         </div>
                       </li>
-                    );
+                    )
                   })}
                 </ul>
               </div>
@@ -236,5 +236,5 @@ export function TaskActivityModal({
         )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }

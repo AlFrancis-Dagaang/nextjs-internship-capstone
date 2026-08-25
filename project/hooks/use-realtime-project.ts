@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { getPusherClient, getRealtimeClientId } from "@/lib/realtime/client";
-import type { ProjectRealtimeEvent } from "@/lib/realtime/server";
+import { useEffect } from "react"
+import { getPusherClient, getRealtimeClientId } from "@/lib/realtime/client"
+import type { ProjectRealtimeEvent } from "@/lib/realtime/server"
 
 /**
  * Subscribes to the same project-{projectId} channel useRealtimeBoard uses,
@@ -14,27 +14,27 @@ export function useRealtimeProject(
   onEvent: (event: ProjectRealtimeEvent) => void,
 ) {
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId) return
 
-    const pusher = getPusherClient();
-    const channel = pusher.subscribe(`project-${projectId}`);
-    const clientId = getRealtimeClientId();
+    const pusher = getPusherClient()
+    const channel = pusher.subscribe(`project-${projectId}`)
+    const clientId = getRealtimeClientId()
 
     const handler = (
       event: ProjectRealtimeEvent & { originClientId?: string },
     ) => {
-      if (event.originClientId && event.originClientId === clientId) return;
-      onEvent(event);
-    };
+      if (event.originClientId && event.originClientId === clientId) return
+      onEvent(event)
+    }
 
-    channel.bind("project-event", handler);
+    channel.bind("project-event", handler)
 
     return () => {
-      channel.unbind("project-event", handler);
+      channel.unbind("project-event", handler)
       // Note: if useRealtimeBoard is also subscribed to this same channel
       // elsewhere on the page, calling unsubscribe here is safe — Pusher
       // reference-counts subscribe/unsubscribe per channel name.
-      pusher.unsubscribe(`project-${projectId}`);
-    };
-  }, [projectId, onEvent]);
+      pusher.unsubscribe(`project-${projectId}`)
+    }
+  }, [projectId, onEvent])
 }

@@ -1,25 +1,25 @@
 // components/team/modals/delete-team-modal.tsx
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { deleteTeam } from "@/lib/actions/team";
-import { useToast } from "@/hooks/use-toast";
+} from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
+import { deleteTeam } from "@/lib/actions/team"
 
 type DeleteTeamModalProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: (teamId: string) => void;
-  teamId: string;
-  teamName: string;
-};
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: (teamId: string) => void
+  teamId: string
+  teamName: string
+}
 
 export function DeleteTeamModal({
   isOpen,
@@ -28,42 +28,42 @@ export function DeleteTeamModal({
   teamId,
   teamName,
 }: DeleteTeamModalProps) {
-  const { toast } = useToast();
-  const [confirmed, setConfirmed] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast()
+  const [confirmed, setConfirmed] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    if (isOpen) setConfirmed(false);
-  }, [isOpen]);
+    if (isOpen) setConfirmed(false)
+  }, [isOpen])
 
   async function handleConfirmDelete() {
-    setIsDeleting(true);
+    setIsDeleting(true)
     try {
-      const result = await deleteTeam(teamId);
+      const result = await deleteTeam(teamId)
 
-      if (!result || !result.success) {
+      if (!result?.success) {
         toast({
           title: "Failed to delete team",
           description: result?.error || "Action was blocked or failed.",
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
 
       toast({
         title: "Team deleted",
         description: `"${teamName}" was permanently deleted.`,
-      });
-      onClose();
-      onSuccess(teamId);
+      })
+      onClose()
+      onSuccess(teamId)
     } catch {
       toast({
         title: "Failed to delete team",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(false)
     }
   }
 
@@ -127,5 +127,5 @@ export function DeleteTeamModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { getPusherClient } from "@/lib/realtime/client";
-import type { NotificationRealtimePayload } from "@/lib/realtime/server";
+import { useEffect } from "react"
+import { getPusherClient } from "@/lib/realtime/client"
+import type { NotificationRealtimePayload } from "@/lib/realtime/server"
 
 /**
  * Subscribes to `user-{userId}` and calls onNotification for each incoming
@@ -14,20 +14,20 @@ export function useRealtimeNotifications(
   onNotification: (notification: NotificationRealtimePayload) => void,
 ) {
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return
 
-    const pusher = getPusherClient();
-    const channel = pusher.subscribe(`user-${userId}`);
+    const pusher = getPusherClient()
+    const channel = pusher.subscribe(`user-${userId}`)
 
     const handler = (notification: NotificationRealtimePayload) => {
-      onNotification(notification);
-    };
+      onNotification(notification)
+    }
 
-    channel.bind("notification", handler);
+    channel.bind("notification", handler)
 
     return () => {
-      channel.unbind("notification", handler);
-      pusher.unsubscribe(`user-${userId}`);
-    };
-  }, [userId, onNotification]);
+      channel.unbind("notification", handler)
+      pusher.unsubscribe(`user-${userId}`)
+    }
+  }, [userId, onNotification])
 }

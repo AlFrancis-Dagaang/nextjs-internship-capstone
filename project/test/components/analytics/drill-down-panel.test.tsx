@@ -1,6 +1,5 @@
-import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
-import { DrillDownPanel } from "@/components/analytics/drill-down-panel";
+import { render, screen, waitFor } from "@testing-library/react"
+import { DrillDownPanel } from "@/components/analytics/drill-down-panel"
 
 // Mock server actions for drill-downs
 jest.mock("@/lib/actions/analytics", () => ({
@@ -30,7 +29,7 @@ jest.mock("@/lib/actions/analytics", () => ({
   getVelocityDrillDown: jest.fn(),
   getActiveUsersDrillDown: jest.fn(),
   getAvgTaskTimeDrillDown: jest.fn(),
-}));
+}))
 
 describe("DrillDownPanel", () => {
   it("renders project drill-down data correctly when requested", async () => {
@@ -43,14 +42,14 @@ describe("DrillDownPanel", () => {
         endDate="2026-06-30"
         projectId={null}
       />,
-    );
+    )
 
-    expect(screen.getByText("Loading details...")).toBeInTheDocument();
+    expect(screen.getByText("Loading details...")).toBeInTheDocument()
 
     await waitFor(() => {
-      expect(screen.getByText("Project: Alpha Project")).toBeInTheDocument();
-      expect(screen.getByText("Build login screen")).toBeInTheDocument();
-      expect(screen.getByText("Setup database")).toBeInTheDocument();
-    });
-  });
-});
+      expect(screen.getByText("Project: Alpha Project")).toBeInTheDocument()
+      expect(screen.getByText("Build login screen")).toBeInTheDocument()
+      expect(screen.getByText("Setup database")).toBeInTheDocument()
+    })
+  })
+})

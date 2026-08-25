@@ -1,11 +1,11 @@
 // components/layout/page-header.tsx
-import React from "react";
+import type React from "react"
 
 type PageHeaderProps = {
-  title: string;
-  description?: string;
-  children?: React.ReactNode;
-};
+  title: string
+  description?: string
+  children?: React.ReactNode
+}
 
 export function PageHeader({ title, description, children }: PageHeaderProps) {
   return (
@@ -26,5 +26,5 @@ export function PageHeader({ title, description, children }: PageHeaderProps) {
         </div>
       )}
     </div>
-  );
+  )
 }

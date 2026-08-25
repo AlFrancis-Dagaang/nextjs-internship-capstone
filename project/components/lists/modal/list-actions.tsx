@@ -1,25 +1,25 @@
 // components/projects/modal/list-actions.tsx
-"use client";
+"use client"
 
-import { useState, useRef, useEffect } from "react";
 import {
-  MoreHorizontal,
   ChevronLeft,
-  X,
   Edit2,
+  MoreHorizontal,
   Move,
   Trash2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+  X,
+} from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { moveList } from "@/lib/actions/lists";
-import { List } from "@/lib/db/schema";
+} from "@/components/ui/select"
+import { moveList } from "@/lib/actions/lists"
+import type { List } from "@/lib/db/schema"
 
 export function ListActions({
   listId,
@@ -30,48 +30,48 @@ export function ListActions({
   onDelete,
   onMoved,
 }: {
-  listId: string;
-  listName: string;
-  currentPosition: number;
-  totalLists: number;
-  onRename: () => void;
-  onDelete: () => void;
-  onMoved?: (updatedLists: List[]) => void;
+  listId: string
+  listName: string
+  currentPosition: number
+  totalLists: number
+  onRename: () => void
+  onDelete: () => void
+  onMoved?: (updatedLists: List[]) => void
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [view, setView] = useState<"menu" | "move">("menu");
-  const [position, setPosition] = useState("1");
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false)
+  const [view, setView] = useState<"menu" | "move">("menu")
+  const [position, setPosition] = useState("1")
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setPosition(String(currentPosition + 1));
-  }, [currentPosition]);
+    setPosition(String(currentPosition + 1))
+  }, [currentPosition])
 
   // Close when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node;
+      const target = event.target as Node
       if (menuRef.current && !menuRef.current.contains(target)) {
         const isRadixPortal = (target as Element).closest?.(
           "[data-radix-popper-content-wrapper]",
-        );
-        if (isRadixPortal) return;
+        )
+        if (isRadixPortal) return
 
-        setIsOpen(false);
-        setTimeout(() => setView("menu"), 150);
+        setIsOpen(false)
+        setTimeout(() => setView("menu"), 150)
       }
     }
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside)
     }
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isOpen])
 
   const positionOptions = Array.from({ length: totalLists }, (_, i) =>
     String(i + 1),
-  );
+  )
 
   return (
     <div className="relative" ref={menuRef}>
@@ -79,8 +79,8 @@ export function ListActions({
         variant="ghost"
         size="icon"
         onClick={() => {
-          setIsOpen(!isOpen);
-          if (!isOpen) setView("menu");
+          setIsOpen(!isOpen)
+          if (!isOpen) setView("menu")
         }}
         className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg"
       >
@@ -103,9 +103,9 @@ export function ListActions({
 
               <button
                 onClick={() => {
-                  setIsOpen(false);
-                  setView("menu");
-                  onRename();
+                  setIsOpen(false)
+                  setView("menu")
+                  onRename()
                 }}
                 className="w-full text-left px-2.5 py-2 text-xs text-foreground hover:bg-secondary rounded-xl transition-colors flex items-center space-x-2.5 font-medium"
               >
@@ -124,9 +124,9 @@ export function ListActions({
               <div className="border-t border-border pt-1 mt-1">
                 <button
                   onClick={() => {
-                    setIsOpen(false);
-                    setView("menu");
-                    onDelete();
+                    setIsOpen(false)
+                    setView("menu")
+                    onDelete()
                   }}
                   className="w-full text-left px-2.5 py-2 text-xs text-destructive hover:bg-destructive/10 rounded-xl transition-colors flex items-center space-x-2.5 font-medium"
                 >
@@ -184,10 +184,10 @@ export function ListActions({
                     const result = await moveList(
                       listId,
                       parseInt(position, 10) - 1,
-                    );
-                    setIsOpen(false);
-                    setView("menu");
-                    if (result.success) onMoved?.(result.data);
+                    )
+                    setIsOpen(false)
+                    setView("menu")
+                    if (result.success) onMoved?.(result.data)
                   }}
                 >
                   Confirm Move
@@ -198,5 +198,5 @@ export function ListActions({
         </div>
       )}
     </div>
-  );
+  )
 }

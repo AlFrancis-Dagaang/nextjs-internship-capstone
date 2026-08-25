@@ -1,39 +1,39 @@
 // components/tasks/tast-detail-modal/task-sidebar.tsx
-"use client";
+"use client"
 
-import type { Task } from "@/lib/db/schema";
 import type {
   ListWithTasks,
   TaskWithCommentCount,
-} from "@/components/lists/board";
-import { TaskActivityFeed } from "./task-activity-feed";
-import { TaskPrioritySection } from "./task-priority-section";
-import { TaskDatesSection } from "./task-dates-section";
-import { TaskMoveSection } from "./task-move-section";
-import { TaskMembersSection } from "./task-members-section";
-import { TaskQuickActions } from "./task-quick-actions";
+} from "@/components/lists/board"
+import type { Task } from "@/lib/db/schema"
+import { TaskActivityFeed } from "./task-activity-feed"
+import { TaskDatesSection } from "./task-dates-section"
+import { TaskMembersSection } from "./task-members-section"
+import { TaskMoveSection } from "./task-move-section"
+import { TaskPrioritySection } from "./task-priority-section"
+import { TaskQuickActions } from "./task-quick-actions"
 
 type TaskSidebarProps = {
-  task: Task;
-  projectId: string;
-  allLists: ListWithTasks[];
+  task: Task
+  projectId: string
+  allLists: ListWithTasks[]
   assignableUsers: {
-    id: string;
-    name?: string;
-    email?: string;
-    imageUrl?: string | null;
-    hasImage?: boolean | null;
-  }[];
-  activityRefreshKey: number;
-  canEdit: boolean;
-  role: "owner" | "admin" | "editor" | "contributor" | "viewer";
-  onRestored?: () => void;
-  onChanged?: (task: TaskWithCommentCount) => void;
-  onMoved?: (task: Task, affectedTasks: Task[]) => void;
-  onOpenChange: (open: boolean) => void;
-  onDeleteClick?: () => void;
-  onArchive?: () => void;
-};
+    id: string
+    name?: string
+    email?: string
+    imageUrl?: string | null
+    hasImage?: boolean | null
+  }[]
+  activityRefreshKey: number
+  canEdit: boolean
+  role: "owner" | "admin" | "editor" | "contributor" | "viewer"
+  onRestored?: () => void
+  onChanged?: (task: TaskWithCommentCount) => void
+  onMoved?: (task: Task, affectedTasks: Task[]) => void
+  onOpenChange: (open: boolean) => void
+  onDeleteClick?: () => void
+  onArchive?: () => void
+}
 
 export function TaskSidebar({
   task,
@@ -108,5 +108,5 @@ export function TaskSidebar({
         />
       </div>
     </div>
-  );
+  )
 }

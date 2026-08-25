@@ -1,4 +1,4 @@
-import { queries } from "@/lib/db";
+import { queries } from "@/lib/db"
 
 /**
  * Single place that turns Clerk user data into a local `users` row.
@@ -20,5 +20,5 @@ export async function syncUserFromClerkData(
     name,
     imageUrl,
     hasImage,
-  });
+  })
 }

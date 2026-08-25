@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import PusherClient from "pusher-js";
+import PusherClient from "pusher-js"
 
-let pusherClientInstance: PusherClient | null = null;
+let pusherClientInstance: PusherClient | null = null
 
 /**
  * Singleton Pusher client. Reused across every hook that subscribes to a
@@ -13,9 +13,9 @@ export function getPusherClient(): PusherClient {
     pusherClientInstance = new PusherClient(
       process.env.NEXT_PUBLIC_PUSHER_KEY!,
       { cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER! },
-    );
+    )
   }
-  return pusherClientInstance;
+  return pusherClientInstance
 }
 
 /**
@@ -24,12 +24,12 @@ export function getPusherClient(): PusherClient {
  * own echo when the board-event comes back over the channel.
  */
 export function getRealtimeClientId(): string {
-  if (typeof window === "undefined") return "";
-  const KEY = "pf-realtime-client-id";
-  let id = sessionStorage.getItem(KEY);
+  if (typeof window === "undefined") return ""
+  const KEY = "pf-realtime-client-id"
+  let id = sessionStorage.getItem(KEY)
   if (!id) {
-    id = crypto.randomUUID();
-    sessionStorage.setItem(KEY, id);
+    id = crypto.randomUUID()
+    sessionStorage.setItem(KEY, id)
   }
-  return id;
+  return id
 }

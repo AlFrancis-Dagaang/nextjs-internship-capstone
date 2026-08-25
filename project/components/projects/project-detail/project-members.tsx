@@ -1,55 +1,47 @@
 // components/projects/project-detail/project-members.tsx
-"use client";
+"use client"
 
-import { useState, useTransition, useMemo } from "react";
-import {
-  Trash2,
-  Shield,
-  UserPlus,
-  Search,
-  Edit2,
-  Check,
-  X,
-} from "lucide-react";
-import type { Project } from "@/lib/db/schema";
-import {
-  updateMemberRole,
-  removeProjectMember,
-} from "@/lib/actions/project-member";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Check, Edit2, Search, Shield, Trash2, UserPlus, X } from "lucide-react"
+import { useMemo, useState, useTransition } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { InviteMemberModal } from "../modals/invite-member-modal";
-import { DeleteMemberModal } from "../modals/delete-member-modal";
-import { getRealtimeClientId } from "@/lib/realtime/client";
-import { UserAvatar } from "@/components/ui/user-avatar";
-import type { Member } from "@/stores/project-store";
+} from "@/components/ui/select"
+import { UserAvatar } from "@/components/ui/user-avatar"
+import { useToast } from "@/hooks/use-toast"
+import {
+  removeProjectMember,
+  updateMemberRole,
+} from "@/lib/actions/project-member"
+import type { Project } from "@/lib/db/schema"
+import { getRealtimeClientId } from "@/lib/realtime/client"
+import type { Member } from "@/stores/project-store"
+import { DeleteMemberModal } from "../modals/delete-member-modal"
+import { InviteMemberModal } from "../modals/invite-member-modal"
 
 type ProjectMembersProps = {
-  project: Project;
-  members: Member[];
-  isOwner: boolean;
-  canManage: boolean;
-  ownerName?: string;
-  ownerEmail?: string;
-  ownerImageUrl?: string | null;
-  ownerHasImage?: boolean | null;
-  onMemberAdded: (projectId: string, member: Member) => void;
+  project: Project
+  members: Member[]
+  isOwner: boolean
+  canManage: boolean
+  ownerName?: string
+  ownerEmail?: string
+  ownerImageUrl?: string | null
+  ownerHasImage?: boolean | null
+  onMemberAdded: (projectId: string, member: Member) => void
   onMemberAddConfirmed: (
     projectId: string,
     tempId: string,
     realMember: Member,
-  ) => void;
-  onMemberRoleChanged: (projectId: string, member: Member) => void;
-  onMemberRemoved: (projectId: string, memberId: string) => void;
-};
+  ) => void
+  onMemberRoleChanged: (projectId: string, member: Member) => void
+  onMemberRemoved: (projectId: string, memberId: string) => void
+}
 
 export function ProjectMembers({
   project,
@@ -65,100 +57,100 @@ export function ProjectMembers({
   onMemberRoleChanged,
   onMemberRemoved,
 }: ProjectMembersProps) {
-  const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast()
+  const [isPending, startTransition] = useTransition()
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<
     "all" | "owner" | "admin" | "editor" | "contributor" | "viewer"
-  >("all");
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
+  >("all")
+  const [inviteModalOpen, setInviteModalOpen] = useState(false)
+  const [memberToRemove, setMemberToRemove] = useState<Member | null>(null)
 
   // Track which member is currently being edited
-  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null)
   const [tempRole, setTempRole] = useState<
     "admin" | "editor" | "contributor" | "viewer"
-  >("viewer");
+  >("viewer")
 
   // Filter out any existing members from invitations or non-member dropdowns
   const filteredMembers = useMemo(() => {
     return members.filter((m) => {
-      if (m.id.startsWith("team-")) return false;
+      if (m.id.startsWith("team-")) return false
 
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase()
       const matchesSearch =
         !searchQuery ||
         m.email?.toLowerCase().includes(q) ||
-        m.name?.toLowerCase().includes(q);
-      const matchesRole = roleFilter === "all" || m.role === roleFilter;
-      return matchesSearch && matchesRole;
-    });
-  }, [members, searchQuery, roleFilter]);
+        m.name?.toLowerCase().includes(q)
+      const matchesRole = roleFilter === "all" || m.role === roleFilter
+      return matchesSearch && matchesRole
+    })
+  }, [members, searchQuery, roleFilter])
 
   function startEditing(member: Member) {
-    setEditingMemberId(member.id);
-    setTempRole(member.role as any);
+    setEditingMemberId(member.id)
+    setTempRole(member.role as any)
   }
 
   function cancelEditing() {
-    setEditingMemberId(null);
+    setEditingMemberId(null)
   }
 
   async function handleSaveRole(memberId: string) {
-    const target = members.find((m) => m.id === memberId);
-    if (!target) return;
-    const prev = target;
+    const target = members.find((m) => m.id === memberId)
+    if (!target) return
+    const prev = target
 
-    setEditingMemberId(null);
-    onMemberRoleChanged(project.id, { ...target, role: tempRole });
+    setEditingMemberId(null)
+    onMemberRoleChanged(project.id, { ...target, role: tempRole })
 
     startTransition(async () => {
       const result = await updateMemberRole(project.id, memberId, {
         role: tempRole,
-      });
+      })
       if (!result.success) {
-        onMemberRoleChanged(project.id, prev);
+        onMemberRoleChanged(project.id, prev)
         toast({
           title: "Failed to update role",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
-      toast({ title: "Role updated successfully" });
-    });
+      toast({ title: "Role updated successfully" })
+    })
   }
 
   function confirmRemove() {
-    if (!memberToRemove) return;
-    const member = memberToRemove;
-    setMemberToRemove(null);
-    onMemberRemoved(project.id, member.id);
+    if (!memberToRemove) return
+    const member = memberToRemove
+    setMemberToRemove(null)
+    onMemberRemoved(project.id, member.id)
 
     startTransition(async () => {
       const result = await removeProjectMember(
         project.id,
         member.id,
         getRealtimeClientId(),
-      );
+      )
       if (!result.success) {
-        onMemberAdded(project.id, member);
+        onMemberAdded(project.id, member)
         toast({
           title: "Failed to remove member",
           description: result.error,
           variant: "destructive",
-        });
-        return;
+        })
+        return
       }
       toast({
         title: "Member removed",
         description: `${member.name ?? member.email ?? "User"} was removed from the project.`,
-      });
-    });
+      })
+    })
   }
 
-  const ownerDisplayName = ownerName || ownerEmail || "Project Owner";
+  const ownerDisplayName = ownerName || ownerEmail || "Project Owner"
 
   return (
     <>
@@ -257,7 +249,7 @@ export function ProjectMembers({
             </div>
           ) : (
             filteredMembers.map((member) => {
-              const isEditing = editingMemberId === member.id;
+              const isEditing = editingMemberId === member.id
 
               return (
                 <div
@@ -373,7 +365,7 @@ export function ProjectMembers({
                     )}
                   </div>
                 </div>
-              );
+              )
             })
           )}
         </div>
@@ -398,5 +390,5 @@ export function ProjectMembers({
         isPending={isPending}
       />
     </>
-  );
+  )
 }
